@@ -1,0 +1,67 @@
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { randomBytes } from 'node:crypto';
+
+async function main() {
+	const rootDir = process.cwd();
+	const envPath = join(rootDir, '.env');
+	const envExamplePath = join(rootDir, '.env.example');
+
+	if (!existsSync(envExamplePath)) {
+		console.error('❌ .env.example not found!');
+		process.exit(1);
+	}
+
+	let envContent = '';
+	let isNewFile = false;
+
+	if (existsSync(envPath)) {
+		console.log('ℹ️  .env file already exists. Checking configuration...');
+		envContent = readFileSync(envPath, 'utf-8');
+	} else {
+		console.log('ℹ️  Creating .env file from .env.example...');
+		envContent = readFileSync(envExamplePath, 'utf-8');
+		isNewFile = true;
+	}
+
+	// 1. Generate BETTER_AUTH_SECRET if missing or empty
+	const secretRegex = /BETTER_AUTH_SECRET=(.*)/;
+	const match = envContent.match(secretRegex);
+
+	let needsUpdate = false;
+
+	if (!match || match[1].trim() === '' || match[1].trim() === '""' || match[1].trim() === "''") {
+		console.log('🔑 Generating BETTER_AUTH_SECRET...');
+		const secret = randomBytes(32).toString('hex'); // 64 chars hex
+
+		if (match) {
+			// Replace existing empty definition
+			envContent = envContent.replace(secretRegex, `BETTER_AUTH_SECRET="${secret}"`);
+		} else {
+			// Append to end
+			// Ensure connection with newline
+			if (!envContent.endsWith('\n')) envContent += '\n';
+			envContent += `\n# Auth Secret\nBETTER_AUTH_SECRET="${secret}"\n`;
+		}
+		needsUpdate = true;
+	} else {
+		console.log('✅ BETTER_AUTH_SECRET is already configured.');
+	}
+
+	// 2. Check DODO_PAYMENTS_API_KEY
+	if (
+		!envContent.includes('DODO_PAYMENTS_API_KEY') ||
+		envContent.includes('DODO_PAYMENTS_API_KEY=""')
+	) {
+		console.warn('⚠️  DODO_PAYMENTS_API_KEY is not set. Please add it to your .env file manually.');
+	}
+
+	if (isNewFile || needsUpdate) {
+		writeFileSync(envPath, envContent);
+		console.log(`✅ ${isNewFile ? 'Created' : 'Updated'} .env file successfully.`);
+	} else {
+		console.log('✨ .env is already up to date.');
+	}
+}
+
+main().catch(console.error);
