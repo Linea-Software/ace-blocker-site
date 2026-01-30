@@ -1,6 +1,13 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+function runCommand(command: string, args: string[]) {
+	console.log(`🚀 Running: ${command} ${args.join(' ')}...`);
+	const result = spawnSync(command, args, { stdio: 'inherit', shell: true });
+	return result.status === 0;
+}
 
 async function main() {
 	const rootDir = process.cwd();
@@ -48,6 +55,14 @@ async function main() {
 		console.log('✅ BETTER_AUTH_SECRET is already configured.');
 	}
 
+	// 1.5. Set BETTER_AUTH_URL if missing
+	if (!envContent.includes('BETTER_AUTH_URL')) {
+		console.log('🔗 Adding BETTER_AUTH_URL...');
+		if (!envContent.endsWith('\n')) envContent += '\n';
+		envContent += `BETTER_AUTH_URL="http://localhost:5173"\n`;
+		needsUpdate = true;
+	}
+
 	// 2. Check DODO_PAYMENTS_API_KEY
 	if (
 		!envContent.includes('DODO_PAYMENTS_API_KEY') ||
@@ -62,6 +77,30 @@ async function main() {
 	} else {
 		console.log('✨ .env is already up to date.');
 	}
+
+	// 3. Database & Auth Setup
+	console.log('\n🗄️  Setting up database...');
+
+	// Ensure docker is running
+	if (!runCommand('docker', ['compose', 'up', '-d'])) {
+		console.warn('⚠️  Failed to start docker containers. Please make sure Docker is running.');
+	} else {
+		console.log('✅ Docker containers are running.');
+
+		// Wait a bit for Postgres to be ready
+		console.log('⏳ Waiting for database to be ready...');
+		await new Promise((resolve) => setTimeout(resolve, 3000));
+
+		// Push schema
+		console.log('📦 Applying database migrations...');
+		if (!runCommand('bun', ['run', 'db:migrate'])) {
+			console.error('❌ Failed to apply database migrations.');
+		} else {
+			console.log('✅ Database migrations applied successfully.');
+		}
+	}
+
+	console.log('\n✨ Setup complete! You can now run the development server.');
 }
 
 main().catch(console.error);
