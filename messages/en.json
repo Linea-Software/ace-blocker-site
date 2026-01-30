@@ -18,5 +18,22 @@
 	"feature_analytics_description": "Visualize your progress and see exactly how much time you've reclaimed since starting your journey with Ace Blocker.",
 	"footer_rights_suffix": "Ace Blocker. All rights reserved.",
 	"footer_terms": "Terms",
-	"footer_privacy": "Privacy"
+	"footer_privacy": "Privacy",
+	"pro_title": "Choose the Perfect Plan",
+	"pro_subtitle": "Upgrade to Ace Blocker Pro and unlock the full potential of your focus journey.",
+	"plan_free_name": "Basic",
+	"plan_free_price": "$0",
+	"plan_free_description": "Perfect for getting started with focus protection.",
+	"plan_pro_name": "Pro",
+	"plan_pro_price": "$1.99",
+	"plan_pro_duration": "/month*",
+	"plan_pro_description": "The ultimate toolset for total digital well-being.",
+	"feature_devices_free": "1 Device",
+	"feature_devices_pro": "Unlimited Devices",
+	"feature_scripts_pro": "Premium Boredom Scripts",
+	"feature_lists_pro": "Curated Category Lists",
+	"feature_prevention_pro": "Advanced Bypass Prevention",
+	"feature_basic_blocking": "Standard Site Blocking",
+	"cta_get_started": "Get Started",
+	"cta_upgrade_now": "Upgrade to Pro"
 }
