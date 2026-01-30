@@ -35,5 +35,20 @@
 	"feature_prevention_pro": "Advanced Bypass Prevention",
 	"feature_basic_blocking": "Standard Site Blocking",
 	"cta_get_started": "Get Started",
-	"cta_upgrade_now": "Upgrade to Pro"
+	"cta_upgrade_now": "Upgrade to Pro",
+	"about_hero_title": "The Mission Behind",
+	"about_hero_app": "Ace Blocker",
+	"about_hero_description": "We didn't just build another blocker. We built an engine for behavioral change. Ace Blocker is designed to break the cycle of internet addiction at the source.",
+	"about_mission_title": "Why We Exist",
+	"about_mission_description": "Internet addiction isn't about a lack of willpower; it's about systems designed to exploit your biology. We build tools that fight back, giving you the upper hand in the battle for your attention.",
+	"about_tech_title": "Powered by the Ace Engine",
+	"about_tech_description": "Under the hood, Ace Blocker uses a high-performance, system-wide proxy engine that ensures nothing slips through the cracks.",
+	"about_feature_system_title": "System-Wide Protection",
+	"about_feature_system_description": "Unlike simple browser extensions, Ace Blocker operates at the network level. This means it protects your entire system—apps, games, and every browser you use.",
+	"about_feature_intel_title": "Millions of Rules, Zero Lag",
+	"about_feature_intel_description": "Our engine handles millions of site rules in real-time using high-performance database technology, allowing for instant filtering without slowing down your connection.",
+	"about_feature_scripts_title": "Boredom Scripts",
+	"about_feature_scripts_description": "Sometimes blocking isn't enough. Our 'Boredom Scripts' modify addictive sites to remove the triggers that hook you—like infinite scroll or manipulative UI—making the sites less appealing and more boring.",
+	"about_feature_locks_title": "Hardened Schedules & Locks",
+	"about_feature_locks_description": "Set it and forget it—or try to. Our schedules can be locked with increasing levels of strictness, ensuring that when your willpower dips, your protection remains absolute."
 }
