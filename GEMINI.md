@@ -22,7 +22,7 @@ ALWAYS use **Bun** for all package management and script execution tasks.
 - **Better Auth**: [Documentation](https://www.better-auth.com/llms.txt) - Handles authentication and session management.
 - **Zod**: [Documentation](https://zod.dev/llms.txt) - Used to verify user request schemas and for type safety.
 - **Paraglide**: Localization framework.
-- **shadcn-svelte**: [Documentation](https://shadcn-svelte.com/llms.txt) - UI component library. Use `bun x shadcn-svelte@latest add <component-name>` to add new components.
+- **shadcn-svelte**: [Documentation](https://shadcn-svelte.com/llms.txt) - UI component library. Use `bun x shadcn-svelte@latest add -y <component-name>` to add new components.
 - **Lucide Svelte**: Use `@lucide/svelte` for icons. Do NOT use `lucide-svelte` as it is deprecated.
 
 ## Project Description
@@ -35,11 +35,18 @@ This website is a full-stack SvelteKit application used for product publicity, m
 
 - `/src/routes/`: Contains SvelteKit pages and API endpoints.
   - Standard routes include authentication (`signin`, `signup`) and functionality (`generate-checkout`, `demo`).
+  - **Page-specific components** MUST reside in a `./_components` folder within the route directory.
 - `/src/lib/`: Reusable components, utilities, and logic.
+  - `/src/lib/components/`: **Global components** reused across the app.
+  - `/src/lib/components/ui/`: Reserved ONLY for **shadcn-svelte** components.
   - `/src/lib/server/`: Server-only logic, including:
     - `auth.ts`: Better Auth configuration.
     - `db/`: Database schema (`schema.ts`, `auth-schema.ts`) and connection (`index.ts`) using Drizzle.
   - `/src/lib/paraglide/`: Auto-generated localization runtime.
+
+## Nomenclature & Design Patterns
+
+- **Svelte Components**: All `.svelte` files MUST use `UpperCamelCase` naming convention (e.g., `Button.svelte`, `UserCard.svelte`).
 - `/scripts/`: Development and maintenance scripts. **ALWAYS use TypeScript** for these scripts.
 - `/messages/`: Localization message files for Paraglide. During development, always prioritize English (`en`). Only translate when explicitly requested.
 - `/drizzle/`: Database migrations managed by Drizzle.
