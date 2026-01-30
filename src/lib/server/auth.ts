@@ -5,9 +5,10 @@ import { dodopayments, checkout, webhooks } from '@dodopayments/better-auth';
 import DodoPayments from 'dodopayments';
 
 import { dev } from '$app/environment';
+import { env } from '$env/dynamic/private';
 
 export const dodoPayments = new DodoPayments({
-	bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
+	bearerToken: env.DODO_PAYMENTS_API_KEY,
 	environment: dev ? 'test_mode' : 'live_mode'
 });
 
@@ -27,14 +28,14 @@ export const auth = betterAuth({
 					products: [
 						{
 							productId: 'pdt_0NWdT3yqiyWXgLXcFgwhy',
-							slug: 'premium-plan'
+							slug: 'monthly-subscription'
 						}
 					],
 					successUrl: '/dashboard/success',
 					authenticatedUsersOnly: true
 				}),
 				webhooks({
-					webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
+					webhookKey: env.DODO_PAYMENTS_WEBHOOK_SECRET!,
 					onPayload: async (payload) => {
 						console.log('Received webhook:', payload.type);
 					},

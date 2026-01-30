@@ -1,6 +1,12 @@
 import { json } from '@sveltejs/kit';
-import DodoPayments from 'dodopayments';
-import { env } from '$env/dynamic/private';
+import { dodoPayments } from '$lib/server/auth';
+
+import { z } from 'zod';
+
+const CheckoutSchema = z.object({
+	productId: z.string().optional(),
+	quantity: z.number().int().positive().default(1)
+});
 
 export async function POST({ request, locals }) {
 
@@ -8,22 +14,20 @@ export async function POST({ request, locals }) {
 		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
 
-	const { productId, quantity = 1 } = await request.json();
+	const body = await request.json();
+	const validation = CheckoutSchema.safeParse(body);
 
-	if (!env.DODO_PAYMENTS_API_KEY) {
-		return json({ error: 'Dodo Payments API key not configured' }, { status: 500 });
+	if (!validation.success) {
+		return json({ error: 'Invalid request', details: validation.error.format() }, { status: 400 });
 	}
 
-	const client = new DodoPayments({
-		bearerToken: env.DODO_PAYMENTS_API_KEY,
-		environment: 'test_mode' // Default to test mode for safety
-	});
+	const { productId, quantity } = validation.data;
 
 	try {
 		// Use fake product if none provided, for testing as requested
 		const actualProductId = productId || 'pdt_0NXOnI40qSEVOqAnCUwmm';
 
-		const session = await client.checkoutSessions.create({
+		const session = await dodoPayments.checkoutSessions.create({
 			product_cart: [
 				{
 					product_id: actualProductId,
@@ -31,7 +35,6 @@ export async function POST({ request, locals }) {
 				}
 			],
 			return_url: new URL('/checkout/success', request.url).toString(),
-			// optional: add customer info from locals.user if available
 			customer: locals.user
 				? {
 					email: locals.user.email,
