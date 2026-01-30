@@ -22,6 +22,7 @@ ALWAYS use **Bun** for all package management and script execution tasks.
 - **Better Auth**: [Documentation](https://www.better-auth.com/llms.txt) - Handles authentication and session management.
 - **Zod**: [Documentation](https://zod.dev/llms.txt) - Used to verify user request schemas and for type safety.
 - **Paraglide**: Localization framework.
+- **shadcn-svelte**: [Documentation](https://shadcn-svelte.com/llms.txt) - UI component library. Use `bun x shadcn-svelte@latest add <component-name>` to add new components.
 
 ## Project Description
 
