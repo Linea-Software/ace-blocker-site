@@ -8,6 +8,7 @@ ALWAYS use **Bun** for all package management and script execution tasks.
 - Use `bun run` instead of `npm run`
 - Use `bun` instead of `node`
 - Do NOT use `npm`, `yarn`, or `pnpm` under any circumstances.
+- **Running Locally**: When running locally, use `bun run dev` and watch `http://localhost:5173/` in a browser to test changes.
 
 ## Self-Maintenance (IMPORTANT)
 
