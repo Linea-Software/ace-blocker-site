@@ -2,6 +2,7 @@
 	import Navbar from '$lib/components/Navbar.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Shield, Zap, Lock, BarChart3, ArrowRight, Download } from '@lucide/svelte';
+	import * as m from '$lib/paraglide/messages';
 </script>
 
 <Navbar />
@@ -14,25 +15,24 @@
 				<div
 					class="inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium bg-muted/50 backdrop-blur-sm mb-4"
 				>
-					<span class="text-primary mr-2">New</span>
+					<span class="text-primary mr-2">{m.hero_new_badge()}</span>
 					<span class="text-muted-foreground transition-colors hover:text-foreground">
-						Version 2.0 is now available
+						{m.hero_version_available()}
 					</span>
 					<ArrowRight class="ml-2 h-3 w-3" />
 				</div>
 				<h1
 					class="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/70"
 				>
-					Reclaim Your Focus with <span class="text-primary">Ace Blocker</span>
+					{m.hero_title_focus()} <span class="text-primary">{m.hero_title_app()}</span>
 				</h1>
 				<p class="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-					The most powerful blocker designed to help you overcome internet addictions through
-					intelligent site filtering and behavior-shaping scripts.
+					{m.hero_description()}
 				</p>
 				<div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
 					<Button size="lg" class="h-12 px-8 text-lg font-semibold w-full sm:w-auto" href="/download">
 						<Download class="mr-2 h-5 w-5" />
-						Download Free
+						{m.hero_download_button()}
 					</Button>
 					<Button
 						variant="outline"
@@ -40,7 +40,7 @@
 						class="h-12 px-8 text-lg font-semibold w-full sm:w-auto"
 						href="/get-pro"
 					>
-						Explore Pro Features
+						{m.hero_pro_button()}
 					</Button>
 				</div>
 			</div>
@@ -63,10 +63,9 @@
 	<section class="py-20 bg-muted/30">
 		<div class="container mx-auto px-4">
 			<div class="text-center mb-16 space-y-4">
-				<h2 class="text-3xl md:text-4xl font-bold tracking-tight">Built for Professionals</h2>
+				<h2 class="text-3xl md:text-4xl font-bold tracking-tight">{m.features_section_title()}</h2>
 				<p class="text-muted-foreground text-lg max-w-2xl mx-auto">
-					Simple to setup, impossible to ignore. Ace Blocker provides the tools you need to stay on
-					track.
+					{m.features_section_description()}
 				</p>
 			</div>
 
@@ -75,10 +74,9 @@
 					<div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-6">
 						<Lock class="h-6 w-6 text-primary" />
 					</div>
-					<h3 class="text-xl font-bold mb-3">Hardened Blocks</h3>
+					<h3 class="text-xl font-bold mb-3">{m.feature_blocks_title()}</h3>
 					<p class="text-muted-foreground leading-relaxed">
-						Advanced network-level blocking that's difficult to bypass, ensuring you stay away from
-						distractions when you need to most.
+						{m.feature_blocks_description()}
 					</p>
 				</div>
 
@@ -86,10 +84,9 @@
 					<div class="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center mb-6">
 						<Zap class="h-6 w-6 text-blue-500" />
 					</div>
-					<h3 class="text-xl font-bold mb-3">Boredom Scripts</h3>
+					<h3 class="text-xl font-bold mb-3">{m.feature_scripts_title()}</h3>
 					<p class="text-muted-foreground leading-relaxed">
-						Inject scripts that make addictive sites less visually appealing, breaking the dopamine
-						loops that keep you scrolling.
+						{m.feature_scripts_description()}
 					</p>
 				</div>
 
@@ -97,10 +94,9 @@
 					<div class="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center mb-6">
 						<BarChart3 class="h-6 w-6 text-green-500" />
 					</div>
-					<h3 class="text-xl font-bold mb-3">Insights & Analytics</h3>
+					<h3 class="text-xl font-bold mb-3">{m.feature_analytics_title()}</h3>
 					<p class="text-muted-foreground leading-relaxed">
-						Visualize your progress and see exactly how much time you've reclaimed since starting
-						your journey with Ace Blocker.
+						{m.feature_analytics_description()}
 					</p>
 				</div>
 			</div>
@@ -113,14 +109,14 @@
 		<div class="flex flex-col md:flex-row justify-between items-center gap-8">
 			<div class="flex items-center gap-2">
 				<Shield class="h-5 w-5 text-primary" />
-				<span class="font-bold tracking-tight">Ace Blocker</span>
+				<span class="font-bold tracking-tight">{m.hero_title_app()}</span>
 			</div>
 			<p class="text-sm text-muted-foreground">
-				&copy; {new Date().getFullYear()} Ace Blocker. All rights reserved.
+				&copy; {new Date().getFullYear()} {m.footer_rights_suffix()}
 			</p>
 			<div class="flex items-center gap-6">
-				<a href="/terms" class="text-sm text-muted-foreground hover:text-foreground">Terms</a>
-				<a href="/privacy" class="text-sm text-muted-foreground hover:text-foreground">Privacy</a>
+				<a href="/terms" class="text-sm text-muted-foreground hover:text-foreground">{m.footer_terms()}</a>
+				<a href="/privacy" class="text-sm text-muted-foreground hover:text-foreground">{m.footer_privacy()}</a>
 			</div>
 		</div>
 	</div>

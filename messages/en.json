@@ -1,4 +1,22 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"hello_world": "Hello, {name} from en!"
+	"hello_world": "Hello, {name} from en!",
+	"hero_new_badge": "New",
+	"hero_version_available": "Version 2.0 is now available",
+	"hero_title_focus": "Reclaim Your Focus with",
+	"hero_title_app": "Ace Blocker",
+	"hero_description": "The most powerful blocker designed to help you overcome internet addictions through intelligent site filtering and behavior-shaping scripts.",
+	"hero_download_button": "Download Free",
+	"hero_pro_button": "Explore Pro Features",
+	"features_section_title": "Built for Professionals",
+	"features_section_description": "Simple to setup, impossible to ignore. Ace Blocker provides the tools you need to stay on track.",
+	"feature_blocks_title": "Hardened Blocks",
+	"feature_blocks_description": "Advanced network-level blocking that's difficult to bypass, ensuring you stay away from distractions when you need to most.",
+	"feature_scripts_title": "Boredom Scripts",
+	"feature_scripts_description": "Inject scripts that make addictive sites less visually appealing, breaking the dopamine loops that keep you scrolling.",
+	"feature_analytics_title": "Insights & Analytics",
+	"feature_analytics_description": "Visualize your progress and see exactly how much time you've reclaimed since starting your journey with Ace Blocker.",
+	"footer_rights_suffix": "Ace Blocker. All rights reserved.",
+	"footer_terms": "Terms",
+	"footer_privacy": "Privacy"
 }
