@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import * as NavigationMenu from '$lib/components/ui/navigation-menu';
 	import * as Sheet from '$lib/components/ui/sheet';
 	import { Separator } from '$lib/components/ui/separator';
 	import {
@@ -37,13 +36,13 @@
 	class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
 >
 	<div class="container flex h-16 items-center justify-between mx-auto px-4">
-		<div class="flex items-center gap-4 md:gap-8">
+		<div class="flex items-center gap-4 h-full">
 			<!-- Mobile Menu Button -->
 			<Sheet.Root bind:open={isMobileMenuOpen}>
 				<Sheet.Trigger
-					class="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground md:hidden"
+					class="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground md:hidden"
 				>
-					<Menu class="h-6 w-6" />
+					<Menu class="h-5 w-5" />
 					<span class="sr-only">Toggle menu</span>
 				</Sheet.Trigger>
 				<Sheet.Content side="left" class="w-[300px] sm:w-[400px] flex flex-col">
@@ -110,51 +109,46 @@
 				</Sheet.Content>
 			</Sheet.Root>
 
-			<a href="/" class="flex items-center space-x-2 transition-opacity hover:opacity-90">
+			<a href="/" class="flex items-center space-x-2 transition-opacity hover:opacity-90 mr-4">
 				<Shield class="h-6 w-6 text-primary" />
 				<span class="inline-block font-bold tracking-tight text-xl sm:text-2xl">Ace Blocker</span>
 			</a>
 
-			<NavigationMenu.Root class="hidden md:flex">
-				<NavigationMenu.List class="gap-1">
-					{#each navLinks as link}
-						<NavigationMenu.Item>
-							<NavigationMenu.Link
-								href={link.href}
-								class={cn(
-									'group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50',
-									isActive(link.href) ? 'bg-accent text-primary' : 'bg-background'
-								)}
-							>
-								<link.icon class={cn('mr-2 h-4 w-4', link.iconClass)} />
-								{link.label}
-							</NavigationMenu.Link>
-						</NavigationMenu.Item>
-					{/each}
-				</NavigationMenu.List>
-			</NavigationMenu.Root>
+			<nav class="hidden md:flex items-center gap-1 h-full">
+				{#each navLinks as link}
+					<a
+						href={link.href}
+						class={cn(
+							'inline-flex h-9 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50',
+							isActive(link.href) ? 'bg-accent text-primary' : 'text-muted-foreground'
+						)}
+					>
+						<link.icon class={cn('mr-2 h-4 w-4', link.iconClass)} />
+						{link.label}
+					</a>
+				{/each}
+			</nav>
 		</div>
 
-		<div class="flex items-center gap-2 sm:gap-4">
+		<div class="flex items-center gap-2 sm:gap-4 h-full">
 			{#if $session.data}
-				<Button href="/dashboard" variant="ghost" size="sm" class="hidden sm:flex">
+				<Button href="/dashboard" variant="ghost" class="hidden sm:inline-flex items-center">
 					Dashboard
 				</Button>
 				<Button
 					onclick={() => authClient.signOut()}
 					variant="outline"
-					size="sm"
-					class="hidden sm:flex"
+					class="hidden sm:inline-flex items-center"
 				>
 					Sign Out
 				</Button>
 			{:else}
-				<Button href="/signin" variant="ghost" size="sm" class="hidden sm:flex">
+				<Button href="/signin" variant="ghost" class="hidden sm:inline-flex items-center">
 					Log In
 				</Button>
-				<Button href="/signup" size="sm">
+				<Button href="/signup" class="sm:px-6 inline-flex items-center">
 					<span class="hidden sm:inline">Sign Up</span>
-					<span class="sm:hidden text-xs">Join</span>
+					<span class="sm:hidden text-xs px-2">Join</span>
 				</Button>
 			{/if}
 		</div>
