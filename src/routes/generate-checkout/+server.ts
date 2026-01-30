@@ -3,10 +3,10 @@ import DodoPayments from 'dodopayments';
 import { env } from '$env/dynamic/private';
 
 export async function POST({ request, locals }) {
-	// Optional: Check if user is authenticated
-	// if (!locals.session) {
-	// 	return json({ error: 'Unauthorized' }, { status: 401 });
-	// }
+
+	if (!locals.session) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
 
 	const { productId, quantity = 1 } = await request.json();
 
@@ -21,7 +21,7 @@ export async function POST({ request, locals }) {
 
 	try {
 		// Use fake product if none provided, for testing as requested
-		const actualProductId = productId || 'prod_fake_123';
+		const actualProductId = productId || 'pdt_0NXOnI40qSEVOqAnCUwmm';
 
 		const session = await client.checkoutSessions.create({
 			product_cart: [
@@ -34,9 +34,9 @@ export async function POST({ request, locals }) {
 			// optional: add customer info from locals.user if available
 			customer: locals.user
 				? {
-						email: locals.user.email,
-						name: locals.user.name
-					}
+					email: locals.user.email,
+					name: locals.user.name
+				}
 				: undefined
 		});
 

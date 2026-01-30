@@ -9,9 +9,42 @@ ALWAYS use **Bun** for all package management and script execution tasks.
 - Use `bun` instead of `node`
 - Do NOT use `npm`, `yarn`, or `pnpm` under any circumstances.
 
-You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
+## Self-Maintenance (IMPORTANT)
 
-## Available MCP Tools:
+- **Maintain Context**: You MUST automatically edit this `GEMINI.md` file whenever significant changes occur in the project (e.g., new tools added, new core documentation links found, project structure changes, or new patterns established). Keep this document up-to-date as the "Source of Truth" for your behavior in this project.
+
+## Core Documentation & Tech Stack
+
+**IMPORTANT**: You MUST always read the relevant documentation below before performing tasks related to these technologies. Use the documented patterns and best practices.
+
+- **Svelte 5 & SvelteKit**: [Documentation](https://svelte.dev/llms.txt) - Full-stack framework for the site. Use Svelte 5 runes (`$state`, `$derived`, `$effect`, etc.).
+- **Drizzle ORM**: [Documentation](https://orm.drizzle.team/llms.txt) - Database management for Postgres.
+- **Better Auth**: [Documentation](https://www.better-auth.com/llms.txt) - Handles authentication and session management.
+- **Zod**: [Documentation](https://zod.dev/llms.txt) - Used to verify user request schemas and for type safety.
+- **Paraglide**: Localization framework.
+
+## Project Description
+
+**Ace Blocker** is a blocker application designed to help users overcome internet addictions. It blocks addictive network sites (porn, social media, betting, etc.) and provides a suite of scripts to make these sites less appealing and more boring.
+
+This website is a full-stack SvelteKit application used for product publicity, managing users, subscriptions, and providing a REST API.
+
+## Project Structure
+
+- `/src/routes/`: Contains SvelteKit pages and API endpoints.
+  - Standard routes include authentication (`signin`, `signup`) and functionality (`generate-checkout`, `demo`).
+- `/src/lib/`: Reusable components, utilities, and logic.
+  - `/src/lib/server/`: Server-only logic, including:
+    - `auth.ts`: Better Auth configuration.
+    - `db/`: Database schema (`schema.ts`, `auth-schema.ts`) and connection (`index.ts`) using Drizzle.
+  - `/src/lib/paraglide/`: Auto-generated localization runtime.
+- `/scripts/`: Development and maintenance scripts. **ALWAYS use TypeScript** for these scripts.
+- `/messages/`: Localization message files for Paraglide. During development, always prioritize English (`en`). Only translate when explicitly requested.
+- `/drizzle/`: Database migrations managed by Drizzle.
+
+## Svelte MCP Tools usage:
+
+You have access to a Svelte MCP server for documentation. Use these tools effectively:
 
 ### 1. list-sections
 
