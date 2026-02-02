@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from './db';
-import { dodopayments, checkout, webhooks } from '@dodopayments/better-auth';
+import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
 import DodoPayments from 'dodopayments';
 
 import { dev } from '$app/environment';
@@ -25,12 +25,9 @@ export const auth = betterAuth({
 			createCustomerOnSignUp: true,
 			use: [
 				checkout({
-					products: [
-						{
-							productId: 'pdt_0NWdT3yqiyWXgLXcFgwhy',
-							slug: 'monthly-subscription'
-						}
-					],
+					products:
+						JSON.parse(env.DODO_PAYMENTS_PRODUCTS!) as Product[]
+					,
 					successUrl: '/dashboard/success',
 					authenticatedUsersOnly: true
 				}),
