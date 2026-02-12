@@ -4,8 +4,13 @@ import { randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 
 function runCommand(command: string, args: string[]) {
-	console.log(`🚀 Running: ${command} ${args.join(' ')}...`);
-	const result = spawnSync(command, args, { stdio: 'inherit', shell: true });
+	// Use sudo on Linux for docker commands
+	const isLinux = process.platform === 'linux';
+	const useSudo = isLinux && command === 'docker';
+	const cmd = useSudo ? `sudo ${command}` : command;
+
+	console.log(`🚀 Running: ${cmd} ${args.join(' ')}...`);
+	const result = spawnSync(cmd, args, { stdio: 'inherit', shell: true });
 	return result.status === 0;
 }
 
