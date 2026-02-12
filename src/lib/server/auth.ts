@@ -1,12 +1,13 @@
 import { betterAuth } from 'better-auth';
+import { admin } from "better-auth/plugins"
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { db } from './db';
+import { db } from '$lib/server/db';
 import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
 import DodoPayments from 'dodopayments';
 
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
-import { resend } from './email';
+import { resend } from '$lib/server/email';
 
 if (!env.DODO_PAYMENTS_API_KEY) {
 	throw new Error('DODO_PAYMENTS_API_KEY is not set');
@@ -31,7 +32,7 @@ export const auth = betterAuth({
 	}),
 	emailAndPassword: {
 		enabled: true,
-		requireEmailVerification: true
+		requireEmailVerification: !dev
 	},
 	emailVerification: {
 		sendVerificationEmail: async ({ user, url, token }, request) => {
@@ -44,6 +45,7 @@ export const auth = betterAuth({
 		}
 	},
 	plugins: [
+		admin(),
 		dodopayments({
 			client: dodoPayments,
 			createCustomerOnSignUp: true,
@@ -71,3 +73,28 @@ export const auth = betterAuth({
 		})
 	]
 });
+
+
+
+// if (dev) {
+// 	const { users } = await auth.api.listUsers({
+// 		query: {
+// 			limit: 1,
+// 			searchField: 'email',
+// 			searchValue: 'dev@example.com'
+// 		}
+// 	});
+
+// 	if (users.length === 0) {
+// 		await auth.api.createUser({
+// 			body: {
+// 				email: 'dev@example.com',
+// 				password: 'dev-password',
+// 				name: 'Dev User',
+// 				role: 'user'
+// 			}
+// 		});
+// 	}
+
+// 	console.log('✅ Created default dev user: dev@example.com / dev-password');
+// }

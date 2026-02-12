@@ -10,6 +10,9 @@ ALWAYS use **Bun** for all package management and script execution tasks.
 - Do NOT use `npm`, `yarn`, or `pnpm` under any circumstances.
 - **Running Locally**: The development server is ALWAYS running at `http://localhost:5173/` during development. You do NOT need to run `bun run dev` yourself. Use this URL to test and verify changes.
 - **Initial Setup**: Run `bun run setup` to automatically configure the `.env` file (including secrets), start the Docker database, and apply Drizzle migrations.
+- **Development Credentials**: In development mode, a default admin user is automatically created:
+  - **Email**: `dev@example.com`
+  - **Password**: `dev-password`
 - **Committing Changes**: Once you have finished a task and verified it, you MUST commit your changes using `git add .` and `git commit -m "..."` with a descriptive message.
 
 ## Self-Maintenance (IMPORTANT)
