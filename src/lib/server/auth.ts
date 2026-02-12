@@ -7,6 +7,18 @@ import DodoPayments from 'dodopayments';
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 
+if (!env.DODO_PAYMENTS_API_KEY) {
+	throw new Error('DODO_PAYMENTS_API_KEY is not set');
+}
+
+if (!env.DODO_PAYMENTS_PRODUCTS) {
+	throw new Error('DODO_PAYMENTS_PRODUCTS is not set');
+}
+
+if (!env.DODO_PAYMENTS_WEBHOOK_SECRET) {
+	throw new Error('DODO_PAYMENTS_WEBHOOK_SECRET is not set');
+}
+
 export const dodoPayments = new DodoPayments({
 	bearerToken: env.DODO_PAYMENTS_API_KEY,
 	environment: dev ? 'test_mode' : 'live_mode'
