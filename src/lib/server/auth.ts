@@ -6,6 +6,7 @@ import DodoPayments from 'dodopayments';
 
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
+import { resend } from './email';
 
 if (!env.DODO_PAYMENTS_API_KEY) {
 	throw new Error('DODO_PAYMENTS_API_KEY is not set');
@@ -29,7 +30,18 @@ export const auth = betterAuth({
 		provider: 'pg'
 	}),
 	emailAndPassword: {
-		enabled: true
+		enabled: true,
+		requireEmailVerification: true
+	},
+	emailVerification: {
+		sendVerificationEmail: async ({ user, url, token }, request) => {
+			resend.emails.send({
+				from: 'noreply@send.aceblocker.com',
+				to: user.email,
+				subject: 'Verify your email',
+				text: `Click the link to verify your email: ${url}`
+			})
+		}
 	},
 	plugins: [
 		dodopayments({
