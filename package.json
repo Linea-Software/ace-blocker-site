@@ -39,6 +39,7 @@
 		"@vitest/browser-playwright": "^4.0.15",
 		"bits-ui": "^2.14.4",
 		"clsx": "^2.1.1",
+		"devcert-sanscache": "^0.5.1",
 		"drizzle-kit": "^0.31.8",
 		"drizzle-orm": "^0.45.0",
 		"eslint": "^9.39.1",

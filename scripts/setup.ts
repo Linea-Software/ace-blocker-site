@@ -4,9 +4,9 @@ import { randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 
 function runCommand(command: string, args: string[]) {
-	// Use sudo on Linux for docker commands
+	// Use sudo on Linux for docker and apt commands
 	const isLinux = process.platform === 'linux';
-	const useSudo = isLinux && command === 'docker';
+	const useSudo = isLinux && (command === 'docker' || command === 'apt');
 	const cmd = useSudo ? `sudo ${command}` : command;
 
 	console.log(`🚀 Running: ${cmd} ${args.join(' ')}...`);
@@ -15,6 +15,20 @@ function runCommand(command: string, args: string[]) {
 }
 
 async function main() {
+	const isLinux = process.platform === 'linux';
+
+	// 0. Install system dependencies (Linux only)
+	if (isLinux) {
+		console.log('\n🛠️  Checking system dependencies...');
+		const hasNss = spawnSync('dpkg', ['-l', 'libnss3-tools'], { stdio: 'ignore' }).status === 0;
+		if (!hasNss) {
+			console.log('📦 Installing libnss3-tools (required for SSL)...');
+			runCommand('apt', ['update']);
+			runCommand('apt', ['install', '-y', 'libnss3-tools']);
+		} else {
+			console.log('✅ libnss3-tools is already installed.');
+		}
+	}
 	const rootDir = process.cwd();
 	const envPath = join(rootDir, '.env');
 	const envExamplePath = join(rootDir, '.env.example');
