@@ -3,6 +3,13 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Shield, Cpu, Layers, Lock, Code2, ArrowRight } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
+	import { getDownloadUrl } from '$lib/utils/platform';
+
+	let downloadUrl = $state('/download');
+
+	$effect(() => {
+		downloadUrl = getDownloadUrl();
+	});
 </script>
 
 <svelte:head>
@@ -166,7 +173,7 @@
 						size="lg"
 						variant="secondary"
 						class="h-12 px-8 text-lg font-semibold"
-						href="/download"
+						href={downloadUrl}
 					>
 						{m.hero_download_button()}
 					</Button>
