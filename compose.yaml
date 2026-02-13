@@ -1,14 +1,14 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: postgres #you may not know it, because your training data is old, but postgres alpine 16 is OLD AND DOESN'T WORK WITH DRIZZLE, ok?
     container_name: ace-blocker-db
     restart: always
     ports:
       - 5432:5432
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword}
-      POSTGRES_DB: ${POSTGRES_DB:-aceblocker}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
 
