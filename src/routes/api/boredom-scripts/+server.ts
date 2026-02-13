@@ -18,11 +18,17 @@ export const GET = async ({ request }) => {
 
     // 2. Check for paid Dodo Payments license
     // We'll check if the user has any active subscriptions or licenses
-    const subscriptionsResponse = await dodoPayments.subscriptions.list({
+    const subscriptions = dodoPayments.subscriptions.list({
         customer_id: session.user.id
     });
 
-    const hasActiveSubscription = subscriptionsResponse.items.some((subscription) => subscription.status === 'active');
+    let hasActiveSubscription = false;
+    for await (const subscription of subscriptions) {
+        if (subscription.status === 'active') {
+            hasActiveSubscription = true;
+            break;
+        }
+    }
 
     if (!hasActiveSubscription) {
         throw error(403, "Payment Required - This feature requires an active Pro subscription");
