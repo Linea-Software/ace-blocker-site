@@ -1,8 +1,8 @@
 import { createAuthClient } from 'better-auth/svelte';
 import { dodopaymentsClient } from '@dodopayments/better-auth';
-import { env } from '$env/dynamic/private';
+import { dev } from '$app/environment';
 
 export const authClient = createAuthClient({
-	baseURL: env.BETTER_AUTH_URL || 'https://localhost:5173',
+	baseURL: dev ? 'https://localhost:5173' : 'https://aceblocker.com',
 	plugins: [dodopaymentsClient()]
 });

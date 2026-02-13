@@ -181,7 +181,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword}
       POSTGRES_DB: ${POSTGRES_DB:-aceblocker}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql
 
 volumes:
   pgdata:

@@ -5,7 +5,6 @@
     "": {
       "name": "ace-blocker-site",
       "dependencies": {
-        "@bunny.net/storage-sdk": "latest",
         "@dodopayments/better-auth": "^1.4.2",
         "better-auth": "^1.4.18",
         "dodopayments": "^2.19.0",
@@ -63,8 +62,6 @@
     "@better-auth/utils": ["@better-auth/utils@0.3.0", "", {}, "sha512-W+Adw6ZA6mgvnSnhOki270rwJ42t4XzSK6YWGF//BbVXL6SwCLWfyzBc1lN2m/4RM28KubdBKQ4X5VMoLRNPQw=="],
 
     "@better-fetch/fetch": ["@better-fetch/fetch@1.1.21", "", {}, "sha512-/ImESw0sskqlVR94jB+5+Pxjf+xBwDZF/N5+y2/q4EqD7IARUTSpPfIo8uf39SYpCxyOCtbyYpUrZ3F/k0zT4A=="],
-
-    "@bunny.net/storage-sdk": ["@bunny.net/storage-sdk@0.3.1", "", { "dependencies": { "dotenv": "^16.4.7", "zod": "^3.24.2" } }, "sha512-nHD+e+CxYBcSoZERkxI/7Qir/kZaCfBTT+ULgZNUitNSyZ4mWD3DbTy+sHwVfRyc6wQ0XYD//6LImi2PU9JoWg=="],
 
     "@dodopayments/better-auth": ["@dodopayments/better-auth@1.4.2", "", { "dependencies": { "@dodopayments/core": "^0.3.8" }, "peerDependencies": { "zod": "^3.25.0 || ^4.0.0" } }, "sha512-RrQXBg8exg43b7eafMeDuBkdLSxxkwxfdr1VAGzaoY28w2Sbc8pgQ8zrnhbzTEjmN97doCRp+9lACj0UdobWxQ=="],
 
@@ -449,8 +446,6 @@
     "devcert-sanscache": ["devcert-sanscache@0.5.1", "", { "dependencies": { "command-exists": "^1.2.9", "get-port": "^6.1.2", "glob": "^10.4.5", "rimraf": "^5.0.9" } }, "sha512-9ePmMvWItstun0c35V5WXUlNU4MCHtpXWxKUJcDiZvyKkcA3FxkL6PFHKqTd446mXMmvLpOGBxVD6GjBXeMA5A=="],
 
     "dodopayments": ["dodopayments@2.19.0", "", { "dependencies": { "standardwebhooks": "^1.0.0" }, "bin": { "dodopayments": "bin/cli" } }, "sha512-qEc7aFmRbneQZF8+084eHqc0qpd577kUtMdaJLb/fsTmhfqdJeHBQ/1hVYS/fYeP9hJQ/MkuDnXSyO+JEEF4dA=="],
-
-    "dotenv": ["dotenv@16.6.1", "", {}, "sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow=="],
 
     "drizzle-kit": ["drizzle-kit@0.31.9", "", { "dependencies": { "@drizzle-team/brocli": "^0.10.2", "@esbuild-kit/esm-loader": "^2.5.5", "esbuild": "^0.25.4", "esbuild-register": "^3.5.0" }, "bin": { "drizzle-kit": "bin.cjs" } }, "sha512-GViD3IgsXn7trFyBUUHyTFBpH/FsHTxYJ66qdbVggxef4UBPHRYxQaRzYLTuekYnk9i5FIEL9pbBIwMqX/Uwrg=="],
 
@@ -855,8 +850,6 @@
     "zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
 
     "@better-auth/core/kysely": ["kysely@0.28.10", "", {}, "sha512-ksNxfzIW77OcZ+QWSAPC7yDqUSaIVwkTWnTPNiIy//vifNbwsSgQ57OkkncHxxpcBHM3LRfLAZVEh7kjq5twVA=="],
-
-    "@bunny.net/storage-sdk/zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
 
     "@dodopayments/core/dodopayments": ["dodopayments@2.14.3", "", { "dependencies": { "standardwebhooks": "^1.0.0" }, "bin": { "dodopayments": "bin/cli" } }, "sha512-WJ0bpTgoNLeMIwysc2hpKE+Gs723AMVt8SGVy9/UC2auhvHB0l4cXCYcPjfhplPugQQUcwrwu2EwtpiK4/9x2Q=="],
 
