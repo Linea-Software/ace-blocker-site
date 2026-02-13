@@ -32,7 +32,7 @@ export const auth = betterAuth({
 	}),
 	emailAndPassword: {
 		enabled: true,
-		requireEmailVerification: !dev
+		requireEmailVerification: true
 	},
 	emailVerification: {
 		sendVerificationEmail: async ({ user, url, token }, request) => {
