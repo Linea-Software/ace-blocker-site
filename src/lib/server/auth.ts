@@ -1,12 +1,15 @@
+import 'dotenv/config';
 import { betterAuth } from 'better-auth';
 import { admin } from "better-auth/plugins"
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from './db';
 import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
 import DodoPayments from 'dodopayments';
+import { resend } from './email';
+
 
 const env = process.env;
-import { resend } from './email';
+
 
 if (!env.DODO_PAYMENTS_API_KEY) {
 	throw new Error('DODO_PAYMENTS_API_KEY is not set');
@@ -35,12 +38,14 @@ export const auth = betterAuth({
 	},
 	emailVerification: {
 		sendVerificationEmail: async ({ user, url, token }, request) => {
-			resend.emails.send({
-				from: 'noreply@send.aceblocker.com',
+			const result = await resend.emails.send({
+				from: 'noreply@aceblocker.com',
 				to: user.email,
 				subject: 'Verify your email',
 				text: `Click the link to verify your email: ${url}`
 			})
+
+			console.log(result)
 		}
 	},
 	plugins: [

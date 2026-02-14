@@ -43,10 +43,6 @@ const config: UserConfigExport = async ({ mode }) => {
 			sveltekit(),
 			paraglideVitePlugin({ project: './project.inlang', outdir: './src/lib/paraglide' })
 		] as any,
-		optimizeDeps: {
-			disabled: "dev"
-		},
-
 		test: {
 			expect: { requireAssertions: true },
 
