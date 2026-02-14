@@ -1,13 +1,12 @@
 import { betterAuth } from 'better-auth';
 import { admin } from "better-auth/plugins"
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { db } from '$lib/server/db';
+import { db } from './db';
 import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
 import DodoPayments from 'dodopayments';
 
-import { dev } from '$app/environment';
-import { env } from '$env/dynamic/private';
-import { resend } from '$lib/server/email';
+const env = process.env;
+import { resend } from './email';
 
 if (!env.DODO_PAYMENTS_API_KEY) {
 	throw new Error('DODO_PAYMENTS_API_KEY is not set');
@@ -23,7 +22,7 @@ if (!env.DODO_PAYMENTS_WEBHOOK_SECRET) {
 
 export const dodoPayments = new DodoPayments({
 	bearerToken: env.DODO_PAYMENTS_API_KEY,
-	environment: dev ? 'test_mode' : 'live_mode'
+	environment: 'test_mode'
 });
 
 export const auth = betterAuth({

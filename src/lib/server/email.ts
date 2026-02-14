@@ -1,5 +1,5 @@
 import { Resend } from 'resend';
-import { env } from '$env/dynamic/private';
+const env = process.env;
 
 if (!env.RESEND_API_KEY) {
     throw new Error('RESEND_API_KEY is not set');

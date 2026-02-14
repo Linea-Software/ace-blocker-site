@@ -8,6 +8,13 @@
       "when": 1768835287684,
       "tag": "0000_lucky_eddie_brock",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771067686841,
+      "tag": "0001_bright_namorita",
+      "breakpoints": true
     }
   ]
 }
