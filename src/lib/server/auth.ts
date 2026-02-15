@@ -7,6 +7,9 @@ import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/be
 import DodoPayments from 'dodopayments';
 import { resend } from './email';
 
+import { dev } from '$app/environment';
+import { user } from './db/schema';
+import { eq } from 'drizzle-orm';
 
 const env = process.env;
 
@@ -78,27 +81,36 @@ export const auth = betterAuth({
 	]
 });
 
+if (dev) {
+	(async () => {
+		try {
+			const existingUser = await db.query.user.findFirst({
+				where: (user, { eq }) => eq(user.email, 'dev@example.com'),
+			});
 
+			if (!existingUser) {
+				console.log('⏳ Creating default dev user...');
+				await auth.api.signUpEmail({
+					body: {
+						email: 'dev@example.com',
+						password: 'dev-password',
+						name: 'Dev User'
+					}
+				});
 
-// if (dev) {
-// 	const { users } = await auth.api.listUsers({
-// 		query: {
-// 			limit: 1,
-// 			searchField: 'email',
-// 			searchValue: 'dev@example.com'
-// 		}
-// 	});
+				await db.update(user)
+					.set({ role: 'admin', emailVerified: true })
+					.where(eq(user.email, 'dev@example.com'));
 
-// 	if (users.length === 0) {
-// 		await auth.api.createUser({
-// 			body: {
-// 				email: 'dev@example.com',
-// 				password: 'dev-password',
-// 				name: 'Dev User',
-// 				role: 'user'
-// 			}
-// 		});
-// 	}
-
-// 	console.log('✅ Created default dev user: dev@example.com / dev-password');
-// }
+				console.log('✅ Created default dev user: dev@example.com / dev-password');
+			} else if (existingUser.role !== 'admin' || !existingUser.emailVerified) {
+				await db.update(user)
+					.set({ role: 'admin', emailVerified: true })
+					.where(eq(user.email, 'dev@example.com'));
+				console.log('✅ Updated dev user to admin and verified email');
+			}
+		} catch (e) {
+			console.error('❌ Error in dev user seeding:', e);
+		}
+	})();
+}
