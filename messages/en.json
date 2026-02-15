@@ -2,7 +2,7 @@
 	"$schema": "https://inlang.com/schema/inlang-message-format",
 	"hello_world": "Hello, {name} from en!",
 	"hero_new_badge": "New",
-	"hero_version_available": "Version 2.0 is now available",
+	"hero_version_available": "Ace Blocker 1.0 Alpha is now live",
 	"hero_title_focus": "Reclaim Your Focus with",
 	"hero_title_app": "Ace Blocker",
 	"hero_description": "The most powerful blocker designed to help you overcome internet addictions through intelligent site filtering and behavior-shaping scripts.",

@@ -8,7 +8,14 @@ export const GET: RequestHandler = async ({ params }) => {
     const { arch } = params;
 
     if (dev) {
-        return new Response(null, { status: 200 });
+        console.log(`[DEV] Download requested for arch: ${arch}. Returning empty file to save CDN bandwidth.`);
+        return new Response('', {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/octet-stream',
+                'Content-Disposition': `attachment; filename="ace-blocker-alpha-${arch}.test"`
+            }
+        });
     }
 
     if (arch === 'linux_x64') {

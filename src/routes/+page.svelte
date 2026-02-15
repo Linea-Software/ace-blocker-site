@@ -19,15 +19,16 @@
 	<section class="relative overflow-hidden pt-20 pb-16 md:pt-32 md:pb-24">
 		<div class="relative z-10 container mx-auto px-4">
 			<div class="mx-auto max-w-3xl space-y-8 text-center">
-				<div
-					class="mb-4 inline-flex items-center rounded-full border bg-muted/50 px-3 py-1 text-sm font-medium backdrop-blur-sm"
+				<a
+					href={downloadUrl}
+					class="mb-4 inline-flex items-center rounded-full border bg-muted/50 px-3 py-1 text-sm font-medium backdrop-blur-sm transition-all hover:bg-muted"
 				>
 					<span class="mr-2 text-primary">{m.hero_new_badge()}</span>
 					<span class="text-muted-foreground transition-colors hover:text-foreground">
 						{m.hero_version_available()}
 					</span>
 					<ArrowRight class="ml-2 h-3 w-3" />
-				</div>
+				</a>
 				<h1
 					class="bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent md:text-7xl"
 				>
