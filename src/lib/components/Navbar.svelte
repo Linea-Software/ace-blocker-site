@@ -78,7 +78,7 @@
 								Dashboard
 							</a>
 							<button
-								class="flex flex-1 items-center gap-3 rounded-md px-3 py-2 text-lg font-medium text-destructive transition-colors hover:bg-destructive/10"
+								class="flex flex-1 items-center gap-3 rounded-md px-3 py-2 text-lg font-medium text-destructive transition-all duration-200 hover:bg-red-600 hover:text-white active:scale-95"
 								onclick={() => {
 									authClient.signOut();
 									isMobileMenuOpen = false;
@@ -138,7 +138,7 @@
 				<Button
 					onclick={() => authClient.signOut()}
 					variant="ghost"
-					class="hidden items-center text-destructive transition-colors hover:bg-destructive/10 sm:inline-flex"
+					class="hidden items-center text-destructive transition-all duration-200 hover:bg-red-600 hover:text-white active:scale-95 sm:inline-flex"
 				>
 					<LogOut class="mr-2 h-4 w-4" />
 					Sign Out
