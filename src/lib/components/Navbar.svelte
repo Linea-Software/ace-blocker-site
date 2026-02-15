@@ -18,12 +18,25 @@
 	import { cn } from '$lib/utils';
 
 	const session = authClient.useSession();
+	let isPro = $state(false);
+
+	$effect(() => {
+		if ($session.data) {
+			authClient.dodopayments.customer.subscriptions.list().then(({ data }: { data: any[] | null }) => {
+				isPro = data?.some((s: any) => s.status === 'active') ?? false;
+			}).catch(() => (isPro = false));
+		} else {
+			isPro = false;
+		}
+	});
 
 	const navLinks = [
 		{ href: '/download', label: 'Download', icon: Download },
-		{ href: '/get-pro', label: 'Get Pro', icon: Crown, iconClass: 'text-yellow-500' },
+		{ href: '/get-pro', label: 'Get Pro', icon: Crown, iconClass: 'text-yellow-500', hideIfPro: true },
 		{ href: '/about', label: 'About', icon: Info }
 	];
+
+	const visibleLinks = $derived(navLinks.filter(link => !link.hideIfPro || !isPro));
 
 	let isMobileMenuOpen = $state(false);
 
@@ -54,7 +67,7 @@
 						<Sheet.Description>Manage your digital well-being.</Sheet.Description>
 					</Sheet.Header>
 					<div class="flex flex-1 flex-col gap-4 py-8">
-						{#each navLinks as link}
+						{#each visibleLinks as link}
 							<a
 								href={link.href}
 								class={cn(
@@ -115,7 +128,7 @@
 			</a>
 
 			<nav class="hidden h-full items-center gap-1 md:flex">
-				{#each navLinks as link}
+				{#each visibleLinks as link}
 					<a
 						href={link.href}
 						class={cn(
