@@ -3,8 +3,23 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
+	import * as Tabs from '$lib/components/ui/tabs';
 	import { Check, Shield, Zap, LayoutGrid, Smartphone, Lock, Infinity, ShieldAlert, Globe, ArrowRight } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
+	import { authClient } from '$lib/auth-client';
+	import { goto } from '$app/navigation';
+
+	let billingCycle = $state('yearly');
+	const session = authClient.useSession();
+
+	function handleUpgrade() {
+		if ($session.data) {
+			const slug = billingCycle === 'yearly' ? 'ace_blocker_yearly' : 'ace_blocker_monthly';
+			goto(`/checkout?slug=${slug}`);
+		} else {
+			goto('/signin');
+		}
+	}
 </script>
 
 <Navbar />
@@ -12,7 +27,7 @@
 <main class="min-h-[calc(100vh-4rem)] bg-muted/30 py-16 md:py-24">
 	<div class="container mx-auto px-4">
 		<!-- Header -->
-		<div class="max-w-2xl mx-auto text-center mb-16 space-y-4">
+		<div class="max-w-2xl mx-auto text-center mb-8 space-y-4">
 			<Badge variant="outline" class="px-3 py-1 text-sm font-medium border-primary/20 text-primary">
 				Pricing Plans
 			</Badge>
@@ -22,6 +37,19 @@
 			<p class="text-xl text-muted-foreground">
 				{m.pro_subtitle()}
 			</p>
+		</div>
+
+		<!-- Billing Toggle -->
+		<div class="flex justify-center mb-12">
+			<Tabs.Root bind:value={billingCycle} class="w-full max-w-[400px]">
+				<Tabs.List class="grid w-full grid-cols-2">
+					<Tabs.Trigger value="monthly">Monthly</Tabs.Trigger>
+					<Tabs.Trigger value="yearly">
+						Yearly
+						<Badge variant="secondary" class="ml-2 bg-primary/10 text-primary hover:bg-primary/10 border-transparent text-[10px] py-0 px-1.5">30% OFF</Badge>
+					</Tabs.Trigger>
+				</Tabs.List>
+			</Tabs.Root>
 		</div>
 
 		<!-- Pricing Grid -->
@@ -60,22 +88,40 @@
 
 			<!-- Pro Plan -->
 			<Card.Root class="relative overflow-hidden flex flex-col border-2 border-primary bg-background shadow-2xl md:-mt-4 md:-mb-4">
+				<!-- 
 				<div class="absolute top-0 right-0 p-0 m-0 overflow-hidden w-32 h-32 pointer-events-none">
 					<div class="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-widest text-center py-1 absolute top-6 -right-8 w-32 rotate-45 shadow-sm">
 						Popular
 					</div>
 				</div>
+				-->
 				<Card.Header class="pb-8">
 					<div class="flex justify-between items-start mb-4">
 						<Card.Title class="text-2xl font-bold text-primary">{m.plan_pro_name()}</Card.Title>
-						<Badge class="bg-primary/20 text-primary border-transparent">BEST VALUE</Badge>
+						<!-- <Badge class="bg-primary/20 text-primary border-transparent">BEST VALUE</Badge> -->
 					</div>
 					<div class="flex flex-col mb-2">
 						<div class="flex items-baseline gap-1">
-							<span class="text-5xl font-extrabold tracking-tight">{m.plan_pro_price()}</span>
-							<span class="text-muted-foreground font-medium">{m.plan_pro_duration()}</span>
+							{#if billingCycle === 'yearly'}
+								<div class="absolute top-4 right-4 animate-in fade-in zoom-in duration-300">
+									<Badge class="bg-primary text-primary-foreground font-bold px-3 py-1 text-sm shadow-md">
+										30% OFF
+									</Badge>
+								</div>
+								<div class="flex flex-col">
+									<div class="flex items-baseline gap-1">
+										<span class="text-5xl font-extrabold tracking-tight">$24.99</span>
+										<span class="text-muted-foreground font-medium">/year</span>
+									</div>
+								</div>
+							{:else}
+								<span class="text-5xl font-extrabold tracking-tight">$2.99</span>
+								<span class="text-muted-foreground font-medium">/month</span>
+							{/if}
 						</div>
-						<span class="text-[10px] text-muted-foreground mt-1">*Excl. taxes</span>
+						<span class="text-[10px] text-muted-foreground mt-1 leading-relaxed">
+							*Taxes included. Price at checkout will be converted to your local currency.
+						</span>
 					</div>
 					<Card.Description>{m.plan_pro_description()}</Card.Description>
 				</Card.Header>
@@ -106,7 +152,7 @@
 					</div>
 				</Card.Content>
 				<Card.Footer class="pt-8">
-					<Button class="w-full h-12 text-lg font-bold shadow-lg shadow-primary/25" href="/signup">
+					<Button class="w-full h-12 text-lg font-bold shadow-lg shadow-primary/25" onclick={handleUpgrade}>
 						{m.cta_upgrade_now()}
 					</Button>
 				</Card.Footer>

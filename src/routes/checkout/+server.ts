@@ -1,50 +1,74 @@
-import { json } from '@sveltejs/kit';
+import { json, redirect } from '@sveltejs/kit';
 import { dodoPayments } from '$lib/server/auth';
+import type { Product } from 'dodopayments/resources';
 
-import { z } from 'zod';
-
-const CheckoutSchema = z.object({
-	productId: z.string().optional(),
-	quantity: z.number().int().positive().default(1)
-});
-
-export async function POST({ request, locals }) {
-
-	if (!locals.session) {
-		return json({ error: 'Unauthorized' }, { status: 401 });
+export async function GET({ url, locals, request }) {
+	if (!locals.session || !locals.user) {
+		throw redirect(302, '/signin');
 	}
 
-	const body = await request.json();
-	const validation = CheckoutSchema.safeParse(body);
+	const slug = url.searchParams.get('slug');
 
-	if (!validation.success) {
-		return json({ error: 'Invalid request', details: validation.error.format() }, { status: 400 });
+	if (!slug) {
+		return json({ error: 'Product slug is required' }, { status: 400 });
 	}
 
-	const { productId, quantity } = validation.data;
+	// 1. Resolve slug to productId against DODO_PAYMENTS_PRODUCTS
+	const rawProducts = process.env.DODO_PAYMENTS_PRODUCTS;
+	if (!rawProducts) {
+		return json({ error: 'Server configuration error: Products not defined' }, { status: 500 });
+	}
+
+	let products: any[] = [];
+	try {
+		products = JSON.parse(rawProducts);
+	} catch (e) {
+		return json({ error: 'Server configuration error: Invalid products format' }, { status: 500 });
+	}
+
+	const product = products.find((p: any) => p.slug === slug);
+	if (!product) {
+		return json({ error: 'Invalid product slug' }, { status: 400 });
+	}
+
+	const productId = product.product_id || product.productId;
 
 	try {
-		// Use fake product if none provided, for testing as requested
-		const actualProductId = productId || 'pdt_0NXOnI40qSEVOqAnCUwmm';
+		// 2. Check if the user already has an active subscription
+		const subscriptions = dodoPayments.subscriptions.list({
+			customer_id: locals.user.id
+		});
 
+		for await (const subscription of subscriptions) {
+			if (subscription.status === 'active') {
+				throw redirect(302, '/get-pro?error=already_subscribed');
+			}
+		}
+
+		// 3. Create checkout session
 		const session = await dodoPayments.checkoutSessions.create({
 			product_cart: [
 				{
-					product_id: actualProductId,
-					quantity: quantity
+					product_id: productId,
+					quantity: 1
 				}
 			],
 			return_url: new URL('/checkout/success', request.url).toString(),
-			customer: locals.user
-				? {
-					email: locals.user.email,
-					name: locals.user.name
-				}
-				: undefined
+			customer: {
+				email: locals.user.email,
+				name: locals.user.name
+			}
 		});
 
-		return json({ url: session.checkout_url });
+		if (session.checkout_url) {
+			throw redirect(302, session.checkout_url);
+		}
+
+		return json({ error: 'Failed to generate checkout URL' }, { status: 500 });
 	} catch (error) {
+		if (error && typeof error === 'object' && 'status' in error && 'location' in error) {
+			throw error;
+		}
 		console.error('Dodo Payments Error:', error);
 		return json({ error: 'Failed to create checkout session' }, { status: 500 });
 	}
