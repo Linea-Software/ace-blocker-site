@@ -31,6 +31,7 @@ ALWAYS use **Bun** for all package management and script execution tasks.
 - **shadcn-svelte**: [Documentation](https://shadcn-svelte.com/llms.txt) - UI component library. Use `bun x shadcn-svelte@latest add -y <component-name>` to add new components.
 - **Lucide Svelte**: Use `@lucide/svelte` for icons. Do NOT use `lucide-svelte` as it is deprecated.
 - **DodoPayments**: [Documentation](https://docs.dodopayments.com/llms.txt) - Payments and license management.
+- **BunnyCDN**: [Documentation](https://docs.bunny.net/llms.txt) - CDN for hosting files.
 
 ## Project Description
 
