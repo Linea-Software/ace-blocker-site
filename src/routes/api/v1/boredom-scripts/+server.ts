@@ -1,4 +1,4 @@
-import { auth, dodoPayments } from "$lib/server/auth";
+import { dodoPayments } from "$lib/server/auth";
 import { error } from "@sveltejs/kit";
 import crypto from "crypto";
 import { env } from "$env/dynamic/private";
@@ -6,32 +6,28 @@ import { env } from "$env/dynamic/private";
 const securityKey = env.BUNNY_SECURITY_KEY;
 const storagePath = "/boredom-scripts.zip";
 
-export const GET = async ({ request }) => {
-    // 1. Authenticate user
-    const session = await auth.api.getSession({
-        headers: request.headers
-    });
+export const GET = async ({ url }) => {
+    const licenceKey = url.searchParams.get('licenceKey');
 
-    if (!session) {
-        throw error(401, "Unauthorized - Please sign in");
+    if (!licenceKey) {
+        throw error(400, "Missing licenceKey query parameter");
     }
 
-    // 2. Check for paid Dodo Payments license
-    // We'll check if the user has any active subscriptions or licenses
-    const subscriptions = dodoPayments.subscriptions.list({
-        customer_id: session.user.id
-    });
+    // 1. Validate Dodo Payments license key
+    try {
+        const validation = await dodoPayments.licenses.validate({
+            license_key: licenceKey
+        });
 
-    let hasActiveSubscription = false;
-    for await (const subscription of subscriptions) {
-        if (subscription.status === 'active') {
-            hasActiveSubscription = true;
-            break;
+        if (!validation.valid) {
+            throw error(403, "Invalid or expired license key");
         }
-    }
-
-    if (!hasActiveSubscription) {
-        throw error(403, "Payment Required - This feature requires an active Pro subscription");
+    } catch (e) {
+        console.error('Error validating license:', e);
+        if (e instanceof Error && 'status' in e && e.status === 403) {
+            throw error(403, "Invalid or expired license key");
+        }
+        throw error(500, "Failed to validate license key");
     }
 
     if (!securityKey) {
@@ -39,12 +35,10 @@ export const GET = async ({ request }) => {
         throw error(500, "Internal Server Error");
     }
 
-    // 3. Generate BunnyCDN Token (10 minutes expiry)
+    // 2. Generate BunnyCDN Token (10 minutes expiry)
     const expires = Math.round(Date.now() / 1000) + 600;
     const hashableBase = securityKey + storagePath + expires;
 
-    // BunnyCDN usually uses MD5 or SHA256 depending on zone settings.
-    // You indicated sha256 in your snippet.
     const token = crypto
         .createHash("sha256")
         .update(hashableBase)
@@ -53,7 +47,7 @@ export const GET = async ({ request }) => {
         .replace(/\//g, "_")
         .replace(/=/g, "");
 
-    const url = `https://cdn.aceblocker.com${storagePath}?token=${token}&expires=${expires}`;
+    const downloadUrl = `https://cdn.aceblocker.com${storagePath}?token=${token}&expires=${expires}`;
 
-    return new Response(url);
+    return new Response(downloadUrl);
 };
