@@ -21,18 +21,31 @@ ALWAYS use **Bun** for all package management and script execution tasks.
 
 ## Core Documentation & Tech Stack
 
-**IMPORTANT**: You MUST always read the relevant documentation below before performing tasks related to these technologies. Use the documented patterns and best practices.
+**🚨 CRITICAL MANDATORY REQUIREMENT 🚨**
+Before performing ANY task related to the technologies below, you MUST use `read_url_content` to read the linked `llms.txt` documentation. Relying solely on internal knowledge is UNACCEPTABLE and leads to outdated patterns (e.g., missing Svelte 5 runes).
 
-- **Svelte 5 & SvelteKit**: [Documentation](https://svelte.dev/llms.txt) - Full-stack framework for the site. Use Svelte 5 runes (`$state`, `$derived`, `$effect`, etc.).
-- **Drizzle ORM**: [Documentation](https://orm.drizzle.team/llms.txt) - Database management for Postgres.
-- **Better Auth**: [Documentation](https://www.better-auth.com/llms.txt) - Handles authentication and session management.
-- **Zod**: [Documentation](https://zod.dev/llms.txt) - Used to verify user request schemas and for type safety.
-- **Paraglide**: Localization framework.
-- **shadcn-svelte**: [Documentation](https://shadcn-svelte.com/llms.txt) - UI component library. Use `bun x shadcn-svelte@latest add -y <component-name>` to add new components.
+- **Svelte 5 & SvelteKit**: [Documentation](https://svelte.dev/llms.txt) - Full-stack framework. **MUST use Svelte 5 runes (`$state`, `$derived`, `$effect`, etc.)**.
+- **Drizzle ORM**: [Documentation](https://orm.drizzle.team/llms.txt) - Database management.
+- **Better Auth**: [Documentation](https://www.better-auth.com/llms.txt) - Authentication.
+- **Zod**: [Documentation](https://zod.dev/llms.txt) - Schema verification.
+- **shadcn-svelte**: [Documentation](https://shadcn-svelte.com/llms.txt) - UI components.
+- **DodoPayments**: [Documentation](https://docs.dodopayments.com/llms.txt) - Payments.
+- **BunnyCDN**: [Documentation](https://docs.bunny.net/llms.txt) - File hosting.
+- **Hono**: [Documentation](https://hono.dev/llms.txt) - API framework.
+
+### Mandatory Research Workflow
+
+1. **Identify**: Determine which technologies from the list above are involved in the task.
+2. **Fetch**: Call `read_url_content` for EVERY relevant documentation URL.
+3. **Analyze**: Use only the patterns, runes, and practices found in that documentation.
+4. **Citing Source**: In your plan, briefly mention which documentation was consulted (e.g., "Consulted Svelte 5 llms.txt for proper rune usage").
+
+**FAILURE TO FOLLOW THIS WORKFLOW IS A PROJECT-LEVEL FAILURE.**
+
+### Secondary Technologies
+
 - **Lucide Svelte**: Use `@lucide/svelte` for icons. Do NOT use `lucide-svelte` as it is deprecated.
-- **DodoPayments**: [Documentation](https://docs.dodopayments.com/llms.txt) - Payments and license management.
-- **BunnyCDN**: [Documentation](https://docs.bunny.net/llms.txt) - CDN for hosting files.
-- **Hono**: [Documentation](https://hono.dev/llms.txt) - Web framework for API.
+- **Paraglide**: Localization framework managed via the `project.inlang` file.
 
 ## Project Description
 
@@ -51,7 +64,19 @@ This website is a full-stack SvelteKit application used for product publicity, m
   - `/src/lib/server/`: Server-only logic, including:
     - `auth.ts`: Better Auth configuration.
     - `db/`: Database schema (`schema.ts`, `auth-schema.ts`) and connection (`index.ts`) using Drizzle.
+    - `api/`: Hono API implementation using `@hono/zod-openapi` for type-safe RPC and auto-generated documentation.
   - `/src/lib/paraglide/`: Auto-generated localization runtime.
+
+## API Development & Documentation
+
+The project uses **Hono** (specifically `OpenAPIHono`) to handle all API requests under the `/api` prefix.
+
+- **Catch-all Route**: `src/routes/api/[...paths]/+server.ts` forwards all requests to the Hono app.
+- **Type Safety**: The Hono app exports an `AppType`. Use `hono/client` (specifically `hc<AppType>`) in external projects to get full type safety and auto-completion.
+- **OpenAPI / Swagger**:
+  - In development mode, the interactive Swagger UI is available at `/api/docs`.
+  - The raw OpenAPI specification is available at `/api/v1/openapi.json`.
+- **Router Pattern**: Always use modular routers in `src/lib/server/api/routers/` and use `createRoute` to define schemas for paths, queries, and responses.
 
 ## Nomenclature & Design Patterns
 
