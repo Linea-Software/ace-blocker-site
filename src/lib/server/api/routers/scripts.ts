@@ -5,6 +5,7 @@ import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
 
 const route = createRoute({
+    operationId: 'getBoredomScripts',
     method: 'get',
     path: '/boredom',
     request: {

@@ -4,8 +4,14 @@ import { pcTrials } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { HTTPException } from 'hono/http-exception';
 
+const TRIAL_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
+
+const TrialStatus = z.enum(['not_used', 'in_progress', 'ended']).openapi('TrialStatus');
+
+
 // Route Definition: Check if PC used trial
 const checkRoute = createRoute({
+    operationId: 'checkPcTrialStatus',
     method: 'get',
     path: '/check/:pcId',
     request: {
@@ -20,7 +26,7 @@ const checkRoute = createRoute({
         200: {
             content: {
                 'application/json': {
-                    schema: z.object({ used: z.boolean() })
+                    schema: z.object({ status: TrialStatus })
                 }
             },
             description: 'Trial usage status'
@@ -31,8 +37,10 @@ const checkRoute = createRoute({
     }
 });
 
+
 // Route Definition: Flag PC as used trial
 const flagRoute = createRoute({
+    operationId: 'flagPcTrialUsage',
     method: 'post',
     path: '/flag',
     request: {
@@ -68,12 +76,25 @@ export const trialsRouter = new OpenAPIHono()
             const existing = await db.query.pcTrials.findFirst({
                 where: eq(pcTrials.pcIdentifier, pcId)
             });
-            return c.json({ used: !!existing });
+
+            if (!existing) {
+                return c.json({ status: 'not_used' as const });
+            }
+
+            const now = new Date().getTime();
+            const createdAt = new Date(existing.createdAt).getTime();
+            const isInProgress = now - createdAt < TRIAL_DURATION_MS;
+
+            return c.json({
+                status: isInProgress ? ('in_progress' as const) : ('ended' as const)
+            });
+
         } catch (e) {
             console.error('Error checking trial status:', e);
             throw new HTTPException(500, { message: 'Failed to check trial status' });
         }
     })
+
     .openapi(flagRoute, async (c) => {
         const { pcId } = c.req.valid('json');
         try {

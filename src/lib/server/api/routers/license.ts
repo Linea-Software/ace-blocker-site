@@ -3,6 +3,7 @@ import { dodoPayments } from '$lib/server/auth';
 import { HTTPException } from 'hono/http-exception';
 
 const route = createRoute({
+    operationId: 'validateLicenseKey',
     method: 'get',
     path: '/:key',
     request: {
@@ -49,4 +50,3 @@ export const licenseRouter = new OpenAPIHono()
             throw new HTTPException(500, { message: 'Failed to validate license' });
         }
     });
-
