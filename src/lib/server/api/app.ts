@@ -1,9 +1,10 @@
-import { OpenAPIHono } from '@hono/zod-openapi';
-import { swaggerUI } from '@hono/swagger-ui';
-import { v1Router } from './routers/v1';
 import { dev } from '$app/environment';
+import { swaggerUI } from '@hono/swagger-ui';
+import { OpenAPIHono } from '@hono/zod-openapi';
+import { v1Router } from './routers/v1';
 
-export const app = new OpenAPIHono();
+export const app = new OpenAPIHono().basePath('/api');
+
 
 app.route('/v1', v1Router);
 
@@ -22,7 +23,11 @@ if (dev) {
             url: '/api/v1/openapi.json',
         })
     );
+
+    // Redirect the root to docs in dev
+    app.get('/', (c) => c.redirect('/api/docs'));
 }
+
 
 export type AppType = typeof app;
 

@@ -30,33 +30,34 @@ vi.mock('$env/dynamic/private', () => ({
 }));
 
 describe('Hono API', () => {
-    it('GET /v1/licenses/:key returns validation result', async () => {
-        const res = await app.request('/v1/licenses/valid-key');
+    it('GET /api/v1/licenses/:key returns validation result', async () => {
+        const res = await app.request('/api/v1/licenses/valid-key');
         expect(res.status).toBe(200);
         const data = await res.json();
         expect(data).toEqual({ valid: true });
 
-        const resInvalid = await app.request('/v1/licenses/invalid-key');
+        const resInvalid = await app.request('/api/v1/licenses/invalid-key');
         expect(resInvalid.status).toBe(200);
         const dataInvalid = await resInvalid.json();
         expect(dataInvalid).toEqual({ valid: false });
     });
 
-    it('GET /v1/scripts/boredom returns download url for valid license', async () => {
-        const res = await app.request('/v1/scripts/boredom?licenseKey=valid-key');
+    it('GET /api/v1/scripts/boredom returns download url for valid license', async () => {
+        const res = await app.request('/api/v1/scripts/boredom?licenseKey=valid-key');
         expect(res.status).toBe(200);
         const text = await res.text();
         expect(text).toContain('https://cdn.aceblocker.com/boredom-scripts.zip');
         expect(text).toContain('token=');
     });
 
-    it('GET /v1/scripts/boredom returns 403 for invalid license', async () => {
-        const res = await app.request('/v1/scripts/boredom?licenseKey=invalid-key');
+    it('GET /api/v1/scripts/boredom returns 403 for invalid license', async () => {
+        const res = await app.request('/api/v1/scripts/boredom?licenseKey=invalid-key');
         expect(res.status).toBe(403);
     });
 
-    it('GET /v1/scripts/boredom requires licenseKey', async () => {
-        const res = await app.request('/v1/scripts/boredom');
+    it('GET /api/v1/scripts/boredom requires licenseKey', async () => {
+        const res = await app.request('/api/v1/scripts/boredom');
         expect(res.status).toBe(400);
     });
 });
+
