@@ -1,11 +1,42 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { app } from './app';
 
-// Mock dodoPayments in auth.ts if necessary, but let's try running against real dev env logic first
-// or at least handle the env vars.
+// Mock drizzle-orm to make inspection easier
+vi.mock('drizzle-orm', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('drizzle-orm')>();
+    return {
+        ...actual,
+        eq: vi.fn().mockImplementation((col, val) => ({ __val: val }))
+    };
+});
 
-// For now, let's assume we want to test the routing logic.
-// If dodoPayments requires secrets, we might need to mock it to avoid failures in CI/test environment without secrets.
+// Mock state using vi.hoisted to share between mock factory and tests
+const { mockDbState } = vi.hoisted(() => ({
+    mockDbState: new Set<string>()
+}));
+
+// Mock DB for Trials
+vi.mock('$lib/server/db', () => ({
+    db: {
+        query: {
+            pcTrials: {
+                findFirst: vi.fn().mockImplementation(async ({ where }) => {
+                    const queriedId = where?.__val;
+                    if (queriedId && mockDbState.has(queriedId)) {
+                        return { id: 1, pcIdentifier: queriedId };
+                    }
+                    return null;
+                })
+            }
+        },
+        insert: vi.fn().mockReturnValue({
+            values: vi.fn().mockImplementation(async (vals) => {
+                mockDbState.add(vals.pcIdentifier);
+                return;
+            })
+        })
+    }
+}));
 
 vi.mock('$lib/server/auth', () => {
     return {
@@ -28,6 +59,7 @@ vi.mock('$env/dynamic/private', () => ({
         BUNNY_SECURITY_KEY: 'test-secret-key'
     }
 }));
+
 
 describe('Hono API', () => {
     it('GET /api/v1/licenses/:key returns validation result', async () => {
@@ -58,6 +90,41 @@ describe('Hono API', () => {
     it('GET /api/v1/scripts/boredom requires licenseKey', async () => {
         const res = await app.request('/api/v1/scripts/boredom');
         expect(res.status).toBe(400);
+    });
+});
+
+describe('Trial API', () => {
+    beforeAll(() => {
+        mockDbState.clear();
+        mockDbState.add('used-pc');
+    });
+
+    it('GET /api/v1/trials/check/:pcId returns true for used PC', async () => {
+        const res = await app.request('/api/v1/trials/check/used-pc');
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data).toEqual({ used: true });
+    });
+
+    it('GET /api/v1/trials/check/:pcId returns false for unused PC', async () => {
+        // The router queries DB. The mock returns null since 'new-pc' is not in set.
+        const res = await app.request('/api/v1/trials/check/new-pc');
+        expect(res.status).toBe(200);
+        const data = await res.json();
+        expect(data).toEqual({ used: false });
+    });
+
+    it('POST /api/v1/trials/flag adds new PC', async () => {
+        const res = await app.request('/api/v1/trials/flag', {
+            method: 'POST',
+            body: JSON.stringify({ pcId: 'brand-new-pc' }),
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        expect(res.status).toBe(200);
+
+        // Verify it was added
+        expect(mockDbState.has('brand-new-pc')).toBe(true);
     });
 });
 
