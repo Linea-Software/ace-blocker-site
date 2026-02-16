@@ -32,6 +32,7 @@ ALWAYS use **Bun** for all package management and script execution tasks.
 - **Lucide Svelte**: Use `@lucide/svelte` for icons. Do NOT use `lucide-svelte` as it is deprecated.
 - **DodoPayments**: [Documentation](https://docs.dodopayments.com/llms.txt) - Payments and license management.
 - **BunnyCDN**: [Documentation](https://docs.bunny.net/llms.txt) - CDN for hosting files.
+- **Hono**: [Documentation](https://hono.dev/llms.txt) - Web framework for API.
 
 ## Project Description
 
