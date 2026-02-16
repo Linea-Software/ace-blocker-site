@@ -21,13 +21,7 @@
 	let isPro = $state(false);
 
 	$effect(() => {
-		if ($session.data) {
-			authClient.dodopayments.customer.subscriptions.list().then(({ data }: { data: any[] | null }) => {
-				isPro = data?.some((s: any) => s.status === 'active') ?? false;
-			}).catch(() => (isPro = false));
-		} else {
-			isPro = false;
-		}
+		// TODO: implement subscription check
 	});
 
 	const navLinks = [
