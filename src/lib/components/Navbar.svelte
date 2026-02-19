@@ -18,19 +18,21 @@
 	import { cn } from '$lib/utils';
 
 	const session = authClient.useSession();
-	let isPro = $state(false);
-
-	$effect(() => {
-		// TODO: implement subscription check
-	});
+	const isPro = $derived(page.data.isPro || false);
 
 	const navLinks = [
 		{ href: '/download', label: 'Download', icon: Download },
-		{ href: '/get-pro', label: 'Get Pro', icon: Crown, iconClass: 'text-yellow-500', hideIfPro: true },
+		{
+			href: '/get-pro',
+			label: 'Get Pro',
+			icon: Crown,
+			iconClass: 'text-yellow-500',
+			hideIfPro: true
+		},
 		{ href: '/about', label: 'About', icon: Info }
 	];
 
-	const visibleLinks = $derived(navLinks.filter(link => !link.hideIfPro || !isPro));
+	const visibleLinks = $derived(navLinks.filter((link) => !link.hideIfPro || !isPro));
 
 	let isMobileMenuOpen = $state(false);
 
