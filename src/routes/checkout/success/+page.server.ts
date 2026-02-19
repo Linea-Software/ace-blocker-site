@@ -23,28 +23,28 @@ export const load: PageServerLoad = async ({ locals, url }) => {
             email: locals.user.email
         });
 
-        const customer = customers.items?.[0];
-
-        if (!customer) {
+        if (!customers.items || customers.items.length === 0) {
             return {
                 success: false,
                 error: 'No customer account found. Please contact support.'
             };
         }
 
+        const customer = customers.items[0];
+
         const licenses = await dodoPayments.licenseKeys.list({
             customer_id: customer.customer_id,
             status: 'active'
         });
 
-        const license = licenses.items?.[0];
-
-        if (!license) {
+        if (!licenses.items || licenses.items.length === 0) {
             return {
                 success: false,
                 error: 'No active license found. Please wait a moment or contact support.'
             };
         }
+
+        const license = licenses.items[0];
 
         return {
             success: true,

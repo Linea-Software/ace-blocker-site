@@ -11,9 +11,8 @@ export const load: LayoutServerLoad = async ({ locals }) => {
                 email: locals.user.email
             });
 
-            const customer = customers.items?.[0];
-
-            if (customer) {
+            if (customers.items && customers.items.length > 0) {
+                const customer = customers.items[0];
                 const customerId = customer.customer_id;
 
                 // 1. Check for active subscriptions

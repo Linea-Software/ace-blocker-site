@@ -39,9 +39,8 @@ export async function GET({ url, locals, request }) {
 			email: locals.user.email
 		});
 
-		const customer = customers.items?.[0];
-
-		if (customer) {
+		if (customers.items && customers.items.length > 0) {
+			const customer = customers.items[0];
 			const customerId = customer.customer_id;
 
 			// 2. Check if the user already has an active subscription
