@@ -34,14 +34,34 @@ export async function GET({ url, locals, request }) {
 	const productId = product.product_id || product.productId;
 
 	try {
-		// 2. Check if the user already has an active subscription
-		const subscriptions = dodoPayments.subscriptions.list({
-			customer_id: locals.user.id
+		// Find Dodo Customer ID by email
+		const customers = await dodoPayments.customers.list({
+			email: locals.user.email
 		});
 
-		for await (const subscription of subscriptions) {
-			if (subscription.status === 'active') {
-				throw redirect(302, '/get-pro?error=already_subscribed');
+		const customer = customers.items?.[0];
+
+		if (customer) {
+			const customerId = customer.customer_id;
+
+			// 2. Check if the user already has an active subscription
+			const subscriptions = dodoPayments.subscriptions.list({
+				customer_id: customerId
+			});
+
+			for await (const subscription of subscriptions) {
+				if (subscription.status === 'active') {
+					throw redirect(302, '/');
+				}
+			}
+
+			// Check for active license keys too
+			const licenses = await dodoPayments.licenseKeys.list({
+				customer_id: customerId,
+				status: 'active'
+			});
+			if (licenses.items && licenses.items.length > 0) {
+				throw redirect(302, '/');
 			}
 		}
 

@@ -18,13 +18,26 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     }
 
     try {
-        // Fallback: Fetch the most recent active license key for the customer
+        // Fallback: Find Dodo Customer ID by email
+        const customers = await dodoPayments.customers.list({
+            email: locals.user.email
+        });
+
+        const customer = customers.items?.[0];
+
+        if (!customer) {
+            return {
+                success: false,
+                error: 'No customer account found. Please contact support.'
+            };
+        }
+
         const licenses = await dodoPayments.licenseKeys.list({
-            customer_id: locals.user.id,
+            customer_id: customer.customer_id,
             status: 'active'
         });
 
-        const license = licenses.items[0];
+        const license = licenses.items?.[0];
 
         if (!license) {
             return {
