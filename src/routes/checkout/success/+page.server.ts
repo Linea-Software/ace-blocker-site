@@ -2,19 +2,28 @@ import { redirect } from '@sveltejs/kit';
 import { dodoPayments } from '$lib/server/auth';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
     if (!locals.session || !locals.user) {
         throw redirect(302, '/signin');
     }
 
+    const urlLicenseKey = url.searchParams.get('license_key');
+
+    if (urlLicenseKey) {
+        return {
+            success: true,
+            licenseKey: urlLicenseKey,
+            customerName: locals.user.name
+        };
+    }
+
     try {
-        // Fetch the most recent active license key for the customer
+        // Fallback: Fetch the most recent active license key for the customer
         const licenses = await dodoPayments.licenseKeys.list({
             customer_id: locals.user.id,
             status: 'active'
         });
 
-        // Sort by created_at descending if possible, or just take the first one
         const license = licenses.items[0];
 
         if (!license) {
