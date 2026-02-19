@@ -22,11 +22,14 @@ const route = createRoute({
     responses: {
         200: {
             content: {
-                'text/plain': {
-                    schema: z.string()
+                'application/json': {
+                    schema: z.object({
+                        url: z.string(),
+                        version: z.string()
+                    })
                 }
             },
-            description: 'Download URL for boredom scripts'
+            description: 'Download URL and version for boredom scripts'
         },
         403: {
             description: 'Invalid or expired license key'
@@ -82,5 +85,5 @@ export const scriptsRouter = new OpenAPIHono()
 
         const downloadUrl = `https://cdn.aceblocker.com${storagePath}?token=${token}&expires=${expires}`;
 
-        return c.text(downloadUrl);
+        return c.json({ url: downloadUrl, version: '0.1.0' });
     });

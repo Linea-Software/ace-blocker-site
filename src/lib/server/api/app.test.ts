@@ -36,12 +36,13 @@ describe('Hono API', () => {
         expect(dataInvalid).toEqual({ valid: false });
     });
 
-    it('GET /api/v1/scripts/boredom returns download url for valid license', async () => {
+    it('GET /api/v1/scripts/boredom returns download url and version for valid license', async () => {
         const res = await app.request('/api/v1/scripts/boredom?licenseKey=valid-key');
         expect(res.status).toBe(200);
-        const text = await res.text();
-        expect(text).toContain('https://cdn.aceblocker.com/boredom-scripts.zip');
-        expect(text).toContain('token=');
+        const data = await res.json();
+        expect(data.url).toContain('https://cdn.aceblocker.com/boredom-scripts.zip');
+        expect(data.url).toContain('token=');
+        expect(data.version).toBe('0.1.0');
     });
 
     it('GET /api/v1/scripts/boredom returns 403 for invalid license', async () => {
