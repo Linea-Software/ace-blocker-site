@@ -1,0 +1,222 @@
+[
+  {
+    "id": "0d30c227-2f59-5566-802b-ad8e5960040b",
+    "old_id": "basic-adult-block-list",
+    "name": "Adult Content",
+    "description": "Blocks known adult content websites.",
+    "requires_pro": false,
+    "sources": [
+      {
+        "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts",
+        "source_type": "url",
+        "format": "standard"
+      }
+    ]
+  },
+  {
+    "id": "a5961464-cc1b-5b4f-9661-dfcbc91ededc",
+    "old_id": "social-block-list",
+    "name": "Social Media",
+    "description": "Blocks social media sites.",
+    "requires_pro": false,
+    "sources": [
+      {
+        "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/social/hosts",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/social-onlydomains.txt",
+        "source_type": "url",
+        "format": "wildcarddomains"
+      }
+    ]
+  },
+  {
+    "id": "93971737-f12f-5151-aaa2-0b34bc9e6f6d",
+    "old_id": "gaming-block-list",
+    "name": "Gaming",
+    "description": "Blocks online gaming sites and services.",
+    "requires_pro": false,
+    "sources": [
+      {
+        "source": "https://raw.githubusercontent.com/nickoppen/pihole-blocklists/master/unifiedGamingLists01.txt",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/nickoppen/pihole-blocklists/master/unifiedGamingLists02.txt",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/olbat/ut1-blacklists/refs/heads/master/blacklists/games/domains",
+        "source_type": "url",
+        "format": "wildcarddomains"
+      }
+    ]
+  },
+  {
+    "id": "62c154f8-1ead-563d-b857-aa34f08d94ff",
+    "old_id": "extended-adult-block-list",
+    "name": "Extended Adult Content",
+    "description": "Blocks known adult content websites.",
+    "requires_pro": true,
+    "sources": [
+      {
+        "source": "https://raw.githubusercontent.com/columndeeply/hosts/main/hosts00",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/columndeeply/hosts/main/hosts01",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/columndeeply/hosts/main/hosts02",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/columndeeply/hosts/main/hosts03",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/columndeeply/hosts/main/hosts04",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/columndeeply/hosts/main/hosts05",
+        "source_type": "url",
+        "format": "standard"
+      }
+    ]
+  },
+  {
+    "id": "dd758fd4-dd4e-5ee6-b604-f91db8c3335d",
+    "old_id": "gambling-block-list",
+    "name": "Gambling",
+    "description": "Blocks online gambling sites.",
+    "requires_pro": true,
+    "sources": [
+      {
+        "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/gambling/hosts",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/olbat/ut1-blacklists/refs/heads/master/blacklists/gambling/domains",
+        "source_type": "url",
+        "format": "wildcarddomains"
+      },
+      {
+        "source": "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/gambling-onlydomains.txt",
+        "source_type": "url",
+        "format": "wildcarddomains"
+      }
+    ]
+  },
+  {
+    "id": "26d34d59-71d6-510e-bfdb-6002cf570f3e",
+    "old_id": "messaging-block-list",
+    "name": "Messaging Apps",
+    "description": "Blocks popular messaging applications.",
+    "requires_pro": true,
+    "sources": [
+      {
+        "source": "https://raw.githubusercontent.com/nickoppen/pihole-blocklists/master/blocklist-discord.txt",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/nickoppen/pihole-blocklists/master/blocklist-messenger.txt",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/nickoppen/pihole-blocklists/master/blocklist-signal.txt",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/nickoppen/pihole-blocklists/master/blocklist-telegram.txt",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/nickoppen/pihole-blocklists/master/blocklist-viber.txt",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/nickoppen/pihole-blocklists/master/blocklist-snapchat.txt",
+        "source_type": "url",
+        "format": "standard"
+      }
+    ]
+  },
+  {
+    "id": "50f375b3-e751-5c51-9f6f-d238f0c2d1ff",
+    "old_id": "streaming-sites-list",
+    "name": "Streaming Sites",
+    "description": "Blocks popular streaming services.",
+    "requires_pro": true,
+    "sources": [
+      {
+        "source": "https://raw.githubusercontent.com/nickspaargaren/no-google/refs/heads/master/categories/youtubeparsed",
+        "source_type": "url",
+        "format": "wildcarddomains"
+      }
+    ]
+  },
+  {
+    "id": "546d20b5-2233-5ebf-9075-881e456a6da7",
+    "old_id": "shopping-sites-list",
+    "name": "Shopping Sites",
+    "description": "Blocks popular shopping services.",
+    "requires_pro": true,
+    "sources": [
+      {
+        "source": "https://raw.githubusercontent.com/olbat/ut1-blacklists/refs/heads/master/blacklists/shopping/domains",
+        "source_type": "url",
+        "format": "standard"
+      }
+    ]
+  },
+  {
+    "id": "c164665d-8a75-55c8-8f7f-bb9c0867ec6e",
+    "old_id": "phishing-sites-list",
+    "name": "Phishing Sites",
+    "description": "Blocks popular phishing sites.",
+    "requires_pro": true,
+    "sources": [
+      {
+        "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-only/hosts",
+        "source_type": "url",
+        "format": "standard"
+      },
+      {
+        "source": "https://raw.githubusercontent.com/olbat/ut1-blacklists/refs/heads/master/blacklists/phishing/domains",
+        "source_type": "url",
+        "format": "wildcarddomains"
+      }
+    ]
+  },
+  {
+    "id": "832220a0-9bb0-547a-99fd-6f733af1617d",
+    "old_id": "piracy-sites-list",
+    "name": "Piracy Sites",
+    "description": "Blocks popular piracy sites.",
+    "requires_pro": true,
+    "sources": [
+      {
+        "source": "https://raw.githubusercontent.com/olbat/ut1-blacklists/refs/heads/master/blacklists/warez/domains",
+        "source_type": "url",
+        "format": "wildcarddomains"
+      }
+    ]
+  }
+]
