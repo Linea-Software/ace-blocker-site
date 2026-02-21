@@ -4,6 +4,11 @@ import { HTTPException } from 'hono/http-exception';
 import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
 
+if (!env.BUNNY_SECURITY_KEY) {
+    console.error("❌ BUNNY_SECURITY_KEY is missing in environment variables");
+    throw new HTTPException(500, { message: "Internal Server Error" });
+}
+
 const route = createRoute({
     operationId: 'getBoredomScripts',
     method: 'get',
@@ -44,15 +49,9 @@ export const scriptsRouter = new OpenAPIHono()
     .openapi(route, async (c) => {
         const { licenseKey } = c.req.valid('query');
         const securityKey = env.BUNNY_SECURITY_KEY;
-        const storagePath = "/boredom-scripts.zip";
-
-        if (!securityKey) {
-            console.error("❌ BUNNY_SECURITY_KEY is missing in environment variables");
-            throw new HTTPException(500, { message: "Internal Server Error" });
-        }
+        const storagePath = "/premium/boredom-scripts.zip";
 
         try {
-            // 1. Validate Dodo Payments license key
             const validation = await dodoPayments.licenses.validate({
                 license_key: licenseKey
             });
@@ -61,7 +60,6 @@ export const scriptsRouter = new OpenAPIHono()
                 throw new HTTPException(403, { message: "Invalid or expired license key" });
             }
         } catch (e) {
-            console.error('Error validating license:', e);
             if (e instanceof HTTPException) {
                 throw e;
             }
@@ -71,7 +69,6 @@ export const scriptsRouter = new OpenAPIHono()
             throw new HTTPException(500, { message: "Failed to validate license key" });
         }
 
-        // 2. Generate BunnyCDN Token (10 minutes expiry)
         const expires = Math.round(Date.now() / 1000) + 600;
         const hashableBase = securityKey + storagePath + expires;
 
