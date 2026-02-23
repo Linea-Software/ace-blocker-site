@@ -78,7 +78,7 @@ async function main() {
 	if (!envContent.includes('BETTER_AUTH_URL')) {
 		console.log('🔗 Adding BETTER_AUTH_URL...');
 		if (!envContent.endsWith('\n')) envContent += '\n';
-		envContent += `BETTER_AUTH_URL="http://localhost:5173"\n`;
+		envContent += `BETTER_AUTH_URL="https://localhost:5173"\n`;
 		needsUpdate = true;
 	}
 
