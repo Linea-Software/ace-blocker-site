@@ -1,17 +1,18 @@
 import 'dotenv/config';
 import { betterAuth } from 'better-auth';
-import { admin } from "better-auth/plugins"
+import { admin, apiKey } from "better-auth/plugins"
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from './db';
 import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
 import DodoPayments from 'dodopayments';
 import { resend } from './email';
 
-import { dev } from '$app/environment';
+//import { dev } from '$app/environment';
 import { user } from './db/schema';
 import { eq } from 'drizzle-orm';
 
 const env = process.env;
+const dev = import.meta.env.DEV;
 
 
 if (!env.DODO_PAYMENTS_API_KEY) {
@@ -53,6 +54,7 @@ export const auth = betterAuth({
 	},
 	plugins: [
 		admin(),
+		apiKey(),
 		dodopayments({
 			client: dodoPayments,
 			createCustomerOnSignUp: true,
