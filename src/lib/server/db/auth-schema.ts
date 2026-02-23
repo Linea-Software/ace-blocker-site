@@ -118,10 +118,25 @@ export const apikey = pgTable(
   ],
 );
 
+export const backups = pgTable(
+  "backups",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    data: text("data").notNull(),
+    version: text("version").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("backups_userId_idx").on(table.userId)],
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   apikeys: many(apikey),
+  backups: many(backups),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -141,6 +156,13 @@ export const accountRelations = relations(account, ({ one }) => ({
 export const apikeyRelations = relations(apikey, ({ one }) => ({
   user: one(user, {
     fields: [apikey.userId],
+    references: [user.id],
+  }),
+}));
+
+export const backupsRelations = relations(backups, ({ one }) => ({
+  user: one(user, {
+    fields: [backups.userId],
     references: [user.id],
   }),
 }));

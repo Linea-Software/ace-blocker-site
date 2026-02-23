@@ -54,7 +54,9 @@ export const auth = betterAuth({
 	},
 	plugins: [
 		admin(),
-		apiKey(),
+		apiKey({
+			enableSessionForAPIKeys: true
+		}),
 		dodopayments({
 			client: dodoPayments,
 			createCustomerOnSignUp: true,
