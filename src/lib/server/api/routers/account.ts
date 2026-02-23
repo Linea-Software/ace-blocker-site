@@ -13,6 +13,17 @@ const route = createRoute({
     operationId: 'getAccountDetails',
     method: 'get',
     path: '/',
+    request: {
+        headers: z.object({
+            'x-api-key': z.string().openapi({
+                param: {
+                    name: 'x-api-key',
+                    in: 'header'
+                },
+                example: 'your-api-key-here'
+            })
+        })
+    },
     responses: {
         200: {
             description: 'Account details retrieved successfully',

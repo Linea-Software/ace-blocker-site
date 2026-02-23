@@ -51,6 +51,15 @@ const route = createRoute({
     method: 'post',
     path: '/',
     request: {
+        headers: z.object({
+            'x-api-key': z.string().openapi({
+                param: {
+                    name: 'x-api-key',
+                    in: 'header'
+                },
+                example: 'your-api-key-here'
+            })
+        }),
         body: {
             content: {
                 'application/json': {
