@@ -5,7 +5,7 @@ import { HTTPException } from 'hono/http-exception';
 
 const AccountDetailsSchema = z.object({
     name: z.string(),
-    email: z.email(),
+    email: z.string().email(),
     isPro: z.boolean()
 }).openapi('AccountDetails');
 
@@ -45,8 +45,15 @@ const route = createRoute({
 export const accountRouter = new OpenAPIHono();
 
 accountRouter.openapi(route, async (c) => {
+    const apiKey = c.req.header('x-api-key');
+    if (!apiKey) {
+        throw new HTTPException(401, { message: 'x-api-key header required' });
+    }
+
     const session = await auth.api.getSession({
-        headers: c.req.raw.headers
+        headers: new Headers({
+            'x-api-key': apiKey
+        })
     });
 
     if (!session?.user) {

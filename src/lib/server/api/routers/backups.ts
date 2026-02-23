@@ -13,7 +13,7 @@ const BackupSitesListSourceSchema = z.object({
 }).openapi('BackupSitesListSource');
 
 const BackupSitesListSchema = z.object({
-    id: z.uuid(),
+    id: z.string().uuid(),
     name: z.string(),
     description: z.string().nullable(),
     sources: z.array(BackupSitesListSourceSchema)
@@ -32,11 +32,11 @@ const BackupScheduleEntrySchema = z.object({
 }).openapi('BackupScheduleEntry');
 
 const BackupNetworkBlockSchema = z.object({
-    id: z.uuid(),
+    id: z.string().uuid(),
     name: z.string(),
     schedules: z.array(BackupScheduleEntrySchema),
     userRules: z.array(z.string()),
-    connectedSitesLists: z.array(z.uuid())
+    connectedSitesLists: z.array(z.string().uuid())
 }).openapi('BackupNetworkBlock');
 
 const EngineBackupSchema = z.object({
@@ -89,8 +89,15 @@ const route = createRoute({
 export const backupsRouter = new OpenAPIHono();
 
 backupsRouter.openapi(route, async (c) => {
+    const apiKey = c.req.header('x-api-key');
+    if (!apiKey) {
+        throw new HTTPException(401, { message: 'x-api-key header required' });
+    }
+
     const session = await auth.api.getSession({
-        headers: c.req.raw.headers
+        headers: new Headers({
+            'x-api-key': apiKey
+        })
     });
 
     if (!session?.user) {
