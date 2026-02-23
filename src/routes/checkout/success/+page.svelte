@@ -20,7 +20,7 @@
 			return;
 		}
 
-		if (data.success && data.licenseKey) {
+		if (data.success && data.licenseKey && data.apiKey) {
 			// Wait a bit for the animation before trying to activate
 			setTimeout(activateLicense, 1500);
 		}
@@ -34,7 +34,7 @@
 			const callbackUrl = encodeURIComponent(
 				`${window.location.origin}${window.location.pathname}?activated=true`
 			);
-			window.location.href = `aceblocker://licence/activate?key=${data.licenseKey}&callback=${callbackUrl}`;
+			window.location.href = `aceblocker://licence/activate?licenceKey=${data.licenseKey}&apiKey=${data.apiKey}&callback=${callbackUrl}`;
 		} catch (err) {
 			console.error('Activation error:', err);
 			activationStatus = 'failed';
