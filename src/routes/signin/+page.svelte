@@ -9,10 +9,14 @@
 	import * as Alert from '$lib/components/ui/alert';
 	import { Loader2, AlertCircle } from '@lucide/svelte';
 
+	import { page } from '$app/state';
+
 	let email = $state('');
 	let password = $state('');
 	let error = $state<string | null>(null);
 	let loading = $state(false);
+
+	const origin = $derived(page.url.searchParams.get('origin'));
 
 	async function handleSignIn(e: Event) {
 		e.preventDefault();
@@ -25,9 +29,24 @@
 				callbackURL: '/'
 			},
 			{
-				onSuccess: () => {
-					loading = false;
-					goto('/');
+				onSuccess: async () => {
+					if (origin === 'ace-engine') {
+						try {
+							const res = await fetch('/api/v1/account/link-engine', {
+								method: 'POST'
+							});
+							if (!res.ok) throw new Error('Failed to link engine');
+							const data = await res.json();
+							window.location.href = `aceblocker://account/api-key?apiKey=${data.apiKey}`;
+						} catch (err) {
+							console.error(err);
+							loading = false;
+							error = 'Failed to generate access keys for the engine.';
+						}
+					} else {
+						loading = false;
+						goto('/');
+					}
 				},
 				onError: (ctx) => {
 					loading = false;
@@ -86,9 +105,9 @@
 			</form>
 		</Card.Content>
 		<Card.Footer>
-			<div class="text-center text-sm text-muted-foreground w-full">
+			<div class="w-full text-center text-sm text-muted-foreground">
 				Don't have an account?
-				<a href="/signup" class="text-primary font-medium hover:underline">Sign Up</a>
+				<a href="/signup" class="font-medium text-primary hover:underline">Sign Up</a>
 			</div>
 		</Card.Footer>
 	</Card.Root>
