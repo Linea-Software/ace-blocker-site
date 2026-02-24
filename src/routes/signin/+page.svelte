@@ -6,8 +6,9 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Card from '$lib/components/ui/card';
 	import * as Alert from '$lib/components/ui/alert';
-	import { Loader2, AlertCircle, Shield, ArrowLeft } from '@lucide/svelte';
+	import { Loader2, AlertCircle, Shield, ArrowLeft, Sun, Moon } from '@lucide/svelte';
 	import { page } from '$app/state';
+	import { toggleMode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages.js';
 
 	let email = $state('');
@@ -69,7 +70,7 @@
 	}
 </script>
 
-<div class="flex min-h-screen w-full bg-[#030712] text-slate-200">
+<div class="flex min-h-screen w-full bg-background text-foreground transition-colors duration-300">
 	<!-- Left Side: Branded Panel (Desktop Only) -->
 	<div
 		class="relative hidden w-1/2 flex-col justify-between bg-gradient-to-br from-[#0c111d] to-[#030712] p-12 lg:flex"
@@ -104,7 +105,7 @@
 	<!-- Right Side: Form Container -->
 	<div class="flex w-full flex-col items-center justify-center p-6 lg:w-1/2">
 		<div class="mb-8 flex w-full max-w-md items-center justify-between lg:hidden">
-			<a href="/" class="flex items-center gap-2 font-bold text-white">
+			<a href="/" class="flex items-center gap-2 font-bold dark:text-white">
 				<Shield class="h-6 w-6 text-amber-500" />
 				<span>Ace Blocker</span>
 			</a>
@@ -119,9 +120,27 @@
 
 		{#if !origin}
 			<div
-				class="mb-8 w-full max-w-md lg:absolute lg:top-8 lg:right-8 lg:mb-0 lg:flex lg:justify-end"
+				class="mb-8 w-full max-w-md lg:absolute lg:top-8 lg:right-8 lg:mb-0 lg:flex lg:items-center lg:justify-end lg:gap-4"
 			>
-				<Button variant="ghost" href="/" class="text-slate-400 hover:text-white">
+				<Button
+					variant="ghost"
+					size="icon"
+					class="h-9 w-9 rounded-md text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-white"
+					onclick={toggleMode}
+				>
+					<Sun
+						class="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"
+					/>
+					<Moon
+						class="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"
+					/>
+					<span class="sr-only">Toggle theme</span>
+				</Button>
+				<Button
+					variant="ghost"
+					href="/"
+					class="text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-white"
+				>
 					<ArrowLeft class="mr-2 h-4 w-4" />
 					Back to home
 				</Button>
@@ -130,8 +149,8 @@
 
 		<div class="w-full max-w-md animate-in duration-700 fade-in slide-in-from-bottom-4">
 			<div class="mb-8">
-				<h2 class="mb-2 text-4xl font-bold text-white">{m.auth_sign_in_title()}</h2>
-				<p class="text-slate-400">{m.auth_sign_in_description()}</p>
+				<h2 class="mb-2 text-4xl font-bold dark:text-white">{m.auth_sign_in_title()}</h2>
+				<p class="text-muted-foreground">{m.auth_sign_in_description()}</p>
 			</div>
 
 			{#if error}
@@ -144,19 +163,23 @@
 
 			<form onsubmit={handleSignIn} class="space-y-6">
 				<div class="space-y-2">
-					<Label for="email" class="text-slate-300">{m.auth_email_label()}</Label>
+					<Label for="email" class="text-foreground/80 dark:text-slate-300"
+						>{m.auth_email_label()}</Label
+					>
 					<Input
 						id="email"
 						type="email"
 						placeholder="you@example.com"
 						bind:value={email}
 						required
-						class="border-slate-800 bg-slate-900/50 text-white placeholder:text-slate-600 focus:border-amber-500/50 focus:ring-amber-500/20"
+						class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
 					/>
 				</div>
 				<div class="space-y-2">
 					<div class="flex items-center justify-between">
-						<Label for="password" class="text-slate-300">{m.auth_password_label()}</Label>
+						<Label for="password" class="text-foreground/80 dark:text-slate-300"
+							>{m.auth_password_label()}</Label
+						>
 						<a href="/forgot-password" class="text-xs text-amber-500 hover:underline"
 							>Forgot password?</a
 						>
@@ -167,7 +190,7 @@
 						placeholder="••••••••"
 						bind:value={password}
 						required
-						class="border-slate-800 bg-slate-900/50 text-white placeholder:text-slate-600 focus:border-amber-500/50 focus:ring-amber-500/20"
+						class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
 					/>
 				</div>
 
@@ -197,9 +220,3 @@
 		</div>
 	</div>
 </div>
-
-<style>
-	:global(body) {
-		background-color: #030712;
-	}
-</style>

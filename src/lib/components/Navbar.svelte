@@ -11,11 +11,14 @@
 		Shield,
 		Menu,
 		LayoutDashboard,
-		LogOut
+		LogOut,
+		Sun,
+		Moon
 	} from '@lucide/svelte';
 	import { authClient } from '$lib/auth-client';
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils';
+	import { toggleMode, mode } from 'mode-watcher';
 
 	const session = authClient.useSession();
 	const isPro = $derived(page.data.isPro || false);
@@ -114,6 +117,21 @@
 								Sign Up
 							</a>
 						{/if}
+
+						<Separator />
+
+						<button
+							class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
+							onclick={toggleMode}
+						>
+							{#if mode.current === 'dark'}
+								<Sun class="h-5 w-5" />
+								Light Mode
+							{:else}
+								<Moon class="h-5 w-5" />
+								Dark Mode
+							{/if}
+						</button>
 					</div>
 				</Sheet.Content>
 			</Sheet.Root>
@@ -144,6 +162,22 @@
 		</div>
 
 		<div class="flex h-full items-center gap-2 sm:gap-4">
+			<Button
+				variant="ghost"
+				size="icon"
+				class="h-9 w-9 rounded-md dark:text-slate-300 dark:hover:text-white"
+				onclick={toggleMode}
+				aria-label="Toggle theme"
+			>
+				<Sun
+					class="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"
+				/>
+				<Moon
+					class="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"
+				/>
+				<span class="sr-only">Toggle theme</span>
+			</Button>
+
 			{#if $session.data}
 				<Button
 					href="/dashboard"
