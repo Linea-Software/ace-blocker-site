@@ -1,4 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { eq, desc } from 'drizzle-orm';
 import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { backups } from '$lib/server/db/schema';
@@ -46,7 +47,7 @@ const EngineBackupSchema = z.object({
     deactivatedBoredomScripts: z.array(z.string())
 }).openapi('EngineBackup');
 
-const route = createRoute({
+const createBackupRoute = createRoute({
     operationId: 'createBackup',
     method: 'post',
     path: '/',
@@ -74,7 +75,7 @@ const route = createRoute({
             content: {
                 'application/json': {
                     schema: z.object({
-                        id: z.uuid()
+                        id: z.string().uuid()
                     })
                 }
             }
@@ -86,9 +87,40 @@ const route = createRoute({
     }
 });
 
+const fetchBackupRoute = createRoute({
+    operationId: 'fetchBackup',
+    method: 'get',
+    path: '/',
+    request: {
+        headers: z.object({
+            'x-api-key': z.string().openapi({
+                param: {
+                    name: 'x-api-key',
+                    in: 'header'
+                },
+                example: 'your-api-key-here'
+            })
+        })
+    },
+    responses: {
+        200: {
+            description: 'Latest backup retrieved successfully',
+            content: {
+                'application/json': {
+                    schema: EngineBackupSchema
+                }
+            }
+        },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden (Pro required)' },
+        404: { description: 'Backup not found' },
+        500: { description: 'Internal Server Error' }
+    }
+});
+
 export const backupsRouter = new OpenAPIHono();
 
-backupsRouter.openapi(route, async (c) => {
+backupsRouter.openapi(createBackupRoute, async (c) => {
     const apiKey = c.req.header('x-api-key');
     if (!apiKey) {
         throw new HTTPException(401, { message: 'x-api-key header required' });
@@ -127,4 +159,39 @@ backupsRouter.openapi(route, async (c) => {
     });
 
     return c.json({ id: backupId });
+});
+
+backupsRouter.openapi(fetchBackupRoute, async (c) => {
+    const apiKey = c.req.header('x-api-key');
+    if (!apiKey) {
+        throw new HTTPException(401, { message: 'x-api-key header required' });
+    }
+
+    const session = await auth.api.getSession({
+        headers: new Headers({
+            'x-api-key': apiKey
+        })
+    });
+
+    if (!session?.user) {
+        throw new HTTPException(401, { message: 'Unauthorized' });
+    }
+
+    const isPro = await isUserPro(session.user.email);
+    if (!isPro) {
+        throw new HTTPException(403, { message: 'Pro license required' });
+    }
+
+    const [latestBackup] = await db
+        .select()
+        .from(backups)
+        .where(eq(backups.userId, session.user.id))
+        .orderBy(desc(backups.createdAt))
+        .limit(1);
+
+    if (!latestBackup) {
+        throw new HTTPException(404, { message: 'No backup found' });
+    }
+
+    return c.json(JSON.parse(latestBackup.data));
 });
