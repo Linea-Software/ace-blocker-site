@@ -56,5 +56,22 @@
 	"download_manual_button": "Download Manually",
 	"download_other_arch_title": "Looking for another version?",
 	"download_arch_windows": "Windows (x64)",
-	"download_arch_linux": "Linux (x64)"
+	"download_arch_linux": "Linux (x64)",
+	"auth_sign_in_title": "Sign In",
+	"auth_sign_in_description": "Enter your email and password to access your account",
+	"auth_email_label": "Email",
+	"auth_password_label": "Password",
+	"auth_confirm_password_label": "Confirm Password",
+	"auth_sign_in_button": "Sign In",
+	"auth_signing_in": "Signing in...",
+	"auth_sign_up_title": "Create an Account",
+	"auth_sign_up_description": "Start your journey to reclaiming your focus.",
+	"auth_sign_up_button": "Sign Up",
+	"auth_signing_up": "Creating account...",
+	"auth_already_have_account": "Already have an account?",
+	"auth_don_t_have_account": "Don't have an account?",
+	"auth_reclaim_focus_title": "Reclaim your focus.",
+	"auth_reclaim_focus_subtitle": "Take back your time.",
+	"auth_passwords_do_not_match": "Passwords do not match",
+	"auth_name_label": "Name"
 }

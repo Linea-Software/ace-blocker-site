@@ -9,7 +9,7 @@ ALWAYS use **Bun** for all package management and script execution tasks.
 - Use `bun` instead of `node`
 - Do NOT use `npm`, `yarn`, or `pnpm` under any circumstances.
 - **When installing packages**, use `bun add <package>` or `bun add -d <package>`.
-- **Running Locally**: The development server is ALWAYS running at `http://localhost:5173/` during development. You do NOT need to run `bun run dev` yourself. Use this URL to test and verify changes.
+- **Running Locally**: The development server is ALWAYS running at `https://localhost:5173/` during development. You do NOT need to run `bun run dev` yourself. Use this URL to test and verify changes.
 - **Initial Setup**: Run `bun run setup` to automatically configure the `.env` file (including secrets), start the Docker database, and apply Drizzle migrations.
 - **Database Management**: Run `bun run db:delete` to stop the Docker database and delete its associated volumes (virtual disk).
 - **Development Credentials**: In development mode, a default admin user is automatically created:
