@@ -46,7 +46,7 @@ Before performing ANY task related to the technologies below, you MUST use `read
 
 ### Secondary Technologies
 
-- **Lucide Svelte**: Use `@lucide/svelte` for icons. Do NOT use `lucide-svelte` as it is deprecated.
+- **Secondary Technologies**: Use `@lucide/svelte` for icons. Do NOT use `lucide-svelte` as it is only for Svelte 4; `@lucide/svelte` is required for Svelte 5.
 
 ## Localization (Paraglide JS)
 
