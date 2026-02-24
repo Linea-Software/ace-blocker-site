@@ -8,13 +8,14 @@ ALWAYS use **Bun** for all package management and script execution tasks.
 - Use `bun run` instead of `npm run`
 - Use `bun` instead of `node`
 - Do NOT use `npm`, `yarn`, or `pnpm` under any circumstances.
+- **When installing packages**, use `bun add <package>` or `bun add -d <package>`.
 - **Running Locally**: The development server is ALWAYS running at `http://localhost:5173/` during development. You do NOT need to run `bun run dev` yourself. Use this URL to test and verify changes.
 - **Initial Setup**: Run `bun run setup` to automatically configure the `.env` file (including secrets), start the Docker database, and apply Drizzle migrations.
 - **Database Management**: Run `bun run db:delete` to stop the Docker database and delete its associated volumes (virtual disk).
 - **Development Credentials**: In development mode, a default admin user is automatically created:
   - **Email**: `dev@example.com`
   - **Password**: `dev-password`
-- **Committing Changes**: Once you have finished a task and verified it, you MUST commit your changes using `git add .` and `git commit -m "..."` with a descriptive message.
+- **Committing Changes**: You **MUST** perform git commits yourself. Once you have finished a task and verified it, run `git add .` and `git commit -m "..."` with a descriptive message. Do NOT ask the user to commit for you.
 
 ## Self-Maintenance (IMPORTANT)
 
@@ -46,7 +47,18 @@ Before performing ANY task related to the technologies below, you MUST use `read
 ### Secondary Technologies
 
 - **Lucide Svelte**: Use `@lucide/svelte` for icons. Do NOT use `lucide-svelte` as it is deprecated.
-- **Paraglide**: Localization framework managed via the `project.inlang` file.
+
+## Localization (Paraglide JS)
+
+- **CRITICAL**: All user-facing text **MUST** be localized using Paraglide. Hardcoded strings are **FORBIDDEN** in UI components.
+- **Workflow**:
+  1. Add the string key to `messages/en.json` (format: `"snake_case_key": "Text content"`).
+  2. Run `bun run check` (or let the dev server auto-generate fields) to ensure types are updated.
+  3. Import `* as m` from `$lib/paraglide/messages.js`.
+  4. Use `m.snake_case_key()` in your Svelte components or TS files.
+- **Rules**:
+  - **Only** edit `en.json` by default. Do **NOT** edit other language files (`de.json`, `fr.json`, etc.) unless the user explicitly instructs you to do so.
+  - Variable arguments: Use `{paramName}` in JSON (e.g., `"hello_user": "Hello {name}"`) and pass object used in code: `m.hello_user({ name: 'User' })`.
 
 ## Project Description
 
@@ -82,9 +94,24 @@ The project uses **Hono** (specifically `OpenAPIHono`) to handle all API request
 ## Nomenclature & Design Patterns
 
 - **Svelte Components**: All `.svelte` files MUST use `UpperCamelCase` naming convention (e.g., `Button.svelte`, `UserCard.svelte`).
-- `/scripts/`: Development and maintenance scripts. **ALWAYS use TypeScript** for these scripts.
+- **Page-specific components**: These MUST reside in a `./_components` folder within the route directory OR be prefixed with an underscore (e.g., `_Component.svelte`) to differentiate them from routes.
 - `/messages/`: Localization message files for Paraglide. During development, always prioritize English (`en`). Only translate when explicitly requested.
+- `/scripts/`: Development and maintenance scripts. **ALWAYS use TypeScript** for these scripts.
 - `/drizzle/`: Database migrations managed by Drizzle.
+
+## Scripts
+
+Use `bun run <script>` for these tasks:
+
+- `setup`: Configures `.env`, starts Docker DB, and applies migrations.
+- `db:start`: Starts the Docker database.
+- `db:delete`: Stops the Docker database and deletes volumes.
+- `db:push`: Pushes schema changes to the database (development).
+- `db:migrate`: Runs migrations.
+- `db:studio`: Opens Drizzle Studio.
+- `check`: Runs Svelte-check for type safety and linting.
+- `test`: Runs unit and E2E tests.
+- `format`: Formats code with Prettier.
 
 ## Svelte MCP Tools usage:
 
