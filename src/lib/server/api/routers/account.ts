@@ -126,3 +126,102 @@ accountRouter.openapi(linkEngineRoute, async (c) => {
         apiKey: apiKeyResponse.key
     });
 });
+
+const ListApiKeysRoute = createRoute({
+    operationId: 'listApiKeys',
+    method: 'get',
+    path: '/api-keys',
+    responses: {
+        200: {
+            description: 'List of API keys retrieved successfully',
+            content: {
+                'application/json': {
+                    schema: z.array(z.object({
+                        id: z.string(),
+                        name: z.string().nullable(),
+                        createdAt: z.string(),
+                        lastRequest: z.string().nullable(),
+                        expiresAt: z.string().nullable()
+                    }))
+                }
+            }
+        },
+        401: { description: 'Unauthorized' },
+        500: { description: 'Internal Server Error' }
+    }
+});
+
+accountRouter.openapi(ListApiKeysRoute, async (c) => {
+    const session = await auth.api.getSession({
+        headers: c.req.raw.headers
+    });
+
+    if (!session?.user) {
+        throw new HTTPException(401, { message: 'Unauthorized' });
+    }
+
+    const keys = await auth.api.listApiKeys({
+        headers: c.req.raw.headers
+    });
+
+    return c.json(keys.map(key => ({
+        id: key.id,
+        name: key.name,
+        createdAt: key.createdAt.toISOString(),
+        lastRequest: key.lastRequest?.toISOString() ?? null,
+        expiresAt: key.expiresAt?.toISOString() ?? null
+    })));
+});
+
+const RevokeApiKeyRoute = createRoute({
+    operationId: 'revokeApiKey',
+    method: 'post',
+    path: '/revoke',
+    request: {
+        body: {
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        keyId: z.string()
+                    })
+                }
+            }
+        }
+    },
+    responses: {
+        200: {
+            description: 'API key revoked successfully',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        success: z.boolean()
+                    })
+                }
+            }
+        },
+        401: { description: 'Unauthorized' },
+        500: { description: 'Internal Server Error' }
+    }
+});
+
+accountRouter.openapi(RevokeApiKeyRoute, async (c) => {
+    const session = await auth.api.getSession({
+        headers: c.req.raw.headers
+    });
+
+    if (!session?.user) {
+        throw new HTTPException(401, { message: 'Unauthorized' });
+    }
+
+    const { keyId } = c.req.valid('json');
+
+    await auth.api.deleteApiKey({
+        body: { keyId },
+        headers: c.req.raw.headers
+    });
+
+    return c.json({
+        success: true
+    });
+});
+
