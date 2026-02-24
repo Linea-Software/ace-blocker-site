@@ -24,7 +24,9 @@
 
 <Navbar />
 
-<main class="min-h-[calc(100vh-4rem)] bg-[#0B0B0F] py-16 text-slate-50 md:py-24">
+<main
+	class="min-h-[calc(100vh-4rem)] bg-white py-16 text-slate-900 transition-colors duration-500 md:py-24 dark:bg-[#0B0B0F] dark:text-slate-50"
+>
 	<div class="container mx-auto px-4">
 		<!-- Header -->
 		<div class="mx-auto mb-16 max-w-3xl space-y-6 text-center">
@@ -34,10 +36,12 @@
 			>
 				{m.hero_new_badge()}
 			</Badge>
-			<h1 class="text-4xl font-black tracking-tight sm:text-5xl md:text-6xl">
+			<h1
+				class="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl md:text-6xl dark:text-white"
+			>
 				{m.pro_title()}
 			</h1>
-			<p class="mx-auto max-w-xl text-lg text-slate-400 md:text-xl">
+			<p class="mx-auto max-w-xl text-lg text-slate-600 md:text-xl dark:text-slate-400">
 				{m.pro_subtitle()}
 			</p>
 		</div>
@@ -45,14 +49,14 @@
 		<!-- Billing Toggle -->
 		<div class="mb-16 flex justify-center">
 			<div
-				class="inline-flex items-center rounded-full border border-slate-800 bg-slate-900/50 p-1"
+				class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900/50"
 			>
 				<button
 					class={cn(
 						'flex items-center justify-center rounded-full px-8 py-2.5 text-sm font-bold transition-all duration-200',
 						billingCycle === 'monthly'
-							? 'bg-slate-800 text-white shadow-lg'
-							: 'text-slate-400 hover:text-slate-200'
+							? 'bg-white text-slate-900 shadow-md dark:bg-slate-800 dark:text-white'
+							: 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
 					)}
 					onclick={() => (billingCycle = 'monthly')}
 				>
@@ -63,7 +67,7 @@
 						'flex items-center justify-center gap-2 rounded-full px-8 py-2.5 text-sm font-bold transition-all duration-200',
 						billingCycle === 'yearly'
 							? 'bg-[#FFBF00] text-[#0B0B0F] shadow-[0_0_20px_rgba(255,191,0,0.2)]'
-							: 'text-slate-400 hover:text-slate-200'
+							: 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
 					)}
 					onclick={() => (billingCycle = 'yearly')}
 				>
@@ -71,7 +75,9 @@
 					<span
 						class={cn(
 							'rounded px-1.5 py-0.5 text-[10px] font-black uppercase',
-							billingCycle === 'yearly' ? 'bg-black/10' : 'bg-amber-500/20 text-amber-500'
+							billingCycle === 'yearly'
+								? 'bg-black/10'
+								: 'bg-amber-500/20 text-amber-600 dark:text-amber-500'
 						)}
 					>
 						-30%
@@ -84,53 +90,67 @@
 		<div class="mx-auto grid max-w-5xl grid-cols-1 items-stretch gap-8 md:grid-cols-2">
 			<!-- Free Plan -->
 			<Card.Root
-				class="relative flex flex-col overflow-hidden border-slate-800/50 bg-slate-900/20 transition-all duration-300"
+				class="relative flex flex-col overflow-hidden border-slate-200 bg-white shadow-sm transition-all duration-300 dark:border-slate-800/50 dark:bg-slate-900/20"
 			>
 				<Card.Header class="space-y-6 pb-8">
 					<div class="flex items-center gap-2">
 						<div
-							class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/50 text-slate-400"
+							class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
 						>
 							<Shield class="h-6 w-6" />
 						</div>
-						<Card.Title class="text-2xl font-black text-slate-200">{m.plan_free_name()}</Card.Title>
+						<Card.Title class="text-2xl font-black text-slate-900 dark:text-slate-200"
+							>{m.plan_free_name()}</Card.Title
+						>
 					</div>
 					<div class="flex flex-col">
 						<div class="flex items-baseline gap-1">
-							<span class="text-5xl font-black tracking-tight text-slate-200"
+							<span class="text-5xl font-black tracking-tight text-slate-900 dark:text-slate-200"
 								>{m.plan_free_price()}</span
 							>
 							<span class="text-slate-500">/forever</span>
 						</div>
-						<p class="mt-4 text-slate-400">
+						<p class="mt-4 text-slate-600 dark:text-slate-400">
 							{m.plan_free_description()}
 						</p>
 					</div>
 				</Card.Header>
 				<Card.Content class="flex-1 space-y-5">
 					<div class="flex items-center gap-4">
-						<div class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800/30">
-							<Check class="h-3.5 w-3.5 text-slate-500" />
+						<div
+							class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/30"
+						>
+							<Check class="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
 						</div>
-						<span class="text-sm font-medium text-slate-400">{m.feature_unlimited_devices()}</span>
+						<span class="text-sm font-medium text-slate-600 dark:text-slate-400"
+							>{m.feature_unlimited_devices()}</span
+						>
 					</div>
 					<div class="flex items-center gap-4">
-						<div class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800/30">
-							<Check class="h-3.5 w-3.5 text-slate-500" />
+						<div
+							class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/30"
+						>
+							<Check class="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
 						</div>
-						<span class="text-sm font-medium text-slate-400">{m.feature_blocks_unlimited()}</span>
+						<span class="text-sm font-medium text-slate-600 dark:text-slate-400"
+							>{m.feature_blocks_unlimited()}</span
+						>
 					</div>
 					<div class="flex items-center gap-4">
-						<div class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800/30">
-							<Check class="h-3.5 w-3.5 text-slate-500" />
+						<div
+							class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/30"
+						>
+							<Check class="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
 						</div>
-						<span class="text-sm font-medium text-slate-400">{m.feature_lists_basic()}</span>
+						<span class="text-sm font-medium text-slate-600 dark:text-slate-400"
+							>{m.feature_lists_basic()}</span
+						>
 					</div>
 				</Card.Content>
 				<Card.Footer class="pt-8">
 					<Button
 						variant="outline"
-						class="h-12 w-full border-slate-800 bg-transparent text-slate-400 hover:bg-slate-800 hover:text-white"
+						class="h-12 w-full border-slate-200 bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
 						href="/signup"
 					>
 						{m.cta_get_started()}
@@ -140,7 +160,7 @@
 
 			<!-- Pro Plan -->
 			<Card.Root
-				class="relative flex flex-col overflow-hidden border-2 border-[#FFBF00] bg-slate-900/60 shadow-[0_0_50px_rgba(255,191,0,0.15)] backdrop-blur-sm transition-all duration-300 md:-mt-4 md:-mb-4"
+				class="relative flex flex-col overflow-hidden border-2 border-[#FFBF00] bg-white shadow-xl transition-all duration-300 md:-mt-4 md:-mb-4 dark:bg-slate-900/60 dark:shadow-[0_0_50px_rgba(255,191,0,0.15)] dark:backdrop-blur-sm"
 			>
 				<!-- SAVE 30% Badge -->
 				{#if billingCycle === 'yearly'}
@@ -174,28 +194,30 @@
 							{#if billingCycle === 'yearly'}
 								<div class="flex flex-col">
 									<span
-										class="text-sm font-bold text-slate-500 line-through decoration-[#FFBF00]/50"
+										class="text-sm font-bold text-slate-400 line-through decoration-[#FFBF00]/50 dark:text-slate-500"
 										>{m.plan_pro_price_yearly_old()}</span
 									>
 									<div class="flex items-baseline gap-1">
-										<span class="font-mono text-6xl font-black tracking-tighter text-white"
+										<span
+											class="font-mono text-6xl font-black tracking-tighter text-slate-900 dark:text-white"
 											>{m.plan_pro_price_yearly()}</span
 										>
-										<span class="text-slate-400">/year</span>
+										<span class="text-slate-500 dark:text-slate-400">/year</span>
 									</div>
 								</div>
 							{:else}
-								<span class="font-mono text-6xl font-black tracking-tighter text-white"
+								<span
+									class="font-mono text-6xl font-black tracking-tighter text-slate-900 dark:text-white"
 									>{m.plan_pro_price_monthly()}</span
 								>
-								<span class="text-slate-400">/month</span>
+								<span class="text-slate-500 dark:text-slate-400">/month</span>
 							{/if}
 						</div>
 						<!-- Trial Subtitle -->
-						<p class="mt-2 text-sm font-bold text-amber-500/90">
+						<p class="mt-2 text-sm font-bold text-amber-600 dark:text-amber-500/90">
 							{m.trial_subtitle()}
 						</p>
-						<p class="mt-4 text-sm leading-relaxed text-slate-400">
+						<p class="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
 							{m.plan_pro_description()}
 						</p>
 					</div>
@@ -218,31 +240,41 @@
 						<div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10">
 							<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
 						</div>
-						<span class="text-sm font-bold text-white">{m.feature_lists_all()}</span>
+						<span class="text-sm font-bold text-slate-900 dark:text-white"
+							>{m.feature_lists_all()}</span
+						>
 					</div>
 					<div class="flex items-center gap-4">
 						<div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10">
 							<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
 						</div>
-						<span class="text-sm font-bold text-white">{m.feature_lists_custom()}</span>
+						<span class="text-sm font-bold text-slate-900 dark:text-white"
+							>{m.feature_lists_custom()}</span
+						>
 					</div>
 					<div class="flex items-center gap-4">
 						<div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10">
 							<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
 						</div>
-						<span class="text-sm font-bold text-white">{m.feature_sync_cloud()}</span>
+						<span class="text-sm font-bold text-slate-900 dark:text-white"
+							>{m.feature_sync_cloud()}</span
+						>
 					</div>
 					<div class="flex items-center gap-4">
 						<div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10">
 							<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
 						</div>
-						<span class="text-sm font-bold text-white">{m.feature_scripts_premium()}</span>
+						<span class="text-sm font-bold text-slate-900 dark:text-white"
+							>{m.feature_scripts_premium()}</span
+						>
 					</div>
 					<div class="flex items-center gap-4">
 						<div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10">
 							<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
 						</div>
-						<span class="text-sm font-bold text-white">{m.feature_unlimited_devices()}</span>
+						<span class="text-sm font-bold text-slate-900 dark:text-white"
+							>{m.feature_unlimited_devices()}</span
+						>
 					</div>
 
 					<p class="pt-2 text-[10px] leading-relaxed text-slate-500 italic">
@@ -252,7 +284,7 @@
 
 				<Card.Footer class="flex flex-col gap-3 pt-8 pb-10">
 					<Button
-						class="group relative h-16 w-full overflow-hidden bg-[#FFBF00] text-xl font-black text-[#0B0B0F] shadow-[0_10px_30px_rgba(255,191,0,0.3)] transition-all hover:scale-[1.02] hover:bg-amber-400 active:scale-95"
+						class="group relative h-16 w-full overflow-hidden bg-[#FFBF00] text-xl font-black text-slate-950 shadow-[0_10px_30px_rgba(255,191,0,0.3)] transition-all hover:scale-[1.02] hover:bg-amber-400 active:scale-95"
 						onclick={handleUpgrade}
 					>
 						<span class="relative z-10">{m.cta_upgrade_now()}</span>
@@ -273,10 +305,12 @@
 			<div class="grid grid-cols-1 items-center gap-16 md:grid-cols-2">
 				<div class="space-y-12">
 					<div class="space-y-4">
-						<h2 class="text-3xl font-black tracking-tight text-white sm:text-4xl">
+						<h2
+							class="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl dark:text-white"
+						>
 							The ultimate focus toolbox.
 						</h2>
-						<p class="text-lg text-slate-400">
+						<p class="text-lg text-slate-600 dark:text-slate-400">
 							Don't just block sites. Change your relationship with the internet using our advanced
 							features designed for deep work.
 						</p>
@@ -285,13 +319,15 @@
 					<div class="grid grid-cols-1 gap-8">
 						<div class="flex gap-5">
 							<div
-								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900"
+								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
 							>
 								<Infinity class="h-6 w-6 text-amber-500" />
 							</div>
 							<div class="space-y-1">
-								<h3 class="text-lg font-bold text-slate-200">Unlimited Everything</h3>
-								<p class="text-slate-400">
+								<h3 class="text-lg font-bold text-slate-900 dark:text-slate-200">
+									Unlimited Everything
+								</h3>
+								<p class="text-slate-600 dark:text-slate-400">
 									With a generous free plan that included unlimited network blocks plus unlimited
 									locks as well as 3 site lists.
 								</p>
@@ -300,13 +336,15 @@
 
 						<div class="flex gap-5">
 							<div
-								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900"
+								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
 							>
 								<Sparkles class="h-6 w-6 text-amber-500" />
 							</div>
 							<div class="space-y-1">
-								<h3 class="text-lg font-bold text-slate-200">Premium Boredom Scripts</h3>
-								<p class="text-slate-400">
+								<h3 class="text-lg font-bold text-slate-900 dark:text-slate-200">
+									Premium Boredom Scripts
+								</h3>
+								<p class="text-slate-600 dark:text-slate-400">
 									Make addictive sites boring by stripping away reels, infinite scrolls, and
 									manipulative notifications.
 								</p>
@@ -315,13 +353,15 @@
 
 						<div class="flex gap-5">
 							<div
-								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900"
+								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
 							>
 								<Layers class="h-6 w-6 text-amber-500" />
 							</div>
 							<div class="space-y-1">
-								<h3 class="text-lg font-bold text-slate-200">Curated Intelligence</h3>
-								<p class="text-slate-400">
+								<h3 class="text-lg font-bold text-slate-900 dark:text-slate-200">
+									Curated Intelligence
+								</h3>
+								<p class="text-slate-600 dark:text-slate-400">
 									Stop hunting for blocklists. We provide expertly curated lists for all major
 									distractions, updated regularly.
 								</p>
@@ -330,13 +370,15 @@
 
 						<div class="flex gap-5">
 							<div
-								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900"
+								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
 							>
 								<Cloud class="h-6 w-6 text-amber-500" />
 							</div>
 							<div class="space-y-1">
-								<h3 class="text-lg font-bold text-slate-200">Cloud Sync & Backup</h3>
-								<p class="text-slate-400">
+								<h3 class="text-lg font-bold text-slate-900 dark:text-slate-200">
+									Cloud Sync & Backup
+								</h3>
+								<p class="text-slate-600 dark:text-slate-400">
 									Your settings, schedules and lists are synced across all your devices and backed
 									up securely.
 								</p>
@@ -347,7 +389,7 @@
 
 				<!-- Visual Representation Section -->
 				<div
-					class="group relative flex aspect-square items-center justify-center overflow-hidden rounded-[3rem] border border-slate-800 bg-slate-950/50 p-12"
+					class="group relative flex aspect-square items-center justify-center overflow-hidden rounded-[3rem] border border-slate-200 bg-slate-50 p-12 dark:border-slate-800 dark:bg-slate-950/50"
 				>
 					<!-- Glow effect -->
 					<div
@@ -356,7 +398,7 @@
 
 					<div class="relative w-full max-w-sm space-y-8">
 						<div
-							class="translate-y-4 -rotate-2 transform rounded-3xl border border-amber-500/50 bg-[#0B0B0F] p-6 shadow-2xl transition-all duration-500 group-hover:translate-y-0 group-hover:rotate-0 group-hover:border-amber-500"
+							class="translate-y-4 -rotate-2 transform rounded-3xl border border-amber-500/30 bg-white p-6 shadow-2xl transition-all duration-500 group-hover:translate-y-0 group-hover:rotate-0 group-hover:border-amber-500 dark:border-amber-500/50 dark:bg-[#0B0B0F]"
 						>
 							<div class="mb-6 flex items-center justify-between">
 								<div class="flex items-center gap-3">
@@ -410,20 +452,28 @@
 	</div>
 </main>
 
-<footer class="border-t border-slate-900 bg-[#0B0B0F] py-16">
+<footer
+	class="border-t border-slate-200 bg-slate-50 py-16 transition-colors duration-500 dark:border-slate-900 dark:bg-[#0B0B0F]"
+>
 	<div class="container mx-auto px-4">
 		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
 			<div class="flex items-center gap-3">
 				<Shield class="h-7 w-7 text-amber-500" />
-				<span class="text-xl font-black tracking-tight text-white">{m.hero_title_app()}</span>
+				<span class="text-xl font-black tracking-tight text-slate-900 dark:text-white"
+					>{m.hero_title_app()}</span
+				>
 			</div>
 			<p class="text-sm text-slate-500">
 				&copy; {new Date().getFullYear()}
 				{m.footer_rights_suffix()}
 			</p>
-			<div class="flex items-center gap-8 text-sm font-bold text-slate-400">
-				<a href="/terms" class="transition-colors hover:text-[#FFBF00]">{m.footer_terms()}</a>
-				<a href="/privacy" class="transition-colors hover:text-[#FFBF00]">{m.footer_privacy()}</a>
+			<div class="flex items-center gap-8 text-sm font-bold text-slate-600 dark:text-slate-400">
+				<a href="/terms" class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
+					>{m.footer_terms()}</a
+				>
+				<a href="/privacy" class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
+					>{m.footer_privacy()}</a
+				>
 			</div>
 		</div>
 	</div>
@@ -432,10 +482,19 @@
 <style>
 	:global(html) {
 		scroll-behavior: smooth;
+		background-color: white;
+	}
+
+	:global(html.dark) {
 		background-color: #0b0b0f;
 	}
 
 	:global(body) {
+		background-color: white;
+		color: #0f172a;
+	}
+
+	:global(.dark body) {
 		background-color: #0b0b0f;
 		color: #f8fafc;
 	}

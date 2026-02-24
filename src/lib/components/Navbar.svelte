@@ -45,7 +45,7 @@
 </script>
 
 <header
-	class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+	class="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-slate-800 dark:bg-[#0B0B0F]/95 supports-[backdrop-filter]:dark:bg-[#0B0B0F]/60"
 >
 	<div class="container mx-auto flex h-16 items-center justify-between px-4">
 		<div class="flex h-full items-center gap-4">
@@ -138,7 +138,8 @@
 
 			<a href="/" class="mr-4 flex items-center space-x-2 transition-opacity hover:opacity-90">
 				<Shield class="h-6 w-6 text-primary dark:text-amber-500" />
-				<span class="inline-block text-xl font-bold tracking-tight sm:text-2xl dark:text-white"
+				<span
+					class="inline-block text-xl font-bold tracking-tight text-slate-900 sm:text-2xl dark:text-white"
 					>Ace Blocker</span
 				>
 			</a>
@@ -151,7 +152,7 @@
 							'inline-flex h-9 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50',
 							isActive(link.href)
 								? 'bg-accent text-primary dark:text-amber-500'
-								: 'text-muted-foreground dark:text-slate-400 dark:hover:text-white'
+								: 'text-slate-600 dark:text-slate-400 dark:hover:text-white'
 						)}
 					>
 						<link.icon class={cn('mr-2 h-4 w-4', link.iconClass)} />
@@ -165,7 +166,7 @@
 			<Button
 				variant="ghost"
 				size="icon"
-				class="h-9 w-9 rounded-md dark:text-slate-300 dark:hover:text-white"
+				class="h-9 w-9 rounded-md text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
 				onclick={toggleMode}
 				aria-label="Toggle theme"
 			>
@@ -182,7 +183,7 @@
 				<Button
 					href="/dashboard"
 					variant="ghost"
-					class="hidden items-center sm:inline-flex dark:text-slate-300 dark:hover:text-white"
+					class="hidden items-center text-slate-600 hover:text-slate-900 sm:inline-flex dark:text-slate-300 dark:hover:text-white"
 				>
 					Dashboard
 				</Button>
@@ -198,13 +199,13 @@
 				<Button
 					href="/signin"
 					variant="ghost"
-					class="hidden items-center sm:inline-flex dark:text-slate-300 dark:hover:text-white"
+					class="hidden items-center text-slate-600 hover:text-slate-900 sm:inline-flex dark:text-slate-300 dark:hover:text-white"
 				>
 					Log In
 				</Button>
 				<Button
 					href="/signup"
-					class="inline-flex items-center sm:px-6 dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
+					class="inline-flex items-center bg-slate-900 text-white hover:bg-slate-800 sm:px-6 dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
 				>
 					<span class="hidden sm:inline">Sign Up</span>
 					<span class="px-2 text-xs sm:hidden">Join</span>

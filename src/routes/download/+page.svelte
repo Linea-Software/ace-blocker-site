@@ -116,17 +116,17 @@
 <Navbar />
 
 <main
-	class="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 pt-16 pb-12"
+	class="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-4 pt-16 pb-12 transition-colors duration-500 dark:bg-[#0B0B0F]"
 >
 	<!-- Background Aesthetics (Zen Theme) -->
 	<div
-		class="pointer-events-none absolute inset-0 -z-10 bg-background transition-colors duration-500"
+		class="pointer-events-none absolute inset-0 -z-10 bg-slate-50 transition-colors duration-500 dark:bg-[#0B0B0F]"
 	>
 		<div
-			class="absolute inset-0 bg-radial-[at_50%_50%] from-background via-background to-amber-500/5 dark:to-amber-500/10"
+			class="absolute inset-0 bg-radial-[at_50%_50%] from-slate-50 via-slate-50 to-amber-500/5 dark:from-[#0B0B0F] dark:via-[#0B0B0F] dark:to-amber-500/10"
 		></div>
 		<div
-			class="absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-[120px] dark:bg-primary/10"
+			class="absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-200/50 blur-[120px] dark:bg-primary/10"
 		></div>
 
 		<!-- Subtle Moving Orbs -->
@@ -149,7 +149,7 @@
 						class="absolute inset-0 animate-pulse rounded-full bg-amber-500/20 blur-2xl transition-all duration-500 group-hover:bg-amber-500/30"
 					></div>
 					<div
-						class="relative flex h-24 w-24 items-center justify-center rounded-3xl border border-border/50 bg-card/80 text-amber-500 shadow-2xl backdrop-blur-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:border-amber-500/50"
+						class="relative flex h-24 w-24 items-center justify-center rounded-3xl border border-slate-200 bg-white text-amber-500 shadow-xl shadow-slate-200/50 backdrop-blur-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:border-amber-500/50 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-2xl"
 					>
 						<IconDownload size={44} stroke={1.5} />
 					</div>
@@ -157,13 +157,13 @@
 			</div>
 
 			<div class="space-y-4">
-				<h1 class="text-4xl font-black tracking-tighter md:text-7xl">
+				<h1 class="text-4xl font-black tracking-tighter text-slate-900 md:text-7xl dark:text-white">
 					{m.download_title().replace('...', '')}<span
-						class="inline-block w-[1em] text-left text-amber-500">{dots}</span
+						class="inline-block w-[1em] text-left text-amber-500 dark:text-amber-400">{dots}</span
 					>
 				</h1>
 				<p
-					class="mx-auto max-w-xl text-lg font-medium tracking-tight text-muted-foreground opacity-80 sm:text-xl"
+					class="mx-auto max-w-xl text-lg font-medium tracking-tight text-slate-600 opacity-80 sm:text-xl dark:text-slate-400"
 				>
 					{m.download_description()}
 				</p>
@@ -187,7 +187,7 @@
 				<a
 					href="https://github.com/aintDatCap/ace-blocker/releases"
 					target="_blank"
-					class="group flex items-center gap-1.5 text-sm font-bold text-muted-foreground/70 transition-all hover:text-amber-500"
+					class="group flex items-center gap-1.5 text-sm font-bold text-slate-500 transition-all hover:text-amber-500 dark:text-slate-400"
 				>
 					<IconFileText size={16} class="transition-transform group-hover:rotate-12" />
 					{m.download_app_version()}
@@ -202,11 +202,16 @@
 		<!-- Platform Bento Grid -->
 		<div class="space-y-10">
 			<div class="flex items-center gap-4 px-4">
-				<div class="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent"></div>
-				<span class="text-[10px] font-black tracking-[0.2em] text-muted-foreground/60 uppercase"
+				<div
+					class="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:via-slate-800"
+				></div>
+				<span
+					class="text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase dark:text-slate-500"
 					>{m.download_other_arch_title()}</span
 				>
-				<div class="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent"></div>
+				<div
+					class="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:via-slate-800"
+				></div>
 			</div>
 
 			<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -221,8 +226,8 @@
 								? 'hover:scale-[1.02] active:scale-[0.98]'
 								: 'cursor-not-allowed opacity-50 grayscale'}
 								{isRecommended
-								? 'border-2 border-amber-500/50 bg-amber-500/5 shadow-2xl shadow-amber-500/10'
-								: 'border border-border/40 bg-card/30 backdrop-blur-3xl hover:border-amber-500/30 hover:bg-amber-500/5 hover:shadow-xl'}"
+								? 'border-2 border-amber-500/50 bg-amber-50 shadow-2xl shadow-amber-500/10 dark:bg-amber-500/5'
+								: 'border border-slate-200 bg-white shadow-sm hover:border-amber-500/30 hover:bg-amber-50 dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-amber-500/30 dark:hover:bg-amber-500/5 dark:hover:shadow-xl'}"
 							aria-disabled={!option.isAvailable}
 						>
 							{#if isRecommended}
@@ -234,27 +239,29 @@
 							{/if}
 
 							<div
-								class="flex h-14 w-14 items-center justify-center rounded-2xl border border-border/50 bg-background/50 transition-all duration-300 {option.isAvailable
-									? 'group-hover:border-amber-500 group-hover:bg-amber-500 group-hover:text-black group-hover:shadow-lg group-hover:shadow-amber-500/30'
+								class="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 transition-all duration-300 dark:border-slate-800 dark:bg-slate-900/50 {option.isAvailable
+									? 'group-hover:border-amber-500 group-hover:bg-amber-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-amber-500/30 dark:group-hover:text-black'
 									: ''}"
 							>
 								<PlatformIcon size={32} stroke={1.5} />
 							</div>
 
 							<div class="space-y-1">
-								<h3 class="text-2xl font-black tracking-tight">{option.name}</h3>
-								<p class="text-sm font-bold text-muted-foreground opacity-80">{option.details}</p>
+								<h3 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+									{option.name}
+								</h3>
+								<p class="text-sm font-bold text-slate-500 dark:text-slate-400">{option.details}</p>
 							</div>
 
 							<div
-								class="mt-4 flex w-full items-center justify-between border-t border-border/30 pt-4"
+								class="mt-4 flex w-full items-center justify-between border-t border-slate-200 pt-4 dark:border-slate-800"
 							>
 								<span
-									class="text-[10px] font-black tracking-widest text-muted-foreground/60 uppercase"
+									class="text-[10px] font-black tracking-widest text-slate-400 uppercase dark:text-slate-500"
 									>{option.size}</span
 								>
 								<span
-									class="rounded-lg border border-border/50 bg-muted px-2 py-1 text-[10px] font-black tracking-wider text-muted-foreground uppercase"
+									class="rounded-lg border border-slate-200 bg-slate-100 px-2 py-1 text-[10px] font-black tracking-wider text-slate-500 uppercase dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
 								>
 									{option.ext}
 								</span>
@@ -263,7 +270,7 @@
 
 						{#if !option.isAvailable}
 							<div
-								class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-[2.5rem] bg-background/10 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100"
+								class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-[2.5rem] bg-white/50 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100 dark:bg-black/50"
 							>
 								<div
 									class="rounded-full bg-amber-500 px-4 py-2 text-xs font-black tracking-[0.2em] text-black uppercase shadow-xl shadow-amber-500/40"
@@ -281,7 +288,7 @@
 		<div class="mx-auto max-w-2xl space-y-16">
 			<!-- System Requirements -->
 			<div
-				class="relative overflow-hidden rounded-[2rem] border border-border/40 bg-card/20 p-10 backdrop-blur-sm transition-all hover:border-border/60 hover:bg-card/40"
+				class="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-10 shadow-sm transition-all hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/20 dark:hover:border-slate-700 dark:hover:bg-slate-900/40"
 			>
 				<div class="flex flex-col items-center gap-6 text-center">
 					<div
@@ -290,10 +297,14 @@
 						<IconShieldCheck size={24} />
 					</div>
 					<div class="space-y-2">
-						<h4 class="text-[10px] font-black tracking-[0.3em] text-muted-foreground/70 uppercase">
+						<h4
+							class="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase dark:text-slate-400"
+						>
 							{m.download_sys_req_title()}
 						</h4>
-						<p class="text-xl font-black tracking-tight">{m.download_sys_req_details()}</p>
+						<p class="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+							{m.download_sys_req_details()}
+						</p>
 					</div>
 				</div>
 			</div>
@@ -302,10 +313,10 @@
 			<div class="space-y-4 px-4">
 				<button
 					onclick={() => (showChecksums = !showChecksums)}
-					class="group flex w-full items-center justify-between rounded-2xl border border-border/40 bg-card/10 px-6 py-4 text-left backdrop-blur-sm transition-all hover:bg-card/30"
+					class="group flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-6 py-4 text-left shadow-sm transition-all hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/10 dark:hover:bg-slate-900/30"
 				>
 					<span
-						class="text-sm font-black tracking-widest text-muted-foreground/80 uppercase group-hover:text-amber-500"
+						class="text-sm font-black tracking-widest text-slate-700 uppercase group-hover:text-amber-500 dark:text-slate-300"
 						>{m.download_checksums_toggle()}</span
 					>
 					<div
@@ -319,7 +330,7 @@
 				{#if showChecksums}
 					<div
 						transition:fade={{ duration: 300 }}
-						class="overflow-hidden rounded-2xl border border-border/40 bg-muted/20 p-8 text-left backdrop-blur-md"
+						class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-8 text-left dark:border-slate-800 dark:bg-slate-900/20"
 					>
 						<div class="space-y-6 font-mono text-[10px]">
 							<div class="space-y-2">
@@ -327,7 +338,7 @@
 									Windows (x64) SHA-256
 								</p>
 								<p
-									class="rounded-xl border border-border/30 bg-background/50 p-4 break-all text-muted-foreground select-all"
+									class="rounded-xl border border-slate-200 bg-white p-4 break-all text-slate-600 select-all dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400"
 								>
 									TODO
 								</p>
@@ -337,7 +348,7 @@
 									Linux (x64) SHA-256
 								</p>
 								<p
-									class="rounded-xl border border-border/30 bg-background/50 p-4 break-all text-muted-foreground select-all"
+									class="rounded-xl border border-slate-200 bg-white p-4 break-all text-slate-600 select-all dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400"
 								>
 									TODO
 								</p>
@@ -352,7 +363,7 @@
 				<Button
 					variant="ghost"
 					href="/"
-					class="group h-12 rounded-full border border-transparent px-8 text-[10px] font-black tracking-widest text-muted-foreground uppercase transition-all hover:border-amber-500/20 hover:bg-amber-500/10 hover:text-amber-500"
+					class="group h-12 rounded-full border border-transparent px-8 text-[10px] font-black tracking-widest text-slate-500 uppercase transition-all hover:border-amber-500/20 hover:bg-amber-500/10 hover:text-amber-500 dark:text-slate-400"
 				>
 					<MoveLeft class="mr-3 h-4 w-4 transition-transform group-hover:-translate-x-2" />
 					{m.download_back_home()}

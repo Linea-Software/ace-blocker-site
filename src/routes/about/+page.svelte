@@ -29,12 +29,16 @@
 
 <Navbar />
 
-<main class="flex min-h-[calc(100vh-4rem)] flex-col bg-[#0B0B0F] text-slate-50">
+<main
+	class="flex min-h-[calc(100vh-4rem)] flex-col bg-white text-slate-900 transition-colors duration-500 dark:bg-[#0B0B0F] dark:text-slate-50"
+>
 	<!-- Hero Section -->
 	<section class="relative overflow-hidden pt-16 pb-16 md:pt-24 md:pb-24">
 		<div class="relative z-10 container mx-auto px-4">
 			<div class="mx-auto max-w-4xl space-y-8 text-center">
-				<h1 class="text-4xl font-black tracking-tight text-slate-50 sm:text-5xl md:text-6xl">
+				<h1
+					class="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl md:text-6xl dark:text-slate-50"
+				>
 					{m.about_hero_title()}
 					<span
 						class="block bg-gradient-to-r from-amber-400 to-[#FFBF00] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(255,191,0,0.4)]"
@@ -42,7 +46,9 @@
 						{m.about_hero_app()}
 					</span>
 				</h1>
-				<p class="mx-auto max-w-3xl text-lg leading-relaxed text-slate-400 md:text-xl">
+				<p
+					class="mx-auto max-w-3xl text-lg leading-relaxed text-slate-700 md:text-xl dark:text-slate-400"
+				>
 					{m.about_hero_description()}
 				</p>
 			</div>
@@ -60,7 +66,9 @@
 	</section>
 
 	<!-- Mission Section -->
-	<section class="relative overflow-hidden border-y border-slate-900 bg-slate-950/50 py-20">
+	<section
+		class="relative overflow-hidden border-y border-slate-200 bg-slate-50 py-20 dark:border-slate-900 dark:bg-slate-950/50"
+	>
 		<!-- Subtle radial backdrop -->
 		<div
 			class="absolute inset-0 z-0 bg-[radial-gradient(circle_at_left,_var(--tw-gradient-stops))] from-amber-500/5 via-transparent to-transparent"
@@ -69,16 +77,16 @@
 		<div class="relative z-10 container mx-auto px-4">
 			<div class="mx-auto grid max-w-5xl grid-cols-1 items-center gap-16 md:grid-cols-2">
 				<div class="space-y-6">
-					<h2 class="text-3xl font-black tracking-tight text-white md:text-4xl">
+					<h2 class="text-3xl font-black tracking-tight text-slate-900 md:text-4xl dark:text-white">
 						{m.about_mission_title()}
 					</h2>
-					<p class="text-lg leading-relaxed text-slate-400">
+					<p class="text-lg leading-relaxed text-slate-600 dark:text-slate-400">
 						{m.about_mission_description()}
 					</p>
 				</div>
 				<div class="group relative flex justify-center">
 					<div
-						class="relative flex h-64 w-64 items-center justify-center rounded-[3rem] border border-slate-800 bg-slate-900/50 shadow-2xl backdrop-blur-md transition-all duration-500 group-hover:border-amber-500/50 group-hover:shadow-[0_0_40px_rgba(255,191,0,0.1)]"
+						class="relative flex h-64 w-64 items-center justify-center rounded-[3rem] border border-slate-200 bg-white shadow-xl backdrop-blur-md transition-all duration-500 group-hover:border-amber-500/50 group-hover:shadow-[0_0_40px_rgba(255,191,0,0.1)] dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-2xl"
 					>
 						<!-- Official Logo Equivalent (Shield + Timer) -->
 						<div class="relative flex items-center justify-center">
@@ -114,10 +122,10 @@
 					<Cpu class="h-4 w-4" />
 					High-Performance Core
 				</div>
-				<h2 class="text-3xl font-black tracking-tight text-white md:text-4xl">
+				<h2 class="text-3xl font-black tracking-tight text-slate-900 md:text-4xl dark:text-white">
 					{m.about_tech_title()}
 				</h2>
-				<p class="mx-auto max-w-2xl text-lg text-slate-400">
+				<p class="mx-auto max-w-2xl text-lg text-slate-600 dark:text-slate-400">
 					{m.about_tech_description()}
 				</p>
 			</div>
@@ -125,7 +133,7 @@
 			<div class="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">
 				<!-- System-Wide -->
 				<div
-					class="group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/50 p-8 shadow-xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
+					class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
 					<div
 						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"
@@ -136,15 +144,17 @@
 					>
 						<Layers class="h-7 w-7 text-[#FFBF00]" />
 					</div>
-					<h3 class="mb-3 text-xl font-bold text-slate-100">{m.about_feature_system_title()}</h3>
-					<p class="leading-relaxed text-slate-400">
+					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
+						{m.about_feature_system_title()}
+					</h3>
+					<p class="leading-relaxed text-slate-600 dark:text-slate-400">
 						{m.about_feature_system_description()}
 					</p>
 				</div>
 
 				<!-- Intelligent DB -->
 				<div
-					class="group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/50 p-8 shadow-xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
+					class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
 					<div
 						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"
@@ -155,15 +165,17 @@
 					>
 						<Cpu class="h-7 w-7 text-[#FFBF00]" />
 					</div>
-					<h3 class="mb-3 text-xl font-bold text-slate-100">{m.about_feature_intel_title()}</h3>
-					<p class="leading-relaxed text-slate-400">
+					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
+						{m.about_feature_intel_title()}
+					</h3>
+					<p class="leading-relaxed text-slate-600 dark:text-slate-400">
 						{m.about_feature_intel_description()}
 					</p>
 				</div>
 
 				<!-- Boredom Scripts -->
 				<div
-					class="group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/50 p-8 shadow-xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
+					class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
 					<div
 						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"
@@ -174,15 +186,17 @@
 					>
 						<Code2 class="h-7 w-7 text-[#FFBF00]" />
 					</div>
-					<h3 class="mb-3 text-xl font-bold text-slate-100">{m.about_feature_scripts_title()}</h3>
-					<p class="leading-relaxed text-slate-400">
+					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
+						{m.about_feature_scripts_title()}
+					</h3>
+					<p class="leading-relaxed text-slate-600 dark:text-slate-400">
 						{m.about_feature_scripts_description()}
 					</p>
 				</div>
 
 				<!-- Locks -->
 				<div
-					class="group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/50 p-8 shadow-xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
+					class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
 					<div
 						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"
@@ -193,8 +207,10 @@
 					>
 						<Lock class="h-7 w-7 text-[#FFBF00]" />
 					</div>
-					<h3 class="mb-3 text-xl font-bold text-slate-100">{m.about_feature_locks_title()}</h3>
-					<p class="leading-relaxed text-slate-400">
+					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
+						{m.about_feature_locks_title()}
+					</h3>
+					<p class="leading-relaxed text-slate-600 dark:text-slate-400">
 						{m.about_feature_locks_description()}
 					</p>
 				</div>
@@ -206,24 +222,24 @@
 	<section class="relative mb-24 py-12">
 		<div class="container mx-auto px-4">
 			<div
-				class="relative space-y-8 overflow-hidden rounded-[3rem] border border-slate-800 bg-slate-950/80 px-8 py-16 text-center shadow-2xl backdrop-blur-md md:py-24"
+				class="relative space-y-8 overflow-hidden rounded-[3rem] border border-slate-200 bg-slate-50 px-8 py-16 text-center shadow-2xl backdrop-blur-md md:py-24 dark:border-slate-800 dark:bg-slate-950/80"
 			>
 				<!-- Decorative pattern & Glows -->
 				<div class="absolute inset-0 z-0">
 					<div
-						class="absolute top-0 left-1/2 h-[300px] w-[500px] -translate-x-1/2 rounded-full bg-amber-500/10 blur-[100px]"
+						class="absolute top-0 left-1/2 h-[300px] w-[500px] -translate-x-1/2 rounded-full bg-amber-500/10 opacity-50 blur-[100px] dark:opacity-100"
 					></div>
 					<div
-						class="absolute inset-0 opacity-[0.03]"
+						class="absolute inset-0 opacity-[0.03] dark:opacity-[0.03]"
 						style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 32px 32px;"
 					></div>
 				</div>
 
 				<div class="relative z-10 mx-auto max-w-3xl space-y-6">
-					<h2 class="text-3xl font-black tracking-tight text-white md:text-5xl">
+					<h2 class="text-3xl font-black tracking-tight text-slate-900 md:text-5xl dark:text-white">
 						Ready to take back control?
 					</h2>
-					<p class="text-lg text-slate-400 md:text-xl">
+					<p class="text-lg text-slate-700 md:text-xl dark:text-slate-400">
 						Join thousands of users who have transformed their relationship with the internet using
 						Ace Blocker.
 					</p>
@@ -233,14 +249,14 @@
 					class="relative z-10 mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
 				>
 					<Button
-						class="h-14 w-full bg-gradient-to-r from-[#FFBF00] to-orange-500 px-10 text-lg font-black text-[#0B0B0F] shadow-[0_10px_30px_rgba(255,191,0,0.3)] transition-all hover:scale-[1.02] active:scale-95 sm:w-auto"
+						class="h-14 w-full bg-gradient-to-r from-[#FFBF00] to-orange-500 px-10 text-lg font-black text-slate-950 shadow-[0_10px_30px_rgba(255,191,0,0.3)] transition-all hover:scale-[1.02] active:scale-95 sm:w-auto"
 						href={downloadUrl}
 					>
 						{m.hero_download_button()}
 					</Button>
 					<Button
 						variant="outline"
-						class="h-14 w-full border-[#FFBF00]/50 bg-transparent px-10 text-lg font-bold text-[#FFBF00] transition-colors hover:bg-[#FFBF00]/10 hover:text-[#FFBF00] sm:w-auto"
+						class="h-14 w-full border-slate-300 bg-transparent px-10 text-lg font-bold text-slate-900 transition-colors hover:bg-amber-500/10 hover:text-amber-600 sm:w-auto dark:border-[#FFBF00]/50 dark:text-[#FFBF00] dark:hover:text-[#FFBF00]"
 						href="/get-pro"
 					>
 						{m.hero_pro_button()}
@@ -251,20 +267,26 @@
 	</section>
 </main>
 
-<footer class="border-t border-slate-900 bg-[#0B0B0F] py-16">
+<footer class="border-t border-slate-200 bg-slate-50 py-16 dark:border-slate-900 dark:bg-[#0B0B0F]">
 	<div class="container mx-auto px-4">
 		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
 			<div class="flex items-center gap-3">
 				<Shield class="h-7 w-7 text-amber-500" />
-				<span class="text-xl font-black tracking-tight text-white">{m.hero_title_app()}</span>
+				<span class="text-xl font-black tracking-tight text-slate-900 dark:text-white"
+					>{m.hero_title_app()}</span
+				>
 			</div>
 			<p class="text-sm text-slate-500">
 				&copy; {new Date().getFullYear()}
 				{m.footer_rights_suffix()}
 			</p>
-			<div class="flex items-center gap-8 text-sm font-bold text-slate-400">
-				<a href="/terms" class="transition-colors hover:text-[#FFBF00]">{m.footer_terms()}</a>
-				<a href="/privacy" class="transition-colors hover:text-[#FFBF00]">{m.footer_privacy()}</a>
+			<div class="flex items-center gap-8 text-sm font-bold text-slate-600 dark:text-slate-400">
+				<a href="/terms" class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
+					>{m.footer_terms()}</a
+				>
+				<a href="/privacy" class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
+					>{m.footer_privacy()}</a
+				>
 			</div>
 		</div>
 	</div>
@@ -273,10 +295,19 @@
 <style>
 	:global(html) {
 		scroll-behavior: smooth;
+		background-color: white;
+	}
+
+	:global(html.dark) {
 		background-color: #0b0b0f;
 	}
 
 	:global(body) {
+		background-color: white;
+		color: #0f172a;
+	}
+
+	:global(.dark body) {
 		background-color: #0b0b0f;
 		color: #f8fafc;
 	}
