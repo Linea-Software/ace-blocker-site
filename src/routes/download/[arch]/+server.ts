@@ -23,7 +23,7 @@ export const GET: RequestHandler = async ({ params }) => {
     }
 
     if (arch === 'windows_x64') {
-        throw redirect(302, new URL('/ace-engine-win_x64.exe', baseUrl));
+        throw redirect(302, new URL(encodeURIComponent('/Ace Blocker Installer.exe'), baseUrl));
     }
 
     throw error(400, `Unsupported architecture: ${arch}. Supported architectures are: linux_x64, windows_x64`);
