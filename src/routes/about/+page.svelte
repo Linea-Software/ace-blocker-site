@@ -67,7 +67,7 @@
 		></div>
 
 		<div class="relative z-10 container mx-auto px-4">
-			<div class="grid grid-cols-1 items-center gap-16 md:grid-cols-2">
+			<div class="mx-auto grid max-w-5xl grid-cols-1 items-center gap-16 md:grid-cols-2">
 				<div class="space-y-6">
 					<h2 class="text-3xl font-black tracking-tight text-white md:text-4xl">
 						{m.about_mission_title()}
