@@ -119,8 +119,10 @@
 			</Sheet.Root>
 
 			<a href="/" class="mr-4 flex items-center space-x-2 transition-opacity hover:opacity-90">
-				<Shield class="h-6 w-6 text-primary" />
-				<span class="inline-block text-xl font-bold tracking-tight sm:text-2xl">Ace Blocker</span>
+				<Shield class="h-6 w-6 text-primary dark:text-amber-500" />
+				<span class="inline-block text-xl font-bold tracking-tight sm:text-2xl dark:text-white"
+					>Ace Blocker</span
+				>
 			</a>
 
 			<nav class="hidden h-full items-center gap-1 md:flex">
@@ -129,7 +131,9 @@
 						href={link.href}
 						class={cn(
 							'inline-flex h-9 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50',
-							isActive(link.href) ? 'bg-accent text-primary' : 'text-muted-foreground'
+							isActive(link.href)
+								? 'bg-accent text-primary dark:text-amber-500'
+								: 'text-muted-foreground dark:text-slate-400 dark:hover:text-white'
 						)}
 					>
 						<link.icon class={cn('mr-2 h-4 w-4', link.iconClass)} />
@@ -141,7 +145,11 @@
 
 		<div class="flex h-full items-center gap-2 sm:gap-4">
 			{#if $session.data}
-				<Button href="/dashboard" variant="ghost" class="hidden items-center sm:inline-flex">
+				<Button
+					href="/dashboard"
+					variant="ghost"
+					class="hidden items-center sm:inline-flex dark:text-slate-300 dark:hover:text-white"
+				>
 					Dashboard
 				</Button>
 				<Button
@@ -153,10 +161,17 @@
 					Sign Out
 				</Button>
 			{:else}
-				<Button href="/signin" variant="ghost" class="hidden items-center sm:inline-flex">
+				<Button
+					href="/signin"
+					variant="ghost"
+					class="hidden items-center sm:inline-flex dark:text-slate-300 dark:hover:text-white"
+				>
 					Log In
 				</Button>
-				<Button href="/signup" class="inline-flex items-center sm:px-6">
+				<Button
+					href="/signup"
+					class="inline-flex items-center sm:px-6 dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
+				>
 					<span class="hidden sm:inline">Sign Up</span>
 					<span class="px-2 text-xs sm:hidden">Join</span>
 				</Button>
