@@ -7,6 +7,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Loader2, AlertCircle, Shield, ArrowLeft, CheckCircle2, Sun, Moon } from '@lucide/svelte';
+	import { page } from '$app/state';
 	import { toggleMode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages.js';
 
@@ -17,8 +18,37 @@
 	let error = $state<string | null>(null);
 	let loading = $state(false);
 
+	const session = authClient.useSession();
+	const origin = $derived(page.url.searchParams.get('origin'));
 	const passwordsMatch = $derived(password.length > 0 && password === confirmPassword);
 	const canSubmit = $derived(!loading && name && email && password && passwordsMatch);
+
+	async function linkEngine() {
+		loading = true;
+		error = null;
+		try {
+			const res = await fetch('/api/v1/account/link-engine', {
+				method: 'POST'
+			});
+			if (!res.ok) throw new Error('Failed to link engine');
+			const data = await res.json();
+			window.location.href = `aceblocker://account/api-key?apiKey=${data.apiKey}`;
+		} catch (err) {
+			console.error(err);
+			loading = false;
+			error = 'Failed to generate access keys for the engine.';
+		}
+	}
+
+	$effect(() => {
+		if ($session.data && !loading) {
+			if (origin === 'ace-engine' || origin === 'aceblocker') {
+				linkEngine();
+			} else {
+				goto('/');
+			}
+		}
+	});
 
 	async function handleSignUp(e: Event) {
 		e.preventDefault();
@@ -36,9 +66,13 @@
 				callbackURL: '/'
 			},
 			{
-				onSuccess: () => {
-					loading = false;
-					goto('/');
+				onSuccess: async () => {
+					if (origin === 'ace-engine' || origin === 'aceblocker') {
+						await linkEngine();
+					} else {
+						loading = false;
+						goto('/');
+					}
 				},
 				onError: (ctx) => {
 					loading = false;
