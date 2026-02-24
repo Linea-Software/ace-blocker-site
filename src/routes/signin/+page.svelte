@@ -16,7 +16,31 @@
 	let error = $state<string | null>(null);
 	let loading = $state(false);
 
+	const session = authClient.useSession();
 	const origin = $derived(page.url.searchParams.get('origin'));
+
+	async function linkEngine() {
+		loading = true;
+		error = null;
+		try {
+			const res = await fetch('/api/v1/account/link-engine', {
+				method: 'POST'
+			});
+			if (!res.ok) throw new Error('Failed to link engine');
+			const data = await res.json();
+			window.location.href = `aceblocker://account/api-key?apiKey=${data.apiKey}`;
+		} catch (err) {
+			console.error(err);
+			loading = false;
+			error = 'Failed to generate access keys for the engine.';
+		}
+	}
+
+	$effect(() => {
+		if ($session.data && (origin === 'ace-engine' || origin === 'aceblocker') && !loading) {
+			linkEngine();
+		}
+	});
 
 	async function handleSignIn(e: Event) {
 		e.preventDefault();
@@ -30,19 +54,8 @@
 			},
 			{
 				onSuccess: async () => {
-					if (origin === 'ace-engine') {
-						try {
-							const res = await fetch('/api/v1/account/link-engine', {
-								method: 'POST'
-							});
-							if (!res.ok) throw new Error('Failed to link engine');
-							const data = await res.json();
-							window.location.href = `aceblocker://account/api-key?apiKey=${data.apiKey}`;
-						} catch (err) {
-							console.error(err);
-							loading = false;
-							error = 'Failed to generate access keys for the engine.';
-						}
+					if (origin === 'ace-engine' || origin === 'aceblocker') {
+						await linkEngine();
 					} else {
 						loading = false;
 						goto('/');
