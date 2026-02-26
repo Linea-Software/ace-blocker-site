@@ -118,25 +118,21 @@ const fetchBackupRoute = createRoute({
     }
 });
 
-export const backupsRouter = new OpenAPIHono();
+export const backupsRouter = new OpenAPIHono<{
+    Variables: {
+        user: typeof auth.$Infer.Session.user | null;
+        session: typeof auth.$Infer.Session.session | null;
+    }
+}>();
 
 backupsRouter.openapi(createBackupRoute, async (c) => {
-    const apiKey = c.req.header('x-api-key');
-    if (!apiKey) {
-        throw new HTTPException(401, { message: 'x-api-key header required' });
-    }
+    const user = c.get('user');
 
-    const session = await auth.api.getSession({
-        headers: new Headers({
-            'x-api-key': apiKey
-        })
-    });
-
-    if (!session?.user) {
+    if (!user) {
         throw new HTTPException(401, { message: 'Unauthorized' });
     }
 
-    const isPro = await isUserPro(session.user.email);
+    const isPro = await isUserPro(user.email);
     if (!isPro) {
         throw new HTTPException(403, { message: 'Pro license required' });
     }
@@ -152,7 +148,7 @@ backupsRouter.openapi(createBackupRoute, async (c) => {
     const backupId = uuidv7();
     await db.insert(backups).values({
         id: backupId,
-        userId: session.user.id,
+        userId: user.id,
         data: JSON.stringify(validatedData),
         version: validatedData.version,
         createdAt: new Date()
@@ -162,22 +158,13 @@ backupsRouter.openapi(createBackupRoute, async (c) => {
 });
 
 backupsRouter.openapi(fetchBackupRoute, async (c) => {
-    const apiKey = c.req.header('x-api-key');
-    if (!apiKey) {
-        throw new HTTPException(401, { message: 'x-api-key header required' });
-    }
+    const user = c.get('user');
 
-    const session = await auth.api.getSession({
-        headers: new Headers({
-            'x-api-key': apiKey
-        })
-    });
-
-    if (!session?.user) {
+    if (!user) {
         throw new HTTPException(401, { message: 'Unauthorized' });
     }
 
-    const isPro = await isUserPro(session.user.email);
+    const isPro = await isUserPro(user.email);
     if (!isPro) {
         throw new HTTPException(403, { message: 'Pro license required' });
     }
@@ -185,7 +172,7 @@ backupsRouter.openapi(fetchBackupRoute, async (c) => {
     const [latestBackup] = await db
         .select()
         .from(backups)
-        .where(eq(backups.userId, session.user.id))
+        .where(eq(backups.userId, user.id))
         .orderBy(desc(backups.createdAt))
         .limit(1);
 

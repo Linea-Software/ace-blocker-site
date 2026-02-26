@@ -42,29 +42,25 @@ const route = createRoute({
     }
 });
 
-export const accountRouter = new OpenAPIHono();
+export const accountRouter = new OpenAPIHono<{
+    Variables: {
+        user: typeof auth.$Infer.Session.user | null;
+        session: typeof auth.$Infer.Session.session | null;
+    }
+}>();
 
 accountRouter.openapi(route, async (c) => {
-    const apiKey = c.req.header('x-api-key');
-    if (!apiKey) {
-        throw new HTTPException(401, { message: 'x-api-key header required' });
-    }
+    const user = c.get('user');
 
-    const session = await auth.api.getSession({
-        headers: new Headers({
-            'x-api-key': apiKey
-        })
-    });
-
-    if (!session?.user) {
+    if (!user) {
         throw new HTTPException(401, { message: 'Unauthorized' });
     }
 
-    const isPro = await isUserPro(session.user.email);
+    const isPro = await isUserPro(user.email);
 
     return c.json({
-        name: session.user.name,
-        email: session.user.email,
+        name: user.name,
+        email: user.email,
         isPro: isPro
     });
 });
@@ -90,13 +86,9 @@ const linkEngineRoute = createRoute({
 });
 
 accountRouter.openapi(linkEngineRoute, async (c) => {
-    // This endpoint must be called with a session cookie (browser auth)
-    // No x-api-key header check here, we want the current session
-    const session = await auth.api.getSession({
-        headers: c.req.raw.headers
-    });
+    const user = c.get('user');
 
-    if (!session?.user) {
+    if (!user) {
         throw new HTTPException(401, { message: 'Unauthorized' });
     }
 
@@ -118,7 +110,7 @@ accountRouter.openapi(linkEngineRoute, async (c) => {
     const apiKeyResponse = await auth.api.createApiKey({
         body: {
             name: 'Desktop App',
-            userId: session.user.id
+            userId: user.id
         }
     });
 
@@ -152,11 +144,9 @@ const ListApiKeysRoute = createRoute({
 });
 
 accountRouter.openapi(ListApiKeysRoute, async (c) => {
-    const session = await auth.api.getSession({
-        headers: c.req.raw.headers
-    });
+    const user = c.get('user');
 
-    if (!session?.user) {
+    if (!user) {
         throw new HTTPException(401, { message: 'Unauthorized' });
     }
 
@@ -205,11 +195,9 @@ const RevokeApiKeyRoute = createRoute({
 });
 
 accountRouter.openapi(RevokeApiKeyRoute, async (c) => {
-    const session = await auth.api.getSession({
-        headers: c.req.raw.headers
-    });
+    const user = c.get('user');
 
-    if (!session?.user) {
+    if (!user) {
         throw new HTTPException(401, { message: 'Unauthorized' });
     }
 
