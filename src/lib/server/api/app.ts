@@ -1,6 +1,7 @@
 import { dev } from '$app/environment';
 import { swaggerUI } from '@hono/swagger-ui';
 import { OpenAPIHono } from '@hono/zod-openapi';
+import { merge, isErrorResult } from 'openapi-merge';
 import { v1Router } from './routers/v1';
 import { auth } from '$lib/server/auth';
 
@@ -39,6 +40,36 @@ app.on(['POST', 'GET'], '/auth/*', (c) => auth.handler(c.req.raw));
 
 app.route('/v1', v1Router);
 
+/**
+ * Better Auth generates OpenAPI 3.1 compatible schemas which might include
+ * "type": ["string", "null"]. OpenAPI 3.0 (used by many UIs) doesn't support this.
+ * This function recursively fixes these to "type": "string", "nullable": true.
+ */
+function fixBetterAuthSchema(obj: any) {
+    if (!obj || typeof obj !== 'object') return;
+    if (obj.type && Array.isArray(obj.type)) {
+        const types = obj.type as string[];
+        const hasNull = types.includes('null');
+        const mainType = types.find((t) => t !== 'null');
+        if (mainType) {
+            obj.type = mainType;
+            if (hasNull) {
+                obj.nullable = true;
+            }
+        } else if (hasNull) {
+            obj.type = 'string'; // Default fallback
+            obj.nullable = true;
+        }
+    }
+    for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            if (typeof obj[key] === 'object') {
+                fixBetterAuthSchema(obj[key]);
+            }
+        }
+    }
+}
+
 if (dev) {
     app.get('/v1/openapi.json', async (c) => {
         const doc = app.getOpenAPIDocument({
@@ -52,27 +83,22 @@ if (dev) {
         try {
             const authDoc = await auth.api.generateOpenAPISchema();
             if (authDoc) {
-                // Merge paths
-                for (const [path, value] of Object.entries(authDoc.paths)) {
-                    // Better Auth paths are relative to the auth base, so we add /auth
-                    doc.paths[`/auth${path}`] = value as any;
-                }
+                fixBetterAuthSchema(authDoc);
 
-                // Merge components
-                if (authDoc.components) {
-                    doc.components = doc.components || {};
-                    if (authDoc.components.schemas) {
-                        doc.components.schemas = {
-                            ...doc.components.schemas,
-                            ...(authDoc.components.schemas as any),
-                        };
-                    }
-                    if (authDoc.components.securitySchemes) {
-                        doc.components.securitySchemes = {
-                            ...doc.components.securitySchemes,
-                            ...(authDoc.components.securitySchemes as any),
-                        };
-                    }
+                const mergeResult = merge([
+                    {
+                        oas: doc as any,
+                    },
+                    {
+                        oas: authDoc as any,
+                        pathModification: { prepend: '/auth' },
+                    },
+                ]);
+
+                if (!isErrorResult(mergeResult)) {
+                    return c.json(mergeResult.output);
+                } else {
+                    console.error('OpenAPI Merge Error:', mergeResult.message);
                 }
             }
         } catch (e) {
