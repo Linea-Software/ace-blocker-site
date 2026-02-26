@@ -20,31 +20,28 @@
 			return;
 		}
 
-		if (data.success && data.licenseKey && data.apiKey) {
+		if (data.success && data.apiKey) {
 			// Wait a bit for the animation before trying to activate
 			setTimeout(activateLicense, 1500);
 		}
 	});
 
 	async function activateLicense() {
-		if (!data.licenseKey) return;
-
 		activationStatus = 'activating';
 		try {
 			const callbackUrl = encodeURIComponent(
 				`${window.location.origin}${window.location.pathname}?activated=true`
 			);
-			window.location.href = `aceblocker://licence/activate?licenceKey=${data.licenseKey}&apiKey=${data.apiKey}&callback=${callbackUrl}`;
+			window.location.href = `aceblocker://account/api-key?apiKey=${data.apiKey}&callback=${callbackUrl}`;
 		} catch (err) {
 			console.error('Activation error:', err);
 			activationStatus = 'failed';
-			errorMessage =
-				'Could not automatically activate the app. Please try manually or copy the key.';
+			errorMessage = 'Could not automatically activate the app. Please try manually.';
 		}
 	}
 	function copyToClipboard() {
-		if (data.licenseKey) {
-			navigator.clipboard.writeText(data.licenseKey);
+		if (data.apiKey) {
+			navigator.clipboard.writeText(data.apiKey);
 			copied = true;
 			setTimeout(() => (copied = false), 2000);
 		}
@@ -97,13 +94,13 @@
 					>
 						<div class="relative z-10">
 							<p class="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-								Your License Key
+								Your Device API Key
 							</p>
 							<div class="flex items-center gap-3">
 								<code
 									class="flex-1 rounded-lg border border-border/50 bg-background/80 px-4 py-3 font-mono text-lg font-bold tracking-wider select-all"
 								>
-									{data.licenseKey}
+									{data.apiKey}
 								</code>
 								<Button
 									variant="secondary"
