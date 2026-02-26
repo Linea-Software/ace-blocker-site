@@ -14,6 +14,11 @@ const route = createRoute({
     operationId: 'getBoredomScripts',
     method: 'get',
     path: '/boredom',
+    security: [
+        {
+            APIKeyHeader: []
+        }
+    ],
     responses: {
         200: {
             content: {

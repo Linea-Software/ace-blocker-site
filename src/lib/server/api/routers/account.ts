@@ -17,17 +17,11 @@ const route = createRoute({
     operationId: 'getAccountDetails',
     method: 'get',
     path: '/',
-    request: {
-        headers: z.object({
-            'x-api-key': z.string().openapi({
-                param: {
-                    name: 'x-api-key',
-                    in: 'header'
-                },
-                example: 'your-api-key-here'
-            })
-        })
-    },
+    security: [
+        {
+            APIKeyHeader: []
+        }
+    ],
     responses: {
         200: {
             description: 'Account details retrieved successfully',
@@ -73,6 +67,11 @@ const linkEngineRoute = createRoute({
     operationId: 'linkEngine',
     method: 'post',
     path: '/link-engine',
+    security: [
+        {
+            APIKeyHeader: []
+        }
+    ],
     responses: {
         200: {
             description: 'API key generated/retrieved for desktop app',
@@ -127,6 +126,11 @@ const ListApiKeysRoute = createRoute({
     operationId: 'listApiKeys',
     method: 'get',
     path: '/api-keys',
+    security: [
+        {
+            APIKeyHeader: []
+        }
+    ],
     responses: {
         200: {
             description: 'List of API keys retrieved successfully',
@@ -171,6 +175,11 @@ const RevokeApiKeyRoute = createRoute({
     operationId: 'revokeApiKey',
     method: 'post',
     path: '/revoke',
+    security: [
+        {
+            APIKeyHeader: []
+        }
+    ],
     request: {
         body: {
             content: {

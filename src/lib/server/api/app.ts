@@ -11,6 +11,12 @@ export const app = new OpenAPIHono<{
     }
 }>().basePath('/api');
 
+app.openAPIRegistry.registerComponent('securitySchemes', 'APIKeyHeader', {
+    type: 'apiKey',
+    in: 'header',
+    name: 'x-api-key',
+});
+
 // Better Auth Middleware
 app.use('*', async (c, next) => {
     const session = await auth.api.getSession({

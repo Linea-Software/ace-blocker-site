@@ -52,16 +52,12 @@ const createBackupRoute = createRoute({
     operationId: 'createBackup',
     method: 'post',
     path: '/',
+    security: [
+        {
+            APIKeyHeader: []
+        }
+    ],
     request: {
-        headers: z.object({
-            'x-api-key': z.string().openapi({
-                param: {
-                    name: 'x-api-key',
-                    in: 'header'
-                },
-                example: 'your-api-key-here'
-            })
-        }),
         body: {
             content: {
                 'application/json': {
@@ -92,17 +88,11 @@ const fetchBackupRoute = createRoute({
     operationId: 'fetchBackup',
     method: 'get',
     path: '/',
-    request: {
-        headers: z.object({
-            'x-api-key': z.string().openapi({
-                param: {
-                    name: 'x-api-key',
-                    in: 'header'
-                },
-                example: 'your-api-key-here'
-            })
-        })
-    },
+    security: [
+        {
+            APIKeyHeader: []
+        }
+    ],
     responses: {
         200: {
             description: 'Latest backup retrieved successfully',

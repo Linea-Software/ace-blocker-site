@@ -22,6 +22,11 @@ const route = createRoute({
     operationId: 'getSitesListBackup',
     method: 'get',
     path: '/{siteListUuid}/backup',
+    security: [
+        {
+            APIKeyHeader: []
+        }
+    ],
     request: {
         params: z.object({
             siteListUuid: z.string().uuid().openapi({
