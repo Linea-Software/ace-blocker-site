@@ -40,12 +40,46 @@ app.on(['POST', 'GET'], '/auth/*', (c) => auth.handler(c.req.raw));
 app.route('/v1', v1Router);
 
 if (dev) {
-    app.doc('/v1/openapi.json', {
-        openapi: '3.0.0',
-        info: {
-            version: '1.0.0',
-            title: 'Ace Blocker API',
-        },
+    app.get('/v1/openapi.json', async (c) => {
+        const doc = app.getOpenAPIDocument({
+            openapi: '3.0.0',
+            info: {
+                version: '1.0.0',
+                title: 'Ace Blocker API',
+            },
+        });
+
+        try {
+            const authDoc = await auth.api.generateOpenAPISchema();
+            if (authDoc) {
+                // Merge paths
+                for (const [path, value] of Object.entries(authDoc.paths)) {
+                    // Better Auth paths are relative to the auth base, so we add /auth
+                    doc.paths[`/auth${path}`] = value as any;
+                }
+
+                // Merge components
+                if (authDoc.components) {
+                    doc.components = doc.components || {};
+                    if (authDoc.components.schemas) {
+                        doc.components.schemas = {
+                            ...doc.components.schemas,
+                            ...(authDoc.components.schemas as any),
+                        };
+                    }
+                    if (authDoc.components.securitySchemes) {
+                        doc.components.securitySchemes = {
+                            ...doc.components.securitySchemes,
+                            ...(authDoc.components.securitySchemes as any),
+                        };
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Failed to merge Better Auth OpenAPI schema:', e);
+        }
+
+        return c.json(doc);
     });
 
     app.get(

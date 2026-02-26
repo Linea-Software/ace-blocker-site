@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { betterAuth } from 'better-auth';
-import { admin, apiKey } from "better-auth/plugins"
+import { admin, apiKey, openAPI } from "better-auth/plugins"
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from './db';
 import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
@@ -57,6 +57,7 @@ export const auth = betterAuth({
 		apiKey({
 			enableSessionForAPIKeys: true
 		}),
+		openAPI(),
 		dodopayments({
 			client: dodoPayments,
 			createCustomerOnSignUp: true,
