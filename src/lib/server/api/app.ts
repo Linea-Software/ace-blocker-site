@@ -41,30 +41,28 @@ app.on(['POST', 'GET'], '/auth/*', (c) => auth.handler(c.req.raw));
 app.route('/v1', v1Router);
 
 /**
- * Better Auth generates OpenAPI 3.1 compatible schemas which might include
- * "type": ["string", "null"]. OpenAPI 3.0 (used by many UIs) doesn't support this.
- * This function recursively fixes these to "type": "string", "nullable": true.
+ * Better Auth generates OpenAPI 3.1 compatible schemas.
+ * Some tools require every operation to have an operationId.
+ * This function ensures operationId and summary are present.
  */
 function fixBetterAuthSchema(obj: any) {
     if (!obj || typeof obj !== 'object') return;
-    if (obj.type && Array.isArray(obj.type)) {
-        const types = obj.type as string[];
-        const hasNull = types.includes('null');
-        const mainType = types.find((t) => t !== 'null');
-        if (mainType) {
-            obj.type = mainType;
-            if (hasNull) {
-                obj.nullable = true;
-            }
-        } else if (hasNull) {
-            obj.type = 'string'; // Default fallback
-            obj.nullable = true;
-        }
-    }
-    for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-            if (typeof obj[key] === 'object') {
-                fixBetterAuthSchema(obj[key]);
+
+    if (obj.paths) {
+        for (const [path, methods] of Object.entries(obj.paths)) {
+            if (typeof methods === 'object' && methods !== null) {
+                for (const [method, operation] of Object.entries(methods)) {
+                    if (typeof operation === 'object' && operation !== null) {
+                        const op = operation as any;
+                        if (!op.operationId) {
+                            // Generate a unique operationId: method + path (cleaned up)
+                            op.operationId = `${method}${path.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                        }
+                        if (!op.summary) {
+                            op.summary = `${method.toUpperCase()} ${path}`;
+                        }
+                    }
+                }
             }
         }
     }
@@ -73,7 +71,7 @@ function fixBetterAuthSchema(obj: any) {
 if (dev) {
     app.get('/v1/openapi.json', async (c) => {
         const doc = app.getOpenAPIDocument({
-            openapi: '3.0.0',
+            openapi: '3.1.0',
             info: {
                 version: '1.0.0',
                 title: 'Ace Blocker API',
@@ -96,7 +94,10 @@ if (dev) {
                 ]);
 
                 if (!isErrorResult(mergeResult)) {
-                    return c.json(mergeResult.output);
+                    // Ensure the output is also 3.1.0
+                    const output = mergeResult.output as any;
+                    output.openapi = '3.1.0';
+                    return c.json(output);
                 } else {
                     console.error('OpenAPI Merge Error:', mergeResult.message);
                 }
