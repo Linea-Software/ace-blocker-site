@@ -33,8 +33,9 @@ const BackupScheduleEntrySchema = z.object({
 }).openapi('BackupScheduleEntry');
 
 const BackupNetworkBlockSchema = z.object({
-    id: z.string().uuid(),
+    id: z.uuid(),
     name: z.string(),
+    safe_search: z.boolean(),
     schedules: z.array(BackupScheduleEntrySchema),
     userRules: z.array(z.string()),
     connectedSitesLists: z.array(z.string().uuid())

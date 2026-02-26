@@ -1,5 +1,6 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { dodoPayments } from '$lib/server/auth';
+import { isUserPro } from '$lib/server/pro';
+import { auth } from '$lib/server/auth';
 import { HTTPException } from 'hono/http-exception';
 import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
@@ -13,17 +14,6 @@ const route = createRoute({
     operationId: 'getBoredomScripts',
     method: 'get',
     path: '/boredom',
-    request: {
-        query: z.object({
-            licenseKey: z.string().min(1).openapi({
-                param: {
-                    name: 'licenseKey',
-                    in: 'query'
-                },
-                example: '12345'
-            })
-        })
-    },
     responses: {
         200: {
             content: {
@@ -36,8 +26,11 @@ const route = createRoute({
             },
             description: 'Download URL and version for boredom scripts'
         },
+        401: {
+            description: 'Unauthorized'
+        },
         403: {
-            description: 'Invalid or expired license key'
+            description: 'Forbidden (Pro required)'
         },
         500: {
             description: 'Server error'
@@ -45,29 +38,25 @@ const route = createRoute({
     }
 });
 
-export const scriptsRouter = new OpenAPIHono()
+export const scriptsRouter = new OpenAPIHono<{
+    Variables: {
+        user: typeof auth.$Infer.Session.user | null;
+        session: typeof auth.$Infer.Session.session | null;
+    }
+}>()
     .openapi(route, async (c) => {
-        const { licenseKey } = c.req.valid('query');
+        const user = c.get('user');
+        if (!user) {
+            throw new HTTPException(401, { message: 'Unauthorized' });
+        }
+
+        const isPro = await isUserPro(user.email);
+        if (!isPro) {
+            throw new HTTPException(403, { message: 'Pro license required' });
+        }
+
         const securityKey = env.BUNNY_SECURITY_KEY;
         const storagePath = "/premium/boredom-scripts.zip";
-
-        try {
-            const validation = await dodoPayments.licenses.validate({
-                license_key: licenseKey
-            });
-
-            if (!validation.valid) {
-                throw new HTTPException(403, { message: "Invalid or expired license key" });
-            }
-        } catch (e) {
-            if (e instanceof HTTPException) {
-                throw e;
-            }
-            if (e instanceof Error && 'status' in e && e.status === 403) {
-                throw new HTTPException(403, { message: "Invalid or expired license key" });
-            }
-            throw new HTTPException(500, { message: "Failed to validate license key" });
-        }
 
         const expires = Math.round(Date.now() / 1000) + 600;
         const hashableBase = securityKey + storagePath + expires;

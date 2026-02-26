@@ -1,12 +1,16 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { auth } from '$lib/server/auth';
-import { isUserPro } from '$lib/server/pro';
+import { getProStatus } from '$lib/server/pro';
 import { HTTPException } from 'hono/http-exception';
+
 
 const AccountDetailsSchema = z.object({
     name: z.string(),
     email: z.email(),
-    isPro: z.boolean()
+    licence: z.object({
+        isActive: z.boolean(),
+        expiration: z.date(),
+    })
 }).openapi('AccountDetails');
 
 const route = createRoute({
@@ -56,12 +60,12 @@ accountRouter.openapi(route, async (c) => {
         throw new HTTPException(401, { message: 'Unauthorized' });
     }
 
-    const isPro = await isUserPro(user.email);
+    const licence = await getProStatus(user.email);
 
     return c.json({
         name: user.name,
         email: user.email,
-        isPro: isPro
+        licence: licence
     });
 });
 
