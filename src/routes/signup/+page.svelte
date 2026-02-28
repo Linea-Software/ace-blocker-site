@@ -32,7 +32,24 @@
 			});
 			if (!res.ok) throw new Error('Failed to link engine');
 			const data = await res.json();
-			window.location.href = `aceblocker://account/api-key?apiKey=${data.apiKey}`;
+			const apiKey = data.apiKey;
+
+			const localUrl = `https://ace-engine.local/account/api-key?apiKey=${apiKey}`;
+			const protocolUrl = `aceblocker://account/api-key?apiKey=${apiKey}`;
+
+			try {
+				// Try the local engine first via HTTPS
+				const localRes = await fetch(localUrl, { method: 'GET' });
+				if (localRes.ok) {
+					goto('/');
+				} else {
+					window.location.href = protocolUrl;
+				}
+			} catch (err) {
+				// If local engine is not reachable or CORS fails, fall back to custom protocol
+				console.warn('Local engine link failed, falling back to protocol:', err);
+				window.location.href = protocolUrl;
+			}
 		} catch (err) {
 			console.error(err);
 			loading = false;

@@ -32,7 +32,23 @@
 			const callbackUrl = encodeURIComponent(
 				`${window.location.origin}${window.location.pathname}?activated=true`
 			);
-			window.location.href = `aceblocker://account/api-key?apiKey=${data.apiKey}&callback=${callbackUrl}`;
+			const apiKey = data.apiKey;
+			const localUrl = `https://ace-engine.local/account/api-key?apiKey=${apiKey}&callback=${callbackUrl}`;
+			const protocolUrl = `aceblocker://account/api-key?apiKey=${apiKey}&callback=${callbackUrl}`;
+
+			try {
+				// Try the local engine first via HTTPS
+				const localRes = await fetch(localUrl, { method: 'GET' });
+				if (localRes.ok) {
+					activationStatus = 'success';
+				} else {
+					window.location.href = protocolUrl;
+				}
+			} catch (err) {
+				// If local engine is not reachable or CORS fails, fall back to custom protocol
+				console.warn('Local engine activation failed, falling back to protocol:', err);
+				window.location.href = protocolUrl;
+			}
 		} catch (err) {
 			console.error('Activation error:', err);
 			activationStatus = 'failed';
