@@ -11,7 +11,7 @@
 	import { toggleMode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages.js';
 
-	import { api } from '$lib/api';
+	import { apiClient } from '$lib/api-client';
 
 	let email = $state('');
 	let password = $state('');
@@ -25,7 +25,7 @@
 		loading = true;
 		error = null;
 		try {
-			const { data, error: apiError } = await api.v1.account['link-engine'].post();
+			const { data, error: apiError } = await apiClient.v1.account['link-engine'].post();
 
 			if (apiError) throw new Error((apiError.value as string) || 'Failed to link engine');
 			if (!data) throw new Error('Failed to link engine');
@@ -37,7 +37,7 @@
 
 			try {
 				// Try the local engine first via HTTPS
-				const localRes = await fetch(localUrl, { method: 'GET' });
+				const localRes = await fetch(localUrl, { method: 'POST' });
 				if (localRes.ok) {
 					goto('/');
 				} else {
