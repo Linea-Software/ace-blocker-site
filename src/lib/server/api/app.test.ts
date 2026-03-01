@@ -2,56 +2,59 @@ import { describe, it, expect, vi } from 'vitest';
 import { app } from './app';
 
 vi.mock('$lib/server/auth', () => {
-    return {
-        dodoPayments: {
-            licenses: {
-                validate: vi.fn().mockImplementation(async ({ license_key }) => {
-                    if (license_key === 'valid-key') {
-                        return { valid: true };
-                    }
-                    return { valid: false };
-                })
-            }
-        }
-    };
+	return {
+		dodoPayments: {
+			licenses: {
+				validate: vi.fn().mockImplementation(async ({ license_key }) => {
+					if (license_key === 'valid-key') {
+						return { valid: true };
+					}
+					return { valid: false };
+				})
+			}
+		}
+	};
 });
 
 // Mock environment variables for scripts router
 vi.mock('$env/dynamic/private', () => ({
-    env: {
-        BUNNY_SECURITY_KEY: 'test-secret-key'
-    }
+	env: {
+		BUNNY_SECURITY_KEY: 'test-secret-key'
+	}
 }));
 
-describe('Hono API', () => {
-    it('GET /api/v1/licenses/:key returns validation result', async () => {
-        const res = await app.request('/api/v1/licenses/valid-key');
-        expect(res.status).toBe(200);
-        const data = await res.json();
-        expect(data).toEqual({ valid: true });
+describe('Elysia API', () => {
+	const handle = (path: string, method = 'GET') =>
+		app.handle(new Request(`http://localhost${path}`, { method }));
 
-        const resInvalid = await app.request('/api/v1/licenses/invalid-key');
-        expect(resInvalid.status).toBe(200);
-        const dataInvalid = await resInvalid.json();
-        expect(dataInvalid).toEqual({ valid: false });
-    });
+	it('GET /api/v1/licenses/:key returns validation result', async () => {
+		const res = await handle('/api/v1/licenses/valid-key');
+		expect(res.status).toBe(200);
+		const data = await res.json();
+		expect(data).toEqual({ valid: true });
 
-    it('GET /api/v1/scripts/boredom returns download url and version for valid license', async () => {
-        const res = await app.request('/api/v1/scripts/boredom?licenseKey=valid-key');
-        expect(res.status).toBe(200);
-        const data = await res.json();
-        expect(data.url).toContain('https://cdn.aceblocker.com/boredom-scripts.zip');
-        expect(data.url).toContain('token=');
-        expect(data.version).toBe('0.1.0');
-    });
+		const resInvalid = await handle('/api/v1/licenses/invalid-key');
+		expect(resInvalid.status).toBe(200);
+		const dataInvalid = await resInvalid.json();
+		expect(dataInvalid).toEqual({ valid: false });
+	});
 
-    it('GET /api/v1/scripts/boredom returns 403 for invalid license', async () => {
-        const res = await app.request('/api/v1/scripts/boredom?licenseKey=invalid-key');
-        expect(res.status).toBe(403);
-    });
+	it('GET /api/v1/scripts/boredom returns download url and version for valid license', async () => {
+		const res = await handle('/api/v1/scripts/boredom?licenseKey=valid-key');
+		expect(res.status).toBe(200);
+		const data = await res.json();
+		expect(data.url).toContain('https://cdn.aceblocker.com/boredom-scripts.zip');
+		expect(data.url).toContain('token=');
+		expect(data.version).toBe('0.1.0');
+	});
 
-    it('GET /api/v1/scripts/boredom requires licenseKey', async () => {
-        const res = await app.request('/api/v1/scripts/boredom');
-        expect(res.status).toBe(400);
-    });
+	it('GET /api/v1/scripts/boredom returns 403 for invalid license', async () => {
+		const res = await handle('/api/v1/scripts/boredom?licenseKey=invalid-key');
+		expect(res.status).toBe(403);
+	});
+
+	it('GET /api/v1/scripts/boredom requires licenseKey', async () => {
+		const res = await handle('/api/v1/scripts/boredom');
+		expect(res.status).toBe(400);
+	});
 });

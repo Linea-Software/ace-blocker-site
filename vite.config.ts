@@ -3,10 +3,9 @@ import tailwindcss from '@tailwindcss/vite';
 import type { UserConfigExport } from 'vite';
 import { playwright } from '@vitest/browser-playwright';
 import { sveltekit } from '@sveltejs/kit/vite';
-import devcert from "devcert-sanscache";
+import devcert from 'devcert-sanscache';
 import fs from 'node:fs';
 import path from 'node:path';
-
 
 const config: UserConfigExport = async ({ mode }) => {
 	const server: { https?: any } = {};
@@ -26,10 +25,13 @@ const config: UserConfigExport = async ({ mode }) => {
 				if (!fs.existsSync(path.dirname(certPath))) {
 					fs.mkdirSync(path.dirname(certPath), { recursive: true });
 				}
-				fs.writeFileSync(certPath, JSON.stringify({
-					key: certificate.key.toString(),
-					cert: certificate.cert.toString()
-				}));
+				fs.writeFileSync(
+					certPath,
+					JSON.stringify({
+						key: certificate.key.toString(),
+						cert: certificate.cert.toString()
+					})
+				);
 			}
 		} catch (e) {
 			console.warn('⚠️  Failed to generate or load dev SSL certificate. Falling back to HTTP.', e);

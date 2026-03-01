@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { betterAuth } from 'better-auth';
-import { admin, apiKey, openAPI } from "better-auth/plugins"
+import { admin, apiKey, openAPI } from 'better-auth/plugins';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from './db';
 import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
@@ -13,7 +13,6 @@ import { eq } from 'drizzle-orm';
 
 const env = process.env;
 const dev = import.meta.env.DEV;
-
 
 if (!env.DODO_PAYMENTS_API_KEY) {
 	throw new Error('DODO_PAYMENTS_API_KEY is not set');
@@ -47,9 +46,9 @@ export const auth = betterAuth({
 				to: user.email,
 				subject: 'Verify your email',
 				text: `Click the link to verify your email: ${url}`
-			})
+			});
 
-			console.log(result)
+			console.log(result);
 		}
 	},
 	plugins: [
@@ -63,9 +62,7 @@ export const auth = betterAuth({
 			createCustomerOnSignUp: true,
 			use: [
 				checkout({
-					products:
-						JSON.parse(env.DODO_PAYMENTS_PRODUCTS!) as Product[]
-					,
+					products: JSON.parse(env.DODO_PAYMENTS_PRODUCTS!) as Product[],
 					successUrl: '/dashboard/success',
 					authenticatedUsersOnly: true
 				}),
@@ -90,7 +87,7 @@ if (dev) {
 	(async () => {
 		try {
 			const existingUser = await db.query.user.findFirst({
-				where: (user, { eq }) => eq(user.email, 'dev@example.com'),
+				where: (user, { eq }) => eq(user.email, 'dev@example.com')
 			});
 
 			if (!existingUser) {
@@ -103,13 +100,15 @@ if (dev) {
 					}
 				});
 
-				await db.update(user)
+				await db
+					.update(user)
 					.set({ role: 'admin', emailVerified: true })
 					.where(eq(user.email, 'dev@example.com'));
 
 				console.log('✅ Created default dev user: dev@example.com / dev-password');
 			} else if (existingUser.role !== 'admin' || !existingUser.emailVerified) {
-				await db.update(user)
+				await db
+					.update(user)
 					.set({ role: 'admin', emailVerified: true })
 					.where(eq(user.email, 'dev@example.com'));
 				console.log('✅ Updated dev user to admin and verified email');

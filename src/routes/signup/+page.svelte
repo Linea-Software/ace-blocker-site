@@ -11,6 +11,8 @@
 	import { toggleMode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages.js';
 
+	import { api } from '$lib/api';
+
 	let name = $state('');
 	let email = $state('');
 	let password = $state('');
@@ -27,11 +29,11 @@
 		loading = true;
 		error = null;
 		try {
-			const res = await fetch('/api/v1/account/link-engine', {
-				method: 'POST'
-			});
-			if (!res.ok) throw new Error('Failed to link engine');
-			const data = await res.json();
+			const { data, error: apiError } = await api.v1.account['link-engine'].post();
+
+			if (apiError) throw new Error((apiError.value as string) || 'Failed to link engine');
+			if (!data) throw new Error('Failed to link engine');
+
 			const apiKey = data.apiKey;
 
 			const localUrl = `https://ace-engine.local/account/api-key?apiKey=${apiKey}`;
@@ -91,7 +93,7 @@
 						goto('/');
 					}
 				},
-				onError: (ctx) => {
+				onError: (ctx: any) => {
 					loading = false;
 					error = ctx.error.message;
 				}

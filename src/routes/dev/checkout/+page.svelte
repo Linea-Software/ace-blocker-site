@@ -46,8 +46,8 @@
 		</Card.Header>
 		<Card.Content class="space-y-4">
 			<p class="text-sm text-muted-foreground">
-				Testing Dodo Payments integration with Better Auth. Clicking the button below will generate a
-				checkout session and open it in a new tab.
+				Testing Dodo Payments integration with Better Auth. Clicking the button below will generate
+				a checkout session and open it in a new tab.
 			</p>
 
 			{#if error}

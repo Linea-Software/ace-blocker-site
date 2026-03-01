@@ -2,15 +2,15 @@ import type { LayoutServerLoad } from './$types';
 import { isUserPro } from '$lib/server/pro';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
-    let isPro = false;
+	let isPro = false;
 
-    if (locals.user) {
-        isPro = await isUserPro(locals.user.email);
-    }
+	if (locals.user) {
+		isPro = await isUserPro(locals.user.email);
+	}
 
-    return {
-        user: locals.user,
-        session: locals.session,
-        isPro
-    };
+	return {
+		user: locals.user,
+		session: locals.session,
+		isPro
+	};
 };
