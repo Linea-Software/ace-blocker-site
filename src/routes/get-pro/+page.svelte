@@ -104,12 +104,6 @@
 				</div>
 			{/if}
 
-			<Badge
-				variant="outline"
-				class="border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-semibold tracking-wider text-amber-500 uppercase"
-			>
-				{m.hero_new_badge()}
-			</Badge>
 			<h1
 				class="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl md:text-6xl dark:text-white"
 			>
