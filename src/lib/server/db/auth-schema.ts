@@ -15,7 +15,10 @@ export const user = pgTable('user', {
 	role: text('role'),
 	banned: boolean('banned').default(false),
 	banReason: text('ban_reason'),
-	banExpires: timestamp('ban_expires')
+	banExpires: timestamp('ban_expires'),
+	// Cached pro status — avoids hammering DodoPayments API on every request
+	proStatusCachedAt: timestamp('pro_status_cached_at'),
+	proExpiration: timestamp('pro_expiration')
 });
 
 export const session = pgTable(
