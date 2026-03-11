@@ -6,6 +6,7 @@ import { db } from './db';
 import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
 import DodoPayments from 'dodopayments';
 import { resend } from './email';
+import { updateProExpiration, clearProExpiration } from './pro';
 
 //import { dev } from '$app/environment';
 import { user } from './db/schema';
@@ -68,14 +69,49 @@ export const auth = betterAuth({
 				}),
 				webhooks({
 					webhookKey: env.DODO_PAYMENTS_WEBHOOK_SECRET!,
+
 					onPayload: async (payload) => {
-						console.log('Received webhook:', payload.type);
+						console.log('📦 Received webhook:', payload.type);
 					},
-					onPaymentSucceeded: async (payload) => {
-						console.log('Payment succeeded:', payload);
+
+					// ── Pro activation events ─────────────────────────────────────────────
+					// Set proExpiration to next_billing_date and bust the cache.
+
+					onSubscriptionActive: async (payload) => {
+						await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
 					},
-					onPaymentFailed: async (payload) => {
-						console.log('Payment failed:', payload);
+					onSubscriptionRenewed: async (payload) => {
+						await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
+					},
+					onSubscriptionPlanChanged: async (payload) => {
+						await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
+					},
+					onSubscriptionUpdated: async (payload) => {
+						// Only activate if still active after the update
+						if (payload.data.status === 'active') {
+							await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
+						} else {
+							await clearProExpiration(payload.data.customer.email);
+						}
+					},
+
+					// ── Pro deactivation events ───────────────────────────────────────────
+					// Clear proExpiration so the next API call re-checks DodoPayments.
+
+					onSubscriptionCancelled: async (payload) => {
+						await clearProExpiration(payload.data.customer.email);
+					},
+					onSubscriptionFailed: async (payload) => {
+						await clearProExpiration(payload.data.customer.email);
+					},
+					onSubscriptionExpired: async (payload) => {
+						await clearProExpiration(payload.data.customer.email);
+					},
+					onSubscriptionPaused: async (payload) => {
+						await clearProExpiration(payload.data.customer.email);
+					},
+					onSubscriptionOnHold: async (payload) => {
+						await clearProExpiration(payload.data.customer.email);
 					}
 				})
 			]

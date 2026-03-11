@@ -23,6 +23,11 @@ interface CacheEntry {
 
 const memoryCache = new Map<string, CacheEntry>();
 
+/** Bust the L1 in-memory cache for a given email (called by webhook handlers). */
+export function invalidateProCache(email: string): void {
+	memoryCache.delete(email);
+}
+
 export async function getProStatus(
 	email: string
 ): Promise<{ isActive: boolean; expiration: Date }> {
@@ -106,4 +111,37 @@ export async function getProStatus(
 export async function isUserPro(email: string): Promise<boolean> {
 	const proStatus = await getProStatus(email);
 	return proStatus.isActive;
+}
+
+// ---------------------------------------------------------------------------
+// Webhook helpers — called directly from auth.ts webhook handlers.
+// They write to the DB immediately and bust the L1 cache so the next
+// request sees the fresh status without waiting for a DodoPayments API call.
+// ---------------------------------------------------------------------------
+
+export async function updateProExpiration(email: string, nextBillingDate: Date | null): Promise<void> {
+	const expiration = nextBillingDate ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // fallback: +30 days
+	try {
+		await db
+			.update(user)
+			.set({ proStatusCachedAt: new Date(), proExpiration: expiration })
+			.where(eq(user.email, email));
+		invalidateProCache(email);
+		console.log(`✅ Pro status activated via webhook for ${email} until ${expiration.toISOString()}`);
+	} catch (e) {
+		console.error(`❌ Failed to update pro expiration for ${email}:`, e);
+	}
+}
+
+export async function clearProExpiration(email: string): Promise<void> {
+	try {
+		await db
+			.update(user)
+			.set({ proStatusCachedAt: new Date(), proExpiration: null })
+			.where(eq(user.email, email));
+		invalidateProCache(email);
+		console.log(`⛔ Pro status revoked via webhook for ${email}`);
+	} catch (e) {
+		console.error(`❌ Failed to clear pro expiration for ${email}:`, e);
+	}
 }
