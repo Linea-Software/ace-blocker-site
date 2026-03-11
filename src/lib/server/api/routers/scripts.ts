@@ -4,6 +4,10 @@ import { auth } from '$lib/server/auth';
 import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
 
+if (!env.BUNNY_SECURITY_KEY) {
+	throw new Error('❌ BUNNY_SECURITY_KEY is missing in environment variables');
+}
+
 export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 	.derive(async ({ request }) => {
 		const session = await auth.api.getSession({
@@ -24,11 +28,6 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 			const isPro = await isUserPro(user.email);
 			if (!isPro) {
 				return status(403, 'Pro license required');
-			}
-
-			if (!env.BUNNY_SECURITY_KEY) {
-				console.error('❌ BUNNY_SECURITY_KEY is missing in environment variables');
-				return status(500, 'Internal Server Error');
 			}
 
 			const securityKey = env.BUNNY_SECURITY_KEY;
