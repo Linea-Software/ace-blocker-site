@@ -90,6 +90,8 @@ if (dev) {
 				where: (user, { eq }) => eq(user.email, 'dev@example.com')
 			});
 
+			const devProExpiration = new Date('2099-12-31T23:59:59Z');
+
 			if (!existingUser) {
 				console.log('⏳ Creating default dev user...');
 				await auth.api.signUpEmail({
@@ -102,16 +104,30 @@ if (dev) {
 
 				await db
 					.update(user)
-					.set({ role: 'admin', emailVerified: true })
+					.set({
+						role: 'admin',
+						emailVerified: true,
+						proStatusCachedAt: new Date(),
+						proExpiration: devProExpiration
+					})
 					.where(eq(user.email, 'dev@example.com'));
 
 				console.log('✅ Created default dev user: dev@example.com / dev-password');
-			} else if (existingUser.role !== 'admin' || !existingUser.emailVerified) {
+			} else if (
+				existingUser.role !== 'admin' ||
+				!existingUser.emailVerified ||
+				!existingUser.proStatusCachedAt
+			) {
 				await db
 					.update(user)
-					.set({ role: 'admin', emailVerified: true })
+					.set({
+						role: 'admin',
+						emailVerified: true,
+						proStatusCachedAt: new Date(),
+						proExpiration: devProExpiration
+					})
 					.where(eq(user.email, 'dev@example.com'));
-				console.log('✅ Updated dev user to admin and verified email');
+				console.log('✅ Updated dev user to admin, verified email, and set pro status');
 			}
 		} catch (e) {
 			console.error('❌ Error in dev user seeding:', e);
