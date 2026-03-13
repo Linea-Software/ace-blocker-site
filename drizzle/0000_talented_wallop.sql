@@ -1,3 +1,20 @@
+CREATE TABLE "backups" (
+	"id" text PRIMARY KEY NOT NULL,
+	"user_id" text NOT NULL,
+	"data" text NOT NULL,
+	"version" text NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "backups_user_id_unique" UNIQUE("user_id")
+);
+--> statement-breakpoint
+CREATE TABLE "pro_status" (
+	"id" text PRIMARY KEY NOT NULL,
+	"user_id" text NOT NULL,
+	"cached_at" timestamp,
+	"expiration" timestamp,
+	CONSTRAINT "pro_status_user_id_unique" UNIQUE("user_id")
+);
+--> statement-breakpoint
 CREATE TABLE "account" (
 	"id" text PRIMARY KEY NOT NULL,
 	"account_id" text NOT NULL,
@@ -38,14 +55,6 @@ CREATE TABLE "apikey" (
 	"metadata" text
 );
 --> statement-breakpoint
-CREATE TABLE "backups" (
-	"id" text PRIMARY KEY NOT NULL,
-	"user_id" text NOT NULL,
-	"data" text NOT NULL,
-	"version" text NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
-);
---> statement-breakpoint
 CREATE TABLE "session" (
 	"id" text PRIMARY KEY NOT NULL,
 	"expires_at" timestamp NOT NULL,
@@ -57,6 +66,13 @@ CREATE TABLE "session" (
 	"user_id" text NOT NULL,
 	"impersonated_by" text,
 	CONSTRAINT "session_token_unique" UNIQUE("token")
+);
+--> statement-breakpoint
+CREATE TABLE "two_factor" (
+	"id" text PRIMARY KEY NOT NULL,
+	"secret" text NOT NULL,
+	"backup_codes" text NOT NULL,
+	"user_id" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "user" (
@@ -71,6 +87,7 @@ CREATE TABLE "user" (
 	"banned" boolean DEFAULT false,
 	"ban_reason" text,
 	"ban_expires" timestamp,
+	"two_factor_enabled" boolean DEFAULT false,
 	CONSTRAINT "user_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
@@ -83,13 +100,17 @@ CREATE TABLE "verification" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+ALTER TABLE "backups" ADD CONSTRAINT "backups_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "pro_status" ADD CONSTRAINT "pro_status_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "apikey" ADD CONSTRAINT "apikey_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "backups" ADD CONSTRAINT "backups_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "two_factor" ADD CONSTRAINT "two_factor_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "backups_userId_idx" ON "backups" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "apikey_key_idx" ON "apikey" USING btree ("key");--> statement-breakpoint
 CREATE INDEX "apikey_userId_idx" ON "apikey" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "backups_userId_idx" ON "backups" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "session_userId_idx" ON "session" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "twoFactor_secret_idx" ON "two_factor" USING btree ("secret");--> statement-breakpoint
+CREATE INDEX "twoFactor_userId_idx" ON "two_factor" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");
