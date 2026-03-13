@@ -21,17 +21,15 @@
 	import { page } from '$app/state';
 	import * as Alert from '$lib/components/ui/alert';
 	import { cn } from '$lib/utils';
+	import { engineConfig } from '$lib/states/engine.svelte';
+	import { Crown } from '@lucide/svelte';
 
 	let billingCycle = $state('yearly');
 	const session = authClient.useSession();
 	const origin = $derived(page.url.searchParams.get('origin'));
 
-	let error = $state<string | null>(null);
-	let loading = $state(false);
-
 	async function linkEngine() {
-		loading = true;
-		error = null;
+		engineConfig.linkState = 'loading';
 		try {
 			const res = await fetch('/api/v1/account/link-engine', {
 				method: 'POST'
@@ -40,34 +38,41 @@
 			const data = await res.json();
 			const apiKey = data.apiKey;
 
-			const localUrl = `https://ace-engine.local/account/api-key?apiKey=${apiKey}`;
-			const protocolUrl = `aceblocker://account/api-key?apiKey=${apiKey}`;
+			const hostname = (window as any).__BOREDOM_SERVER_HOSTNAME__ || 'ace-engine.local';
+			const port = (window as any).__BOREDOM_SERVER_PORT__ || '443';
+			const localUrl = `https://${hostname}:${port}/account/api-key?apiKey=${apiKey}`;
 
 			try {
-				// Try the local engine first via HTTPS
-				const localRes = await fetch(localUrl, { method: 'GET' });
+				// Primary attempt via local API
+				const localRes = await fetch(localUrl, { method: 'POST' });
 				if (localRes.ok) {
-					goto('/');
+					engineConfig.linkState = 'success';
+					// Wait a few seconds then redirect to dashboard or home
+					setTimeout(() => {
+						goto('/dashboard');
+					}, 3000);
 				} else {
-					window.location.href = protocolUrl;
+					throw new Error('Local API returned non-OK status');
 				}
 			} catch (err) {
-				// If local engine is not reachable or CORS fails, fall back to custom protocol
+				// Fallback to custom protocol
 				console.warn('Local engine link failed, falling back to protocol:', err);
-				window.location.href = protocolUrl;
+				engineConfig.linkState = 'error';
+				window.location.href = `aceblocker://auth?apiKey=${apiKey}`;
 			}
 		} catch (err) {
 			console.error(err);
-			loading = false;
-			error = 'Failed to generate access keys for the engine.';
+			engineConfig.linkState = 'error';
 		}
 	}
 
 	$effect(() => {
-		if ($session.data && (origin === 'ace-engine' || origin === 'aceblocker') && !loading) {
+		if ($session.data && (origin === 'ace-engine' || origin === 'aceblocker') && engineConfig.linkState === 'idle') {
 			linkEngine();
 		}
 	});
+
+	const isPro = $derived(page.data.isPro || false);
 
 	function handleUpgrade() {
 		if ($session.data) {
@@ -87,35 +92,71 @@
 	<div class="container mx-auto px-4">
 		<!-- Header -->
 		<div class="mx-auto mb-16 max-w-3xl space-y-6 text-center">
-			{#if error}
-				<Alert.Root variant="destructive" class="mb-6 border-red-900/50 bg-red-900/10 text-red-400">
-					<AlertCircle class="h-4 w-4" />
-					<Alert.Title>Error</Alert.Title>
-					<Alert.Description>{error}</Alert.Description>
-				</Alert.Root>
-			{/if}
-
-			{#if loading}
+			{#if engineConfig.linkState === 'error'}
 				<div
 					class="mb-6 flex items-center justify-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-amber-500"
 				>
-					<Loader2 class="h-5 w-5 animate-spin" />
-					<span class="font-medium">Linking your account to Ace Engine...</span>
+					<AlertCircle class="h-5 w-5" />
+					<span class="font-medium">{m.linking_error()}</span>
 				</div>
 			{/if}
 
-			<h1
-				class="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl md:text-6xl dark:text-white"
-			>
-				{m.pro_title()}
-			</h1>
-			<p class="mx-auto max-w-xl text-lg text-slate-600 md:text-xl dark:text-slate-400">
-				{m.pro_subtitle()}
-			</p>
+			{#if engineConfig.linkState === 'loading'}
+				<div
+					class="mb-6 flex items-center justify-center gap-2 rounded-lg border border-[#FFBF00]/20 bg-[#FFBF00]/5 p-4 text-[#FFBF00]"
+				>
+					<Loader2 class="h-5 w-5 animate-spin" />
+					<span class="font-medium">{m.linking_loading()}</span>
+				</div>
+			{/if}
+
+			{#if engineConfig.linkState === 'success'}
+				<div
+					class="mb-6 flex items-center justify-center gap-2 rounded-lg border-emerald-500/20 bg-emerald-500/5 p-4 text-emerald-500"
+				>
+					<Check class="h-5 w-5" />
+					<span class="font-medium">{m.linking_success()}</span>
+				</div>
+			{/if}
+
+			{#if !isPro}
+				<h1
+					class="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl md:text-6xl dark:text-white"
+				>
+					{m.pro_title()}
+				</h1>
+				<p class="mx-auto max-w-xl text-lg text-slate-600 md:text-xl dark:text-slate-400">
+					{m.pro_subtitle()}
+				</p>
+			{:else}
+				<div class="flex flex-col items-center justify-center space-y-6 py-12">
+					<div class="relative">
+						<div class="absolute inset-0 animate-pulse rounded-full bg-amber-500/20 blur-2xl"></div>
+						<div
+							class="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-[#FFBF00] to-amber-600 shadow-2xl"
+						>
+							<Crown class="h-12 w-12 text-slate-950" />
+						</div>
+					</div>
+					<div class="space-y-2">
+						<h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+							{m.pro_success_title()}
+						</h1>
+						<p class="mx-auto max-w-lg text-lg text-slate-600 dark:text-slate-400">
+							{m.pro_success_description()}
+						</p>
+					</div>
+					<Button href="/dashboard" class="mt-8 bg-slate-900 px-8 py-6 text-lg font-bold dark:bg-white dark:text-slate-950">
+						Go to Dashboard
+					</Button>
+				</div>
+			{/if}
 		</div>
 
-		<!-- Billing Toggle -->
-		<div class="mb-16 flex justify-center">
+		{#if !isPro}
+			<!-- Billing Toggle -->
+			<div class="mb-16 flex justify-center">
+				<!-- ... rest of billing toggle ... -->
 			<div
 				class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900/50"
 			>
@@ -367,6 +408,7 @@
 				</Card.Footer>
 			</Card.Root>
 		</div>
+		{/if}
 
 		<!-- Refined Features Section -->
 		<div class="mx-auto mt-40 max-w-6xl">

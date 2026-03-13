@@ -86,5 +86,10 @@
 	"download_sys_req_title": "System Requirements",
 	"download_sys_req_details": "Windows 10+, Ubuntu 20.04+, macOS 12+",
 	"download_checksums_toggle": "Checksums (SHA-256)",
-	"download_back_home": "Back to homepage"
+	"download_back_home": "Back to homepage",
+	"linking_loading": "Linking your account to Ace Engine...",
+	"linking_success": "Account successfully linked!",
+	"linking_error": "Direct link failed. Opening Ace Blocker app...",
+	"pro_success_title": "You're all set!",
+	"pro_success_description": "Your Pro account is active and linked to your Ace Blocker engine. You can safely close this window and return to the app."
 }
