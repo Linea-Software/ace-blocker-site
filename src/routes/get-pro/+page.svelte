@@ -38,30 +38,19 @@
 			const data = await res.json();
 			const apiKey = data.apiKey;
 
-			const hostname = (window as any).__BOREDOM_SERVER_HOSTNAME__ || 'ace-engine.local';
-			const port = (window as any).__BOREDOM_SERVER_PORT__ || '443';
-			const localUrl = `https://${hostname}:${port}/account/api-key?apiKey=${apiKey}`;
-
-			try {
-				// Primary attempt via local API
-				const localRes = await fetch(localUrl, { method: 'POST' });
-				if (localRes.ok) {
-					engineConfig.linkState = 'success';
-					// Wait a few seconds then redirect to dashboard or home
-					setTimeout(() => {
-						goto('/dashboard');
-					}, 3000);
-				} else {
-					throw new Error('Local API returned non-OK status');
+			// Strict Custom Protocol URI approach
+			window.location.assign(`aceblocker://account/api-key?apiKey=${apiKey}`);
+			
+			engineConfig.linkState = 'success';
+			
+			// Auto-redirect to dashboard after success
+			setTimeout(() => {
+				if (engineConfig.linkState === 'success') {
+					goto('/dashboard');
 				}
-			} catch (err) {
-				// Fallback to custom protocol
-				console.warn('Local engine link failed, falling back to protocol:', err);
-				engineConfig.linkState = 'error';
-				window.location.href = `aceblocker://auth?apiKey=${apiKey}`;
-			}
+			}, 5000);
 		} catch (err) {
-			console.error(err);
+			console.error('Linking error:', err);
 			engineConfig.linkState = 'error';
 		}
 	}
@@ -146,9 +135,14 @@
 							{m.pro_success_description()}
 						</p>
 					</div>
-					<Button href="/dashboard" class="mt-8 bg-slate-900 px-8 py-6 text-lg font-bold dark:bg-white dark:text-slate-950">
-						Go to Dashboard
-					</Button>
+					<div class="mt-8 flex flex-col gap-4 sm:flex-row">
+						<Button href="/dashboard" class="bg-slate-900 px-8 py-6 text-lg font-bold dark:bg-white dark:text-slate-950">
+							Go to Dashboard
+						</Button>
+						<Button variant="outline" href="aceblocker://pro?action=open" class="border-amber-500/50 bg-transparent px-8 py-6 text-lg font-bold text-amber-500 hover:bg-amber-500/10 dark:border-amber-500/30">
+							Open Ace Blocker
+						</Button>
+					</div>
 				</div>
 			{/if}
 		</div>
