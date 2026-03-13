@@ -30,7 +30,3 @@ project.inlang/project_id
  
  # Cert
 .cert/
-
-/.agent
-/.agents
-skills-lock.json
