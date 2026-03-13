@@ -6,10 +6,29 @@
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Badge } from '$lib/components/ui/badge';
-	import { Search, MoreHorizontal, UserX, Crown, Trash2, ShieldCheck, Mail } from '@lucide/svelte';
+	import { Label } from '$lib/components/ui/label';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Select from '$lib/components/ui/select';
+	import {
+		Search,
+		MoreHorizontal,
+		UserX,
+		Crown,
+		Trash2,
+		ShieldCheck,
+		Mail
+	} from '@lucide/svelte';
 	import { cn } from '$lib/utils';
 
 	let { data } = $props();
+
+	let isProModalOpen = $state(false);
+	let selectedUserId = $state<string | null>(null);
+
+	let selectedUnit = $state("Months");
+	const selectedUnitLabel = $derived(
+		["Days", "Months", "Years"].find((u) => u === selectedUnit) ?? "Select unit"
+	);
 
 	function isPro(user: any) {
 		return user.proExpiration && new Date(user.proExpiration) > new Date();
@@ -117,15 +136,15 @@
 									<DropdownMenu.Label>Actions</DropdownMenu.Label>
 									<DropdownMenu.Separator />
 
-									<form method="POST" action="?/grantPro" use:enhance>
-										<input type="hidden" name="userId" value={user.id} />
-										<DropdownMenu.Item>
-											<button type="submit" class="flex w-full items-center gap-2">
-												<Crown class="h-4 w-4 text-amber-500" />
-												Grant Free Pro
-											</button>
-										</DropdownMenu.Item>
-									</form>
+									<DropdownMenu.Item
+										onSelect={() => {
+											selectedUserId = user.id;
+											isProModalOpen = true;
+										}}
+									>
+										<Crown class="h-4 w-4 text-amber-500" />
+										Grant Free Pro
+									</DropdownMenu.Item>
 
 									<form method="POST" action="?/toggleStatus" use:enhance>
 										<input type="hidden" name="userId" value={user.id} />
@@ -165,3 +184,49 @@
 		</Table.Root>
 	</div>
 </div>
+
+<Dialog.Root bind:open={isProModalOpen}>
+	<Dialog.Content>
+		<Dialog.Header>
+			<Dialog.Title>Grant Pro License</Dialog.Title>
+			<Dialog.Description>
+				Select the duration for the manual Pro license override.
+			</Dialog.Description>
+		</Dialog.Header>
+		<form
+			method="POST"
+			action="?/grantPro"
+			use:enhance={() => {
+				isProModalOpen = false;
+			}}
+		>
+			<input type="hidden" name="userId" value={selectedUserId} />
+			<div class="grid gap-4 py-4">
+				<div class="grid grid-cols-4 items-center gap-4">
+					<Label for="duration" class="text-right">Duration</Label>
+					<Input id="duration" name="duration" type="number" min="1" required class="col-span-3" />
+				</div>
+				<div class="grid grid-cols-4 items-center gap-4">
+					<Label for="unit" class="text-right">Unit</Label>
+					<Select.Root
+						type="single"
+						name="unit"
+						bind:value={selectedUnit}
+					>
+						<Select.Trigger class="col-span-3">
+							{selectedUnitLabel}
+						</Select.Trigger>
+						<Select.Content>
+							<Select.Item value="Days" label="Days">Days</Select.Item>
+							<Select.Item value="Months" label="Months">Months</Select.Item>
+							<Select.Item value="Years" label="Years">Years</Select.Item>
+						</Select.Content>
+					</Select.Root>
+				</div>
+			</div>
+			<Dialog.Footer>
+				<Button type="submit">Grant Pro</Button>
+			</Dialog.Footer>
+		</form>
+	</Dialog.Content>
+</Dialog.Root>
