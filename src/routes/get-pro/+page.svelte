@@ -42,13 +42,6 @@
 			window.location.assign(`aceblocker://account/api-key?apiKey=${apiKey}`);
 			
 			engineConfig.linkState = 'success';
-			
-			// Auto-redirect to dashboard after success
-			setTimeout(() => {
-				if (engineConfig.linkState === 'success') {
-					goto('/dashboard');
-				}
-			}, 5000);
 		} catch (err) {
 			console.error('Linking error:', err);
 			engineConfig.linkState = 'error';
