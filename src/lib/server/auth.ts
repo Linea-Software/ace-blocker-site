@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { betterAuth } from 'better-auth';
-import { admin, apiKey, openAPI } from 'better-auth/plugins';
+import { randomBytes } from 'node:crypto';
+import { admin, apiKey, openAPI, twoFactor } from 'better-auth/plugins';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from './db';
 import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
@@ -58,6 +59,19 @@ export const auth = betterAuth({
 			enableSessionForAPIKeys: true
 		}),
 		openAPI(),
+		twoFactor({
+			issuer: 'Ace Blocker',
+			otpOptions: {
+				sendOTP: async ({ user, otp }) => {
+					await resend.emails.send({
+						from: 'security@aceblocker.com',
+						to: user.email,
+						subject: 'Your 2FA Code',
+						text: `Your security code is: ${otp}`
+					});
+				}
+			}
+		}),
 		dodopayments({
 			client: dodoPayments,
 			createCustomerOnSignUp: true,
@@ -170,3 +184,69 @@ if (dev) {
 		}
 	})();
 }
+
+// ── Production Admin Setup ──────────────────────────────────────────────────
+// Automatically creates the production admin account if it doesn't exist.
+(async () => {
+	const adminEmail = env.ADMIN_EMAIL;
+	if (!adminEmail) {
+		console.warn('⚠️  ADMIN_EMAIL not set in environment.');
+		return;
+	}
+
+	try {
+		const adminFound = await db.query.user.findFirst({
+			where: (u, { eq }) => eq(u.email, adminEmail)
+		});
+
+		if (!adminFound) {
+			console.log(`⏳ Creating production admin user: ${adminEmail}...`);
+			// Create user with a random password since they will reset it or use 2FA
+			const tempPassword = randomBytes(32).toString('hex');
+
+			await auth.api.signUpEmail({
+				body: {
+					email: adminEmail,
+					password: tempPassword,
+					name: 'Admin'
+				}
+			});
+
+			// Update role to admin and verify email immediately to allow login
+			await db
+				.update(user)
+				.set({
+					role: 'admin',
+					emailVerified: true,
+					twoFactorEnabled: true // Enforce 2FA from the start
+				})
+				.where(eq(user.email, adminEmail));
+
+			// Better Auth will have sent a verification email due to the config, 
+			// but we also want them to know they are an admin.
+			await resend.emails.send({
+				from: 'security@aceblocker.com',
+				to: adminEmail,
+				subject: 'Admin Account Created',
+				text: `Your admin account for Ace Blocker has been created at ${adminEmail}. 
+Two-factor authentication is enforced. Please use the password reset flow to set your permanent password.`
+			});
+
+			console.log(`✅ Production admin user created: ${adminEmail}`);
+		} else {
+			// Enforce Admin 2FA if not enabled
+			if (!adminFound.twoFactorEnabled || adminFound.role !== 'admin') {
+				console.log(`🔒 Enforcing security for Admin: ${adminEmail}...`);
+				await db
+					.update(user)
+					.set({
+						role: 'admin',
+						twoFactorEnabled: true
+					})
+					.where(eq(user.email, adminEmail));
+			}
+		}
+	} catch (error) {
+		console.error('❌ Admin setup error:', error);
+	}
+})();

@@ -82,6 +82,14 @@ async function main() {
 		needsUpdate = true;
 	}
 
+	// 1.6. Set ADMIN_EMAIL if missing
+	if (!envContent.includes('ADMIN_EMAIL')) {
+		console.log('📧 Adding ADMIN_EMAIL...');
+		if (!envContent.endsWith('\n')) envContent += '\n';
+		envContent += `ADMIN_EMAIL="admin@aceblocker.com"\n`;
+		needsUpdate = true;
+	}
+
 	// 2. Check DODO_PAYMENTS_API_KEY
 	if (
 		!envContent.includes('DODO_PAYMENTS_API_KEY') ||
