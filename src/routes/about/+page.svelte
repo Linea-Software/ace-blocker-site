@@ -120,7 +120,7 @@
 					class="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-bold tracking-wider text-amber-500 uppercase"
 				>
 					<Cpu class="h-4 w-4" />
-					High-Performance Core
+					{m.about_tech_badge()}
 				</div>
 				<h2 class="text-3xl font-black tracking-tight text-slate-900 md:text-4xl dark:text-white">
 					{m.about_tech_title()}
@@ -173,7 +173,7 @@
 					</p>
 				</div>
 
-				<!-- Boredom Scripts -->
+				<!-- Zen Master -->
 				<div
 					class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
@@ -184,7 +184,7 @@
 					<div
 						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 transition-transform duration-300 group-hover:scale-110"
 					>
-						<Code2 class="h-7 w-7 text-[#FFBF00]" />
+						<Sparkles class="h-7 w-7 text-[#FFBF00]" />
 					</div>
 					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
 						{m.about_feature_scripts_title()}
@@ -194,7 +194,7 @@
 					</p>
 				</div>
 
-				<!-- Locks -->
+				<!-- Hardened Locks -->
 				<div
 					class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
@@ -237,11 +237,10 @@
 
 				<div class="relative z-10 mx-auto max-w-3xl space-y-6">
 					<h2 class="text-3xl font-black tracking-tight text-slate-900 md:text-5xl dark:text-white">
-						Ready to take back control?
+						{m.about_cta_title()}
 					</h2>
 					<p class="text-lg text-slate-700 md:text-xl dark:text-slate-400">
-						Join thousands of users who have transformed their relationship with the internet using
-						Ace Blocker.
+						{m.about_cta_description()}
 					</p>
 				</div>
 
