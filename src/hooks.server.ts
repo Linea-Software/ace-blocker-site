@@ -7,8 +7,6 @@ import { resend } from '$lib/server/email';
 import { eq } from 'drizzle-orm';
 import { user } from '$lib/server/db/schema';
 
-let hasCheckedAdmin = false;
-
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
 		event.request = request;
@@ -19,34 +17,6 @@ const handleParaglide: Handle = ({ event, resolve }) =>
 	});
 
 const handleAuth: Handle = async ({ event, resolve }) => {
-	// ── One-time Admin Onboarding Check ──────────────────────────────────────
-	if (!hasCheckedAdmin) {
-		hasCheckedAdmin = true;
-		const adminEmail = process.env.ADMIN_EMAIL;
-		if (adminEmail) {
-			try {
-				const adminExists = await db.query.user.findFirst({
-					where: (u, { eq }) => eq(u.email, adminEmail)
-				});
-
-				if (!adminExists) {
-					console.log(`🚀 No admin found. Sending onboarding email to ${adminEmail}...`);
-					await resend.emails.send({
-						from: 'security@aceblocker.com',
-						to: adminEmail,
-						subject: 'Ace Blocker: Admin Setup Required',
-						text: `Your Ace Blocker instance is live. Please go to ${event.url.origin}/signup and register with this exact email address to automatically claim your Admin account.`
-					});
-				} else if (!adminExists.twoFactorEnabled) {
-					console.log(`🔒 Enforcing 2FA for existing admin: ${adminEmail}...`);
-					await db.update(user).set({ twoFactorEnabled: true }).where(eq(user.email, adminEmail));
-				}
-			} catch (error) {
-				console.error('❌ Hook Admin Check Error:', error);
-			}
-		}
-	}
-
 	const session = await auth.api.getSession({
 		headers: event.request.headers
 	});
@@ -64,3 +34,39 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 };
 
 export const handle: Handle = sequence(handleParaglide, handleAuth);
+
+// ADMIN USER SETUP
+
+(async () => {
+	console.log('[STARTUP]');
+
+	const email = process.env.DEFAULT_ADMIN_EMAIL;
+	const password = process.env.DEFAULT_ADMIN_PASSWORD;
+	const username = process.env.DEFAULT_ADMIN_USERNAME;
+
+	if (!email) {
+		throw new Error('DEFAULT_ADMIN_EMAIL .env value not present');
+	}
+	if (!password) {
+		throw new Error('DEFAULT_ADMIN_PASSWORD .env value not present');
+	}
+	if (!username) {
+		throw new Error('DEFAULT_ADMIN_NAME .env value not present');
+	}
+
+	const existing = await db.select().from(user).where(eq(user.email, email));
+
+	if (existing) {
+		return;
+	}
+
+	await auth.api.createUser({
+		body: {
+			name: username,
+			email: email,
+			password: password
+		}
+	});
+
+	console.log("[SETUP] Admin created with default .env credentials")
+})();

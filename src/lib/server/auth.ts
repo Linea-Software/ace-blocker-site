@@ -8,12 +8,8 @@ import DodoPayments from 'dodopayments';
 import { resend } from './email';
 import { updateProExpiration, clearProExpiration } from './pro';
 
-//import { dev } from '$app/environment';
-import { user } from './db/schema';
-import { eq } from 'drizzle-orm';
 
 const env = process.env;
-const dev = import.meta.env.DEV;
 
 if (!env.DODO_PAYMENTS_API_KEY) {
 	throw new Error('DODO_PAYMENTS_API_KEY is not set');
@@ -26,6 +22,8 @@ if (!env.DODO_PAYMENTS_PRODUCTS) {
 if (!env.DODO_PAYMENTS_WEBHOOK_SECRET) {
 	throw new Error('DODO_PAYMENTS_WEBHOOK_SECRET is not set');
 }
+
+const dodoProducts = JSON.parse(env.DODO_PAYMENTS_PRODUCTS) as Product[];
 
 export const dodoPayments = new DodoPayments({
 	bearerToken: env.DODO_PAYMENTS_API_KEY,
@@ -57,15 +55,6 @@ export const auth = betterAuth({
 		user: {
 			create: {
 				before: async (user) => {
-					if (user.email === env.ADMIN_EMAIL) {
-						return {
-							data: {
-								...user,
-								role: 'admin',
-								twoFactorEnabled: true
-							}
-						};
-					}
 					return { data: user };
 				}
 			},
@@ -117,7 +106,7 @@ export const auth = betterAuth({
 			createCustomerOnSignUp: true,
 			use: [
 				checkout({
-					products: JSON.parse(env.DODO_PAYMENTS_PRODUCTS!) as Product[],
+					products: dodoProducts,
 					successUrl: '/dashboard/success',
 					authenticatedUsersOnly: true
 				}),
@@ -172,56 +161,3 @@ export const auth = betterAuth({
 		})
 	]
 });
-
-if (dev) {
-	(async () => {
-		try {
-			const existingUser = await db.query.user.findFirst({
-				where: (user, { eq }) => eq(user.email, 'dev@example.com')
-			});
-
-			const devProExpiration = new Date('2099-12-31T23:59:59Z');
-
-			if (!existingUser) {
-				console.log('⏳ Creating default dev user...');
-				await auth.api.signUpEmail({
-					body: {
-						email: 'dev@example.com',
-						password: 'dev-password',
-						name: 'Dev User'
-					}
-				});
-
-				await db
-					.update(user)
-					.set({
-						role: 'admin',
-						emailVerified: true,
-						proStatusCachedAt: new Date(),
-						proExpiration: devProExpiration
-					})
-					.where(eq(user.email, 'dev@example.com'));
-
-				console.log('✅ Created default dev user: dev@example.com / dev-password');
-			} else if (
-				existingUser.role !== 'admin' ||
-				!existingUser.emailVerified ||
-				!existingUser.proStatusCachedAt
-			) {
-				await db
-					.update(user)
-					.set({
-						role: 'admin',
-						emailVerified: true,
-						proStatusCachedAt: new Date(),
-						proExpiration: devProExpiration
-					})
-					.where(eq(user.email, 'dev@example.com'));
-				console.log('✅ Updated dev user to admin, verified email, and set pro status');
-			}
-		} catch (e) {
-			console.error('❌ Error in dev user seeding:', e);
-		}
-	})();
-}
-

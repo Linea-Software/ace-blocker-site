@@ -82,6 +82,13 @@ export const backupsRouter = new Elysia({ prefix: '/backups' })
 				data: JSON.stringify(body),
 				version: body.version,
 				createdAt: new Date()
+			}).onConflictDoUpdate({
+				target: backups.userId,
+				set: {
+					data: JSON.stringify(body),
+					version: body.version,
+					createdAt: new Date()
+				}
 			});
 
 			return { id: backupId };

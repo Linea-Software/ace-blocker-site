@@ -1,14 +1,14 @@
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { user } from '$lib/server/db/schema';
+import { user, proStatus } from '$lib/server/db/schema';
 import { count, gt } from 'drizzle-orm';
 
 export const load: PageServerLoad = async () => {
 	const [totalUsersCount] = await db.select({ value: count() }).from(user);
 	const [proUsersCount] = await db
 		.select({ value: count() })
-		.from(user)
-		.where(gt(user.proExpiration, new Date()));
+		.from(proStatus)
+		.where(gt(proStatus.expiration, new Date()));
 
 	return {
 		totalUsers: totalUsersCount.value,

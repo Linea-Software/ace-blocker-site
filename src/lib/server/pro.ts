@@ -1,7 +1,8 @@
 import { dodoPayments } from './auth';
 import { db } from './db';
-import { user } from './db/schema';
+import { user, proStatus } from './db/schema';
 import { eq } from 'drizzle-orm';
+import crypto from 'crypto';
 
 // ---------------------------------------------------------------------------
 // Two-level cache for pro status:
@@ -42,16 +43,16 @@ export async function getProStatus(
 	// ── L2: DB cache ─────────────────────────────────────────────────────────
 	const userRow = await db.query.user.findFirst({
 		where: (u, { eq }) => eq(u.email, email),
-		columns: { id: true, proStatusCachedAt: true, proExpiration: true }
+		with: { proStatus: true }
 	});
 
 	if (
-		userRow?.proStatusCachedAt &&
-		now - userRow.proStatusCachedAt.getTime() < PRO_CACHE_TTL_MS
+		userRow?.proStatus?.cachedAt &&
+		now - userRow.proStatus.cachedAt.getTime() < PRO_CACHE_TTL_MS
 	) {
 		const dbResult = {
-			isActive: userRow.proExpiration !== null && userRow.proExpiration > new Date(),
-			expiration: userRow.proExpiration ?? new Date(0)
+			isActive: userRow.proStatus.expiration !== null && userRow.proStatus.expiration > new Date(),
+			expiration: userRow.proStatus.expiration ?? new Date(0)
 		};
 		// Promote into L1 so the next request in this process is instant
 		memoryCache.set(email, { value: dbResult, expiresAt: now + PRO_CACHE_TTL_MS });
@@ -94,12 +95,22 @@ export async function getProStatus(
 
 	// Persist to DB (fire-and-forget, don't block the response)
 	if (userRow?.id) {
-		db.update(user)
-			.set({
-				proStatusCachedAt: new Date(),
-				proExpiration: result.isActive ? result.expiration : null
+		const proData = {
+			id: crypto.randomUUID(),
+			userId: userRow.id,
+			cachedAt: new Date(),
+			expiration: result.isActive ? result.expiration : null
+		};
+
+		db.insert(proStatus)
+			.values(proData)
+			.onConflictDoUpdate({
+				target: proStatus.userId,
+				set: {
+					cachedAt: proData.cachedAt,
+					expiration: proData.expiration
+				}
 			})
-			.where(eq(user.id, userRow.id))
 			.catch((e) => console.error('Failed to persist pro status cache:', e));
 	}
 
@@ -122,12 +133,31 @@ export async function isUserPro(email: string): Promise<boolean> {
 export async function updateProExpiration(email: string, nextBillingDate: Date | null): Promise<void> {
 	const expiration = nextBillingDate ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // fallback: +30 days
 	try {
-		await db
-			.update(user)
-			.set({ proStatusCachedAt: new Date(), proExpiration: expiration })
-			.where(eq(user.email, email));
-		invalidateProCache(email);
-		console.log(`✅ Pro status activated via webhook for ${email} until ${expiration.toISOString()}`);
+		const userRow = await db.query.user.findFirst({
+			where: (u, { eq }) => eq(u.email, email),
+			columns: { id: true }
+		});
+
+		if (userRow) {
+			const proData = {
+				id: crypto.randomUUID(),
+				userId: userRow.id,
+				cachedAt: new Date(),
+				expiration: expiration
+			};
+
+			await db.insert(proStatus)
+				.values(proData)
+				.onConflictDoUpdate({
+					target: proStatus.userId,
+					set: {
+						cachedAt: proData.cachedAt,
+						expiration: proData.expiration
+					}
+				});
+			invalidateProCache(email);
+			console.log(`✅ Pro status activated via webhook for ${email} until ${expiration.toISOString()}`);
+		}
 	} catch (e) {
 		console.error(`❌ Failed to update pro expiration for ${email}:`, e);
 	}
@@ -135,12 +165,18 @@ export async function updateProExpiration(email: string, nextBillingDate: Date |
 
 export async function clearProExpiration(email: string): Promise<void> {
 	try {
-		await db
-			.update(user)
-			.set({ proStatusCachedAt: new Date(), proExpiration: null })
-			.where(eq(user.email, email));
-		invalidateProCache(email);
-		console.log(`⛔ Pro status revoked via webhook for ${email}`);
+		const userRow = await db.query.user.findFirst({
+			where: (u, { eq }) => eq(u.email, email),
+			columns: { id: true }
+		});
+
+		if (userRow) {
+			await db.update(proStatus)
+				.set({ cachedAt: new Date(), expiration: null })
+				.where(eq(proStatus.userId, userRow.id));
+			invalidateProCache(email);
+			console.log(`⛔ Pro status revoked via webhook for ${email}`);
+		}
 	} catch (e) {
 		console.error(`❌ Failed to clear pro expiration for ${email}:`, e);
 	}

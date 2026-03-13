@@ -4,22 +4,27 @@ import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
 import { fail } from '@sveltejs/kit';
 
+import { ilike } from 'drizzle-orm';
+import { proStatus } from '$lib/server/db/schema';
+import crypto from 'crypto';
+
 export const load: PageServerLoad = async ({ url, request }) => {
 	const search = url.searchParams.get('search');
 
-	const { users } = await auth.api.listUsers({
-		query: {
-			...(search && {
-				searchValue: search,
-				searchField: 'email'
-			}),
-			limit: 100
-		},
-		headers: request.headers
+	const users = await db.query.user.findMany({
+		where: search ? ilike(user.email, `%${search}%`) : undefined,
+		limit: 100,
+		with: {
+			proStatus: true
+		}
 	});
 
 	return {
-		users
+		users: users.map(u => ({
+			...u,
+			proExpiration: u.proStatus?.expiration,
+			proStatusCachedAt: u.proStatus?.cachedAt
+		}))
 	};
 };
 
@@ -107,17 +112,20 @@ export const actions: Actions = {
 		}
 
 		// Update or Override local cache
-		// Using the admin API ensures audit logs and proper metadata handling if enabled
-		await auth.api.adminUpdateUser({
-			body: {
+		await db.insert(proStatus)
+			.values({
+				id: crypto.randomUUID(),
 				userId,
-				data: {
-					proExpiration: expirationDate,
-					proStatusCachedAt: new Date()
+				expiration: expirationDate,
+				cachedAt: new Date()
+			})
+			.onConflictDoUpdate({
+				target: proStatus.userId,
+				set: {
+					expiration: expirationDate,
+					cachedAt: new Date()
 				}
-			},
-			headers: request.headers
-		});
+			});
 
 		return { success: true };
 	}

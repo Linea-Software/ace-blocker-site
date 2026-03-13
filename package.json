@@ -21,7 +21,9 @@
 		"db:push": "drizzle-kit push",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
-		"db:studio": "drizzle-kit studio"
+		"db:studio": "drizzle-kit studio",
+
+		"gen:auth-schema": "bun x auth@latest generate --config ./src/lib/server/auth.ts --output ./src/lib/server/db/auth-schema.ts"
 	},
 	"devDependencies": {
 		"@eslint/js": "~9.39.3",

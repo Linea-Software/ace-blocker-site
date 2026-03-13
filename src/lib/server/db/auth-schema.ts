@@ -24,9 +24,6 @@ export const user = pgTable("user", {
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
   twoFactorEnabled: boolean("two_factor_enabled").default(false),
-  // Cached pro status — avoids hammering DodoPayments API on every request
-  proStatusCachedAt: timestamp("pro_status_cached_at"),
-  proExpiration: timestamp("pro_expiration"),
 });
 
 export const session = pgTable(
@@ -138,30 +135,12 @@ export const twoFactor = pgTable(
   ],
 );
 
-export const backups = pgTable(
-	"backups",
-	{
-		id: text("id").primaryKey(),
-		userId: text("user_id")
-			.notNull()
-			.references(() => user.id, { onDelete: "cascade" }),
-		data: text("data").notNull(),
-		version: text("version").notNull(),
-		createdAt: timestamp("created_at").defaultNow().notNull()
-	},
-	(table) => [index("backups_userId_idx").on(table.userId)]
-);
-
-export const userRelations = relations(user, ({ many, one }) => ({
-  sessions: many(session),
-  accounts: many(account),
-  apikeys: many(apikey),
-  backups: many(backups),
-  twoFactor: one(twoFactor, {
-    fields: [user.id],
-    references: [twoFactor.userId],
-  }),
-}));
+// export const userRelations = relations(user, ({ many }) => ({
+//   sessions: many(session),
+//   accounts: many(account),
+//   apikeys: many(apikey),
+//   twoFactors: many(twoFactor),
+// }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {
@@ -189,11 +168,4 @@ export const twoFactorRelations = relations(twoFactor, ({ one }) => ({
     fields: [twoFactor.userId],
     references: [user.id],
   }),
-}));
-
-export const backupsRelations = relations(backups, ({ one }) => ({
-	user: one(user, {
-		fields: [backups.userId],
-		references: [user.id]
-	})
 }));
