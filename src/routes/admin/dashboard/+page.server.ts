@@ -1,10 +1,18 @@
 import type { PageServerLoad } from './$types';
+import { db } from '$lib/server/db';
+import { user } from '$lib/server/db/schema';
+import { count, gt } from 'drizzle-orm';
 
 export const load: PageServerLoad = async () => {
-	// These will be replaced with real DB queries
+	const [totalUsersCount] = await db.select({ value: count() }).from(user);
+	const [proUsersCount] = await db
+		.select({ value: count() })
+		.from(user)
+		.where(gt(user.proExpiration, new Date()));
+
 	return {
-		totalUsers: 1250,
-		proUsers: 450,
-		siteVisits: 12400
+		totalUsers: totalUsersCount.value,
+		proUsers: proUsersCount.value,
+		siteVisits: 0 // analytics table not yet implemented
 	};
 };
