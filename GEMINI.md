@@ -80,6 +80,16 @@ This website is a full-stack SvelteKit application used for product publicity, m
     - `api/`: Hono API implementation using `@hono/zod-openapi` for type-safe RPC and auto-generated documentation.
   - `/src/lib/paraglide/`: Auto-generated localization runtime.
 
+## Database Patterns
+
+- **Schema Separation**:
+  - `auth-schema.ts`: Contains core tables for Better Auth (user, session, account, verification, apikey, twoFactor). Avoid adding application-specific fields here.
+  - `schema.ts`: Contains application-specific tables and extends `user` via 1:1 or 1:N relations.
+- **User Extensions (1:1)**:
+  - **Pro Status**: Managed via the `proStatus` table in `schema.ts` to avoid bloating the core `user` table.
+  - **Backups**: Managed via the `backups` table in `schema.ts`. Each user has exactly one latest backup (upserted).
+- **Relations**: All `relations` (including `userRelations`) should be defined in `schema.ts` to ensure visibility across the entire app schema.
+
 ## API Development & Documentation
 
 The project uses **Hono** (specifically `OpenAPIHono`) to handle all API requests under the `/api` prefix.
