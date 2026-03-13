@@ -85,7 +85,7 @@
 	"auth_passwords_do_not_match": "Passwords do not match",
 	"auth_name_label": "Name",
 	"download_arch_mac": "macOS",
-	"download_app_version": "Version 2.0.1 - Release Notes",
+	"download_app_version": "Version 1.0.0 alpha - Release Notes",
 	"download_sys_req_title": "System Requirements",
 	"download_sys_req_details": "Windows 10+, Ubuntu 20.04+, macOS 12+",
 	"download_checksums_toggle": "Checksums (SHA-256)",

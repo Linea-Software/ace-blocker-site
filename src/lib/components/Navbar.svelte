@@ -93,14 +93,14 @@
 						{/if}
 						
 						<Separator />
-						{#if $session.data}
+						{#if $session.data?.user.role === 'admin'}
 							<a
-								href="/dashboard"
+								href="/admin/dashboard"
 								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
 								onclick={() => (isMobileMenuOpen = false)}
 							>
 								<LayoutDashboard class="h-5 w-5" />
-								Dashboard
+								Admin Dashboard
 							</a>
 							<button
 								class="flex flex-1 items-center gap-3 rounded-md px-3 py-2 text-lg font-medium text-destructive transition-all duration-200 hover:bg-red-600 hover:text-white active:scale-95"
@@ -211,13 +211,15 @@
 					</Button>
 				{/if}
 
-				<Button
-					href="/dashboard"
-					variant="ghost"
-					class="hidden items-center text-slate-600 hover:text-slate-900 sm:inline-flex dark:text-slate-300 dark:hover:text-white"
-				>
-					Dashboard
-				</Button>
+				{#if $session.data?.user.role === 'admin'}
+					<Button
+						href="/admin/dashboard"
+						variant="ghost"
+						class="hidden items-center text-slate-600 hover:text-slate-900 sm:inline-flex dark:text-slate-300 dark:hover:text-white"
+					>
+						Admin Dashboard
+					</Button>
+				{/if}
 				<Button
 					onclick={() => authClient.signOut()}
 					variant="ghost"
