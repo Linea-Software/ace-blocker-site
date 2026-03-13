@@ -93,7 +93,7 @@ export const auth = betterAuth({
 			otpOptions: {
 				sendOTP: async ({ user, otp }) => {
 					await resend.emails.send({
-						from: 'security@aceblocker.com',
+						from: 'noreply@aceblocker.com',
 						to: user.email,
 						subject: 'Your 2FA Code',
 						text: `Your security code is: ${otp}`

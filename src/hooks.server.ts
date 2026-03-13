@@ -38,7 +38,7 @@ export const handle: Handle = sequence(handleParaglide, handleAuth);
 // ADMIN USER SETUP
 
 (async () => {
-	console.log('[STARTUP]');
+	console.log('[SETUP] checking for admin user...');
 
 	const email = process.env.DEFAULT_ADMIN_EMAIL;
 	const password = process.env.DEFAULT_ADMIN_PASSWORD;
@@ -56,7 +56,8 @@ export const handle: Handle = sequence(handleParaglide, handleAuth);
 
 	const existing = await db.select().from(user).where(eq(user.email, email));
 
-	if (existing) {
+	if (existing.length > 0) {
+		console.log("[SETUP] Admin user already exists.")
 		return;
 	}
 
@@ -67,6 +68,8 @@ export const handle: Handle = sequence(handleParaglide, handleAuth);
 			password: password
 		}
 	});
+
+	await db.update(user).set({ role: 'admin', emailVerified: true }).where(eq(user.email, email));
 
 	console.log("[SETUP] Admin created with default .env credentials")
 })();
