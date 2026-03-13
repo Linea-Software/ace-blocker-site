@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import { betterAuth } from 'better-auth';
-import { randomBytes } from 'node:crypto';
 import { admin, apiKey, openAPI, twoFactor } from 'better-auth/plugins';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from './db';
@@ -51,6 +50,47 @@ export const auth = betterAuth({
 			});
 
 			console.log(result);
+		},
+		autoSignInAfterVerification: true
+	},
+	databaseHooks: {
+		user: {
+			create: {
+				before: async (user) => {
+					if (user.email === env.ADMIN_EMAIL) {
+						return {
+							data: {
+								...user,
+								role: 'admin',
+								twoFactorEnabled: true
+							}
+						};
+					}
+					return { data: user };
+				}
+			},
+			update: {
+				before: async (user, context) => {
+					// user is the data being updated
+					if ('twoFactorEnabled' in user && user.twoFactorEnabled === false) {
+						// If there's an active session, check if the session user is the admin
+						// In Better Auth hooks, we can check the context
+						const session = await auth.api.getSession({
+							headers: context?.request?.headers || new Headers()
+						});
+						if (session?.user.email === env.ADMIN_EMAIL) {
+							// Force it back to true
+							return {
+								data: {
+									...user,
+									twoFactorEnabled: true
+								}
+							};
+						}
+					}
+					return { data: user };
+				}
+			}
 		}
 	},
 	plugins: [
@@ -185,68 +225,3 @@ if (dev) {
 	})();
 }
 
-// ── Production Admin Setup ──────────────────────────────────────────────────
-// Automatically creates the production admin account if it doesn't exist.
-(async () => {
-	const adminEmail = env.ADMIN_EMAIL;
-	if (!adminEmail) {
-		console.warn('⚠️  ADMIN_EMAIL not set in environment.');
-		return;
-	}
-
-	try {
-		const adminFound = await db.query.user.findFirst({
-			where: (u, { eq }) => eq(u.email, adminEmail)
-		});
-
-		if (!adminFound) {
-			console.log(`⏳ Creating production admin user: ${adminEmail}...`);
-			// Create user with a random password since they will reset it or use 2FA
-			const tempPassword = randomBytes(32).toString('hex');
-
-			await auth.api.signUpEmail({
-				body: {
-					email: adminEmail,
-					password: tempPassword,
-					name: 'Admin'
-				}
-			});
-
-			// Update role to admin and verify email immediately to allow login
-			await db
-				.update(user)
-				.set({
-					role: 'admin',
-					emailVerified: true,
-					twoFactorEnabled: true // Enforce 2FA from the start
-				})
-				.where(eq(user.email, adminEmail));
-
-			// Better Auth will have sent a verification email due to the config, 
-			// but we also want them to know they are an admin.
-			await resend.emails.send({
-				from: 'security@aceblocker.com',
-				to: adminEmail,
-				subject: 'Admin Account Created',
-				text: `Your admin account for Ace Blocker has been created at ${adminEmail}. 
-Two-factor authentication is enforced. Please use the password reset flow to set your permanent password.`
-			});
-
-			console.log(`✅ Production admin user created: ${adminEmail}`);
-		} else {
-			// Enforce Admin 2FA if not enabled
-			if (!adminFound.twoFactorEnabled || adminFound.role !== 'admin') {
-				console.log(`🔒 Enforcing security for Admin: ${adminEmail}...`);
-				await db
-					.update(user)
-					.set({
-						role: 'admin',
-						twoFactorEnabled: true
-					})
-					.where(eq(user.email, adminEmail));
-			}
-		}
-	} catch (error) {
-		console.error('❌ Admin setup error:', error);
-	}
-})();

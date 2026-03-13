@@ -6,7 +6,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Card from '$lib/components/ui/card';
 	import * as Alert from '$lib/components/ui/alert';
-	import { Loader2, AlertCircle, Shield, ArrowLeft, CheckCircle2, Sun, Moon } from '@lucide/svelte';
+	import { Loader2, AlertCircle, Shield, ArrowLeft, CheckCircle2, Sun, Moon, Mail } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { toggleMode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages.js';
@@ -19,6 +19,8 @@
 	let confirmPassword = $state('');
 	let error = $state<string | null>(null);
 	let loading = $state(false);
+	let isSubmitted = $state(false);
+	let submittedEmail = $state('');
 
 	const session = authClient.useSession();
 	const origin = $derived(page.url.searchParams.get('origin'));
@@ -82,7 +84,7 @@
 				email,
 				password,
 				name,
-				callbackURL: '/'
+				callbackURL: '/dashboard'
 			},
 			{
 				onSuccess: async () => {
@@ -90,7 +92,11 @@
 						await linkEngine();
 					} else {
 						loading = false;
-						goto('/');
+						submittedEmail = email;
+						isSubmitted = true;
+						// Clear sensitive data after submission
+						password = '';
+						confirmPassword = '';
 					}
 				},
 				onError: (ctx: any) => {
@@ -178,113 +184,143 @@
 		</div>
 
 		<div class="w-full max-w-md animate-in duration-700 fade-in slide-in-from-bottom-4">
-			<div class="mb-8">
-				<h2 class="mb-2 text-4xl font-bold dark:text-white">{m.auth_sign_up_title()}</h2>
-				<p class="text-muted-foreground">{m.auth_sign_up_description()}</p>
-			</div>
+			{#if !isSubmitted}
+				<div class="mb-8">
+					<h2 class="mb-2 text-4xl font-bold dark:text-white">{m.auth_sign_up_title()}</h2>
+					<p class="text-muted-foreground">{m.auth_sign_up_description()}</p>
+				</div>
 
-			{#if error}
-				<Alert.Root variant="destructive" class="mb-6 border-red-900/50 bg-red-900/10 text-red-400">
-					<AlertCircle class="h-4 w-4" />
-					<Alert.Title>Error</Alert.Title>
-					<Alert.Description>{error}</Alert.Description>
-				</Alert.Root>
-			{/if}
+				{#if error}
+					<Alert.Root variant="destructive" class="mb-6 border-red-900/50 bg-red-900/10 text-red-400">
+						<AlertCircle class="h-4 w-4" />
+						<Alert.Title>Error</Alert.Title>
+						<Alert.Description>{error}</Alert.Description>
+					</Alert.Root>
+				{/if}
 
-			<form onsubmit={handleSignUp} class="space-y-5">
-				<div class="space-y-2">
-					<Label for="name" class="text-foreground/80 dark:text-slate-300"
-						>{m.auth_name_label()}</Label
-					>
-					<Input
-						id="name"
-						type="text"
-						placeholder="John Doe"
-						bind:value={name}
-						required
-						class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
-					/>
-				</div>
-				<div class="space-y-2">
-					<Label for="email" class="text-foreground/80 dark:text-slate-300"
-						>{m.auth_email_label()}</Label
-					>
-					<Input
-						id="email"
-						type="email"
-						placeholder="you@example.com"
-						bind:value={email}
-						required
-						class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
-					/>
-				</div>
-				<div class="space-y-2">
-					<Label for="password" class="text-foreground/80 dark:text-slate-300"
-						>{m.auth_password_label()}</Label
-					>
-					<Input
-						id="password"
-						type="password"
-						placeholder="••••••••"
-						bind:value={password}
-						required
-						class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
-					/>
-				</div>
-				<div class="space-y-2">
-					<div class="flex items-center justify-between">
-						<Label for="confirm-password" class="text-foreground/80 dark:text-slate-300"
-							>{m.auth_confirm_password_label()}</Label
+				<form onsubmit={handleSignUp} class="space-y-5">
+					<div class="space-y-2">
+						<Label for="name" class="text-foreground/80 dark:text-slate-300"
+							>{m.auth_name_label()}</Label
 						>
-						{#if confirmPassword && passwordsMatch}
-							<span
-								class="flex items-center gap-1 text-[10px] font-bold tracking-wider text-green-500 uppercase"
-							>
-								<CheckCircle2 class="h-3 w-3" />
-								Match
-							</span>
-						{:else if confirmPassword && !passwordsMatch}
-							<span class="text-[10px] font-bold tracking-wider text-red-500 uppercase">
-								No Match
-							</span>
-						{/if}
+						<Input
+							id="name"
+							type="text"
+							placeholder="John Doe"
+							bind:value={name}
+							required
+							class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+						/>
 					</div>
-					<Input
-						id="confirm-password"
-						type="password"
-						placeholder="••••••••"
-						bind:value={confirmPassword}
-						required
-						class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white {confirmPassword &&
-						!passwordsMatch
-							? 'border-red-900/50 ring-red-900/20'
-							: ''}"
-					/>
+					<div class="space-y-2">
+						<Label for="email" class="text-foreground/80 dark:text-slate-300"
+							>{m.auth_email_label()}</Label
+						>
+						<Input
+							id="email"
+							type="email"
+							placeholder="you@example.com"
+							bind:value={email}
+							required
+							class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+						/>
+					</div>
+					<div class="space-y-2">
+						<Label for="password" class="text-foreground/80 dark:text-slate-300"
+							>{m.auth_password_label()}</Label
+						>
+						<Input
+							id="password"
+							type="password"
+							placeholder="••••••••"
+							bind:value={password}
+							required
+							class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+						/>
+					</div>
+					<div class="space-y-2">
+						<div class="flex items-center justify-between">
+							<Label for="confirm-password" class="text-foreground/80 dark:text-slate-300"
+								>{m.auth_confirm_password_label()}</Label
+							>
+							{#if confirmPassword && passwordsMatch}
+								<span
+									class="flex items-center gap-1 text-[10px] font-bold tracking-wider text-green-500 uppercase"
+								>
+									<CheckCircle2 class="h-3 w-3" />
+									Match
+								</span>
+							{:else if confirmPassword && !passwordsMatch}
+								<span class="text-[10px] font-bold tracking-wider text-red-500 uppercase">
+									No Match
+								</span>
+							{/if}
+						</div>
+						<Input
+							id="confirm-password"
+							type="password"
+							placeholder="••••••••"
+							bind:value={confirmPassword}
+							required
+							class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white {confirmPassword &&
+							!passwordsMatch
+								? 'border-red-900/50 ring-red-900/20'
+								: ''}"
+						/>
+					</div>
+
+					<Button
+						type="submit"
+						class="mt-4 h-12 w-full bg-amber-500 font-bold text-black transition-all hover:bg-amber-400 active:scale-[0.98]"
+						disabled={!canSubmit}
+					>
+						{#if loading}
+							<Loader2 class="mr-2 h-5 w-5 animate-spin" />
+							{m.auth_signing_up()}
+						{:else}
+							{m.auth_sign_up_button()}
+						{/if}
+					</Button>
+				</form>
+
+				<div class="mt-8 text-center text-sm text-slate-500">
+					{m.auth_already_have_account()}
+					<a
+						href="/signin"
+						class="px-1 font-semibold text-amber-500 hover:text-amber-400 hover:underline"
+					>
+						{m.auth_sign_in_button()}
+					</a>
 				</div>
-
-				<Button
-					type="submit"
-					class="mt-4 h-12 w-full bg-amber-500 font-bold text-black transition-all hover:bg-amber-400 active:scale-[0.98]"
-					disabled={!canSubmit}
-				>
-					{#if loading}
-						<Loader2 class="mr-2 h-5 w-5 animate-spin" />
-						{m.auth_signing_up()}
-					{:else}
-						{m.auth_sign_up_button()}
-					{/if}
-				</Button>
-			</form>
-
-			<div class="mt-8 text-center text-sm text-slate-500">
-				{m.auth_already_have_account()}
-				<a
-					href="/signin"
-					class="px-1 font-semibold text-amber-500 hover:text-amber-400 hover:underline"
-				>
-					{m.auth_sign_in_button()}
-				</a>
-			</div>
+			{:else}
+				<div class="text-center animate-in zoom-in-95 duration-500">
+					<div class="relative mx-auto mb-6 h-24 w-24">
+						<div
+							class="absolute inset-0 animate-ping rounded-full bg-amber-500/20 duration-[3000ms]"
+						></div>
+						<div class="relative flex h-full w-full items-center justify-center rounded-full bg-amber-500/10">
+							<Mail class="h-12 w-12 text-amber-500" />
+						</div>
+					</div>
+					<h2 class="mb-3 text-3xl font-bold dark:text-white">Check your email</h2>
+					<p class="text-lg text-muted-foreground leading-relaxed">
+						We've sent a verification link to <span class="text-foreground font-medium"
+							>{submittedEmail}</span
+						>.<br />
+						Click the link to activate your account and access your dashboard.
+					</p>
+					<div class="mt-10">
+						<Button
+							variant="outline"
+							href="/signin"
+							class="border-slate-800 bg-transparent text-slate-400 hover:bg-slate-900 hover:text-white"
+						>
+							<ArrowLeft class="mr-2 h-4 w-4" />
+							Back to sign in
+						</Button>
+					</div>
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>
