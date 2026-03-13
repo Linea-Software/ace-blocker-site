@@ -13,7 +13,10 @@
 		Sparkles,
 		Globe,
 		Loader2,
-		AlertCircle
+		AlertCircle,
+		Clock,
+		Lock,
+		MoreVertical
 	} from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { authClient } from '$lib/auth-client';
@@ -405,32 +408,15 @@
 						<h2
 							class="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl dark:text-white"
 						>
-							The ultimate focus toolbox.
+							{m.toolbox_title()}
 						</h2>
 						<p class="text-lg text-slate-600 dark:text-slate-400">
-							Don't just block sites. Change your relationship with the internet using our advanced
-							features designed for deep work.
+							{m.toolbox_description()}
 						</p>
 					</div>
 
 					<div class="grid grid-cols-1 gap-8">
-						<div class="flex gap-5">
-							<div
-								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
-							>
-								<Infinity class="h-6 w-6 text-amber-500" />
-							</div>
-							<div class="space-y-1">
-								<h3 class="text-lg font-bold text-slate-900 dark:text-slate-200">
-									Unlimited Everything
-								</h3>
-								<p class="text-slate-600 dark:text-slate-400">
-									With a generous free plan that included unlimited network blocks plus unlimited
-									locks as well as 3 site lists.
-								</p>
-							</div>
-						</div>
-
+						<!-- Zen Master Protocols -->
 						<div class="flex gap-5">
 							<div
 								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
@@ -439,15 +425,15 @@
 							</div>
 							<div class="space-y-1">
 								<h3 class="text-lg font-bold text-slate-900 dark:text-slate-200">
-									Premium Boredom Scripts
+									{m.toolbox_zen_master_title()}
 								</h3>
 								<p class="text-slate-600 dark:text-slate-400">
-									Make addictive sites boring by stripping away reels, infinite scrolls, and
-									manipulative notifications.
+									{m.toolbox_zen_master_description()}
 								</p>
 							</div>
 						</div>
 
+						<!-- Premium Blocklists -->
 						<div class="flex gap-5">
 							<div
 								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
@@ -456,15 +442,15 @@
 							</div>
 							<div class="space-y-1">
 								<h3 class="text-lg font-bold text-slate-900 dark:text-slate-200">
-									Curated Intelligence
+									{m.toolbox_blocklists_title()}
 								</h3>
 								<p class="text-slate-600 dark:text-slate-400">
-									Stop hunting for blocklists. We provide expertly curated lists for all major
-									distractions, updated regularly.
+									{m.toolbox_blocklists_description()}
 								</p>
 							</div>
 						</div>
 
+						<!-- Cloud Sync & Backup -->
 						<div class="flex gap-5">
 							<div
 								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
@@ -473,11 +459,10 @@
 							</div>
 							<div class="space-y-1">
 								<h3 class="text-lg font-bold text-slate-900 dark:text-slate-200">
-									Cloud Sync & Backup
+									{m.toolbox_cloud_sync_title()}
 								</h3>
 								<p class="text-slate-600 dark:text-slate-400">
-									Your settings, schedules and lists are synced across all your devices and backed
-									up securely.
+									{m.toolbox_cloud_sync_description()}
 								</p>
 							</div>
 						</div>
@@ -493,54 +478,54 @@
 						class="pointer-events-none absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-500/10 blur-[120px] transition-all duration-500 group-hover:bg-amber-500/15"
 					></div>
 
-					<div class="relative w-full max-w-sm space-y-8">
+					<div class="relative w-full max-w-sm space-y-4">
+						<!-- Card 1 (Standard Block Skeleton) -->
 						<div
-							class="translate-y-4 -rotate-2 transform rounded-3xl border border-amber-500/30 bg-white p-6 shadow-2xl transition-all duration-500 group-hover:translate-y-0 group-hover:rotate-0 group-hover:border-amber-500 dark:border-amber-500/50 dark:bg-[#0B0B0F]"
+							class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl transition-all duration-500 group-hover:-translate-y-1 dark:border-slate-800 dark:bg-[#0B0B0F]"
 						>
-							<div class="mb-6 flex items-center justify-between">
+							<div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800/50">
+								<Shield class="h-6 w-6 text-slate-400 dark:text-slate-500" />
+							</div>
+							<div class="flex-1 space-y-2">
+								<div class="h-4 w-24 rounded bg-slate-200 dark:bg-slate-800/80"></div>
 								<div class="flex items-center gap-3">
-									<div
-										class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500"
-									>
-										<Globe class="h-5 w-5" />
+									<div class="flex items-center gap-1 opacity-50">
+										<Globe class="h-3 w-3 text-slate-400" />
+										<div class="h-2 w-12 rounded bg-slate-200 dark:bg-slate-800"></div>
 									</div>
-									<div class="space-y-1.5">
-										<div class="h-2.5 w-24 rounded-full bg-slate-800"></div>
-										<div class="h-2 w-16 rounded-full bg-slate-900"></div>
+									<div class="flex items-center gap-1 opacity-50">
+										<Clock class="h-3 w-3 text-slate-400" />
+										<div class="h-2 w-16 rounded bg-slate-200 dark:bg-slate-800"></div>
 									</div>
 								</div>
-								<div
-									class="h-6 w-12 rounded-full bg-[#FFBF00] shadow-[0_0_15px_rgba(255,191,0,0.3)]"
-								></div>
 							</div>
-							<div class="space-y-3">
-								<div class="h-2 w-full rounded-full bg-slate-800/50"></div>
-								<div class="h-2 w-4/5 rounded-full bg-slate-800/50"></div>
-								<div class="h-2 w-3/4 rounded-full bg-slate-800/30"></div>
-							</div>
+							<MoreVertical class="h-4 w-4 text-slate-400" />
 						</div>
 
+						<!-- Card 2 (Locked Block Skeleton) -->
 						<div
-							class="translate-x-12 -translate-y-8 rotate-6 transform rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-2xl backdrop-blur-md transition-all duration-500 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:rotate-0"
+							class="translate-x-6 transform flex items-center gap-4 rounded-2xl border-2 border-amber-500/50 bg-white p-4 shadow-2xl transition-all duration-500 group-hover:translate-x-0 dark:bg-[#0B0B0F]"
 						>
-							<div class="mb-4 flex items-center gap-3">
-								<Shield class="h-5 w-5 text-amber-500" />
-								<div class="h-2.5 w-32 rounded-full bg-slate-700"></div>
+							<div class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10">
+								<Lock class="h-6 w-6 text-amber-500" />
 							</div>
-							<div class="space-y-3">
-								<div class="flex items-center justify-between">
-									<div class="h-2 w-20 rounded-full bg-slate-800"></div>
-									<div class="h-1.5 w-1.5 rounded-full bg-emerald-500"></div>
+							<div class="flex-1 space-y-2">
+								<div class="flex items-center gap-2">
+									<div class="h-4 w-32 rounded bg-slate-200 dark:bg-slate-800/80"></div>
+									<div class="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
 								</div>
-								<div class="flex items-center justify-between">
-									<div class="h-2 w-24 rounded-full bg-slate-800"></div>
-									<div class="h-1.5 w-1.5 rounded-full bg-emerald-500"></div>
-								</div>
-								<div class="flex items-center justify-between opacity-50">
-									<div class="h-2 w-16 rounded-full bg-slate-800"></div>
-									<div class="h-1.5 w-1.5 rounded-full bg-slate-800"></div>
+								<div class="flex items-center gap-3">
+									<div class="flex items-center gap-1 opacity-50">
+										<Globe class="h-3 w-3 text-slate-400" />
+										<div class="h-2 w-14 rounded bg-slate-200 dark:bg-slate-800"></div>
+									</div>
+									<div class="flex items-center gap-1 opacity-50">
+										<Clock class="h-3 w-3 text-slate-400" />
+										<div class="h-2 w-20 rounded bg-slate-200 dark:bg-slate-800"></div>
+									</div>
 								</div>
 							</div>
+							<MoreVertical class="h-4 w-4 text-slate-400" />
 						</div>
 					</div>
 				</div>

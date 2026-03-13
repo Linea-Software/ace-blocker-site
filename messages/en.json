@@ -95,5 +95,13 @@
 	"linking_error": "Direct link failed. Opening Ace Blocker app...",
 	"pro_success_title": "You're all set!",
 	"pro_success_description": "Your Pro account is active and linked to your Ace Blocker engine. You can safely close this window and return to the app.",
-	"nav_pro_features": "Pro Features"
+	"nav_pro_features": "Pro Features",
+	"toolbox_blocklists_title": "Premium Blocklists",
+	"toolbox_blocklists_description": "Stop hunting for URLs. Access our expertly curated, automatically updating lists covering all major distractions, adult content, gaming, and more.",
+	"toolbox_zen_master_title": "Zen Master Protocols",
+	"toolbox_zen_master_description": "Unlock all premium friction rules. Make addictive sites radically less appealing by stripping away infinite scrolls and manipulative UI elements.",
+	"toolbox_cloud_sync_title": "Cloud Sync & Backup",
+	"toolbox_cloud_sync_description": "Your settings, schedules and lists are synced across all your devices and backed up securely.",
+	"toolbox_title": "The ultimate focus toolbox.",
+	"toolbox_description": "Don't just block sites. Change your relationship with the internet using our advanced features designed for deep work."
 }
