@@ -19,23 +19,15 @@
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils';
 	import { toggleMode, mode } from 'mode-watcher';
+	import * as m from '$lib/paraglide/messages';
 
 	const session = authClient.useSession();
 	const isPro = $derived(page.data.isPro || false);
 
 	const navLinks = [
 		{ href: '/download', label: 'Download', icon: Download },
-		{
-			href: '/get-pro',
-			label: 'Get Pro',
-			icon: Crown,
-			iconClass: 'text-yellow-500',
-			hideIfPro: true
-		},
 		{ href: '/about', label: 'About', icon: Info }
 	];
-
-	const visibleLinks = $derived(navLinks.filter((link) => !link.hideIfPro || !isPro));
 
 	let isMobileMenuOpen = $state(false);
 
@@ -66,7 +58,7 @@
 						<Sheet.Description>Manage your digital well-being.</Sheet.Description>
 					</Sheet.Header>
 					<div class="flex flex-1 flex-col gap-4 py-8">
-						{#each visibleLinks as link}
+						{#each navLinks as link}
 							<a
 								href={link.href}
 								class={cn(
@@ -75,10 +67,31 @@
 								)}
 								onclick={() => (isMobileMenuOpen = false)}
 							>
-								<link.icon class={cn('h-5 w-5', link.iconClass)} />
+								<link.icon class="h-5 w-5" />
 								{link.label}
 							</a>
 						{/each}
+						
+						{#if isPro}
+							<a
+								href="/get-pro"
+								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-amber-500 transition-colors hover:bg-amber-500/10"
+								onclick={() => (isMobileMenuOpen = false)}
+							>
+								<Crown class="h-5 w-5" />
+								{m.nav_pro_features()}
+							</a>
+						{:else}
+							<a
+								href="/get-pro"
+								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-primary transition-colors hover:text-primary/80"
+								onclick={() => (isMobileMenuOpen = false)}
+							>
+								<Crown class="h-5 w-5 text-amber-500" />
+								Get Pro
+							</a>
+						{/if}
+						
 						<Separator />
 						{#if $session.data}
 							<a
@@ -145,17 +158,17 @@
 			</a>
 
 			<nav class="hidden h-full items-center gap-1 md:flex">
-				{#each visibleLinks as link}
+				{#each navLinks as link}
 					<a
 						href={link.href}
 						class={cn(
-							'inline-flex h-9 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50',
+							'inline-flex h-9 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent focus:bg-accent focus:outline-none disabled:pointer-events-none disabled:opacity-50',
 							isActive(link.href)
 								? 'bg-accent text-primary dark:text-amber-500'
 								: 'text-slate-600 dark:text-slate-400 dark:hover:text-white'
 						)}
 					>
-						<link.icon class={cn('mr-2 h-4 w-4', link.iconClass)} />
+						<link.icon class="mr-2 h-4 w-4" />
 						{link.label}
 					</a>
 				{/each}
@@ -180,6 +193,24 @@
 			</Button>
 
 			{#if $session.data}
+				{#if isPro}
+					<a
+						href="/get-pro"
+						class="hidden items-center gap-2 px-3 text-sm font-medium text-amber-500 transition-colors hover:text-amber-400 sm:flex"
+					>
+						<Crown class="h-4 w-4" />
+						{m.nav_pro_features()}
+					</a>
+				{:else}
+					<Button
+						href="/get-pro"
+						class="hidden items-center bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
+					>
+						<Crown class="mr-2 h-4 w-4" />
+						Get Pro
+					</Button>
+				{/if}
+
 				<Button
 					href="/dashboard"
 					variant="ghost"

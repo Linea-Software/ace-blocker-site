@@ -94,5 +94,6 @@
 	"linking_success": "Account successfully linked!",
 	"linking_error": "Direct link failed. Opening Ace Blocker app...",
 	"pro_success_title": "You're all set!",
-	"pro_success_description": "Your Pro account is active and linked to your Ace Blocker engine. You can safely close this window and return to the app."
+	"pro_success_description": "Your Pro account is active and linked to your Ace Blocker engine. You can safely close this window and return to the app.",
+	"nav_pro_features": "Pro Features"
 }
