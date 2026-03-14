@@ -123,6 +123,10 @@ Use `bun run <script>` for these tasks:
 - `test`: Runs unit and E2E tests.
 - `format`: Formats code with Prettier.
 
+## Agent Skills
+
+You have specialized **Skills** at your disposal located in `./.agent/skills/`. Before performing complex tasks (like setting up Auth, API logic, or Security), you should check these directories for `SKILL.md` files. These files contain project-specific patterns, instructions, and examples that MUST be followed.
+
 ## Svelte MCP Tools usage:
 
 You have access to a Svelte MCP server for documentation. Use these tools effectively:
