@@ -33,14 +33,14 @@ Before performing ANY task related to the technologies below, you MUST use `read
 - **shadcn-svelte**: [Documentation](https://shadcn-svelte.com/llms.txt) - UI components.
 - **DodoPayments**: [Documentation](https://docs.dodopayments.com/llms.txt) - Payments.
 - **BunnyCDN**: [Documentation](https://docs.bunny.net/llms.txt) - File hosting.
-- **Hono**: [Documentation](https://hono.dev/llms.txt) - API framework.
+- **Elysia**: [Documentation](https://elysiajs.com/llms.txt) - API framework.
 
 ### Mandatory Research Workflow
 
 1. **Identify**: Determine which technologies from the list above are involved in the task.
 2. **Fetch**: Call `read_url_content` for EVERY relevant documentation URL.
-3. **Analyze**: Use only the patterns, runes, and practices found in that documentation.
-4. **Citing Source**: In your plan, briefly mention which documentation was consulted (e.g., "Consulted Svelte 5 llms.txt for proper rune usage").
+4. **Analyze**: Use only the patterns, runes, and practices found in that documentation.
+5. **Citing Source**: In your plan, briefly mention which documentation was consulted (e.g., "Consulted Svelte 5 llms.txt for proper rune usage").
 
 **FAILURE TO FOLLOW THIS WORKFLOW IS A PROJECT-LEVEL FAILURE.**
 
@@ -77,7 +77,7 @@ This website is a full-stack SvelteKit application used for product publicity, m
   - `/src/lib/server/`: Server-only logic, including:
     - `auth.ts`: Better Auth configuration.
     - `db/`: Database schema (`schema.ts`, `auth-schema.ts`) and connection (`index.ts`) using Drizzle.
-    - `api/`: Hono API implementation using `@hono/zod-openapi` for type-safe RPC and auto-generated documentation.
+    - `api/`: Elysia API implementation using `@elysiajs/openapi` for type-safe RPC and auto-generated documentation.
   - `/src/lib/paraglide/`: Auto-generated localization runtime.
 
 ## Database Patterns
@@ -92,14 +92,14 @@ This website is a full-stack SvelteKit application used for product publicity, m
 
 ## API Development & Documentation
 
-The project uses **Hono** (specifically `OpenAPIHono`) to handle all API requests under the `/api` prefix.
+The project uses **Elysia** to handle all API requests under the `/api` prefix.
 
-- **Catch-all Route**: `src/routes/api/[...paths]/+server.ts` forwards all requests to the Hono app.
-- **Type Safety**: The Hono app exports an `AppType`. Use `hono/client` (specifically `hc<AppType>`) in external projects to get full type safety and auto-completion.
+- **Catch-all Route**: `src/routes/api/[...slugs]/+server.ts` forwards all requests to the Elysia app.
+- **Type Safety**: The Elysia app exports an `AppType`. Use `@elysiajs/eden` in external projects to get full type safety and auto-completion.
 - **OpenAPI / Swagger**:
   - In development mode, the interactive Swagger UI is available at `/api/docs`.
   - The raw OpenAPI specification is available at `/api/v1/openapi.json`.
-- **Router Pattern**: Always use modular routers in `src/lib/server/api/routers/` and use `createRoute` to define schemas for paths, queries, and responses.
+- **Router Pattern**: Always use modular routers in `src/lib/server/api/routers/`.
 
 ## Nomenclature & Design Patterns
 

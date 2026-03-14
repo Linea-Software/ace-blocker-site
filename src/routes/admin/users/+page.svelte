@@ -146,7 +146,7 @@
 										Grant Free Pro
 									</DropdownMenu.Item>
 
-									<form method="POST" action="?/toggleStatus" use:enhance>
+									<form method="POST" action="/api/v1/admin/users/toggle-status" use:enhance>
 										<input type="hidden" name="userId" value={user.id} />
 										<input type="hidden" name="isBanned" value={user.banned?.toString()} />
 										<DropdownMenu.Item>
@@ -164,7 +164,7 @@
 
 									<DropdownMenu.Separator />
 
-									<form method="POST" action="?/delete" use:enhance>
+									<form method="POST" action="/api/v1/admin/users/delete" use:enhance>
 										<input type="hidden" name="userId" value={user.id} />
 										<DropdownMenu.Item
 											class="focus:text-destructive-foreground text-destructive focus:bg-destructive"
@@ -195,7 +195,7 @@
 		</Dialog.Header>
 		<form
 			method="POST"
-			action="?/grantPro"
+			action="/api/v1/admin/users/grant-pro"
 			use:enhance={() => {
 				isProModalOpen = false;
 			}}
