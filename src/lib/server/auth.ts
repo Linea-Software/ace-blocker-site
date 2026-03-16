@@ -107,7 +107,7 @@ export const auth = betterAuth({
 			use: [
 				checkout({
 					products: dodoProducts,
-					successUrl: '/dashboard/success',
+					successUrl: '/checkout/completed',
 					authenticatedUsersOnly: true
 				}),
 				webhooks({

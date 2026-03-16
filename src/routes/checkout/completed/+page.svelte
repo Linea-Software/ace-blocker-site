@@ -8,14 +8,22 @@
 		AlertCircle,
 		ArrowRight,
 		Check,
-		Download
+		Download,
+		XCircle,
+		LifeBuoy
 	} from '@lucide/svelte';
 	import * as Card from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
+	import { page } from '$app/stores';
 	import { cn } from '$lib/utils';
 	import * as m from '$lib/paraglide/messages.js';
 
 	let { data } = $props();
+
+	// Use Svelte 5 derived rune to get status from URL
+	const status = $derived($page.url.searchParams.get('status'));
+	const isSuccess = $derived(status === 'active' || !status);
+	const isFailed = $derived(status === 'failed');
 
 	let isPro = $state(data.isPro);
 	let verificationInProcess = $state(false);
@@ -23,17 +31,16 @@
 	let activationStatus = $state<'idle' | 'activating' | 'success' | 'failed'>('idle');
 	let errorMessage = $state('');
 
-	// Fail-safe verification check
+	// Fail-safe verification check (only for success state)
 	$effect(() => {
-		if (!isPro && !verificationInProcess && data.success) {
+		if (isSuccess && !isPro && !verificationInProcess && data.success) {
 			verifyProStatus();
 		}
 	});
 
-	// Auto-activation trigger
+	// Auto-activation trigger (only for success state)
 	$effect(() => {
-		if (isPro && activationStatus === 'idle' && data.apiKey) {
-			// Small delay for visual polish
+		if (isSuccess && isPro && activationStatus === 'idle' && data.apiKey) {
 			const timer = setTimeout(activateInApp, 1000);
 			return () => clearTimeout(timer);
 		}
@@ -42,9 +49,7 @@
 	async function verifyProStatus() {
 		verificationInProcess = true;
 		try {
-			// Adding a small delay to allow webhook processing just in case
 			await new Promise((resolve) => setTimeout(resolve, 2000));
-			
 			const res = await fetch('/api/v1/account/verify-pro', { method: 'POST' });
 			if (res.ok) {
 				const result = await res.json();
@@ -70,24 +75,21 @@
 			const protocolUrl = `aceblocker://account/api-key?apiKey=${apiKey}&callback=${callbackUrl}`;
 
 			try {
-				// Try the local engine first via HTTPS
 				const localRes = await fetch(localUrl, { method: 'GET' });
 				if (localRes.ok) {
 					activationStatus = 'success';
 				} else {
 					window.location.href = protocolUrl;
-					// We can't know for sure if the protocol link worked, but we set success after a delay
 					setTimeout(() => { if (activationStatus === 'activating') activationStatus = 'success'; }, 2000);
 				}
 			} catch (err) {
-				console.warn('Local engine activation failed, falling back to protocol:', err);
 				window.location.href = protocolUrl;
 				setTimeout(() => { if (activationStatus === 'activating') activationStatus = 'success'; }, 2000);
 			}
 		} catch (err) {
 			console.error('Activation error:', err);
 			activationStatus = 'failed';
-			errorMessage = 'Could not automatically activate the app. Please try manually.';
+			errorMessage = 'Could not automatically activate the app.';
 		}
 	}
 
@@ -101,7 +103,7 @@
 </script>
 
 <svelte:head>
-	<title>Payment Successful | Ace Blocker</title>
+	<title>{isFailed ? 'Payment Failed' : 'Payment Successful'} | Ace Blocker</title>
 </svelte:head>
 
 <div class="relative flex min-h-[90vh] w-full flex-col items-center justify-center overflow-hidden bg-background px-4 py-20">
@@ -111,9 +113,51 @@
 		<div class="absolute -bottom-[10%] -right-[10%] h-[40%] w-[40%] rounded-full bg-amber-500/5 blur-[120px]"></div>
 	</div>
 
-	{#if data.success}
-		<div in:fly={{ y: 20, duration: 1000 }} class="relative z-10 w-full max-w-xl">
-			<Card.Root class="overflow-hidden border-border/40 bg-card shadow-2xl">
+	<div in:fly={{ y: 20, duration: 1000 }} class="relative z-10 w-full max-w-xl">
+		<Card.Root class="overflow-hidden border-border/40 bg-card shadow-2xl">
+			{#if isFailed}
+				<!-- FAILURE UI -->
+				<div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-destructive/40 to-transparent"></div>
+				
+				<Card.Header class="pb-4 pt-10 text-center">
+					<div class="mb-6 flex justify-center">
+						<div class="relative">
+							<div class="absolute inset-0 animate-pulse rounded-full bg-destructive/20 opacity-20"></div>
+							<div in:scale={{ duration: 600, delay: 200, start: 0.5 }} class="relative flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+								<XCircle size={48} strokeWidth={1.5} />
+							</div>
+						</div>
+					</div>
+					<Card.Title class="text-3xl font-bold tracking-tight text-foreground">
+						Payment Failed
+					</Card.Title>
+					<Card.Description class="mx-auto mt-2 max-w-sm text-balance text-base text-muted-foreground">
+						We couldn't process your payment. Your card has not been charged.
+					</Card.Description>
+				</Card.Header>
+
+				<Card.Content class="space-y-8 px-8 pb-8 pt-4">
+					<div class="flex flex-col gap-3">
+						<Button 
+							href="/get-pro" 
+							class="group h-12 w-full bg-amber-500 text-amber-950 shadow-[0_0_20px_rgba(245,158,11,0.15)] transition-all hover:bg-amber-600 active:scale-[0.98]"
+						>
+							Try Again
+							<ArrowRight class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+						</Button>
+						
+						<Button 
+							variant="outline" 
+							href="mailto:support@aceblocker.com" 
+							class="h-12 w-full border-border/60 bg-transparent text-foreground/80 hover:bg-white/5 active:scale-[0.98]"
+						>
+							<LifeBuoy class="mr-2 h-4 w-4 opacity-50" />
+							Contact Support
+						</Button>
+					</div>
+				</Card.Content>
+			{:else if isSuccess}
+				<!-- SUCCESS UI -->
 				<div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-amber-500/40 to-transparent"></div>
 				
 				<Card.Header class="pb-4 pt-10 text-center">
@@ -170,12 +214,9 @@
 								{/if}
 							</Button>
 						</div>
-						<p class="px-1 text-[11px] leading-relaxed text-muted-foreground/60 italic">
-							This key is used to link your desktop application. Keep it private.
-						</p>
 					</div>
 
-					<!-- Activation Status / Loading Indicator -->
+					<!-- Activation Status -->
 					<div class="flex flex-col items-center justify-center space-y-4 py-2">
 						{#if activationStatus === 'activating'}
 							<div in:fade class="flex items-center gap-3 text-sm font-medium text-muted-foreground/80">
@@ -186,13 +227,6 @@
 							<div in:fade class="flex items-center gap-2 text-sm font-medium text-emerald-400">
 								<Check class="h-4 w-4" />
 								<span>Successfully sent to app</span>
-							</div>
-						{:else if activationStatus === 'failed'}
-							<div in:fade class="flex flex-col items-center gap-2">
-								<span class="text-xs text-destructive/80">{errorMessage}</span>
-								<Button variant="link" size="sm" onclick={activateInApp} class="h-auto p-0 text-amber-500">
-									Retry auto-activation
-								</Button>
 							</div>
 						{/if}
 					</div>
@@ -213,39 +247,19 @@
 							class="h-12 w-full border-border/60 bg-transparent text-foreground/80 hover:bg-white/5 active:scale-[0.98]"
 						>
 							Back to Home
-							<ArrowRight class="ml-2 h-4 w-4 opacity-50 group-hover:opacity-100" />
+							<ArrowRight class="ml-2 h-4 w-4 opacity-50" />
 						</Button>
 					</div>
 				</Card.Content>
+			{/if}
 
-				<Card.Footer class="flex justify-center border-t border-border/40 bg-muted/30 py-4">
-					<p class="text-[9px] font-medium tracking-[0.25em] text-muted-foreground/50 uppercase">
-						ACE BLOCKER © 2026 • SECURE LICENSE GATEWAY
-					</p>
-				</Card.Footer>
-			</Card.Root>
-		</div>
-	{:else}
-		<!-- Error State -->
-		<div in:fade class="w-full max-w-md text-center">
-			<Card.Root class="border-destructive/20 bg-card">
-				<Card.Header>
-					<div class="mb-4 flex justify-center text-destructive">
-						<AlertCircle size={48} strokeWidth={1.5} />
-					</div>
-					<Card.Title class="text-xl">Verification Issue</Card.Title>
-					<Card.Description class="mt-2 text-muted-foreground">
-						{data.error || 'We encountered an error retrieving your license details.'}
-					</Card.Description>
-				</Card.Header>
-				<Card.Footer>
-					<Button variant="outline" class="w-full" onclick={() => window.location.reload()}>
-						Refresh Status
-					</Button>
-				</Card.Footer>
-			</Card.Root>
-		</div>
-	{/if}
+			<Card.Footer class="flex justify-center border-t border-border/40 bg-muted/30 py-4">
+				<p class="text-[9px] font-medium tracking-[0.25em] text-muted-foreground/50 uppercase">
+					ACE BLOCKER © 2026 • {isFailed ? 'PAYMENT GATEWAY' : 'SECURE LICENSE GATEWAY'}
+				</p>
+			</Card.Footer>
+		</Card.Root>
+	</div>
 </div>
 
 <style>

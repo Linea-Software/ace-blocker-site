@@ -72,7 +72,7 @@ export async function GET({ url, locals, request }) {
 					quantity: 1
 				}
 			],
-			return_url: new URL('/checkout/success', request.url).toString(),
+			return_url: new URL('/checkout/completed', request.url).toString(),
 			customer: {
 				email: locals.user.email,
 				name: locals.user.name
