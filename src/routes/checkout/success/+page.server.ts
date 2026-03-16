@@ -18,10 +18,15 @@ export const load: PageServerLoad = async ({ locals }) => {
 			}
 		});
 
+		// Check current pro status
+		const { isUserPro } = await import('$lib/server/pro');
+		const isPro = await isUserPro(locals.user.email);
+
 		return {
 			success: true,
 			apiKey: apiKeyResponse.key,
-			customerName
+			customerName,
+			isPro
 		};
 	} catch (error) {
 		console.error('Error creating API key:', error);

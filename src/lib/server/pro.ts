@@ -30,13 +30,14 @@ export function invalidateProCache(email: string): void {
 }
 
 export async function getProStatus(
-	email: string
+	email: string,
+	force = false
 ): Promise<{ isActive: boolean; expiration: Date }> {
 	const now = Date.now();
 
 	// ── L1: in-memory cache ──────────────────────────────────────────────────
 	const mem = memoryCache.get(email);
-	if (mem && now < mem.expiresAt) {
+	if (!force && mem && now < mem.expiresAt) {
 		return mem.value;
 	}
 
@@ -47,6 +48,7 @@ export async function getProStatus(
 	});
 
 	if (
+		!force &&
 		userRow?.proStatus?.cachedAt &&
 		now - userRow.proStatus.cachedAt.getTime() < PRO_CACHE_TTL_MS
 	) {

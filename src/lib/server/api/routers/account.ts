@@ -179,4 +179,34 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				500: t.String()
 			}
 		}
+	)
+	.post(
+		'/verify-pro',
+		async ({ user, status }) => {
+			if (!user) {
+				return status(401, 'Unauthorized');
+			}
+
+			const proStatus = await getProStatus(user.email, true);
+
+			return {
+				isActive: proStatus.isActive,
+				expiration: proStatus.expiration
+			};
+		},
+		{
+			detail: {
+				operationId: 'verifyProStatus',
+				summary: 'Force sync and verify user pro status',
+				security: [{ APIKeyHeader: [] }]
+			},
+			response: {
+				200: t.Object({
+					isActive: t.Boolean(),
+					expiration: t.Date()
+				}),
+				401: t.String(),
+				500: t.String()
+			}
+		}
 	);
