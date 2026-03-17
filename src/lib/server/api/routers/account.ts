@@ -71,11 +71,17 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				}
 			}
 
+			const isDev = process.env.NODE_ENV === 'development';
+
 			// Create a new one
 			const apiKeyResponse = await auth.api.createApiKey({
 				body: {
 					name: 'Desktop App',
-					userId: user.id
+					userId: user.id,
+					// @ts-ignore - Better Auth schema extensions might not be fully typed here
+					rateLimitEnabled: !isDev,
+					rateLimitMax: 1000,
+					rateLimitTimeWindow: 3600000 // 1 hour window
 				}
 			});
 
