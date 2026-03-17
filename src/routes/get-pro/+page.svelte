@@ -430,7 +430,7 @@
 					</div>
 
 					<div class="grid grid-cols-1 gap-8">
-						<!-- Zen Master Protocols -->
+						<!-- Resistance Mode Protocols -->
 						<div class="flex gap-5">
 							<div
 								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
@@ -439,10 +439,10 @@
 							</div>
 							<div class="space-y-1">
 								<h3 class="text-lg font-bold text-slate-900 dark:text-slate-200">
-									{m.toolbox_zen_master_title()}
+									{m.toolbox_resistance_mode_title()}
 								</h3>
 								<p class="text-slate-600 dark:text-slate-400">
-									{m.toolbox_zen_master_description()}
+									{m.toolbox_resistance_mode_description()}
 								</p>
 							</div>
 						</div>

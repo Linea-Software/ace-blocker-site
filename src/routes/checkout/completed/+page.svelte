@@ -111,7 +111,7 @@
 
 <main class="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center bg-background">
 	<div class="relative flex min-h-[70vh] w-full flex-col items-center justify-center px-4 py-12">
-		<!-- Zen Background Elements -->
+		<!-- Resistance Mode Background Elements -->
 		<div class="pointer-events-none absolute inset-0 overflow-hidden">
 			<div class="absolute -top-[10%] -left-[10%] h-[40%] w-[40%] rounded-full bg-amber-500/5 blur-[120px]"></div>
 			<div class="absolute -bottom-[10%] -right-[10%] h-[40%] w-[40%] rounded-full bg-amber-500/5 blur-[120px]"></div>

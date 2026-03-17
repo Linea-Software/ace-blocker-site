@@ -154,7 +154,7 @@ Ensure the following are set correctly:
 - `POSTGRES_USER`: Database user (default: `postgres`).
 - `POSTGRES_PASSWORD`: **CRITICAL** - Set a strong password for your database.
 - `POSTGRES_DB`: Database name (default: `aceblocker`).
-- `BUNNY_SECURITY_KEY`: Required for boredom script token generation.
+- `BUNNY_SECURITY_KEY`: Required for Resistance Mode script token generation.
 - `DODO_PAYMENTS_API_KEY`: Your production API key.
 - `DODO_PAYMENTS_WEBHOOK_SECRET`: Your production webhook secret.
 

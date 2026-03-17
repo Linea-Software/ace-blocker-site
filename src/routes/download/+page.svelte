@@ -118,7 +118,7 @@
 <main
 	class="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-4 pt-16 pb-12 transition-colors duration-500 dark:bg-[#0B0B0F]"
 >
-	<!-- Background Aesthetics (Zen Theme) -->
+	<!-- Background Aesthetics (Resistance Mode Theme) -->
 	<div
 		class="pointer-events-none absolute inset-0 -z-10 bg-slate-50 transition-colors duration-500 dark:bg-[#0B0B0F]"
 	>

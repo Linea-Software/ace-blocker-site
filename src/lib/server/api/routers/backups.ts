@@ -44,7 +44,7 @@ const EngineBackupSchema = t.Object({
 	version: t.String(),
 	customSitesLists: t.Array(BackupSitesListSchema),
 	networkBlocks: t.Array(BackupNetworkBlockSchema),
-	deactivatedBoredomScripts: t.Array(t.String())
+	deactivatedResistanceModeScripts: t.Array(t.String())
 });
 
 export const backupsRouter = new Elysia({ prefix: '/backups' })

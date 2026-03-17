@@ -39,12 +39,12 @@ Static or dynamic databases of sites/hosts to be blocked.
 - **Lock**: Implements a "strictness" policy. A lock can only be changed to a stricter state (e.g., from Unlocked to LockedUntilEnd).
 - **Location:** `engine-core/src/common/schedule.rs` and `engine-core/src/common/lock.rs`.
 
-### 4. Boredom Scripts
+### 4. Resistance Mode
 
 Custom JavaScript injected into specific websites to reduce their addictive qualities (e.g., removing infinite scroll).
 
-- **Location:** `engine-core/src/common/boredom_scripts.rs`
-- **Management:** Managed via a `DomainScriptTree` for fast domain-based script lookup.
+- **Location:** `engine-core/src/common/resistance_mode.rs`
+- **Management:** Managed via a `ResistanceScriptTree` for fast domain-based script lookup.
 
 ---
 

@@ -19,7 +19,7 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 		};
 	})
 	.get(
-		'/boredom',
+		'/resistance-mode',
 		async ({ user, status }) => {
 			if (!user) {
 				return status(401, 'Unauthorized');
@@ -31,7 +31,7 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 			}
 
 			const securityKey = env.BUNNY_SECURITY_KEY;
-			const storagePath = '/premium/boredom-scripts.zip';
+			const storagePath = '/premium/resistance-scripts.zip';
 
 			const expires = Math.round(Date.now() / 1000) + 600;
 			const hashableBase = securityKey + storagePath + expires;
@@ -50,8 +50,8 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 		},
 		{
 			detail: {
-				operationId: 'getBoredomScripts',
-				summary: 'Get download URL for boredom scripts',
+				operationId: 'getResistanceModeScripts',
+				summary: 'Get download URL for resistance mode scripts',
 				security: [{ APIKeyHeader: [] }]
 			},
 			response: {

@@ -39,22 +39,22 @@ describe('Elysia API', () => {
 		expect(dataInvalid).toEqual({ valid: false });
 	});
 
-	it('GET /api/v1/scripts/boredom returns download url and version for valid license', async () => {
-		const res = await handle('/api/v1/scripts/boredom?licenseKey=valid-key');
+	it('GET /api/v1/scripts/resistance-mode returns download url and version for valid license', async () => {
+		const res = await handle('/api/v1/scripts/resistance-mode?licenseKey=valid-key');
 		expect(res.status).toBe(200);
 		const data = await res.json();
-		expect(data.url).toContain('https://cdn.aceblocker.com/boredom-scripts.zip');
+		expect(data.url).toContain('https://cdn.aceblocker.com/premium/resistance-scripts.zip');
 		expect(data.url).toContain('token=');
 		expect(data.version).toBe('0.1.0');
 	});
 
-	it('GET /api/v1/scripts/boredom returns 403 for invalid license', async () => {
-		const res = await handle('/api/v1/scripts/boredom?licenseKey=invalid-key');
+	it('GET /api/v1/scripts/resistance-mode returns 403 for invalid license', async () => {
+		const res = await handle('/api/v1/scripts/resistance-mode?licenseKey=invalid-key');
 		expect(res.status).toBe(403);
 	});
 
-	it('GET /api/v1/scripts/boredom requires licenseKey', async () => {
-		const res = await handle('/api/v1/scripts/boredom');
+	it('GET /api/v1/scripts/resistance-mode requires licenseKey', async () => {
+		const res = await handle('/api/v1/scripts/resistance-mode');
 		expect(res.status).toBe(400);
 	});
 });
