@@ -102,8 +102,8 @@ export const apikey = pgTable(
     lastRefillAt: timestamp("last_refill_at"),
     enabled: boolean("enabled").default(true),
     rateLimitEnabled: boolean("rate_limit_enabled").default(true),
-    rateLimitTimeWindow: integer("rate_limit_time_window").default(3600000),
-    rateLimitMax: integer("rate_limit_max").default(1000),
+    rateLimitTimeWindow: integer("rate_limit_time_window").default(86400000),
+    rateLimitMax: integer("rate_limit_max").default(100),
     requestCount: integer("request_count").default(0),
     remaining: integer("remaining"),
     lastRequest: timestamp("last_request"),
@@ -134,13 +134,6 @@ export const twoFactor = pgTable(
     index("twoFactor_userId_idx").on(table.userId),
   ],
 );
-
-// export const userRelations = relations(user, ({ many }) => ({
-//   sessions: many(session),
-//   accounts: many(account),
-//   apikeys: many(apikey),
-//   twoFactors: many(twoFactor),
-// }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {
