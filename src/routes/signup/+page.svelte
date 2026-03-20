@@ -84,7 +84,7 @@
 				email,
 				password,
 				name,
-				callbackURL: '/dashboard'
+				callbackURL: '/'
 			},
 			{
 				onSuccess: async () => {

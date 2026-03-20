@@ -137,10 +137,10 @@
 					</div>
 					<div class="mt-8 flex flex-col gap-4 sm:flex-row">
 						<Button
-							href="/dashboard"
+							href="/"
 							class="bg-slate-900 px-8 py-6 text-lg font-bold dark:bg-white dark:text-slate-950"
 						>
-							Go to Dashboard
+							Go to Home
 						</Button>
 						<Button
 							variant="outline"
