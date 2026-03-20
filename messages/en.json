@@ -108,11 +108,11 @@
 	"email_2fa_subject": "2FA Code - Ace Blocker",
 	"email_app_name": "Ace Blocker",
 	"email_2fa_title": "Authentication Required",
-	"email_2fa_body": "You are attempting to log in to your engine control panel. Enter the authorization code below to proceed.",
-	"email_2fa_footer": "This code will expire in 10 minutes. If you did not request this, ignore this email and secure your account.",
+	"email_2fa_body": "Please use the authorization code below to securely access your Ace Blocker dashboard.",
+	"email_2fa_footer": "If you did not request this login, please ignore this email and ensure your account is secure.",
 	"email_verification_title": "System Initialization",
-	"email_verification_body": "Your protocol requires verification before the blocking engine can be activated. Click the button below to verify your identity.",
+	"email_verification_body": "Verify your email address to activate your account and begin reclaiming your focus with Ace Blocker.",
 	"email_verification_button": "Verify Account",
-	"email_verification_footer": "If you did not register for Ace Blocker, no further action is required."
+	"email_verification_footer": "If you did not sign up for an Ace Blocker account, you can safely ignore this email."
 }
 
