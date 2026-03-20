@@ -71,7 +71,7 @@
 								{link.label}
 							</a>
 						{/each}
-						
+
 						{#if isPro}
 							<a
 								href="/get-pro"
@@ -91,7 +91,7 @@
 								Get Pro
 							</a>
 						{/if}
-						
+
 						<Separator />
 						{#if $session.data?.user.role === 'admin'}
 							<a

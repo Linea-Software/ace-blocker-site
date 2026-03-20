@@ -19,6 +19,8 @@
 	import Navbar from '$lib/components/Navbar.svelte';
 	import * as m from '$lib/paraglide/messages.js';
 
+	import { invalidateAll } from '$app/navigation';
+
 	let { data } = $props();
 
 	// Use Svelte 5 derived rune to get status from URL
@@ -26,7 +28,7 @@
 	const isSuccess = $derived(status === 'active' || !status);
 	const isFailed = $derived(status === 'failed');
 
-	let isPro = $state(data.isPro);
+	const isPro = $derived(data.isPro);
 	let verificationInProcess = $state(false);
 	let copied = $state(false);
 	let activationStatus = $state<'idle' | 'activating' | 'success' | 'failed'>('idle');
@@ -55,7 +57,7 @@
 			if (res.ok) {
 				const result = await res.json();
 				if (result.isActive) {
-					isPro = true;
+					await invalidateAll();
 				}
 			}
 		} catch (e) {
