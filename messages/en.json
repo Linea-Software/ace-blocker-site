@@ -109,10 +109,9 @@
 	"email_app_name": "Ace Blocker",
 	"email_2fa_title": "Authentication Required",
 	"email_2fa_body": "Please use the authorization code below to securely access your Ace Blocker dashboard.",
-	"email_2fa_footer": "If you did not request this login, please ignore this email and ensure your account is secure.",
+	"email_2fa_footer": "If you did not request this code, please change your password as soon as possible.",
 	"email_verification_title": "System Initialization",
 	"email_verification_body": "Verify your email address to activate your account and begin reclaiming your focus with Ace Blocker.",
 	"email_verification_button": "Verify Account",
 	"email_verification_footer": "If you did not sign up for an Ace Blocker account, you can safely ignore this email."
 }
-

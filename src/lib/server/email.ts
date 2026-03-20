@@ -13,7 +13,7 @@ export const resend = new Resend(env.RESEND_API_KEY);
 export function getTwoFactorEmailHtml(otpCode: string): string {
 	return `
     <div style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0B0F19; color: #E2E8F0; padding: 60px 20px; text-align: center; line-height: 1.5;">
-        <div style="max-width: 480px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+        <div style="max-width: 480px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden;">
             <div style="height: 4px; background-color: #D97706; width: 100%;"></div>
             
             <div style="padding: 40px 32px;">
@@ -45,7 +45,7 @@ export function getTwoFactorEmailHtml(otpCode: string): string {
 export function getVerificationEmailHtml(verifyUrl: string): string {
 	return `
     <div style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0B0F19; color: #E2E8F0; padding: 60px 20px; text-align: center; line-height: 1.5;">
-        <div style="max-width: 480px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+        <div style="max-width: 480px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden;">
             <div style="height: 4px; background-color: #D97706; width: 100%;"></div>
 
             <div style="padding: 40px 32px;">
