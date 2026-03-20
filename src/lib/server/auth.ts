@@ -2,11 +2,12 @@ import 'dotenv/config';
 import { betterAuth } from 'better-auth';
 import { admin, apiKey, openAPI, twoFactor } from 'better-auth/plugins';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { db } from './db';
+import { db } from '$lib/server/db';
 import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
 import DodoPayments from 'dodopayments';
-import { resend } from './email';
-import { updateProExpiration, clearProExpiration } from './pro';
+import { getTwoFactorEmailHtml, getVerificationEmailHtml, resend } from '$lib/server/email';
+import { updateProExpiration, clearProExpiration } from '$lib/server/pro';
+import * as m from '$lib/paraglide/messages.js';
 
 
 const env = process.env;
@@ -48,8 +49,8 @@ export const auth = betterAuth({
 			const result = await resend.emails.send({
 				from: 'noreply@aceblocker.com',
 				to: user.email,
-				subject: 'Verify your email',
-				text: `Click the link to verify your email: ${url}`
+				subject: m.email_verification_subject(),
+				html: getVerificationEmailHtml(url)
 			});
 
 			console.log(result);
@@ -94,14 +95,14 @@ export const auth = betterAuth({
 		}),
 		openAPI(),
 		twoFactor({
-			issuer: 'Ace Blocker',
+			issuer: m.email_app_name(),
 			otpOptions: {
 				sendOTP: async ({ user, otp }) => {
 					await resend.emails.send({
 						from: 'noreply@aceblocker.com',
 						to: user.email,
-						subject: 'Your 2FA Code',
-						text: `Your security code is: ${otp}`
+						subject: m.email_2fa_subject(),
+						html: getTwoFactorEmailHtml(otp)
 					});
 				}
 			}
@@ -165,4 +166,4 @@ export const auth = betterAuth({
 			]
 		})
 	]
-});
+});
