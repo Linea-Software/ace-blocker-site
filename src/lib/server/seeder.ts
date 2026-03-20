@@ -30,15 +30,19 @@ export async function seedDatabase() {
 
 		const adminRecord = existingAdmin[0];
 		if (adminRecord) {
-			// Ensure admin role and verified status
+			// Ensure admin role, verified status, and 2FA
 			await db
 				.update(user)
-				.set({ role: 'admin', emailVerified: true })
+				.set({
+					role: 'admin',
+					emailVerified: true,
+					twoFactorEnabled: true
+				})
 				.where(eq(user.id, adminRecord.id));
 
 			// Automatically make admin a pro user
 			await updateProExpiration(adminEmail, new Date('2099-01-01'));
-			console.log('[SEEDER] Admin role and pro status ensured.');
+			console.log('[SEEDER] Admin role, verified status and 2FA ensured.');
 		}
 	} else {
 		console.warn('[SEEDER] Admin credentials not fully configured in .env');

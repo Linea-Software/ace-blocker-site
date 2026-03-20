@@ -1,6 +1,6 @@
 import { sequence } from '@sveltejs/kit/hooks';
 import { auth } from '$lib/server/auth';
-import type { Handle } from '@sveltejs/kit';
+import { type Handle, redirect } from '@sveltejs/kit';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { seedDatabase } from '$lib/server/seeder';
 

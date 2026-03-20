@@ -57,37 +57,6 @@ export const auth = betterAuth({
 		},
 		autoSignInAfterVerification: true
 	},
-	databaseHooks: {
-		user: {
-			create: {
-				before: async (user) => {
-					return { data: user };
-				}
-			},
-			update: {
-				before: async (user, context) => {
-					// user is the data being updated
-					if ('twoFactorEnabled' in user && user.twoFactorEnabled === false) {
-						// If there's an active session, check if the session user is the admin
-						// In Better Auth hooks, we can check the context
-						const session = await auth.api.getSession({
-							headers: context?.request?.headers || new Headers()
-						});
-						if (session?.user.email === env.ADMIN_EMAIL) {
-							// Force it back to true
-							return {
-								data: {
-									...user,
-									twoFactorEnabled: true
-								}
-							};
-						}
-					}
-					return { data: user };
-				}
-			}
-		}
-	},
 	plugins: [
 		admin(),
 		apiKey({
@@ -166,4 +135,4 @@ export const auth = betterAuth({
 			]
 		})
 	]
-});
+});
