@@ -30,3 +30,4 @@ project.inlang/project_id
  
  # Cert
 .cert/
+.temp/
