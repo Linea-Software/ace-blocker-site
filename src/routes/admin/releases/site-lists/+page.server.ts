@@ -126,9 +126,22 @@ export const actions: Actions = {
 		}
 
 		try {
+			// 1. Delete asset from BunnyCDN
+			const listFileName = `${id}.zip`;
+			const endpointUrl = `https://storage.bunnycdn.com/${BUNNY_STORAGE_ZONE}/site-lists/${listFileName}`;
+
+			await fetch(endpointUrl, {
+				method: 'DELETE',
+				headers: {
+					'AccessKey': BUNNY_STORAGE_ACCESS_KEY
+				}
+			});
+
+			// 2. Delete record from Database
 			await db.delete(siteList).where(eq(siteList.id, id));
+			
 			await invalidateCache();
-			return { success: true, message: 'Site list deleted successfully' };
+			return { success: true, message: 'Site list and CDN assets deleted successfully' };
 		} catch (e) {
 			console.error("Delete error:", e);
 			return fail(500, { error: true, message: 'Failed to delete site list' });

@@ -17,7 +17,8 @@
 		HardDrive,
 		ExternalLink,
 		Database,
-		Calendar
+		Calendar,
+		AlertTriangle
 	} from '@lucide/svelte';
 	import { fade, scale } from 'svelte/transition';
 
@@ -29,6 +30,7 @@
 	let isDeploying = $state(false);
 	let isUpdating = $state(false);
 	let selectedRelease = $state<any>(null);
+	let itemToDelete = $state<any>(null);
 
 	// Upload Form State
 	let uploadFormState = $state({
@@ -238,15 +240,14 @@
 								>
 									<Settings class="h-4 w-4" />
 								</button>
-								<form method="POST" action="?/deleteRelease" use:enhance>
-									<input type="hidden" name="id" value={list.id} />
-									<button
-										class="rounded-lg border border-white/10 bg-white/5 p-2 text-gray-400 transition-all hover:border-red-500/30 hover:text-red-500 active:scale-90"
-										title="Delete List"
-									>
-										<Trash2 class="h-4 w-4" />
-									</button>
-								</form>
+								<button
+									type="button"
+									onclick={() => itemToDelete = list}
+									class="rounded-lg border border-white/10 bg-white/5 p-2 text-gray-400 transition-all hover:border-red-500/30 hover:text-red-500 active:scale-90"
+									title="Delete List"
+								>
+									<Trash2 class="h-4 w-4" />
+								</button>
 							</div>
 						</td>
 					</tr>
@@ -606,6 +607,63 @@
 					</div>
 				</div>
 			</form>
+		</div>
+	</div>
+{/if}
+
+<!-- Delete Confirmation Modal -->
+{#if itemToDelete}
+	<div 
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+		transition:fade={{ duration: 150 }}
+	>
+		<div 
+			class="w-full max-w-md animate-in fade-in zoom-in-95 duration-200 overflow-hidden rounded-xl border border-white/10 bg-[#111827] shadow-2xl"
+			role="dialog"
+		>
+			<div class="p-6">
+				<div class="flex items-center gap-3 mb-4">
+					<div class="p-2 bg-red-500/10 rounded-lg text-red-500">
+						<AlertTriangle class="h-6 w-6" />
+					</div>
+					<h3 class="text-lg font-bold text-white">Confirm Deletion</h3>
+				</div>
+				
+				<p class="text-sm text-gray-400 leading-relaxed mb-6">
+					Are you sure you want to permanently delete the site list <span class="text-white font-semibold">{itemToDelete.name}</span>? 
+					This action cannot be undone and will prevent the desktop client from downloading this package.
+				</p>
+
+				<div class="flex justify-end gap-3 pt-6 border-t border-white/5">
+					<button
+						type="button"
+						onclick={() => itemToDelete = null}
+						class="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+					>
+						Cancel
+					</button>
+					<form 
+						method="POST" 
+						action="?/deleteRelease" 
+						use:enhance={() => {
+							return async ({ result, update }) => {
+								await update();
+								if (result.type === 'success') {
+									itemToDelete = null;
+								}
+							};
+						}}
+					>
+						<input type="hidden" name="id" value={itemToDelete.id} />
+						<button
+							type="submit"
+							class="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:border-red-500/30 hover:bg-red-500/20"
+						>
+							Delete Permanently
+						</button>
+					</form>
+				</div>
+			</div>
 		</div>
 	</div>
 {/if}
