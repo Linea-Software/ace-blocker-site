@@ -13,7 +13,7 @@ import type { Currency } from "dodopayments/resources";
 
 
 export const MONTHLY_PRICE_MAP: Record<Currency, number> = {
-    AED: 14.99,
+    AED: 15,
     ALL: 399.00,
     AMD: 1599.00,
     ARS: 1499.00, // Reserving minimum of 1000
@@ -310,18 +310,18 @@ export const YEARLY_PRICE_MAP: Record<Currency, number> = {
     YER: 0
 }
 
-
+// TODO: use metadata to set localized language for the producs, with metadata[lang] = "<lang>"
+// TODO: create a map of localized names and descriptions for the producs
 export async function seedPrices() {
-
 
     const existingProducs = await dodoPayments.products.list();
 
     const monthlyMissing = (Object.keys(MONTHLY_PRICE_MAP) as Currency[]).filter((currency) => {
-        return !existingProducs.items.some((product) => product.metadata?.currency === currency);
+        return !existingProducs.items.some((product) => product.currency === currency);
     });
 
     const yearlyMissing = (Object.keys(YEARLY_PRICE_MAP) as Currency[]).filter((currency) => {
-        return !existingProducs.items.some((product) => product.metadata?.currency === currency);
+        return !existingProducs.items.some((product) => product.currency === currency);
     });
 
     console.log("Monthly missing:", monthlyMissing);
@@ -338,35 +338,38 @@ export async function seedPrices() {
         }
 
         // TODO: Name localization
-        const result = await dodoPayments.products.create({
-            name: `Ace Blocker Monthly ${currency}`,
-            price: {
-                currency: currency,
-                discount: 0,
-                price: price,
-                purchasing_power_parity: false,
-                tax_inclusive: true,
-                type: "recurring_price",
+        try {
+            const result = await dodoPayments.products.create({
+                name: `Ace Blocker Monthly ${currency}`,
+                price: {
+                    currency: currency,
+                    discount: 0,
+                    price: price,
+                    purchasing_power_parity: false,
+                    tax_inclusive: true,
+                    type: "recurring_price",
 
-                // How much the subscription lasts
-                subscription_period_interval: "Year",
-                subscription_period_count: 20,
+                    // How much the subscription lasts
+                    subscription_period_interval: "Year",
+                    subscription_period_count: 20,
 
-                // How often the user is charged
-                payment_frequency_count: 1,
-                payment_frequency_interval: "Month",
+                    // How often the user is charged
+                    payment_frequency_count: 1,
+                    payment_frequency_interval: "Month",
 
-                trial_period_days: 14,
+                    trial_period_days: 14,
 
-            },
-            tax_category: "digital_products"
-        });
+                },
+                tax_category: "digital_products"
+            });
 
-        console.log("Created product:", result);
-        await delay(500);
-
+            console.log("Created product:", result);
+            await delay(500);
+        } catch (error) {
+            console.log(`Error creating product for ${currency}:`, error);
+            return;
+        }
     }
-
 
     for (const currency of yearlyMissing) {
         const price = YEARLY_PRICE_MAP[currency];
@@ -377,32 +380,37 @@ export async function seedPrices() {
         }
 
         // TODO: Name localization
-        const result = await dodoPayments.products.create({
-            name: `Ace Blocker Yearly ${currency}`,
-            price: {
-                currency: currency,
-                discount: 0,
-                price: price,
-                purchasing_power_parity: false,
-                tax_inclusive: true,
-                type: "recurring_price",
+        try {
+            const result = await dodoPayments.products.create({
+                name: `Ace Blocker Yearly ${currency}`,
+                price: {
+                    currency: currency,
+                    discount: 0,
+                    price: price,
+                    purchasing_power_parity: false,
+                    tax_inclusive: true,
+                    type: "recurring_price",
 
-                // How much the subscription lasts
-                subscription_period_interval: "Year",
-                subscription_period_count: 20,
+                    // How much the subscription lasts
+                    subscription_period_interval: "Year",
+                    subscription_period_count: 20,
 
-                // How often the user is charged
-                payment_frequency_count: 1,
-                payment_frequency_interval: "Year",
+                    // How often the user is charged
+                    payment_frequency_count: 1,
+                    payment_frequency_interval: "Year",
 
-                trial_period_days: 14,
+                    trial_period_days: 14,
 
-            },
-            tax_category: "digital_products"
-        });
-
-        console.log("Created product:", result);
-        await delay(500);
+                },
+                tax_category: "digital_products"
+            });
+            console.log("Created product:", result);
+            await delay(500);
+        } catch (error) {
+            console.log(`Error creating product for ${currency}:`, error);
+            return;
+        }
 
     }
 }
+
