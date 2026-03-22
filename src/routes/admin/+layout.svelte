@@ -7,7 +7,8 @@
 
 	const adminLinks = [
 		{ href: '/admin/dashboard', label: 'Metrics', icon: LayoutDashboard },
-		{ href: '/admin/users', label: 'User Management', icon: Users }
+		{ href: '/admin/users', label: 'User Management', icon: Users },
+		{ href: '/admin/releases', label: 'Software Releases', icon: Shield }
 	];
 
 	function isActive(href: string) {

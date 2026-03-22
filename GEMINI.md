@@ -69,7 +69,7 @@ This website is a full-stack SvelteKit application used for product publicity, m
 ## Project Structure
 
 - `/src/routes/`: Contains SvelteKit pages and API endpoints.
-  - Standard routes include authentication (`signin`, `signup`) and functionality (`generate-checkout`, `demo`).
+  - Standard routes include authentication (`signin`, `signup`), functionality (`generate-checkout`, `demo`), and admin tools (`admin/releases`).
   - **Page-specific components** MUST reside in a `./_components` folder within the route directory.
 - `/src/lib/`: Reusable components, utilities, and logic.
   - `/src/lib/components/`: **Global components** reused across the app.
