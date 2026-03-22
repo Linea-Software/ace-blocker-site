@@ -5,6 +5,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { BUNNY_STORAGE_ZONE, BUNNY_STORAGE_ACCESS_KEY } from '$env/static/private';
 import crypto from 'crypto';
+import { invalidateCache } from '$lib/server/api/cache';
 
 export const load: PageServerLoad = async () => {
 	const fetchStats = async (table: any, orderField: any) => {
@@ -115,6 +116,7 @@ export const actions: Actions = {
 					}
 				});
 
+				await invalidateCache();
 				return { success: true, message: 'Deployment to CDN and Database overwrite successful' };
 			} else {
 				// Other categories
@@ -135,6 +137,7 @@ export const actions: Actions = {
 					return fail(500, { error: true, message: 'Storage deploy failed at CDN network border' });
 				}
 				
+				await invalidateCache();
 				return { success: true, message: 'Deployment to CDN successful' };
 			}
 		} catch (e) {
@@ -151,6 +154,7 @@ export const actions: Actions = {
 		
 		// NOTE: In full implementation, retrieve latest version array from DB, 
 		// request to Bunny API DELETE endpoint to wipe the folder, then cascade DB records
+		await invalidateCache();
 		return { success: true, message: 'Records targeted for deletion (Mock implementation)' };
 	}
 };

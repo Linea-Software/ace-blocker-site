@@ -17,7 +17,7 @@ interface CacheData {
 
 const cache = new LRUCache<string, CacheData>({
 	max: 10,
-	ttl: 1000 * 60 * 5 // 5 minutes caching
+	ttl: 1000 * 60 * 60 // 1 hour caching
 });
 
 const CACHE_KEY = 'latest_releases';
