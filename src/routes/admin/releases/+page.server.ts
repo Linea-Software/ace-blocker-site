@@ -41,7 +41,7 @@ export const actions: Actions = {
 		const file = formData.get('file') as File;
 		const category = formData.get('category') as string;
 		const version = formData.get('version') as string;
-		
+
 		if (!file || !file.size || !category || !version) {
 			return fail(400, { error: true, message: 'Missing required configuration for deploy (File, Category or Version)' });
 		}
@@ -62,7 +62,7 @@ export const actions: Actions = {
 		try {
 			arrayBuffer = await file.arrayBuffer();
 			size = file.size;
-			
+
 			const buffer = Buffer.from(arrayBuffer);
 			fileHash = crypto.createHash('sha256').update(buffer).digest('hex');
 
@@ -76,7 +76,7 @@ export const actions: Actions = {
 
 				const listFileName = `${id}.zip`;
 				const endpointUrl = `https://storage.bunnycdn.com/${BUNNY_STORAGE_ZONE}/site-lists/${listFileName}`;
-				
+
 				const cdnResponse = await fetch(endpointUrl, {
 					method: 'PUT',
 					headers: {
@@ -86,19 +86,21 @@ export const actions: Actions = {
 					body: arrayBuffer
 				});
 
+				console.log(cdnResponse);
+
 				if (!cdnResponse.ok) return fail(500, { error: true, message: 'BunnyCDN deployment failed.' });
 
 				const cdnDownloadUrl = `https://cdn.aceblocker.com/site-lists/${listFileName}`;
 
 				await db.insert(siteList).values({
 					id: id,
-					name: version, 
+					name: version,
 					fileName: listFileName,
 					downloadUrl: cdnDownloadUrl,
 					sha256: fileHash,
 					size: size,
 					requiresProSubscription: requiresProSubscription,
-					canBeDownloaded: true, 
+					canBeDownloaded: true,
 					downloadCount: 0
 				}).onConflictDoUpdate({
 					target: siteList.id,
@@ -118,7 +120,7 @@ export const actions: Actions = {
 			} else {
 				// Other categories
 				const endpointUrl = `https://storage.bunnycdn.com/${BUNNY_STORAGE_ZONE}/${folderPath}/${file.name}`;
-				
+
 				const response = await fetch(endpointUrl, {
 					method: 'PUT',
 					headers: {
@@ -133,7 +135,7 @@ export const actions: Actions = {
 					console.error("BunnyCDN Upload Error:", errorText);
 					return fail(500, { error: true, message: 'Storage deploy failed at CDN network border' });
 				}
-				
+
 				await invalidateCache();
 				return { success: true, message: 'Deployment to CDN successful' };
 			}
@@ -142,13 +144,13 @@ export const actions: Actions = {
 			return fail(500, { error: true, message: 'Internal server failure during binary deploy' });
 		}
 	},
-	
+
 	deleteRelease: async ({ request }) => {
 		const formData = await request.formData();
 		const category = formData.get('category') as string;
-		
+
 		if (!category) return fail(400, { error: true, message: 'Category required for deletion procedure' });
-		
+
 		// NOTE: In full implementation, retrieve latest version array from DB, 
 		// request to Bunny API DELETE endpoint to wipe the folder, then cascade DB records
 		await invalidateCache();
