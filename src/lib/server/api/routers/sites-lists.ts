@@ -1,14 +1,9 @@
-import { Elysia, t, status } from 'elysia';
+import { Elysia, t } from 'elysia';
 import { isUserPro } from '$lib/server/pro';
 import { auth } from '$lib/server/auth';
 import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
-import sitesLists from '$lib/server/data/sites-lists.json';
 import { getLatestReleasesCache } from '../cache';
-
-const SITES_LISTS_MAPPINGS = Object.fromEntries(
-	sitesLists.map((list) => [list.id, { requiresPro: list.requires_pro }])
-);
 
 export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 	.derive(async ({ request }) => {
@@ -23,12 +18,6 @@ export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 	.get(
 		'/:siteListUuid/backup',
 		async ({ params: { siteListUuid }, user, status }) => {
-			const mapping = SITES_LISTS_MAPPINGS[siteListUuid];
-
-			if (!mapping) {
-				return status(404, 'File mapping not found');
-			}
-
 			const cache = await getLatestReleasesCache();
 			const latestRecord = cache.siteLists[siteListUuid];
 
@@ -36,7 +25,7 @@ export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 				return status(404, 'No uploaded site list file exists for this record yet');
 			}
 
-			if (mapping.requiresPro) {
+			if (latestRecord.requiresProSubscription) {
 				if (!user) {
 					return status(401, 'Unauthorized (Login required for pro lists)');
 				}
@@ -108,3 +97,4 @@ export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 			}
 		}
 	);
+

@@ -1,10 +1,9 @@
-import { auth } from './auth';
-import { db } from './db';
-import { user, proStatus } from './db/schema';
+import { auth } from '$lib/server/auth';
+import { db } from '$lib/server/db';
+import { user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
-import crypto from 'crypto';
 import { dev } from '$app/environment';
-import { updateProExpiration } from './pro';
+import { updateProExpiration } from '$lib/server/pro';
 
 export async function seedDatabase() {
 	console.log('[SEEDER] checking for admin user...');

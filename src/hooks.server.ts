@@ -2,7 +2,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { auth } from '$lib/server/auth';
 import { type Handle, redirect } from '@sveltejs/kit';
 import { paraglideMiddleware } from '$lib/paraglide/server';
-import { seedDatabase } from '$lib/server/seeder';
+import { seedDatabase, seedPrices } from '$lib/server/seeder';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
@@ -34,4 +34,5 @@ export const handle: Handle = sequence(handleParaglide, handleAuth);
 
 // Run seeder
 seedDatabase();
+seedPrices();
 
