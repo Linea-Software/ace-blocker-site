@@ -380,13 +380,13 @@
 								name="file"
 								class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
 								onchange={(e) => (uploadFormState.file = e.currentTarget.files?.[0] || null)}
+								ondragover={handleDragOver}
+								ondragleave={handleDragLeave}
+								ondrop={handleDrop}
 								required
 							/>
 							<div
 								class="flex h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all group-hover:bg-white/5 {isDragging ? 'border-amber-500 bg-amber-500/5' : 'border-white/10 bg-black/20 group-hover:border-white/20'}"
-								ondragover={handleDragOver}
-								ondragleave={handleDragLeave}
-								ondrop={handleDrop}
 							>
 								<div class="flex flex-col items-center justify-center p-5 text-center">
 									<Upload class="mb-2 h-6 w-6 {isDragging ? 'text-amber-500' : 'text-gray-500'}" />

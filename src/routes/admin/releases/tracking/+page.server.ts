@@ -83,9 +83,24 @@ export const actions: Actions = {
 		if (!id) return fail(400, { error: true, message: 'Missing ID' });
 
 		try {
+			// Fetch the record to get CDN path info
+			const release = await db.query.trackingScripts.findFirst({
+				where: eq(trackingScripts.id, id)
+			});
+
+			if (release) {
+				const folderPath = `tracking-scripts/${release.version}`;
+				const endpointUrl = `https://storage.bunnycdn.com/${BUNNY_STORAGE_ZONE}/${folderPath}/${release.fileName}`;
+
+				await fetch(endpointUrl, {
+					method: 'DELETE',
+					headers: { 'AccessKey': BUNNY_STORAGE_ACCESS_KEY }
+				});
+			}
+
 			await db.delete(trackingScripts).where(eq(trackingScripts.id, id));
 			await invalidateCache();
-			return { success: true, message: 'Release deleted successfully' };
+			return { success: true, message: 'Release and CDN assets deleted successfully' };
 		} catch (e) {
 			console.error(e);
 			return fail(500, { error: true, message: 'Delete failed' });
