@@ -8,6 +8,13 @@
       "when": 1773418931673,
       "tag": "0000_talented_wallop",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774166388258,
+      "tag": "0001_flawless_oracle",
+      "breakpoints": true
     }
   ]
 }

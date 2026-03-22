@@ -4,11 +4,14 @@ import {
     text,
     timestamp,
     pgEnum,
+    uuid,
+    boolean,
+    integer,
 } from "drizzle-orm/pg-core";
 
 
-const osEnum = pgEnum('os', ['windows', 'linux', 'macos']);
-const architectureEnum = pgEnum('architecture', ['x64', 'arm64']);
+export const osEnum = pgEnum('os', ['windows', 'linux', 'macos']);
+export const architectureEnum = pgEnum('architecture', ['x64', 'arm64']);
 
 // will stay in 
 // CDN -> /ace-blocker-installer/<version>/<filename>
@@ -24,6 +27,12 @@ export const aceBlockerInstaller = pgTable('ace_blocker_installer', {
     createdAt: timestamp('created_at').defaultNow().notNull(),
     // to be set by the program
     sha256: text('sha256').notNull(),
+    // to be set by the program
+    size: integer('size').notNull(),
+    // to be set by the admins/program: if there's a new version, this will be set to false
+    canBeDownloaded: boolean('can_be_downloaded').default(true).notNull(),
+    // to be set by the program
+    downloadCount: integer('download_count').default(0).notNull(),
 });
 
 // will stay in 
@@ -38,6 +47,12 @@ export const resistanceModeScripts = pgTable('resistance_mode_scripts', {
     createdAt: timestamp('created_at').defaultNow().notNull(),
     // to be set by the program
     sha256: text('sha256').notNull(),
+    // to be set by the program
+    size: integer('size').notNull(),
+    // to be set by the admins/program: if there's a new version, this will be set to false
+    canBeDownloaded: boolean('can_be_downloaded').default(true).notNull(),
+    // to be set by the program
+    downloadCount: integer('download_count').default(0).notNull(),
 });
 
 
@@ -53,4 +68,38 @@ export const trackingScripts = pgTable('tracking_scripts', {
     createdAt: timestamp('created_at').defaultNow().notNull(),
     // to be set by the program
     sha256: text('sha256').notNull(),
+    // to be set by the program
+    size: integer('size').notNull(),
+    // to be set by the admins/program: if there's a new version, this will be set to false
+    canBeDownloaded: boolean('can_be_downloaded').default(true).notNull(),
+    // to be set by the program
+    downloadCount: integer('download_count').default(0).notNull(),
+});
+
+// will stay in 
+// CDN -> /site-lists/<version>/<filename>
+export const siteList = pgTable('site_list', {
+    id: text('id').primaryKey(),
+    // the app will ask for this id, we'll return the latest uploaded file with this site_list_id
+    siteListId: uuid('site_list_id').notNull(),
+    name: text('name').notNull(),
+    url: text('url').notNull(),
+    // it will usually be <id>.zip
+    fileName: text('file_name').notNull(),
+    // to be set by the admins
+    requiresProSubscription: boolean('requires_pro_subscription').default(true).notNull(),
+    // to be set by the program
+    downloadUrl: text('download_url').notNull(),
+    // to be set by the program
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    // to be set by the program
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    // to be set by the program
+    sha256: text('sha256').notNull(),
+    // to be set by the program
+    size: integer('size').notNull(),
+    // to be set by the admins/program: if there's a new version, this will be set to false
+    canBeDownloaded: boolean('can_be_downloaded').default(true).notNull(),
+    // to be set by the program
+    downloadCount: integer('download_count').default(0).notNull(),
 });

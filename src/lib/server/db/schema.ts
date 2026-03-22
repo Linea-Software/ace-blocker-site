@@ -3,6 +3,7 @@ import { user, session, account, apikey, twoFactor } from './auth-schema';
 import { relations } from 'drizzle-orm';
 
 export * from './auth-schema';
+export * from './artifacts-schema';
 
 export const proStatus = pgTable('pro_status', {
 	id: text('id').primaryKey(),
