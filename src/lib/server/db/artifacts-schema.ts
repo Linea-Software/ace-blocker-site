@@ -1,11 +1,8 @@
-import { relations } from "drizzle-orm";
+
 import {
     pgTable,
     text,
     timestamp,
-    boolean,
-    integer,
-    index,
     pgEnum,
 } from "drizzle-orm/pg-core";
 
@@ -13,6 +10,8 @@ import {
 const osEnum = pgEnum('os', ['windows', 'linux', 'macos']);
 const architectureEnum = pgEnum('architecture', ['x64', 'arm64']);
 
+// will stay in 
+// CDN -> /ace-blocker-installer/<version>/<filename>
 export const aceBlockerInstaller = pgTable('ace_blocker_installer', {
     id: text('id').primaryKey(),
     fileName: text('file_name').notNull(),
@@ -23,10 +22,12 @@ export const aceBlockerInstaller = pgTable('ace_blocker_installer', {
     downloadUrl: text('download_url').notNull(),
     // to be set by the program
     createdAt: timestamp('created_at').defaultNow().notNull(),
-    // hash
+    // to be set by the program
     sha256: text('sha256').notNull(),
 });
 
+// will stay in 
+// CDN -> /resistance-mode-scripts/<version>/<filename>
 export const resistanceModeScripts = pgTable('resistance_mode_scripts', {
     id: text('id').primaryKey(),
     fileName: text('file_name').notNull(),
@@ -35,10 +36,13 @@ export const resistanceModeScripts = pgTable('resistance_mode_scripts', {
     downloadUrl: text('download_url').notNull(),
     // to be set by the program
     createdAt: timestamp('created_at').defaultNow().notNull(),
-    // hash
+    // to be set by the program
     sha256: text('sha256').notNull(),
 });
 
+
+// will stay in 
+// CDN -> /tracking-scripts/<version>/<filename>
 export const trackingScripts = pgTable('tracking_scripts', {
     id: text('id').primaryKey(),
     fileName: text('file_name').notNull(),
@@ -47,6 +51,6 @@ export const trackingScripts = pgTable('tracking_scripts', {
     downloadUrl: text('download_url').notNull(),
     // to be set by the program
     createdAt: timestamp('created_at').defaultNow().notNull(),
-    // hash
+    // to be set by the program
     sha256: text('sha256').notNull(),
 });
