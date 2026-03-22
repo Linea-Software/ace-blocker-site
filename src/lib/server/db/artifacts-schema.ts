@@ -77,11 +77,12 @@ export const trackingScripts = pgTable('tracking_scripts', {
 });
 
 // will stay in 
-// CDN -> /site-lists/<version>/<filename>
+// CDN -> /site-lists/<filename>
 export const siteList = pgTable('site_list', {
-    id: text('id').primaryKey(),
     // the app will ask for this id, we'll return the latest uploaded file with this site_list_id
-    siteListId: uuid('site_list_id').notNull(),
+    // the admin will set this id in the admin panel
+    id: uuid('id').primaryKey(),
+
     name: text('name').notNull(),
     url: text('url').notNull(),
     // it will usually be <id>.zip

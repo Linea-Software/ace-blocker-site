@@ -24,26 +24,26 @@ export async function getLatestReleasesCache(): Promise<CacheData> {
         .where(eq(aceBlockerInstaller.canBeDownloaded, true))
         .orderBy(desc(aceBlockerInstaller.createdAt))
         .limit(1);
-        
+
     const latestResistance = await db.select().from(resistanceModeScripts)
         .where(eq(resistanceModeScripts.canBeDownloaded, true))
         .orderBy(desc(resistanceModeScripts.createdAt))
         .limit(1);
-        
+
     const latestTracking = await db.select().from(trackingScripts)
         .where(eq(trackingScripts.canBeDownloaded, true))
         .orderBy(desc(trackingScripts.createdAt))
         .limit(1);
-    
+
     // For site lists, fetch all actively downloadable and group by siteListId
     const siteListsData = await db.select().from(siteList)
         .where(eq(siteList.canBeDownloaded, true))
         .orderBy(desc(siteList.updatedAt));
-        
+
     const latestSiteLists: Record<string, typeof siteList.$inferSelect> = {};
     for (const list of siteListsData) {
-        if (!latestSiteLists[list.siteListId]) {
-            latestSiteLists[list.siteListId] = list; // Keeps the first (latest due to DESC)
+        if (!latestSiteLists[list.id]) {
+            latestSiteLists[list.id] = list; // Keeps the first (latest due to DESC)
         }
     }
 

@@ -4,6 +4,7 @@ import { desc, sql } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { BUNNY_STORAGE_ZONE, BUNNY_STORAGE_ACCESS_KEY } from '$env/static/private';
+import crypto from 'crypto';
 
 export const load: PageServerLoad = async () => {
 	const fetchStats = async (table: any, orderField: any) => {
@@ -53,33 +54,89 @@ export const actions: Actions = {
 			return fail(400, { error: true, message: 'Invalid category designated' });
 		}
 
-		// Upload to Bunny.net Storage using the standard REST API
-		// Assuming using the primary endpoint, can be customized to replication regions
-		const endpointUrl = `https://storage.bunnycdn.com/${BUNNY_STORAGE_ZONE}/${folderPath}/${file.name}`;
-		
+		let arrayBuffer: ArrayBuffer;
+		let size = 0;
+		let fileHash = '';
+
 		try {
-			const arrayBuffer = await file.arrayBuffer();
+			arrayBuffer = await file.arrayBuffer();
+			size = file.size;
 			
-			const response = await fetch(endpointUrl, {
-				method: 'PUT',
-				headers: {
-					'AccessKey': BUNNY_STORAGE_ACCESS_KEY,
-					'Content-Type': 'application/octet-stream',
-				},
-				body: arrayBuffer
-			});
+			const buffer = Buffer.from(arrayBuffer);
+			fileHash = crypto.createHash('sha256').update(buffer).digest('hex');
 
-			if (!response.ok) {
-				const errorText = await response.text();
-				console.error("BunnyCDN Upload Error:", errorText);
-				return fail(500, { error: true, message: 'Storage deploy failed at CDN network border' });
+			if (category === 'siteLists') {
+				const id = formData.get('id') as string;
+				const url = formData.get('url') as string;
+				const requiresProSubscription = formData.get('requiresProSubscription') === 'true';
+
+				if (!id || !url) {
+					return fail(400, { error: true, message: 'Missing require Site List fields (ID or URL)' });
+				}
+
+				const listFileName = `${id}.zip`;
+				const endpointUrl = `https://storage.bunnycdn.com/${BUNNY_STORAGE_ZONE}/site-lists/${listFileName}`;
+				
+				const cdnResponse = await fetch(endpointUrl, {
+					method: 'PUT',
+					headers: {
+						'AccessKey': BUNNY_STORAGE_ACCESS_KEY,
+						'Content-Type': 'application/octet-stream',
+					},
+					body: arrayBuffer
+				});
+
+				if (!cdnResponse.ok) return fail(500, { error: true, message: 'BunnyCDN deployment failed.' });
+
+				const cdnDownloadUrl = `https://cdn.aceblocker.com/site-lists/${listFileName}`;
+
+				await db.insert(siteList).values({
+					id: id,
+					name: version, 
+					url: url,
+					fileName: listFileName,
+					downloadUrl: cdnDownloadUrl,
+					sha256: fileHash,
+					size: size,
+					requiresProSubscription: requiresProSubscription,
+					canBeDownloaded: true, 
+					downloadCount: 0
+				}).onConflictDoUpdate({
+					target: siteList.id,
+					set: {
+						name: version,
+						url: url,
+						fileName: listFileName,
+						downloadUrl: cdnDownloadUrl,
+						sha256: fileHash,
+						size: size,
+						requiresProSubscription: requiresProSubscription,
+						updatedAt: sql`CURRENT_TIMESTAMP`
+					}
+				});
+
+				return { success: true, message: 'Deployment to CDN and Database overwrite successful' };
+			} else {
+				// Other categories
+				const endpointUrl = `https://storage.bunnycdn.com/${BUNNY_STORAGE_ZONE}/${folderPath}/${file.name}`;
+				
+				const response = await fetch(endpointUrl, {
+					method: 'PUT',
+					headers: {
+						'AccessKey': BUNNY_STORAGE_ACCESS_KEY,
+						'Content-Type': 'application/octet-stream',
+					},
+					body: arrayBuffer
+				});
+
+				if (!response.ok) {
+					const errorText = await response.text();
+					console.error("BunnyCDN Upload Error:", errorText);
+					return fail(500, { error: true, message: 'Storage deploy failed at CDN network border' });
+				}
+				
+				return { success: true, message: 'Deployment to CDN successful' };
 			}
-
-			// NOTE: This handles the CDN push. In a full implementation, you would also 
-			// execute the Drizzle ORM insert queries here using properties like `sha256` hash 
-			// which can be calculated using a Node crypto stream.
-			
-			return { success: true, message: 'Deployment to CDN successful' };
 		} catch (e) {
 			console.error("Upload crash:", e);
 			return fail(500, { error: true, message: 'Internal server failure during binary deploy' });

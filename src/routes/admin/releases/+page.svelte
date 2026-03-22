@@ -72,6 +72,7 @@
 	let isDeploying = $state(false);
 
 	let uploadFormState = $state({
+		id: '',
 		version: '',
 		file: null as File | null,
 		os: 'windows',
@@ -84,6 +85,10 @@
 	function openModal(category: string) {
 		activeCategory = category;
 		isModalOpen = true;
+	}
+
+	function generateUuid() {
+		uploadFormState.id = crypto.randomUUID();
 	}
 
 	const handleDeploy: SubmitFunction = () => {
@@ -103,6 +108,7 @@
 				}
 
 				uploadFormState = {
+					id: '',
 					version: '',
 					file: null,
 					os: 'windows',
@@ -365,6 +371,28 @@
 					<!-- Conditional Fields for Site Lists -->
 					{#if activeCategory === 'siteLists'}
 						<div class="space-y-5 animate-in fade-in duration-200">
+							<div class="space-y-1.5">
+								<div class="flex items-center justify-between">
+									<label for="release-id" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Site List ID (UUID)</label>
+									<button 
+										type="button" 
+										onclick={generateUuid} 
+										class="p-1 hover:bg-gray-800 rounded bg-transparent text-gray-500 hover:text-amber-500 transition-colors focus:outline-none"
+										title="Generate new UUID"
+									>
+										<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+									</button>
+								</div>
+								<input 
+									id="release-id"
+									name="id"
+									bind:value={uploadFormState.id}
+									type="text" 
+									placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
+									required
+									class="w-full bg-transparent border border-gray-800 text-gray-100 rounded-lg px-3 py-2 text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors font-mono placeholder:text-gray-600"
+								/>
+							</div>
 							<div class="space-y-1.5">
 								<label for="release-url" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">{m.admin_releases_modal_url()}</label>
 								<input 
