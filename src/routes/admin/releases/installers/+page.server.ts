@@ -4,7 +4,7 @@ import { desc, sql, eq } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { BUNNY_STORAGE_ZONE, BUNNY_STORAGE_ACCESS_KEY } from '$env/static/private';
-import { invalidateCache } from '$lib/server/api/cache';
+import { invalidateInstallerCache } from '$lib/server/api/cache';
 
 export const load: PageServerLoad = async () => {
 	const installers = await db.select().from(aceBlockerInstaller).orderBy(desc(aceBlockerInstaller.createdAt));
@@ -72,7 +72,7 @@ export const actions: Actions = {
 				downloadCount: 0
 			});
 
-			await invalidateCache();
+			await invalidateInstallerCache();
 			return { success: true, message: 'Deployment to CDN and database successful' };
 		} catch (e) {
 			console.error("Upload crash:", e);
@@ -103,7 +103,7 @@ export const actions: Actions = {
 			}
 
 			await db.delete(aceBlockerInstaller).where(eq(aceBlockerInstaller.id, id));
-			await invalidateCache();
+			await invalidateInstallerCache();
 			return { success: true, message: 'Release and CDN assets deleted successfully' };
 		} catch (e) {
 			console.error(e);

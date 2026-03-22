@@ -107,9 +107,25 @@ export async function getLatestSiteListsCache(): Promise<Record<string, typeof s
 	return latestSiteLists;
 }
 
-export function invalidateCache() {
+export function invalidateInstallerCache() {
 	installersCache.clear();
+}
+
+export function invalidateResistanceCache() {
 	resistanceCache.clear();
+}
+
+export function invalidateTrackingCache() {
 	trackingCache.clear();
+}
+
+export function invalidateSiteListsCache() {
 	siteListsCache.clear();
+}
+
+export function invalidateAllCaches() {
+	invalidateInstallerCache();
+	invalidateResistanceCache();
+	invalidateTrackingCache();
+	invalidateSiteListsCache();
 }

@@ -5,7 +5,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { BUNNY_STORAGE_ZONE, BUNNY_STORAGE_ACCESS_KEY } from '$env/static/private';
 import crypto from 'crypto';
-import { invalidateCache } from '$lib/server/api/cache';
+import { invalidateSiteListsCache } from '$lib/server/api/cache';
 
 export const load: PageServerLoad = async () => {
 	const siteLists = await db.select().from(siteList).orderBy(desc(siteList.updatedAt));
@@ -81,7 +81,7 @@ export const actions: Actions = {
 				}
 			});
 
-			await invalidateCache();
+			await invalidateSiteListsCache();
 			return { success: true, message: 'Deployment to CDN and Database overwrite successful' };
 			
 		} catch (e) {
@@ -109,7 +109,7 @@ export const actions: Actions = {
 				})
 				.where(eq(siteList.id, id));
 
-			await invalidateCache();
+			await invalidateSiteListsCache();
 			return { success: true, message: 'Site list updated successfully' };
 		} catch (e) {
 			console.error("Update error:", e);
@@ -140,7 +140,7 @@ export const actions: Actions = {
 			// 2. Delete record from Database
 			await db.delete(siteList).where(eq(siteList.id, id));
 			
-			await invalidateCache();
+			await invalidateSiteListsCache();
 			return { success: true, message: 'Site list and CDN assets deleted successfully' };
 		} catch (e) {
 			console.error("Delete error:", e);

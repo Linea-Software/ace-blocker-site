@@ -4,7 +4,7 @@ import { desc, sql, eq } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { BUNNY_STORAGE_ZONE, BUNNY_STORAGE_ACCESS_KEY } from '$env/static/private';
-import { invalidateCache } from '$lib/server/api/cache';
+import { invalidateTrackingCache } from '$lib/server/api/cache';
 
 export const load: PageServerLoad = async () => {
 	const releases = await db.select().from(trackingScripts).orderBy(desc(trackingScripts.createdAt));
@@ -68,7 +68,7 @@ export const actions: Actions = {
 				downloadCount: 0
 			});
 
-			await invalidateCache();
+			await invalidateTrackingCache();
 			return { success: true, message: 'Deployment to CDN and database successful' };
 		} catch (e) {
 			console.error("Upload crash:", e);
@@ -99,7 +99,7 @@ export const actions: Actions = {
 			}
 
 			await db.delete(trackingScripts).where(eq(trackingScripts.id, id));
-			await invalidateCache();
+			await invalidateTrackingCache();
 			return { success: true, message: 'Release and CDN assets deleted successfully' };
 		} catch (e) {
 			console.error(e);
