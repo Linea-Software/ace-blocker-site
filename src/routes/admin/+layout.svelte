@@ -1,15 +1,31 @@
 <script lang="ts">
-	import { Shield, LayoutDashboard, Users, ArrowLeft } from '@lucide/svelte';
+	import { Shield, LayoutDashboard, Users, ArrowLeft, ChevronDown, ChevronRight } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils';
+	import { slide } from 'svelte/transition';
 
 	let { children } = $props();
 
 	const adminLinks = [
 		{ href: '/admin/dashboard', label: 'Metrics', icon: LayoutDashboard },
-		{ href: '/admin/users', label: 'User Management', icon: Users },
-		{ href: '/admin/releases', label: 'Software Releases', icon: Shield }
+		{ href: '/admin/users', label: 'User Management', icon: Users }
 	];
+
+	const releaseLinks = [
+		{ href: '/admin/releases/installers', label: 'Installers' },
+		{ href: '/admin/releases/resistance', label: 'Resistance Mode' },
+		{ href: '/admin/releases/tracking', label: 'Tracking' },
+		{ href: '/admin/releases/site-lists', label: 'Site Lists' }
+	];
+
+	// Initialize state based on current path
+	let isReleasesExpanded = $state(false);
+	
+	$effect(() => {
+		if (page.url.pathname.includes('/admin/releases')) {
+			isReleasesExpanded = true;
+		}
+	});
 
 	function isActive(href: string) {
 		return page.url.pathname === href;
@@ -43,6 +59,47 @@
 					{link.label}
 				</a>
 			{/each}
+
+			<!-- Accordion Menu for Software Releases -->
+			<div class="pt-1">
+				<button
+					onclick={() => isReleasesExpanded = !isReleasesExpanded}
+					class={cn(
+						'w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+						isReleasesExpanded || page.url.pathname.includes('/admin/releases')
+							? 'bg-amber-500/10 text-amber-600 dark:text-amber-500'
+							: 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900'
+					)}
+				>
+					<div class="flex items-center gap-3">
+						<Shield class="h-5 w-5" />
+						Software Releases
+					</div>
+					{#if isReleasesExpanded}
+						<ChevronDown class="h-4 w-4" />
+					{:else}
+						<ChevronRight class="h-4 w-4" />
+					{/if}
+				</button>
+				
+				{#if isReleasesExpanded}
+					<div class="mt-1 space-y-1" transition:slide={{ duration: 200 }}>
+						{#each releaseLinks as sublink}
+							<a
+								href={sublink.href}
+								class={cn(
+									'block rounded-r-lg py-1.5 text-sm font-medium transition-colors border-l border-border ml-4 pl-4',
+									isActive(sublink.href)
+										? 'text-amber-500 border-amber-500 bg-amber-500/5'
+										: 'text-muted-foreground hover:text-foreground hover:border-slate-400'
+								)}
+							>
+								{sublink.label}
+							</a>
+						{/each}
+					</div>
+				{/if}
+			</div>
 
 			<div class="pt-4 mt-4 border-t border-slate-200 dark:border-slate-800">
 				<a
