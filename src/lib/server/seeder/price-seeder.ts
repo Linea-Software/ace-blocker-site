@@ -327,7 +327,8 @@ export async function seedPrices() {
     console.log("Monthly missing:", monthlyMissing);
     console.log("Yearly missing:", yearlyMissing);
 
-    // TODO: rate limit to two calls per second
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
     for (const currency of monthlyMissing) {
         const price = MONTHLY_PRICE_MAP[currency];
 
@@ -362,6 +363,7 @@ export async function seedPrices() {
         });
 
         console.log("Created product:", result);
+        await delay(500);
 
     }
 
@@ -400,6 +402,7 @@ export async function seedPrices() {
         });
 
         console.log("Created product:", result);
+        await delay(500);
 
     }
 }
