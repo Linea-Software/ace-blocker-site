@@ -2,45 +2,66 @@
 	import * as m from '$lib/paraglide/messages.js';
 	import { enhance } from '$app/forms';
 	import type { ActionData, SubmitFunction } from './$types';
-	import { 
-		Eye, 
-		EyeOff, 
-		Trash2, 
-		Upload, 
-		X, 
-		List, 
+	import {
+		Eye,
+		Trash2,
+		Upload,
+		X,
+		List,
 		Terminal,
-		UploadCloud
+		UploadCloud,
+		Lock,
+		Unlock,
+		Settings,
+		Hash,
+		HardDrive,
+		ExternalLink,
+		Database,
+		Calendar
 	} from '@lucide/svelte';
-	import { fade } from 'svelte/transition';
+	import { fade, scale } from 'svelte/transition';
 
 	let { data, form } = $props<{ data: any; form: ActionData }>();
 
-	let hub = $state({
-		title: m.admin_releases_category_sitelists(),
-		count: data.siteLists.totalDownloads,
-		latest: data.siteLists.latest ? { 
-			version: data.siteLists.latest.name, 
-			canBeDownloaded: data.siteLists.latest.canBeDownloaded
-		} : null
-	});
-
-	let isModalOpen = $state(false);
+	// Modals State
+	let isUploadModalOpen = $state(false);
+	let isDetailsModalOpen = $state(false);
 	let isDeploying = $state(false);
+	let isUpdating = $state(false);
+	let selectedRelease = $state<any>(null);
 
+	// Upload Form State
 	let uploadFormState = $state({
-		id: '',
 		name: '',
 		file: null as File | null,
 		requiresProSubscription: true
 	});
 
-	function openModal() {
-		isModalOpen = true;
+	function openUploadModal() {
+		isUploadModalOpen = true;
 	}
 
-	function generateUuid() {
-		uploadFormState.id = crypto.randomUUID();
+	function openDetails(release: any) {
+		selectedRelease = { ...release };
+		isDetailsModalOpen = true;
+	}
+
+
+	function formatBytes(bytes: number, decimals = 2) {
+		if (bytes === 0) return '0 Bytes';
+		const k = 1024;
+		const dm = decimals < 0 ? 0 : decimals;
+		const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
+		return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+	}
+
+	function formatDate(date: string | Date) {
+		return new Date(date).toLocaleDateString('en-US', {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric'
+		});
 	}
 
 	const handleDeploy: SubmitFunction = () => {
@@ -49,19 +70,23 @@
 			await update();
 			isDeploying = false;
 			if (result.type === 'success') {
-				isModalOpen = false;
-				
-				hub.latest = {
-					version: uploadFormState.name,
-					canBeDownloaded: true
-				};
-
+				isUploadModalOpen = false;
 				uploadFormState = {
-					id: '',
 					name: '',
 					file: null,
 					requiresProSubscription: true
 				};
+			}
+		};
+	};
+
+	const handleUpdate: SubmitFunction = () => {
+		isUpdating = true;
+		return async ({ result, update }) => {
+			await update();
+			isUpdating = false;
+			if (result.type === 'success') {
+				isDetailsModalOpen = false;
 			}
 		};
 	};
@@ -71,248 +96,511 @@
 	<title>{m.admin_releases_category_sitelists()} | Ace Blocker Admin</title>
 </svelte:head>
 
-<div class="min-h-screen bg-[#0B0F19] p-8 font-sans selection:bg-amber-500/30">
-	<header class="mb-8 flex justify-between items-end border-b border-gray-800 pb-4">
+<div class="min-h-screen bg-[#0B0F19] p-8 font-sans text-gray-200 selection:bg-amber-500/30">
+	<!-- Page Header -->
+	<header
+		class="mb-10 flex flex-col justify-between gap-4 border-b border-white/5 pb-6 md:flex-row md:items-center"
+	>
 		<div>
-			<h1 class="text-2xl lg:text-3xl font-bold text-white mb-2 tracking-tight">{m.admin_releases_category_sitelists()}</h1>
-			<p class="text-sm text-gray-400 max-w-lg leading-relaxed">Manage and deploy blocked site lists packages.</p>
+			<div class="mb-1 flex items-center gap-3">
+				<div class="rounded-lg border border-amber-500/20 bg-amber-500/10 p-2 text-amber-500">
+					<List class="h-5 w-5" />
+				</div>
+				<h1 class="text-2xl font-bold tracking-tight text-white lg:text-3xl">
+					{m.admin_releases_category_sitelists()}
+				</h1>
+			</div>
+			<p class="max-w-lg text-sm leading-relaxed text-gray-400">
+				Manage and deploy blocked site lists packages for the Ace Blocker engine.
+			</p>
 		</div>
-		<div class="hidden lg:flex items-center gap-2 px-4 py-2 bg-gray-900 border border-gray-800 rounded-lg text-xs font-mono text-gray-500 shadow-sm">
-			<Terminal class="w-3.5 h-3.5" />
-			<span>DB Status: <span class="text-emerald-500">Connected</span></span>
+
+		<div class="flex items-center gap-3">
+			<div
+				class="hidden items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-[10px] tracking-wider text-gray-500 uppercase lg:flex"
+			>
+				<Database class="h-3.5 w-3.5 text-emerald-500" />
+				<span>DB Status: <span class="text-emerald-400">Connected</span></span>
+			</div>
+			<button
+				onclick={openUploadModal}
+				class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-amber-500/10 transition-all hover:scale-[1.02] hover:bg-amber-400 active:scale-95"
+			>
+				<Upload class="h-4 w-4" />
+				{m.admin_releases_deploy_new()}
+			</button>
 		</div>
 	</header>
 
-	<div class="w-full">
-		<div class="bg-[#111827] border border-gray-800 rounded-xl flex flex-col transition-all shadow-md hover:shadow-lg focus-within:ring-1 focus-within:ring-amber-500/50">
-			<!-- Card Header -->
-			<div class="p-6 border-b border-gray-800/50 flex justify-between items-start bg-gray-900/10 rounded-t-xl">
-				<div class="flex items-center gap-4">
-					<div class="w-10 h-10 flex items-center justify-center bg-[#0B0F19] border border-gray-800 rounded-lg text-amber-500 shadow-inner">
-						<List class="w-5 h-5" />
-					</div>
-					<div>
-						<h2 class="text-lg font-bold text-gray-100 leading-tight tracking-tight">{hub.title}</h2>
-						<p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-1">System Module</p>
-					</div>
-				</div>
-				<div class="inline-flex items-center gap-2 bg-[#0B0F19] border border-gray-800 rounded-md px-2.5 py-1 text-xs font-mono text-gray-400 shadow-sm transition-colors cursor-default hover:border-gray-700">
-					<span class="text-amber-500 text-[10px]">▼</span>
-					{m.admin_releases_total_dls({ count: hub.count })}
-				</div>
-			</div>
-
-			<div class="p-6 flex-1 flex flex-col min-h-[300px]">
-				<!-- State Implementation -->
-				{#if !hub.latest}
-					<!-- Empty State -->
-					<div class="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-800 rounded-xl bg-gray-900/30 w-full flex-1 mb-auto mt-2 transition-colors hover:border-gray-700">
-						<UploadCloud class="w-10 h-10 text-gray-600 mb-3" />
-						<p class="text-sm font-medium text-gray-400 mb-5 text-center">No release uploaded yet.</p>
-						<button 
-							onclick={openModal}
-							class="inline-flex items-center gap-2 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border border-amber-500/20 px-4 py-2 rounded-lg text-sm font-bold transition-colors active:scale-95"
-						>
-							<Upload class="w-4 h-4" />
-							Deploy First Build
-						</button>
-					</div>
-				{:else}
-					<!-- Populated State -->
-					<div class="flex items-center justify-between mb-8 px-1">
-						<div class="space-y-1">
-							<span class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.1em]">{m.admin_releases_latest_version()}</span>
-							<div class="text-xl font-mono font-semibold text-gray-100 tracking-tight flex items-center gap-3">
-								{hub.latest.version}
-								{#if !hub.latest.canBeDownloaded}
-									<span class="text-[10px] px-2 py-0.5 rounded border border-red-500/30 bg-red-500/10 text-red-500 uppercase tracking-tighter">Disabled</span>
-								{/if}
-							</div>
-						</div>
-					</div>
-
-					<!-- Action Bar (Footer of Card) -->
-					<div class="mt-auto pt-5 border-t border-gray-800/50 flex items-center justify-between">
-						<button 
-							onclick={openModal}
-							class="inline-flex justify-center items-center gap-2 bg-amber-500 text-[#0B0F19] text-xs font-bold rounded-md px-4 py-2 hover:bg-amber-400 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-[#111827]"
-						>
-							<Upload class="w-3.5 h-3.5" />
-							{m.admin_releases_deploy_new()}
-						</button>
-						
-						<div class="flex items-center gap-1.5 ml-auto">
-							<form method="POST" action="?/toggleDownloadable" use:enhance>
-								<button 
-									class="p-2 rounded-md bg-transparent border border-transparent text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors focus:ring-1 focus:ring-gray-600 focus:outline-none"
-									title={hub.latest.canBeDownloaded ? "Disable Public Download" : "Enable Public Download"}
-									aria-label={hub.latest.canBeDownloaded ? "Disable Public Download" : "Enable Public Download"}
-								>
-									{#if hub.latest.canBeDownloaded}
-										<Eye class="w-4 h-4" />
-									{:else}
-										<EyeOff class="w-4 h-4" />
-									{/if}
-								</button>
-							</form>
-
-							<form method="POST" action="?/deleteRelease" use:enhance>
-								<button 
-									class="p-2 rounded-md bg-transparent border border-transparent text-gray-500 hover:text-red-500 hover:bg-red-500/10 transition-colors focus:ring-1 focus:ring-red-500 focus:outline-none"
-									title="Delete Record"
-									aria-label="Delete Record"
-								>
-									<Trash2 class="w-4 h-4" />
-								</button>
-							</form>
-						</div>
-					</div>
-				{/if}
-			</div>
+	<!-- Downloads Stats -->
+	<div class="mb-8 grid grid-cols-1 gap-6 text-center sm:text-left md:grid-cols-3">
+		<div class="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+			<p class="mb-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+				Total Downloads
+			</p>
+			<p class="font-mono text-2xl font-bold text-amber-500">
+				{data.totalDownloads.toLocaleString()}
+			</p>
 		</div>
+		<div class="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+			<p class="mb-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">Active Lists</p>
+			<p class="font-mono text-2xl font-bold text-white">{data.siteLists.length}</p>
+		</div>
+		<div class="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+			<p class="mb-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+				Global Storage
+			</p>
+			<p class="font-mono text-2xl font-bold text-white">BunnyCDN</p>
+		</div>
+	</div>
+
+	<!-- Data Table -->
+	<div class="overflow-x-auto rounded-xl border border-white/10 bg-white/[0.02] backdrop-blur-sm">
+		<table class="w-full border-collapse text-left">
+			<thead>
+				<tr class="border-b border-white/10 bg-white/5">
+					<th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+						>Name</th
+					>
+					<th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase">ID</th
+					>
+					<th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+						>Access</th
+					>
+					<th
+						class="px-6 py-4 text-center text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+						>Downloads</th
+					>
+					<th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+						>Updated</th
+					>
+					<th
+						class="px-6 py-4 text-right text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+						>Actions</th
+					>
+				</tr>
+			</thead>
+			<tbody class="divide-y divide-white/5">
+				{#each data.siteLists as list (list.id)}
+					<tr class="group transition-colors hover:bg-white/5">
+						<td class="px-6 py-4">
+							<div class="flex flex-col">
+								<span
+									class="text-sm font-semibold text-white transition-colors group-hover:text-amber-500"
+									>{list.name}</span
+								>
+								<span class="mt-0.5 text-[10px] font-bold tracking-tighter text-gray-500 uppercase"
+									>Static Payload</span
+								>
+							</div>
+						</td>
+						<td class="px-6 py-4">
+							<code
+								class="rounded border border-white/10 bg-white/5 px-2 py-1 font-mono text-[10px] text-gray-400"
+							>
+								{list.id.substring(0, 8)}...
+							</code>
+						</td>
+						<td class="px-6 py-4 text-xs">
+							{#if list.requiresProSubscription}
+								<span
+									class="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 font-medium text-amber-500"
+								>
+									<Lock class="h-3 w-3" />
+									Pro Only
+								</span>
+							{:else}
+								<span
+									class="inline-flex items-center gap-1 rounded-full border border-white/20 bg-gray-100/10 px-2 py-0.5 font-medium text-gray-400"
+								>
+									<Unlock class="h-3 w-3" />
+									Free
+								</span>
+							{/if}
+						</td>
+						<td class="px-6 py-4 text-center">
+							<span class="font-mono text-xs text-gray-300"
+								>{list.downloadCount.toLocaleString()}</span
+							>
+						</td>
+						<td class="px-6 py-4">
+							<span class="flex items-center gap-1.5 text-xs text-gray-400">
+								<Calendar class="h-3.5 w-3.5 opacity-40" />
+								{formatDate(list.updatedAt)}
+							</span>
+						</td>
+						<td class="px-6 py-4 text-right">
+							<div class="flex items-center justify-end gap-2">
+								<button
+									onclick={() => openDetails(list)}
+									class="rounded-lg border border-white/10 bg-white/5 p-2 text-gray-400 transition-all hover:border-white/20 hover:text-white active:scale-90"
+									title="View/Edit Details"
+								>
+									<Settings class="h-4 w-4" />
+								</button>
+								<form method="POST" action="?/deleteRelease" use:enhance>
+									<input type="hidden" name="id" value={list.id} />
+									<button
+										class="rounded-lg border border-white/10 bg-white/5 p-2 text-gray-400 transition-all hover:border-red-500/30 hover:text-red-500 active:scale-90"
+										title="Delete List"
+									>
+										<Trash2 class="h-4 w-4" />
+									</button>
+								</form>
+							</div>
+						</td>
+					</tr>
+				{:else}
+					<tr>
+						<td colspan="6" class="px-6 py-20">
+							<div class="flex flex-col items-center justify-center text-center">
+								<div
+									class="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-4 border border-white/10"
+								>
+									<UploadCloud class="w-6 h-6 text-gray-600" />
+								</div>
+								<h3 class="text-sm font-semibold text-gray-300">No release uploaded yet.</h3>
+								<p class="text-xs text-gray-500 mt-1 mb-6">
+									Start by deploying the first site list package to BunnyCDN.
+								</p>
+								<button
+									onclick={openUploadModal}
+									class="bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border border-amber-500/20 px-4 py-2 rounded-lg text-xs font-bold transition-all"
+								>
+									Deploy First Build
+								</button>
+							</div>
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
 	</div>
 </div>
 
-<!-- Upload Modal Overlay -->
-{#if isModalOpen}
-	<div 
-		class="fixed inset-0 bg-[#0B0F19]/90 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 transition-opacity"
-		transition:fade={{duration: 150}}
+<!-- Upload Modal -->
+{#if isUploadModalOpen}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+		transition:fade={{ duration: 150 }}
 	>
-		<div 
-			class="bg-[#111827] border border-gray-800 rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+		<div
+			class="w-full max-w-md animate-in overflow-hidden rounded-2xl border border-white/10 bg-[#111827] shadow-2xl duration-200 zoom-in-95"
+			transition:scale={{ duration: 200, start: 0.95 }}
 			role="dialog"
-			aria-labelledby="modal-title"
 		>
-			<form method="POST" action="?/uploadRelease" enctype="multipart/form-data" use:enhance={handleDeploy}>
-				<input type="hidden" name="requiresProSubscription" value={uploadFormState.requiresProSubscription.toString()} />
-				
-				<!-- Modal Header -->
-				<div class="px-6 py-5 border-b border-gray-800 flex justify-between items-center bg-[#111827]">
+			<form
+				method="POST"
+				action="?/uploadRelease"
+				enctype="multipart/form-data"
+				use:enhance={handleDeploy}
+			>
+				<input
+					type="hidden"
+					name="requiresProSubscription"
+					value={uploadFormState.requiresProSubscription.toString()}
+				/>
+
+				<div class="flex items-center justify-between border-b border-white/5 px-6 py-5">
 					<div>
-						<h3 id="modal-title" class="text-lg font-bold text-gray-100 flex items-center gap-2">
-							<Upload class="w-4 h-4 text-amber-500" />
-							{m.admin_releases_upload_title()}
+						<h3 class="flex items-center gap-2 text-lg font-bold text-white">
+							<UploadCloud class="h-5 w-5 text-amber-500" />
+							Deploy New List
 						</h3>
-						<p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-1">
-							Targeting: <span class="text-amber-500">Site Lists</span>
+						<p class="mt-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+							Package Deployment
 						</p>
 					</div>
-					<button 
+					<button
 						type="button"
-						onclick={() => isModalOpen = false} 
-						class="text-gray-500 hover:text-white transition-colors p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-700"
-						aria-label="Close Modal"
+						onclick={() => (isUploadModalOpen = false)}
+						class="text-gray-500 transition-colors hover:text-white"
 					>
-						<X class="w-5 h-5" />
+						<X class="h-5 w-5" />
 					</button>
 				</div>
 
-				<div class="p-6 space-y-5">
+				<div class="space-y-6 p-6">
 					{#if form?.error}
-						<div class="p-3 border border-red-500/20 bg-red-500/10 rounded-lg text-sm text-red-500 font-medium">
+						<div
+							class="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs font-medium text-red-500"
+						>
 							{form?.message}
 						</div>
 					{/if}
 
-					<!-- Name Input -->
 					<div class="space-y-1.5">
-						<label for="release-name" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">
-							{m.admin_releases_modal_name()}
-						</label>
-						<input 
-							id="release-name"
+						<label
+							for="upload-name"
+							class="block text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+							>Name</label
+						>
+						<input
+							id="upload-name"
 							name="name"
 							bind:value={uploadFormState.name}
-							type="text" 
-							placeholder="List Name"
+							type="text"
+							placeholder="e.g., Adult Content List"
 							required
-							class="w-full bg-[#0B0F19] border border-gray-800 text-gray-100 rounded-lg px-3 py-2 text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors placeholder:text-gray-600 font-mono"
+							class="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white transition-all outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
 						/>
 					</div>
 
-					<!-- File Upload -->
-					<div class="space-y-1.5">
-						<label for="release-file" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">
-							{m.admin_releases_modal_file()}
-						</label>
-						<div class="relative">
-							<input 
-								id="release-file"
+					<div class="space-y-2">
+						<label
+							for="upload-file"
+							class="block text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+							>Payload File (.zip)</label
+						>
+						<div class="group relative">
+							<input
+								id="upload-file"
+								type="file"
 								name="file"
-								type="file" 
+								class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+								onchange={(e) => (uploadFormState.file = e.currentTarget.files?.[0] || null)}
 								required
-								class="absolute inset-0 opacity-0 cursor-pointer z-10"
-								onchange={(e) => uploadFormState.file = e.currentTarget.files?.[0] || null}
 							/>
-							<div class="w-full bg-[#0B0F19] border border-dashed border-gray-700 hover:border-gray-500 rounded-lg px-4 py-6 text-center transition-colors">
-								<div class="flex flex-col items-center gap-2">
-									<UploadCloud class="w-5 h-5 text-gray-500" />
+							<div
+								class="flex h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/10 bg-black/20 transition-all group-hover:border-white/20 group-hover:bg-white/5"
+							>
+								<div class="flex flex-col items-center justify-center p-5 text-center">
+									<Upload class="mb-2 h-6 w-6 text-gray-500" />
 									{#if uploadFormState.file}
-										<span class="text-amber-500 text-sm font-semibold font-mono truncate max-w-full">{uploadFormState.file.name}</span>
+										<p class="max-w-[280px] truncate font-mono text-xs text-amber-500">
+											{uploadFormState.file.name}
+										</p>
 									{:else}
-										<div class="space-y-0.5">
-											<p class="text-gray-300 text-sm font-medium">Select binary payload</p>
-											<p class="text-gray-600 text-[10px] uppercase font-bold tracking-wider">or drag & drop</p>
-										</div>
+										<p class="text-[10px] font-bold text-gray-500 uppercase">
+											Click or drag & drop binary
+										</p>
 									{/if}
 								</div>
 							</div>
 						</div>
 					</div>
 
-					<!-- Site List Specifics -->
-					<div class="space-y-5 animate-in fade-in duration-200">
-						<div class="space-y-1.5">
-							<div class="flex items-center justify-between">
-								<label for="release-id" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Site List ID (UUID)</label>
-								<button 
-									type="button" 
-									onclick={generateUuid} 
-									class="p-1 hover:bg-gray-800 rounded bg-transparent text-gray-500 hover:text-amber-500 transition-colors focus:outline-none"
-									title="Generate new UUID"
-								>
-									<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-								</button>
+					<div
+						class="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4"
+					>
+						<div class="flex items-center gap-3">
+							<div class="rounded-lg bg-amber-500/10 p-2 text-amber-500">
+								<Lock class="h-4 w-4" />
 							</div>
-							<input 
-								id="release-id"
-								name="id"
-								bind:value={uploadFormState.id}
-								type="text" 
-								placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
-								required
-								class="w-full bg-transparent border border-gray-800 text-gray-100 rounded-lg px-3 py-2 text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors font-mono placeholder:text-gray-600"
+							<div>
+								<p class="text-xs font-bold text-white">Pro Only</p>
+								<p class="mt-0.5 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+									Subscription Required
+								</p>
+							</div>
+						</div>
+						<button
+							type="button"
+							onclick={() =>
+								(uploadFormState.requiresProSubscription =
+									!uploadFormState.requiresProSubscription)}
+							class="relative h-5 w-10 rounded-full transition-colors {uploadFormState.requiresProSubscription
+								? 'bg-amber-500'
+								: 'bg-white/10'}"
+							aria-label="Toggle Pro Requirement"
+						>
+							<div
+								class="absolute top-1 left-1 h-3 w-3 rounded-full bg-white transition-all {uploadFormState.requiresProSubscription
+									? 'translate-x-5'
+									: ''}"
+							></div>
+						</button>
+					</div>
+
+					<button
+						type="submit"
+						disabled={isDeploying}
+						class="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-bold text-black shadow-lg shadow-amber-500/10 transition-all hover:bg-amber-400 disabled:opacity-50"
+					>
+						{#if isDeploying}
+							<div
+								class="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black"
+							></div>
+							Deploying to CDN...
+						{:else}
+							Start Deployment
+						{/if}
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+{/if}
+
+<!-- Details / Edit Modal -->
+{#if isDetailsModalOpen && selectedRelease}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+		transition:fade={{ duration: 150 }}
+	>
+		<div
+			class="w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-[#111827] shadow-2xl"
+			transition:scale={{ duration: 200, start: 0.95 }}
+			role="dialog"
+		>
+			<form method="POST" action="?/updateRelease" use:enhance={handleUpdate}>
+				<input type="hidden" name="id" value={selectedRelease.id} />
+
+				<div class="flex items-center justify-between border-b border-white/5 px-6 py-5 text-white">
+					<div>
+						<h3 class="flex items-center gap-2 text-lg font-bold">
+							<Settings class="h-5 w-5 text-amber-500" />
+							List Details
+						</h3>
+						<p class="mt-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+							Config Update
+						</p>
+					</div>
+					<button
+						type="button"
+						onclick={() => (isDetailsModalOpen = false)}
+						class="text-gray-500 transition-colors hover:text-white"
+					>
+						<X class="h-5 w-5" />
+					</button>
+				</div>
+
+				<div class="space-y-6 p-6">
+					<!-- Editable Fields -->
+					<div class="space-y-4">
+						<div class="space-y-1.5">
+							<label
+								for="edit-name"
+								class="block text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+								>Internal Name</label
+							>
+							<input
+								id="edit-name"
+								name="name"
+								bind:value={selectedRelease.name}
+								type="text"
+								class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white transition-all outline-none focus:border-amber-500"
 							/>
 						</div>
-						<div class="flex items-center justify-between p-3 bg-gray-900 rounded-lg border border-gray-800">
-							<div>
-								<p class="text-sm font-semibold text-gray-200">{m.admin_releases_modal_pro_req()}</p>
-								<p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Subscription Protected</p>
+
+						<div
+							class="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4"
+						>
+							<div class="flex items-center gap-3">
+								<div class="rounded-lg bg-amber-500/10 p-2 text-amber-500">
+									<Lock class="h-4 w-4" />
+								</div>
+								<div>
+									<p class="text-xs font-bold text-white">Pro Only</p>
+									<p class="mt-0.5 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+										Access Control
+									</p>
+								</div>
 							</div>
-							<button 
+							<button
 								type="button"
-								onclick={() => uploadFormState.requiresProSubscription = !uploadFormState.requiresProSubscription!}
-								class="w-10 h-5 rounded-full transition-colors relative {uploadFormState.requiresProSubscription ? 'bg-amber-500' : 'bg-gray-700'}"
+								onclick={() =>
+									(selectedRelease.requiresProSubscription =
+										!selectedRelease.requiresProSubscription)}
+								class="relative h-5 w-10 rounded-full transition-colors {selectedRelease.requiresProSubscription
+									? 'bg-amber-500'
+									: 'bg-white/10'}"
 								aria-label="Toggle Pro Requirement"
 							>
-								<div class="absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform {uploadFormState.requiresProSubscription ? 'translate-x-5' : ''}"></div>
+								<input
+									type="checkbox"
+									name="requiresProSubscription"
+									class="hidden"
+									checked={selectedRelease.requiresProSubscription}
+								/>
+								<div
+									class="absolute top-1 left-1 h-3 w-3 rounded-full bg-white transition-all {selectedRelease.requiresProSubscription
+										? 'translate-x-5'
+										: ''}"
+								></div>
 							</button>
 						</div>
 					</div>
 
-					<!-- Submit Button -->
+					<!-- Read Only Technical Data -->
+					<div class="space-y-3 border-t border-white/5 pt-4">
+						<p class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+							Technical Assets
+						</p>
+
+						<div class="grid grid-cols-2 gap-3">
+							<div class="rounded-lg border border-white/10 bg-black/40 p-3">
+								<div class="mb-1 flex items-center gap-2">
+									<HardDrive class="h-3 w-3 text-gray-500" />
+									<span class="text-[10px] font-bold text-gray-500 uppercase">File Size</span>
+								</div>
+								<p class="font-mono text-xs text-white">{formatBytes(selectedRelease.size)}</p>
+							</div>
+							<div class="rounded-lg border border-white/10 bg-black/40 p-3">
+								<div class="mb-1 flex items-center gap-2">
+									<Hash class="h-3 w-3 text-gray-500" />
+									<span class="text-[10px] font-bold text-gray-500 uppercase">SHA256</span>
+								</div>
+								<p class="truncate font-mono text-xs text-white" title={selectedRelease.sha256}>
+									{selectedRelease.sha256.substring(0, 12)}...
+								</p>
+							</div>
+						</div>
+
+						<div class="space-y-1.5">
+							<label
+								for="edit-uuid"
+								class="block text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+								>Full UUID</label
+							>
+							<div class="flex gap-2">
+								<input
+									id="edit-uuid"
+									value={selectedRelease.id}
+									readonly
+									class="flex-1 rounded-lg border border-white/10 bg-black/40 px-3 py-2 font-mono text-xs text-gray-400 outline-none"
+								/>
+							</div>
+						</div>
+
+						<div class="space-y-1.5">
+							<label
+								for="edit-cdn"
+								class="block text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+								>CDN Link</label
+							>
+							<div class="flex gap-2">
+								<input
+									id="edit-cdn"
+									value={selectedRelease.downloadUrl}
+									readonly
+									class="flex-1 rounded-lg border border-white/10 bg-black/40 px-3 py-2 font-mono text-xs text-gray-400 outline-none"
+								/>
+								<a
+									href={selectedRelease.downloadUrl}
+									target="_blank"
+									class="rounded-lg border border-white/10 bg-white/5 p-2 text-gray-400 hover:bg-white/10"
+									aria-label="Open CDN link in new tab"
+								>
+									<ExternalLink class="h-4 w-4" />
+								</a>
+							</div>
+						</div>
+					</div>
+
 					<div class="pt-2">
-						<button 
+						<button
 							type="submit"
-							disabled={isDeploying}
-							class="w-full bg-amber-500 text-[#0B0F19] font-bold py-2.5 rounded-lg hover:bg-amber-400 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-[#111827]"
+							disabled={isUpdating}
+							class="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-bold text-black transition-all hover:bg-amber-400 disabled:opacity-50"
 						>
-							{#if isDeploying}
-								<span class="w-4 h-4 border-2 border-[#0B0F19]/30 border-t-[#0B0F19] rounded-full animate-spin"></span>
-								Deploying...
+							{#if isUpdating}
+								<div
+									class="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black"
+								></div>
+								Saving...
 							{:else}
-								{m.admin_releases_modal_submit()}
+								Save Configuration
 							{/if}
 						</button>
 					</div>
@@ -324,7 +612,7 @@
 
 <style>
 	:global(body) {
-		background-color: #0B0F19;
+		background-color: #0b0f19;
 		color-scheme: dark;
 	}
 </style>

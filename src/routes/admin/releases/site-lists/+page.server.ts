@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { siteList } from '$lib/server/db/schema';
-import { desc, sql } from 'drizzle-orm';
+import { desc, sql, eq } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { BUNNY_STORAGE_ZONE, BUNNY_STORAGE_ACCESS_KEY } from '$env/static/private';
@@ -8,16 +8,14 @@ import crypto from 'crypto';
 import { invalidateCache } from '$lib/server/api/cache';
 
 export const load: PageServerLoad = async () => {
-	const latest = await db.select().from(siteList).orderBy(desc(siteList.updatedAt)).limit(1);
+	const siteLists = await db.select().from(siteList).orderBy(desc(siteList.updatedAt));
 	const stats = await db.select({
 		total: sql<number>`CAST(SUM(${siteList.downloadCount}) AS INTEGER)`
 	}).from(siteList);
 
 	return {
-		siteLists: {
-			latest: latest[0] || null,
-			totalDownloads: stats[0]?.total || 0
-		}
+		siteLists,
+		totalDownloads: stats[0]?.total || 0
 	};
 };
 
@@ -26,11 +24,11 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const file = formData.get('file') as File;
 		const name = formData.get('name') as string;
-		const id = formData.get('id') as string;
+		const id = formData.get('id') as string || crypto.randomUUID();
 		const requiresProSubscription = formData.get('requiresProSubscription') === 'true';
 
-		if (!file || !file.size || !name || !id) {
-			return fail(400, { error: true, message: 'Missing required configuration for deploy (File, Name or ID)' });
+		if (!file || !file.size || !name) {
+			return fail(400, { error: true, message: 'Missing required configuration for deploy (File or Name)' });
 		}
 
 		let arrayBuffer: ArrayBuffer;
@@ -92,8 +90,48 @@ export const actions: Actions = {
 		}
 	},
 
-	deleteRelease: async () => {
-		await invalidateCache();
-		return { success: true, message: 'Records targeted for deletion (Mock implementation)' };
+	updateRelease: async ({ request }) => {
+		const formData = await request.formData();
+		const id = formData.get('id') as string;
+		const name = formData.get('name') as string;
+		const requiresProSubscription = formData.get('requiresProSubscription') === 'on';
+
+		if (!id || !name) {
+			return fail(400, { error: true, message: 'Missing required fields' });
+		}
+
+		try {
+			await db.update(siteList)
+				.set({ 
+					name, 
+					requiresProSubscription,
+					updatedAt: sql`CURRENT_TIMESTAMP`
+				})
+				.where(eq(siteList.id, id));
+
+			await invalidateCache();
+			return { success: true, message: 'Site list updated successfully' };
+		} catch (e) {
+			console.error("Update error:", e);
+			return fail(500, { error: true, message: 'Failed to update site list' });
+		}
+	},
+
+	deleteRelease: async ({ request }) => {
+		const formData = await request.formData();
+		const id = formData.get('id') as string;
+
+		if (!id) {
+			return fail(400, { error: true, message: 'Missing ID for deletion' });
+		}
+
+		try {
+			await db.delete(siteList).where(eq(siteList.id, id));
+			await invalidateCache();
+			return { success: true, message: 'Site list deleted successfully' };
+		} catch (e) {
+			console.error("Delete error:", e);
+			return fail(500, { error: true, message: 'Failed to delete site list' });
+		}
 	}
 };
