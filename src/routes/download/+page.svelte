@@ -14,18 +14,19 @@
 	} from '@tabler/icons-svelte';
 	import MoveLeft from '@lucide/svelte/icons/move-left';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
-	import ChevronUp from '@lucide/svelte/icons/chevron-up';
 	import Loader2 from '@lucide/svelte/icons/loader-2';
 	import { onMount, type Component } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 
+	let { data } = $props();
+
 	// Svelte 5 state management
-	let arch = $derived(page.url.searchParams.get('arch') || 'windows_x64');
+	let arch = $derived(page.url.searchParams.get('arch') || 'windows');
 	let downloadStarted = $state(false);
 	let dots = $state('');
 	let isManualLoading = $state(false);
 	let showChecksums = $state(false);
-	let detectedArch = $state('windows_x64');
+	let detectedArch = $state('windows');
 
 	// Active "downloading" animation for the title
 	$effect(() => {
@@ -42,7 +43,7 @@
 			const ua = window.navigator.userAgent.toLowerCase();
 
 			if (platform.includes('win') || ua.includes('windows')) {
-				detectedArch = 'windows_x64';
+				detectedArch = 'windows';
 			} else if (platform.includes('mac') || ua.includes('macintosh')) {
 				detectedArch = 'macos_universal';
 			} else if (platform.includes('linux') || ua.includes('linux')) {
@@ -69,35 +70,37 @@
 		isAvailable: boolean;
 	}
 
-	const platformOptions: PlatformOption[] = [
+	let formattedSize = $derived(data.installer ? (data.installer.size / (1024 * 1024)).toFixed(1) + 'MB' : '12MB');
+
+	let platformOptions: PlatformOption[] = $derived([
 		{
-			id: 'windows_x64',
+			id: 'windows',
 			name: 'Windows',
 			icon: IconBrandWindows,
-			size: '12MB',
+			size: formattedSize,
 			ext: '.exe',
 			details: 'x64 Installer',
-			isAvailable: true
+			isAvailable: data.installer?.os === 'windows' || data.installer === undefined
 		},
 		{
-			id: 'macos_universal',
+			id: 'macos',
 			name: 'macOS',
 			icon: IconBrandApple,
-			size: '18MB',
+			size: formattedSize,
 			ext: '.dmg',
 			details: 'Universal Binary',
-			isAvailable: false
+			isAvailable: data.installer?.os === 'macos' || data.installer === undefined
 		},
 		{
-			id: 'linux_x64',
+			id: 'linux',
 			name: 'Linux',
 			icon: IconBrandUbuntu,
-			size: '15MB',
+			size: formattedSize,
 			ext: '.deb',
 			details: 'Debian / Ubuntu',
-			isAvailable: false
+			isAvailable: data.installer?.os === 'linux' || data.installer === undefined
 		}
-	];
+	]);
 
 	function handleManualDownload() {
 		isManualLoading = true;
@@ -190,7 +193,7 @@
 					class="group flex items-center gap-1.5 text-sm font-bold text-slate-500 transition-all hover:text-amber-500 dark:text-slate-400"
 				>
 					<IconFileText size={16} class="transition-transform group-hover:rotate-12" />
-					{m.download_app_version()}
+					Version {data.installer?.version} - Build Notes
 					<IconExternalLink
 						size={12}
 						class="opacity-0 transition-opacity group-hover:opacity-100"

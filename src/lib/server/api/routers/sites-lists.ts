@@ -4,6 +4,7 @@ import { auth } from '$lib/server/auth';
 import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
 import sitesLists from '$lib/server/data/sites-lists.json';
+import { getLatestReleasesCache } from '../cache';
 
 const SITES_LISTS_MAPPINGS = Object.fromEntries(
 	sitesLists.map((list) => [list.id, { requiresPro: list.requires_pro }])
@@ -25,7 +26,14 @@ export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 			const mapping = SITES_LISTS_MAPPINGS[siteListUuid];
 
 			if (!mapping) {
-				return status(404, 'File not found');
+				return status(404, 'File mapping not found');
+			}
+
+			const cache = await getLatestReleasesCache();
+			const latestRecord = cache.siteLists[siteListUuid];
+
+			if (!latestRecord) {
+				return status(404, 'No uploaded site list file exists for this record yet');
 			}
 
 			if (mapping.requiresPro) {
@@ -44,7 +52,7 @@ export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 				}
 
 				const securityKey = env.BUNNY_SECURITY_KEY;
-				const storagePath = `/premium/${siteListUuid}_bak.zip`;
+				const storagePath = `/${env.BUNNY_STORAGE_ZONE}/site-lists/${latestRecord.name}/${latestRecord.fileName}`;
 
 				const expires = Math.round(Date.now() / 1000) + 600;
 				const hashableBase = securityKey + storagePath + expires;
@@ -61,7 +69,22 @@ export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 
 				return { url: downloadUrl };
 			} else {
-				const downloadUrl = `https://cdn.aceblocker.com/free/${siteListUuid}_bak.zip`;
+				// Allow free downloads without signature logic? Or wait, all downloads require signature if they are on a protected zone?
+				// Assuming free lists are on a public block or still signed to prevent direct hotlinking:
+				const securityKey = env.BUNNY_SECURITY_KEY;
+				const storagePath = `/${env.BUNNY_STORAGE_ZONE}/site-lists/${latestRecord.name}/${latestRecord.fileName}`;
+				
+				const expires = Math.round(Date.now() / 1000) + 600;
+				const hashableBase = securityKey + storagePath + expires;
+				const token = crypto
+					.createHash('sha256')
+					.update(hashableBase)
+					.digest('base64')
+					.replace(/\+/g, '-')
+					.replace(/\//g, '_')
+					.replace(/=/g, '');
+
+				const downloadUrl = `https://cdn.aceblocker.com${storagePath}?token=${token}&expires=${expires}`;
 				return { url: downloadUrl };
 			}
 		},

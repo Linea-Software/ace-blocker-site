@@ -3,6 +3,7 @@ import { isUserPro } from '$lib/server/pro';
 import { auth } from '$lib/server/auth';
 import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
+import { getLatestReleasesCache } from '../cache';
 
 if (!env.BUNNY_SECURITY_KEY) {
 	throw new Error('❌ BUNNY_SECURITY_KEY is missing in environment variables');
@@ -30,8 +31,17 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 				return status(403, 'Pro license required');
 			}
 
+			const cache = await getLatestReleasesCache();
+			const latestRecord = cache.resistance;
+
+			if (!latestRecord) {
+				return status(404, 'No resistance mode script has been uploaded yet');
+			}
+
 			const securityKey = env.BUNNY_SECURITY_KEY;
-			const storagePath = '/premium/resistance-scripts.zip';
+			// Retrieve from the new dynamic folder structure created by the admin panel
+			// Folder format: resistance-mode-scripts/<version>/<fileName>
+			const storagePath = `/${env.BUNNY_STORAGE_ZONE}/resistance-mode-scripts/${latestRecord.version}/${latestRecord.fileName}`;
 
 			const expires = Math.round(Date.now() / 1000) + 600;
 			const hashableBase = securityKey + storagePath + expires;
@@ -46,7 +56,7 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 
 			const downloadUrl = `https://cdn.aceblocker.com${storagePath}?token=${token}&expires=${expires}`;
 
-			return { url: downloadUrl, version: '0.1.0' };
+			return { url: downloadUrl, version: latestRecord.version };
 		},
 		{
 			detail: {
@@ -61,6 +71,7 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 				}),
 				401: t.String(),
 				403: t.String(),
+				404: t.String(),
 				500: t.String()
 			}
 		}
