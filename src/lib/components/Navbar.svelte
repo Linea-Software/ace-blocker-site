@@ -34,6 +34,11 @@
 	function isActive(href: string) {
 		return page.url.pathname === href;
 	}
+
+	async function handleSignOut() {
+		await authClient.signOut();
+		window.location.reload();
+	}
 </script>
 
 <header
@@ -105,7 +110,7 @@
 							<button
 								class="flex flex-1 items-center gap-3 rounded-md px-3 py-2 text-lg font-medium text-destructive transition-all duration-200 hover:bg-red-600 hover:text-white active:scale-95"
 								onclick={() => {
-									authClient.signOut();
+									handleSignOut();
 									isMobileMenuOpen = false;
 								}}
 							>
@@ -221,7 +226,7 @@
 					</Button>
 				{/if}
 				<Button
-					onclick={() => authClient.signOut()}
+					onclick={() => handleSignOut()}
 					variant="ghost"
 					class="hidden items-center text-destructive transition-all duration-200 hover:bg-red-600 hover:text-white active:scale-95 sm:inline-flex"
 				>
