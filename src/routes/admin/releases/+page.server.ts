@@ -68,11 +68,10 @@ export const actions: Actions = {
 
 			if (category === 'siteLists') {
 				const id = formData.get('id') as string;
-				const url = formData.get('url') as string;
 				const requiresProSubscription = formData.get('requiresProSubscription') === 'true';
 
-				if (!id || !url) {
-					return fail(400, { error: true, message: 'Missing require Site List fields (ID or URL)' });
+				if (!id) {
+					return fail(400, { error: true, message: 'Missing require Site List fields (ID)' });
 				}
 
 				const listFileName = `${id}.zip`;
@@ -94,7 +93,6 @@ export const actions: Actions = {
 				await db.insert(siteList).values({
 					id: id,
 					name: version, 
-					url: url,
 					fileName: listFileName,
 					downloadUrl: cdnDownloadUrl,
 					sha256: fileHash,
@@ -106,7 +104,6 @@ export const actions: Actions = {
 					target: siteList.id,
 					set: {
 						name: version,
-						url: url,
 						fileName: listFileName,
 						downloadUrl: cdnDownloadUrl,
 						sha256: fileHash,

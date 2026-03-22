@@ -84,7 +84,6 @@ export const siteList = pgTable('site_list', {
     id: uuid('id').primaryKey(),
 
     name: text('name').notNull(),
-    url: text('url').notNull(),
     // it will usually be <id>.zip
     fileName: text('file_name').notNull(),
     // to be set by the admins

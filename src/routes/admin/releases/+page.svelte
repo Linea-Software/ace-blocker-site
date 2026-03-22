@@ -78,7 +78,6 @@
 		os: 'windows',
 		architecture: 'x64',
 		name: '',
-		url: '',
 		requiresProSubscription: true
 	});
 
@@ -114,7 +113,6 @@
 					os: 'windows',
 					architecture: 'x64',
 					name: '',
-					url: '',
 					requiresProSubscription: true
 				};
 				// Optional: Trigger a toast notification (e.g., using a store or event)
@@ -391,17 +389,6 @@
 									placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
 									required
 									class="w-full bg-transparent border border-gray-800 text-gray-100 rounded-lg px-3 py-2 text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-colors font-mono placeholder:text-gray-600"
-								/>
-							</div>
-							<div class="space-y-1.5">
-								<label for="release-url" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider">{m.admin_releases_modal_url()}</label>
-								<input 
-									id="release-url"
-									name="url"
-									bind:value={uploadFormState.url}
-									type="text" 
-									placeholder="https://..."
-									class="w-full bg-[#0B0F19] border border-gray-800 text-gray-100 rounded-lg px-3 py-2 text-sm focus:border-amber-500 outline-none font-mono placeholder:text-gray-600"
 								/>
 							</div>
 							<div class="flex items-center justify-between p-3 bg-gray-900 rounded-lg border border-gray-800">

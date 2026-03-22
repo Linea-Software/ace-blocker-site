@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1773418931673,
-      "tag": "0000_talented_wallop",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1774166388258,
-      "tag": "0001_flawless_oracle",
+      "when": 1774171811423,
+      "tag": "0000_illegal_chronomancer",
       "breakpoints": true
     }
   ]
