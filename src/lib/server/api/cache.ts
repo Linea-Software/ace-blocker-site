@@ -8,33 +8,51 @@ import {
 import { desc, eq } from 'drizzle-orm';
 import { LRUCache } from 'lru-cache';
 
-interface CacheData {
-	installers: (typeof aceBlockerInstaller.$inferSelect) | null;
-	resistance: (typeof resistanceModeScripts.$inferSelect) | null;
-	tracking: (typeof trackingScripts.$inferSelect) | null;
-	siteLists: Record<string, typeof siteList.$inferSelect>;
-}
+const CACHE_KEY = 'latest';
 
-const cache = new LRUCache<string, CacheData>({
+const installersCache = new LRUCache<string, typeof aceBlockerInstaller.$inferSelect>({
 	max: 10,
 	ttl: 1000 * 60 * 60 // 1 hour caching
 });
 
-const CACHE_KEY = 'latest_releases';
+const resistanceCache = new LRUCache<string, typeof resistanceModeScripts.$inferSelect>({
+	max: 10,
+	ttl: 1000 * 60 * 60 // 1 hour caching
+});
 
-export async function getLatestReleasesCache(): Promise<CacheData> {
-	const cached = cache.get(CACHE_KEY);
-	if (cached) {
+const trackingCache = new LRUCache<string, typeof trackingScripts.$inferSelect>({
+	max: 10,
+	ttl: 1000 * 60 * 60 // 1 hour caching
+});
+
+const siteListsCache = new LRUCache<string, Record<string, typeof siteList.$inferSelect>>({
+	max: 10,
+	ttl: 1000 * 60 * 60 // 1 hour caching
+});
+
+export async function getLatestInstallerCache(): Promise<typeof aceBlockerInstaller.$inferSelect | null> {
+	const cached = installersCache.get(CACHE_KEY);
+	if (cached !== undefined) {
 		return cached;
 	}
 
-	// Refresh memory cache from DB
 	const latestInstaller = await db
 		.select()
 		.from(aceBlockerInstaller)
 		.where(eq(aceBlockerInstaller.canBeDownloaded, true))
 		.orderBy(desc(aceBlockerInstaller.createdAt))
 		.limit(1);
+
+	const data = latestInstaller[0] || null;
+	if (data) installersCache.set(CACHE_KEY, data);
+	return data;
+}
+
+export async function getLatestResistanceCache(): Promise<typeof resistanceModeScripts.$inferSelect | null> {
+	const cached = resistanceCache.get(CACHE_KEY);
+	if (cached !== undefined) {
+		return cached;
+	}
 
 	const latestResistance = await db
 		.select()
@@ -43,6 +61,17 @@ export async function getLatestReleasesCache(): Promise<CacheData> {
 		.orderBy(desc(resistanceModeScripts.createdAt))
 		.limit(1);
 
+	const data = latestResistance[0] || null;
+	if (data) resistanceCache.set(CACHE_KEY, data);
+	return data;
+}
+
+export async function getLatestTrackingCache(): Promise<typeof trackingScripts.$inferSelect | null> {
+	const cached = trackingCache.get(CACHE_KEY);
+	if (cached !== undefined) {
+		return cached;
+	}
+
 	const latestTracking = await db
 		.select()
 		.from(trackingScripts)
@@ -50,7 +79,17 @@ export async function getLatestReleasesCache(): Promise<CacheData> {
 		.orderBy(desc(trackingScripts.createdAt))
 		.limit(1);
 
-	// For site lists, fetch all actively downloadable and group by siteListId
+	const data = latestTracking[0] || null;
+	if (data) trackingCache.set(CACHE_KEY, data);
+	return data;
+}
+
+export async function getLatestSiteListsCache(): Promise<Record<string, typeof siteList.$inferSelect>> {
+	const cached = siteListsCache.get(CACHE_KEY);
+	if (cached !== undefined) {
+		return cached;
+	}
+
 	const siteListsData = await db
 		.select()
 		.from(siteList)
@@ -64,19 +103,13 @@ export async function getLatestReleasesCache(): Promise<CacheData> {
 		}
 	}
 
-	const data: CacheData = {
-		installers: latestInstaller[0] || null,
-		resistance: latestResistance[0] || null,
-		tracking: latestTracking[0] || null,
-		siteLists: latestSiteLists
-	};
-
-	cache.set(CACHE_KEY, data);
-
-	return data;
+	siteListsCache.set(CACHE_KEY, latestSiteLists);
+	return latestSiteLists;
 }
 
 export function invalidateCache() {
-	cache.clear();
+	installersCache.clear();
+	resistanceCache.clear();
+	trackingCache.clear();
+	siteListsCache.clear();
 }
-

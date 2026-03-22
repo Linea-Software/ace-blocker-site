@@ -1,21 +1,21 @@
-import { getLatestReleasesCache } from '$lib/server/api/cache';
+import { getLatestInstallerCache } from '$lib/server/api/cache';
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async () => {
-	const cache = await getLatestReleasesCache();
+	const installer = await getLatestInstallerCache();
 
-	if (!cache.installers) {
+	if (!installer) {
 		error(404, { message: 'No installer versions have been published yet.' });
 	}
 
 	return {
 		installer: {
-			version: cache.installers.version,
-			size: cache.installers.size,
-			os: cache.installers.os,
-			architecture: cache.installers.architecture,
-			createdAt: cache.installers.createdAt
+			version: installer.version,
+			size: installer.size,
+			os: installer.os,
+			architecture: installer.architecture,
+			createdAt: installer.createdAt
 		}
 	};
 };

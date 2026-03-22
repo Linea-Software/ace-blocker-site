@@ -1,34 +1,39 @@
 import { Elysia, t } from 'elysia';
-import { getLatestReleasesCache } from '../cache';
+import { getLatestInstallerCache, getLatestResistanceCache, getLatestTrackingCache, getLatestSiteListsCache } from '../cache';
 
 export const releasesRouter = new Elysia({ prefix: '/releases' })
 	.get(
 		'/latest',
 		async ({ status }) => {
 			try {
-				const cache = await getLatestReleasesCache();
+				const [installers, resistance, tracking, siteLists] = await Promise.all([
+					getLatestInstallerCache(),
+					getLatestResistanceCache(),
+					getLatestTrackingCache(),
+					getLatestSiteListsCache()
+				]);
 				
 				// Strip file paths, keeping only version and basic metadata
 				return {
-					installer: cache.installers ? { 
-						version: cache.installers.version,
-						size: cache.installers.size,
-						os: cache.installers.os,
-						architecture: cache.installers.architecture,
-						createdAt: cache.installers.createdAt
+					installer: installers ? { 
+						version: installers.version,
+						size: installers.size,
+						os: installers.os,
+						architecture: installers.architecture,
+						createdAt: installers.createdAt
 					} : null,
-					resistance: cache.resistance ? { 
-						version: cache.resistance.version,
-						size: cache.resistance.size,
-						createdAt: cache.resistance.createdAt
+					resistance: resistance ? { 
+						version: resistance.version,
+						size: resistance.size,
+						createdAt: resistance.createdAt
 					} : null,
-					tracking: cache.tracking ? { 
-						version: cache.tracking.version,
-						size: cache.tracking.size,
-						createdAt: cache.tracking.createdAt
+					tracking: tracking ? { 
+						version: tracking.version,
+						size: tracking.size,
+						createdAt: tracking.createdAt
 					} : null,
 					siteLists: Object.fromEntries(
-						Object.entries(cache.siteLists).map(([id, list]) => [
+						Object.entries(siteLists).map(([id, list]) => [
 							id, {
 								version: list.fileName.split('.')[0] || list.fileName, // approx
 								size: list.size,
