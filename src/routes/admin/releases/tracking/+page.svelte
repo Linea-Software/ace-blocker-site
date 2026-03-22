@@ -22,6 +22,7 @@
 	let isModalOpen = $state(false);
 	let isDeploying = $state(false);
 	let itemToDelete = $state<any>(null);
+	let isDragging = $state(false);
 
 	let uploadFormState = $state({
 		version: '',
@@ -54,6 +55,25 @@
 			}
 		};
 	};
+
+	function handleDragOver(e: DragEvent) {
+		e.preventDefault();
+		isDragging = true;
+	}
+
+	function handleDragLeave(e: DragEvent) {
+		e.preventDefault();
+		isDragging = false;
+	}
+
+	function handleDrop(e: DragEvent) {
+		e.preventDefault();
+		isDragging = false;
+		const file = e.dataTransfer?.files?.[0];
+		if (file) {
+			uploadFormState.file = file;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -213,17 +233,31 @@
 
 					<div class="space-y-1.5">
 						<label for="rel-f" class="block text-[10px] uppercase font-bold tracking-widest text-gray-500">{m.admin_releases_modal_file()}</label>
-						<label for="rel-f" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/10 rounded-xl cursor-pointer hover:bg-white/5 hover:border-white/20 transition-all bg-black/20">
-							<div class="flex flex-col items-center justify-center p-5 text-center">
-								<UploadCloud class="w-6 h-6 text-gray-500 mb-2" />
-								{#if uploadFormState.file}
-									<p class="text-xs font-mono text-amber-500 truncate max-w-[280px]">{uploadFormState.file.name}</p>
-								{:else}
-									<p class="text-[10px] text-gray-500 uppercase font-bold">Click or drag binary</p>
-								{/if}
+						<div class="group relative">
+							<input 
+								id="rel-f" 
+								type="file" 
+								name="file" 
+								class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+								onchange={(e) => uploadFormState.file = e.currentTarget.files?.[0] || null} 
+								required 
+							/>
+							<div 
+								class="flex h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all group-hover:bg-white/5 {isDragging ? 'border-amber-500 bg-amber-500/5' : 'border-white/10 bg-black/20 group-hover:border-white/20'}"
+								ondragover={handleDragOver}
+								ondragleave={handleDragLeave}
+								ondrop={handleDrop}
+							>
+								<div class="flex flex-col items-center justify-center p-5 text-center">
+									<UploadCloud class="w-6 h-6 {isDragging ? 'text-amber-500' : 'text-gray-500'} mb-2" />
+									{#if uploadFormState.file}
+										<p class="text-xs font-mono text-amber-500 truncate max-w-[280px]">{uploadFormState.file.name}</p>
+									{:else}
+										<p class="text-[10px] text-gray-500 uppercase font-bold">{isDragging ? 'Drop file to upload' : 'Click or drag & drop binary'}</p>
+									{/if}
+								</div>
 							</div>
-							<input id="rel-f" type="file" name="file" class="hidden" onchange={(e) => uploadFormState.file = e.currentTarget.files?.[0] || null} required />
-						</label>
+						</div>
 					</div>
 
 					<button 

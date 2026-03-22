@@ -31,6 +31,7 @@
 	let isUpdating = $state(false);
 	let selectedRelease = $state<any>(null);
 	let itemToDelete = $state<any>(null);
+	let isDragging = $state(false);
 
 	// Upload Form State
 	let uploadFormState = $state({
@@ -81,6 +82,25 @@
 			}
 		};
 	};
+
+	function handleDragOver(e: DragEvent) {
+		e.preventDefault();
+		isDragging = true;
+	}
+
+	function handleDragLeave(e: DragEvent) {
+		e.preventDefault();
+		isDragging = false;
+	}
+
+	function handleDrop(e: DragEvent) {
+		e.preventDefault();
+		isDragging = false;
+		const file = e.dataTransfer?.files?.[0];
+		if (file) {
+			uploadFormState.file = file;
+		}
+	}
 
 	const handleUpdate: SubmitFunction = () => {
 		isUpdating = true;
@@ -363,17 +383,20 @@
 								required
 							/>
 							<div
-								class="flex h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/10 bg-black/20 transition-all group-hover:border-white/20 group-hover:bg-white/5"
+								class="flex h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all group-hover:bg-white/5 {isDragging ? 'border-amber-500 bg-amber-500/5' : 'border-white/10 bg-black/20 group-hover:border-white/20'}"
+								ondragover={handleDragOver}
+								ondragleave={handleDragLeave}
+								ondrop={handleDrop}
 							>
 								<div class="flex flex-col items-center justify-center p-5 text-center">
-									<Upload class="mb-2 h-6 w-6 text-gray-500" />
+									<Upload class="mb-2 h-6 w-6 {isDragging ? 'text-amber-500' : 'text-gray-500'}" />
 									{#if uploadFormState.file}
 										<p class="max-w-[280px] truncate font-mono text-xs text-amber-500">
 											{uploadFormState.file.name}
 										</p>
 									{:else}
 										<p class="text-[10px] font-bold text-gray-500 uppercase">
-											Click or drag & drop binary
+											{isDragging ? 'Drop file to upload' : 'Click or drag & drop binary'}
 										</p>
 									{/if}
 								</div>
