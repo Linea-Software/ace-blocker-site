@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import * as m from '$lib/paraglide/messages.js';
 	import { enhance } from '$app/forms';
 	import type { ActionData, SubmitFunction } from './$types';
@@ -58,6 +59,7 @@
 					os: 'windows',
 					architecture: 'x64',
 				};
+				await invalidateAll();
 			}
 		};
 	};
@@ -72,12 +74,12 @@
 		isDragging = false;
 	}
 
-	function handleDrop(e: DragEvent) {
+	function handleDrop(e: DragEvent & { currentTarget: EventTarget & HTMLInputElement }) {
 		e.preventDefault();
 		isDragging = false;
-		const file = e.dataTransfer?.files?.[0];
-		if (file) {
-			uploadFormState.file = file;
+		if (e.dataTransfer?.files?.length) {
+			uploadFormState.file = e.dataTransfer.files[0];
+			e.currentTarget.files = e.dataTransfer.files;
 		}
 	}
 </script>
@@ -338,7 +340,10 @@
 					<form method="POST" action="?/deleteRelease" use:enhance={() => {
 						return async ({ result, update }) => {
 							await update();
-							if (result.type === 'success') itemToDelete = null;
+							if (result.type === 'success') {
+								itemToDelete = null;
+								await invalidateAll();
+							}
 						};
 					}}>
 						<input type="hidden" name="id" value={itemToDelete.id} />

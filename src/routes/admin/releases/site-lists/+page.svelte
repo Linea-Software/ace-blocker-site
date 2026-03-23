@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import * as m from '$lib/paraglide/messages.js';
 	import { enhance } from '$app/forms';
 	import type { ActionData, SubmitFunction } from './$types';
@@ -79,6 +80,7 @@
 					file: null,
 					requiresProSubscription: true
 				};
+				await invalidateAll();
 			}
 		};
 	};
@@ -93,12 +95,12 @@
 		isDragging = false;
 	}
 
-	function handleDrop(e: DragEvent) {
+	function handleDrop(e: DragEvent & { currentTarget: EventTarget & HTMLInputElement }) {
 		e.preventDefault();
 		isDragging = false;
-		const file = e.dataTransfer?.files?.[0];
-		if (file) {
-			uploadFormState.file = file;
+		if (e.dataTransfer?.files?.length) {
+			uploadFormState.file = e.dataTransfer.files[0];
+			e.currentTarget.files = e.dataTransfer.files;
 		}
 	}
 
@@ -109,6 +111,7 @@
 			isUpdating = false;
 			if (result.type === 'success') {
 				isDetailsModalOpen = false;
+				await invalidateAll();
 			}
 		};
 	};
@@ -673,6 +676,7 @@
 								await update();
 								if (result.type === 'success') {
 									itemToDelete = null;
+									await invalidateAll();
 								}
 							};
 						}}
