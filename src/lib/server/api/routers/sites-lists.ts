@@ -3,7 +3,7 @@ import { isUserPro } from '$lib/server/pro';
 import { auth } from '$lib/server/auth';
 import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
-import { getLatestSiteListsCache } from '../cache';
+import { getLatestSiteLists } from '../cache';
 
 export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 	.derive(async ({ request }) => {
@@ -18,8 +18,8 @@ export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 	.get(
 		'/:siteListUuid/backup',
 		async ({ params: { siteListUuid }, user, status }) => {
-			const cache = await getLatestSiteListsCache();
-			const latestRecord = cache[siteListUuid];
+			const cache = getLatestSiteLists();
+			const latestRecord = cache.get(siteListUuid);
 
 			if (!latestRecord) {
 				return status(404, 'No uploaded site list file exists for this record yet');

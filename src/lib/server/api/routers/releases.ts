@@ -1,41 +1,39 @@
 import { Elysia, t } from 'elysia';
-import { getLatestInstallerCache, getLatestResistanceCache, getLatestTrackingCache, getLatestSiteListsCache } from '../cache';
+import { getLatestInstaller, getLatestResistanceScript, getLatestTrackingScript, getLatestSiteLists } from '../cache';
 
 export const releasesRouter = new Elysia({ prefix: '/releases' })
 	.get(
 		'/latest',
 		async ({ status }) => {
 			try {
-				const [installers, resistance, tracking, siteLists] = await Promise.all([
-					getLatestInstallerCache(),
-					getLatestResistanceCache(),
-					getLatestTrackingCache(),
-					getLatestSiteListsCache()
-				]);
-				
+				const installer = getLatestInstaller();
+				const resistance = getLatestResistanceScript();
+				const tracking = getLatestTrackingScript();
+				const siteLists = getLatestSiteLists();
+
 				// Strip file paths, keeping only version and basic metadata
 				return {
-					installer: installers ? { 
-						version: installers.version,
-						size: installers.size,
-						os: installers.os,
-						architecture: installers.architecture,
-						createdAt: installers.createdAt
+					installer: installer ? {
+						version: installer.version,
+						size: installer.size,
+						os: installer.os,
+						architecture: installer.architecture,
+						createdAt: installer.createdAt
 					} : null,
-					resistance: resistance ? { 
+					resistance: resistance ? {
 						version: resistance.version,
 						size: resistance.size,
 						createdAt: resistance.createdAt
 					} : null,
-					tracking: tracking ? { 
+					tracking: tracking ? {
 						version: tracking.version,
 						size: tracking.size,
 						createdAt: tracking.createdAt
 					} : null,
 					siteLists: Object.fromEntries(
-						Object.entries(siteLists).map(([id, list]) => [
+						Array.from(siteLists.entries()).map(([id, list]) => [
 							id, {
-								version: list.fileName.split('.')[0] || list.fileName, // approx
+								version: list.fileName.split('.')[0] || list.fileName,
 								size: list.size,
 								updatedAt: list.updatedAt
 							}

@@ -3,6 +3,7 @@ import { auth } from '$lib/server/auth';
 import { type Handle } from '@sveltejs/kit';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { seedDatabase } from '$lib/server/seeder';
+import { initializeCache } from '$lib/server/api/cache';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
@@ -32,6 +33,7 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 
 export const handle: Handle = sequence(handleParaglide, handleAuth);
 
-// Run seeder
+// Run seeder and initialize cache
 seedDatabase();
+initializeCache();
 

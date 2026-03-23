@@ -6,126 +6,109 @@ import {
 	siteList
 } from '$lib/server/db/schema';
 import { desc, eq } from 'drizzle-orm';
-import { LRUCache } from 'lru-cache';
 
-const CACHE_KEY = 'latest';
+// In-memory cache for latest artifacts (no need for LRU since we only store one of each)
+let latestInstaller: typeof aceBlockerInstaller.$inferSelect | null = null;
+let latestResistanceScript: typeof resistanceModeScripts.$inferSelect | null = null;
+let latestTrackingScript: typeof trackingScripts.$inferSelect | null = null;
+let latestSiteLists: Map<string, typeof siteList.$inferSelect> = new Map();
 
-const installersCache = new LRUCache<string, typeof aceBlockerInstaller.$inferSelect>({
-	max: 10,
-	ttl: 1000 * 60 * 60 // 1 hour caching
-});
+// ============ INSTALLER ============
 
-const resistanceCache = new LRUCache<string, typeof resistanceModeScripts.$inferSelect>({
-	max: 10,
-	ttl: 1000 * 60 * 60 // 1 hour caching
-});
-
-const trackingCache = new LRUCache<string, typeof trackingScripts.$inferSelect>({
-	max: 10,
-	ttl: 1000 * 60 * 60 // 1 hour caching
-});
-
-const siteListsCache = new LRUCache<string, Record<string, typeof siteList.$inferSelect>>({
-	max: 10,
-	ttl: 1000 * 60 * 60 // 1 hour caching
-});
-
-export async function getLatestInstallerCache(): Promise<typeof aceBlockerInstaller.$inferSelect | null> {
-	const cached = installersCache.get(CACHE_KEY);
-	if (cached !== undefined) {
-		return cached;
-	}
-
-	const latestInstaller = await db
+export async function loadLatestInstaller(): Promise<typeof aceBlockerInstaller.$inferSelect | null> {
+	const result = await db
 		.select()
 		.from(aceBlockerInstaller)
 		.where(eq(aceBlockerInstaller.canBeDownloaded, true))
 		.orderBy(desc(aceBlockerInstaller.createdAt))
 		.limit(1);
 
-	const data = latestInstaller[0] || null;
-	if (data) installersCache.set(CACHE_KEY, data);
-	return data;
+	latestInstaller = result[0] || null;
+	return latestInstaller;
 }
 
-export async function getLatestResistanceCache(): Promise<typeof resistanceModeScripts.$inferSelect | null> {
-	const cached = resistanceCache.get(CACHE_KEY);
-	if (cached !== undefined) {
-		return cached;
-	}
+export function getLatestInstaller(): typeof aceBlockerInstaller.$inferSelect | null {
+	return latestInstaller;
+}
 
-	const latestResistance = await db
+// ============ RESISTANCE SCRIPTS ============
+
+export async function loadLatestResistanceScript(): Promise<typeof resistanceModeScripts.$inferSelect | null> {
+	const result = await db
 		.select()
 		.from(resistanceModeScripts)
 		.where(eq(resistanceModeScripts.canBeDownloaded, true))
 		.orderBy(desc(resistanceModeScripts.createdAt))
 		.limit(1);
 
-	const data = latestResistance[0] || null;
-	if (data) resistanceCache.set(CACHE_KEY, data);
-	return data;
+	latestResistanceScript = result[0] || null;
+	return latestResistanceScript;
 }
 
-export async function getLatestTrackingCache(): Promise<typeof trackingScripts.$inferSelect | null> {
-	const cached = trackingCache.get(CACHE_KEY);
-	if (cached !== undefined) {
-		return cached;
-	}
+export function getLatestResistanceScript(): typeof resistanceModeScripts.$inferSelect | null {
+	return latestResistanceScript;
+}
 
-	const latestTracking = await db
+// ============ TRACKING SCRIPTS ============
+
+export async function loadLatestTrackingScript(): Promise<typeof trackingScripts.$inferSelect | null> {
+	const result = await db
 		.select()
 		.from(trackingScripts)
 		.where(eq(trackingScripts.canBeDownloaded, true))
 		.orderBy(desc(trackingScripts.createdAt))
 		.limit(1);
 
-	const data = latestTracking[0] || null;
-	if (data) trackingCache.set(CACHE_KEY, data);
-	return data;
+	latestTrackingScript = result[0] || null;
+	return latestTrackingScript;
 }
 
-export async function getLatestSiteListsCache(): Promise<Record<string, typeof siteList.$inferSelect>> {
-	const cached = siteListsCache.get(CACHE_KEY);
-	if (cached !== undefined) {
-		return cached;
-	}
+export function getLatestTrackingScript(): typeof trackingScripts.$inferSelect | null {
+	return latestTrackingScript;
+}
 
-	const siteListsData = await db
+// ============ SITE LISTS ============
+
+export async function loadLatestSiteLists(): Promise<Map<string, typeof siteList.$inferSelect>> {
+	const results = await db
 		.select()
 		.from(siteList)
-		.where(eq(siteList.canBeDownloaded, true))
-		.orderBy(desc(siteList.updatedAt));
+		.where(eq(siteList.canBeDownloaded, true));
 
-	const latestSiteLists: Record<string, typeof siteList.$inferSelect> = {};
-	for (const list of siteListsData) {
-		if (!latestSiteLists[list.id]) {
-			latestSiteLists[list.id] = list; // Keeps the first (latest due to DESC)
-		}
-	}
-
-	siteListsCache.set(CACHE_KEY, latestSiteLists);
+	latestSiteLists = new Map(results.map((item) => [item.id, item]));
 	return latestSiteLists;
 }
 
-export function invalidateInstallerCache() {
-	installersCache.clear();
+export function getLatestSiteLists(): Map<string, typeof siteList.$inferSelect> {
+	return latestSiteLists;
 }
 
-export function invalidateResistanceCache() {
-	resistanceCache.clear();
+// ============ CACHE INVALIDATION HELPERS ============
+// These reload the cache from database and return the new values
+
+export async function invalidateInstallerCache(): Promise<typeof aceBlockerInstaller.$inferSelect | null> {
+	return await loadLatestInstaller();
 }
 
-export function invalidateTrackingCache() {
-	trackingCache.clear();
+export async function invalidateResistanceCache(): Promise<typeof resistanceModeScripts.$inferSelect | null> {
+	return await loadLatestResistanceScript();
 }
 
-export function invalidateSiteListsCache() {
-	siteListsCache.clear();
+export async function invalidateTrackingCache(): Promise<typeof trackingScripts.$inferSelect | null> {
+	return await loadLatestTrackingScript();
 }
 
-export function invalidateAllCaches() {
-	invalidateInstallerCache();
-	invalidateResistanceCache();
-	invalidateTrackingCache();
-	invalidateSiteListsCache();
+export async function invalidateSiteListsCache(): Promise<Map<string, typeof siteList.$inferSelect>> {
+	return await loadLatestSiteLists();
+}
+
+// ============ INITIALIZE ALL CACHES ============
+
+export async function initializeCache(): Promise<void> {
+	await Promise.all([
+		loadLatestInstaller(),
+		loadLatestResistanceScript(),
+		loadLatestTrackingScript(),
+		loadLatestSiteLists()
+	]);
 }
