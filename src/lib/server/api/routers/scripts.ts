@@ -40,7 +40,7 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 			const securityKey = env.BUNNY_SECURITY_KEY;
 			// Retrieve from the new dynamic folder structure created by the admin panel
 			// Folder format: resistance-mode-scripts/<version>/<fileName>
-			const storagePath = `/${env.BUNNY_STORAGE_ZONE}/resistance-mode-scripts/${latestRecord.version}/${latestRecord.fileName}`;
+			const storagePath = `/resistance-mode-scripts/${latestRecord.version}/${latestRecord.fileName}`;
 
 			const expires = Math.round(Date.now() / 1000) + 600;
 			const hashableBase = securityKey + storagePath + expires;

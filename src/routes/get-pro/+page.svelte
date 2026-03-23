@@ -190,7 +190,7 @@
 									: 'bg-amber-500/20 text-amber-600 dark:text-amber-500'
 							)}
 						>
-							-30%
+							-48%
 						</span>
 					</button>
 				</div>

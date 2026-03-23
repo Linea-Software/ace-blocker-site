@@ -41,7 +41,7 @@ export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 				}
 
 				const securityKey = env.BUNNY_SECURITY_KEY;
-				const storagePath = `/${env.BUNNY_STORAGE_ZONE}/site-lists/${latestRecord.name}/${latestRecord.fileName}`;
+				const storagePath = `/site-lists/premium/${latestRecord.fileName}`;
 
 				const expires = Math.round(Date.now() / 1000) + 600;
 				const hashableBase = securityKey + storagePath + expires;
@@ -61,8 +61,8 @@ export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 				// Allow free downloads without signature logic? Or wait, all downloads require signature if they are on a protected zone?
 				// Assuming free lists are on a public block or still signed to prevent direct hotlinking:
 				const securityKey = env.BUNNY_SECURITY_KEY;
-				const storagePath = `/${env.BUNNY_STORAGE_ZONE}/site-lists/${latestRecord.name}/${latestRecord.fileName}`;
-				
+				const storagePath = `/site-lists/free/${latestRecord.fileName}`;
+
 				const expires = Math.round(Date.now() / 1000) + 600;
 				const hashableBase = securityKey + storagePath + expires;
 				const token = crypto
