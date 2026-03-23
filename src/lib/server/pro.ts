@@ -3,6 +3,7 @@ import { db } from './db';
 import { user, proStatus } from './db/schema';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
+import { LRUCache } from 'lru-cache'
 
 // ---------------------------------------------------------------------------
 // Two-level cache for pro status:
@@ -15,115 +16,48 @@ import crypto from 'crypto';
 // needs to call a pro-gated endpoint every ≤3 days to stay licensed.
 // ---------------------------------------------------------------------------
 const PRO_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
-const HEARTBEAT_WINDOW_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
 
 interface CacheEntry {
-	value: { isActive: boolean; expiration: Date };
-	expiresAt: number;
+	expiration: Date;
 }
 
-const memoryCache = new Map<string, CacheEntry>();
+// user id to cache entry
+const memoryCache = new LRUCache<string, CacheEntry>({
+	max: 5000,
+	ttl: PRO_CACHE_TTL_MS,
+});
 
 /** Bust the L1 in-memory cache for a given email (called by webhook handlers). */
-export function invalidateProCache(email: string): void {
-	memoryCache.delete(email);
+export function invalidateProCache(userId: string): void {
+	memoryCache.delete(userId);
 }
 
-export async function getProStatus(
-	email: string,
-	force = false
-): Promise<{ isActive: boolean; expiration: Date }> {
-	const now = Date.now();
+export async function isUserPro(
+	userId: string
+) : Promise<boolean> {
+	const now = new Date();
 
-	// ── L1: in-memory cache ──────────────────────────────────────────────────
-	const mem = memoryCache.get(email);
-	if (!force && mem && now < mem.expiresAt) {
-		return mem.value;
+	// We're first checking for the cache has the data we need
+	const mem = memoryCache.get(userId);
+	if (mem && now <= mem.expiration) {
+		return true;
 	}
 
-	// ── L2: DB cache ─────────────────────────────────────────────────────────
-	const userRow = await db.query.user.findFirst({
-		where: (u, { eq }) => eq(u.email, email),
-		with: { proStatus: true }
-	});
+	// otherwise let's see if the database has it
 
-	if (
-		!force &&
-		userRow?.proStatus?.cachedAt &&
-		now - userRow.proStatus.cachedAt.getTime() < PRO_CACHE_TTL_MS
-	) {
-		const dbResult = {
-			isActive: userRow.proStatus.expiration !== null && userRow.proStatus.expiration > new Date(),
-			expiration: userRow.proStatus.expiration ?? new Date(0)
-		};
-		// Promote into L1 so the next request in this process is instant
-		memoryCache.set(email, { value: dbResult, expiresAt: now + PRO_CACHE_TTL_MS });
-		return dbResult;
+	const result = await db.select().from(proStatus).where(eq(proStatus.userId, userId)).limit(1);
+
+	if (!result || result.length == 0) {
+		return false;
 	}
 
-	// ── L3: DodoPayments API ─────────────────────────────────────────────────
-	const inactive = { isActive: false, expiration: new Date(0) };
-	let result = inactive;
-
-	try {
-		const customers = await dodoPayments.customers.list({ email });
-
-		if (customers.items && customers.items.length > 0) {
-			const customerId = customers.items[0].customer_id;
-
-			const subscriptions = await dodoPayments.subscriptions.list({
-				customer_id: customerId,
-				status: 'active'
-			});
-
-			if (subscriptions.items && subscriptions.items.length > 0) {
-				let latestExpiration = new Date(0);
-				for (const sub of subscriptions.items) {
-					const nextBilling = sub.next_billing_date ? new Date(sub.next_billing_date) : new Date(0);
-					if (nextBilling > latestExpiration) latestExpiration = nextBilling;
-				}
-				// Extend to at least now + 3 days as a heartbeat grace window
-				const heartbeatDeadline = new Date(now + HEARTBEAT_WINDOW_MS);
-				const effectiveExpiration =
-					latestExpiration > heartbeatDeadline ? latestExpiration : heartbeatDeadline;
-				result = { isActive: true, expiration: effectiveExpiration };
-			}
-		}
-	} catch (error) {
-		console.error('Error checking Pro status:', error);
-		// On error: don't cache — let the next call retry immediately
-		return inactive;
+	const cachedLicence = result[0];
+	if (!cachedLicence.expiration || now > cachedLicence.expiration) {
+		return false;
 	}
 
-	// Persist to DB (fire-and-forget, don't block the response)
-	if (userRow?.id) {
-		const proData = {
-			id: crypto.randomUUID(),
-			userId: userRow.id,
-			cachedAt: new Date(),
-			expiration: result.isActive ? result.expiration : null
-		};
+	return true
 
-		db.insert(proStatus)
-			.values(proData)
-			.onConflictDoUpdate({
-				target: proStatus.userId,
-				set: {
-					cachedAt: proData.cachedAt,
-					expiration: proData.expiration
-				}
-			})
-			.catch((e) => console.error('Failed to persist pro status cache:', e));
-	}
-
-	// Promote into L1
-	memoryCache.set(email, { value: result, expiresAt: now + PRO_CACHE_TTL_MS });
-	return result;
-}
-
-export async function isUserPro(email: string): Promise<boolean> {
-	const proStatus = await getProStatus(email);
-	return proStatus.isActive;
 }
 
 // ---------------------------------------------------------------------------
@@ -132,8 +66,7 @@ export async function isUserPro(email: string): Promise<boolean> {
 // request sees the fresh status without waiting for a DodoPayments API call.
 // ---------------------------------------------------------------------------
 
-export async function updateProExpiration(email: string, nextBillingDate: Date | null): Promise<void> {
-	const expiration = nextBillingDate ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // fallback: +30 days
+export async function updateProExpiration(email: string, nextBillingDate: Date): Promise<void> {
 	try {
 		const userRow = await db.query.user.findFirst({
 			where: (u, { eq }) => eq(u.email, email),
@@ -145,7 +78,7 @@ export async function updateProExpiration(email: string, nextBillingDate: Date |
 				id: crypto.randomUUID(),
 				userId: userRow.id,
 				cachedAt: new Date(),
-				expiration: expiration
+				expiration: nextBillingDate
 			};
 
 			await db.insert(proStatus)
@@ -158,7 +91,7 @@ export async function updateProExpiration(email: string, nextBillingDate: Date |
 					}
 				});
 			invalidateProCache(email);
-			console.log(`✅ Pro status activated via webhook for ${email} until ${expiration.toISOString()}`);
+			console.log(`✅ Pro status activated via webhook for ${email} until ${nextBillingDate.toISOString()}`);
 		}
 	} catch (e) {
 		console.error(`❌ Failed to update pro expiration for ${email}:`, e);
