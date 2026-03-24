@@ -96,17 +96,23 @@ export const auth = betterAuth({
 					// Set proExpiration to next_billing_date and bust the cache.
 
 					onSubscriptionActive: async (payload) => {
-						await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
+						if (payload.data.next_billing_date) {
+							await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
+						}
 					},
 					onSubscriptionRenewed: async (payload) => {
-						await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
+						if (payload.data.next_billing_date) {
+							await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
+						}
 					},
 					onSubscriptionPlanChanged: async (payload) => {
-						await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
+						if (payload.data.next_billing_date) {
+							await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
+						}
 					},
 					onSubscriptionUpdated: async (payload) => {
 						// Only activate if still active after the update
-						if (payload.data.status === 'active') {
+						if (payload.data.status === 'active' && payload.data.next_billing_date) {
 							await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
 						} else {
 							await clearProExpiration(payload.data.customer.email);
