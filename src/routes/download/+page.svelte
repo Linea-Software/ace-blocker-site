@@ -343,7 +343,7 @@
 								<p
 									class="rounded-xl border border-slate-200 bg-white p-4 break-all text-slate-600 select-all dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400"
 								>
-									TODO
+									{data.installer.hash}
 								</p>
 							</div>
 							<div class="space-y-2">

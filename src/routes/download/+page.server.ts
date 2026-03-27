@@ -15,7 +15,8 @@ export const load: PageServerLoad = async () => {
 			size: installer.size,
 			os: installer.os,
 			architecture: installer.architecture,
-			createdAt: installer.createdAt
+			createdAt: installer.createdAt,
+			hash: installer.sha256,
 		}
 	};
 };
