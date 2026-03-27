@@ -42,8 +42,8 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 			}
 		}
 	)
-	.post(
-		'/link-engine',
+	.get(
+		'/api-key/create',
 		async ({ user, request, status }) => {
 			if (!user) {
 				return status(401, 'Unauthorized');
@@ -83,7 +83,7 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 		},
 		{
 			detail: {
-				operationId: 'linkEngine',
+				operationId: 'createApiKey',
 				summary: 'Generate API key for desktop app linking',
 				security: [{ APIKeyHeader: [] }]
 			},
@@ -97,7 +97,7 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 		}
 	)
 	.get(
-		'/api-keys',
+		'/api-key/list',
 		async ({ user, request, status }) => {
 			if (!user) {
 				return status(401, 'Unauthorized');
@@ -145,7 +145,7 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 		}
 	)
 	.post(
-		'/revoke',
+		'/api-key/revoke',
 		async ({ user, request, body, status }) => {
 			if (!user) {
 				return status(401, 'Unauthorized');
@@ -177,9 +177,8 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				500: t.String()
 			}
 		}
-	)
-	.post(
-		'/verify-pro',
+	).get(
+		'/pro',
 		async ({ user, status }) => {
 			if (!user) {
 				return status(401, 'Unauthorized');
@@ -194,8 +193,8 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 		},
 		{
 			detail: {
-				operationId: 'verifyProStatus',
-				summary: 'Force sync and verify user pro status',
+				operationId: 'getProDetails',
+				summary: 'Get user pro status',
 				security: [{ APIKeyHeader: [] }]
 			},
 			response: {
