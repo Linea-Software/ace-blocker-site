@@ -1,4 +1,4 @@
-import { Elysia, t } from 'elysia';
+import { Elysia, redirect, t } from 'elysia';
 import { auth, dodoPayments } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { proStatus, user } from '$lib/server/db/schema';
@@ -142,12 +142,6 @@ export const adminRouter = new Elysia({ prefix: '/admin' })
 								cachedAt: new Date()
 							}
 						});
-
-					const referer = request.headers.get('referer');
-					if (referer && !request.headers.get('accept')?.includes('application/json')) {
-						set.redirect = referer;
-						return;
-					}
 					return { success: true };
 				},
 				{
