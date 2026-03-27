@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia';
 import { auth } from '$lib/server/auth';
-import { getProStatus } from '$lib/server/pro';
+import { isUserPro, getProStatus } from '$lib/server/pro';
 
 export const accountRouter = new Elysia({ prefix: '/account' })
 	.derive(async ({ request }) => {
@@ -19,15 +19,10 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				return status(401, 'Unauthorized');
 			}
 
-			const proStatus = await getProStatus(user.email);
-
 			return {
 				name: user.name,
 				email: user.email,
-				licence: {
-					isActive: proStatus.isActive,
-					expiration: proStatus.expiration
-				}
+				isPro: await isUserPro(user.email)
 			};
 		},
 		{
@@ -40,10 +35,7 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				200: t.Object({
 					name: t.String(),
 					email: t.String(),
-					licence: t.Object({
-						isActive: t.Boolean(),
-						expiration: t.Date()
-					})
+					isPro: t.Boolean(),
 				}),
 				401: t.String(),
 				500: t.String()
@@ -193,11 +185,11 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				return status(401, 'Unauthorized');
 			}
 
-			const proStatus = await getProStatus(user.email, true);
+			const proStatus = await getProStatus(user.id);
 
 			return {
-				isActive: proStatus.isActive,
-				expiration: proStatus.expiration
+				isPro: proStatus.isPro,
+				expiration: proStatus.expirationDate
 			};
 		},
 		{
@@ -208,8 +200,8 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 			},
 			response: {
 				200: t.Object({
-					isActive: t.Boolean(),
-					expiration: t.Date()
+					isPro: t.Boolean(),
+					expiration: t.Nullable(t.Date())
 				}),
 				401: t.String(),
 				500: t.String()

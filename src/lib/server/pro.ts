@@ -60,6 +60,35 @@ export async function isUserPro(
 
 }
 
+/**
+ * Returns the pro status and expiration date for a given user.
+ * @param userId - The user ID to check
+ * @returns An object with isPro boolean and expirationDate (null if not pro)
+ */
+export async function getProStatus(userId: string): Promise<{ isPro: boolean; expirationDate: Date | null }> {
+	const now = new Date();
+
+	// Check L1 cache first
+	const mem = memoryCache.get(userId);
+	if (mem && now <= mem.expiration) {
+		return { isPro: true, expirationDate: mem.expiration };
+	}
+
+	// Check L2 database cache
+	const result = await db.select().from(proStatus).where(eq(proStatus.userId, userId)).limit(1);
+
+	if (!result || result.length === 0) {
+		return { isPro: false, expirationDate: null };
+	}
+
+	const cachedLicence = result[0];
+	if (!cachedLicence.expiration || now > cachedLicence.expiration) {
+		return { isPro: false, expirationDate: null };
+	}
+
+	return { isPro: true, expirationDate: cachedLicence.expiration };
+}
+
 // ---------------------------------------------------------------------------
 // Webhook helpers — called directly from auth.ts webhook handlers.
 // They write to the DB immediately and bust the L1 cache so the next
