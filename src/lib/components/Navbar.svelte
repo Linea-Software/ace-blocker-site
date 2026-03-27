@@ -20,9 +20,10 @@
 	import { cn } from '$lib/utils';
 	import { toggleMode, mode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages';
+	import { apiClient } from '$lib/api-client';
 
+	let { isPro = false } = $props();
 	const session = authClient.useSession();
-	const isPro = $derived(page.data.isPro || false);
 
 	const navLinks = [
 		{ href: '/download', label: 'Download', icon: Download },

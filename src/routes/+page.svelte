@@ -5,6 +5,7 @@
 	import * as m from '$lib/paraglide/messages';
 	import { getDownloadUrl } from '$lib/utils/platform';
 
+	let { data } = $props();
 	let downloadUrl = $state('/download');
 
 	$effect(() => {
@@ -12,7 +13,7 @@
 	});
 </script>
 
-<Navbar />
+<Navbar isPro={data.isPro} />
 
 <main class="flex min-h-[calc(100vh-4rem)] flex-col antialiased">
 	<!-- Hero Section -->

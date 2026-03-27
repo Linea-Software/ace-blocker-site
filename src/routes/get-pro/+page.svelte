@@ -27,6 +27,7 @@
 	import { engineConfig } from '$lib/states/engine.svelte';
 	import { Crown } from '@lucide/svelte';
 
+	let { data } = $props();
 	let billingCycle = $state('yearly');
 	const session = authClient.useSession();
 	const origin = $derived(page.url.searchParams.get('origin'));
@@ -61,7 +62,7 @@
 		}
 	});
 
-	const isPro = $derived(page.data.isPro || false);
+	const isPro = $derived(data.isPro || false);
 
 	function handleUpgrade() {
 		if ($session.data) {
@@ -73,7 +74,7 @@
 	}
 </script>
 
-<Navbar />
+<Navbar isPro={isPro} />
 
 <main
 	class="min-h-[calc(100vh-4rem)] bg-white py-16 text-slate-900 transition-colors duration-500 md:py-24 dark:bg-[#0B0B0F] dark:text-slate-50"

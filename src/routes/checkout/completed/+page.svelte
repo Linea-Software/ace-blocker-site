@@ -86,7 +86,7 @@
 	<title>{isFailed ? 'Protocol Interrupted' : 'System Activated'} | Ace Blocker</title>
 </svelte:head>
 
-<Navbar />
+<Navbar isPro={isPro} />
 
 <main
 	class="relative flex min-h-[calc(100vh-80px)] items-center justify-center overflow-hidden bg-[#0B0F19] p-4 selection:bg-amber-500/30 sm:p-8"

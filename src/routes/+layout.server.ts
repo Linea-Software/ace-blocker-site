@@ -5,7 +5,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	let isPro = false;
 
 	if (locals.user) {
-		isPro = await isUserPro(locals.user.email);
+		isPro = await isUserPro(locals.user.id);
 	}
 
 	return {

@@ -15,6 +15,7 @@
 	import * as m from '$lib/paraglide/messages';
 	import { getDownloadUrl } from '$lib/utils/platform';
 
+	let { data } = $props();
 	let downloadUrl = $state('/download');
 
 	$effect(() => {
@@ -27,7 +28,7 @@
 	<meta name="description" content={m.about_hero_description()} />
 </svelte:head>
 
-<Navbar />
+<Navbar isPro={data.isPro} />
 
 <main
 	class="flex min-h-[calc(100vh-4rem)] flex-col bg-white text-slate-900 transition-colors duration-500 dark:bg-[#0B0B0F] dark:text-slate-50"

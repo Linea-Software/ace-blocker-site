@@ -70,7 +70,9 @@
 		isAvailable: boolean;
 	}
 
-	let formattedSize = $derived(data.installer ? (data.installer.size / (1024 * 1024)).toFixed(1) + 'MB' : '12MB');
+	let formattedSize = $derived(
+		data.installer ? (data.installer.size / (1024 * 1024)).toFixed(1) + 'MB' : '12MB'
+	);
 
 	let platformOptions: PlatformOption[] = $derived([
 		{
@@ -116,7 +118,7 @@
 	<title>Download Ace Blocker</title>
 </svelte:head>
 
-<Navbar />
+<Navbar isPro={data.isPro} />
 
 <main
 	class="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-4 pt-16 pb-12 transition-colors duration-500 dark:bg-[#0B0B0F]"
@@ -149,10 +151,10 @@
 				<div class="group relative">
 					<!-- Pulsing Glow Indicating Active Processing -->
 					<div
-						class="absolute inset-0 animate-pulse rounded-full bg-amber-500/20 blur-2xl transition-all duration-500 group-hover:bg-amber-500/30"
+						class="absolute inset-0 animate-pulse rounded-2xl bg-amber-500/20 blur-2xl transition-all duration-500 group-hover:bg-amber-500/30"
 					></div>
 					<div
-						class="relative flex h-24 w-24 items-center justify-center rounded-3xl border border-slate-200 bg-white text-amber-500 shadow-xl shadow-slate-200/50 backdrop-blur-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:border-amber-500/50 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-2xl"
+						class="relative flex h-24 w-24 items-center justify-center rounded-2xl border border-slate-200 bg-white text-amber-500 shadow-xl shadow-slate-200/50 backdrop-blur-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:border-amber-500/50 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-2xl"
 					>
 						<IconDownload size={44} stroke={1.5} />
 					</div>
@@ -177,7 +179,7 @@
 					size="lg"
 					onclick={handleManualDownload}
 					disabled={isManualLoading}
-					class="relative h-14 overflow-hidden rounded-full bg-amber-500 px-10 text-lg font-bold text-black shadow-xl shadow-amber-500/20 transition-all hover:scale-105 hover:bg-amber-400 active:scale-95 dark:shadow-amber-500/10"
+					class="relative h-14 overflow-hidden rounded-lg bg-amber-500 px-10 text-lg font-bold text-black shadow-xl shadow-amber-500/20 transition-all hover:scale-105 hover:bg-amber-400 active:scale-95 dark:shadow-amber-500/10"
 				>
 					{#if isManualLoading}
 						<Loader2 class="mr-2 h-5 w-5 animate-spin" />
@@ -224,7 +226,7 @@
 					<div class="group relative">
 						<a
 							href={option.isAvailable ? `/download/${option.id}` : undefined}
-							class="relative flex flex-col items-start gap-5 rounded-[2.5rem] p-8 text-left transition-all duration-500
+							class="relative flex flex-col items-start gap-5 rounded-2xl p-8 text-left transition-all duration-500
 								{option.isAvailable
 								? 'hover:scale-[1.02] active:scale-[0.98]'
 								: 'cursor-not-allowed opacity-50 grayscale'}
@@ -235,7 +237,7 @@
 						>
 							{#if isRecommended}
 								<div
-									class="absolute top-6 right-8 rounded-full bg-amber-500 px-3 py-1 text-[10px] font-black tracking-wider text-black uppercase shadow-lg"
+									class="absolute top-6 right-8 rounded-md bg-amber-500 px-3 py-1 text-[10px] font-black tracking-wider text-black uppercase shadow-lg"
 								>
 									Recommended
 								</div>
@@ -264,7 +266,7 @@
 									>{option.size}</span
 								>
 								<span
-									class="rounded-lg border border-slate-200 bg-slate-100 px-2 py-1 text-[10px] font-black tracking-wider text-slate-500 uppercase dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
+									class="rounded-md border border-slate-200 bg-slate-100 px-2 py-1 text-[10px] font-black tracking-wider text-slate-500 uppercase dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
 								>
 									{option.ext}
 								</span>
@@ -273,10 +275,10 @@
 
 						{#if !option.isAvailable}
 							<div
-								class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-[2.5rem] bg-white/50 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100 dark:bg-black/50"
+								class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl bg-white/50 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100 dark:bg-black/50"
 							>
 								<div
-									class="rounded-full bg-amber-500 px-4 py-2 text-xs font-black tracking-[0.2em] text-black uppercase shadow-xl shadow-amber-500/40"
+									class="rounded-md bg-amber-500 px-4 py-2 text-xs font-black tracking-[0.2em] text-black uppercase shadow-xl shadow-amber-500/40"
 								>
 									Coming Soon
 								</div>
@@ -289,29 +291,6 @@
 
 		<!-- Footer Info & Utils -->
 		<div class="mx-auto max-w-2xl space-y-16">
-			<!-- System Requirements -->
-			<div
-				class="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-10 shadow-sm transition-all hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/20 dark:hover:border-slate-700 dark:hover:bg-slate-900/40"
-			>
-				<div class="flex flex-col items-center gap-6 text-center">
-					<div
-						class="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-500"
-					>
-						<IconShieldCheck size={24} />
-					</div>
-					<div class="space-y-2">
-						<h4
-							class="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase dark:text-slate-400"
-						>
-							{m.download_sys_req_title()}
-						</h4>
-						<p class="text-xl font-black tracking-tight text-slate-900 dark:text-white">
-							{m.download_sys_req_details()}
-						</p>
-					</div>
-				</div>
-			</div>
-
 			<!-- Checksums Toggle (Security Conscious) -->
 			<div class="space-y-4 px-4">
 				<button
@@ -366,7 +345,7 @@
 				<Button
 					variant="ghost"
 					href="/"
-					class="group h-12 rounded-full border border-transparent px-8 text-[10px] font-black tracking-widest text-slate-500 uppercase transition-all hover:border-amber-500/20 hover:bg-amber-500/10 hover:text-amber-500 dark:text-slate-400"
+					class="group h-12 rounded-lg border border-transparent px-8 text-[10px] font-black tracking-widest text-slate-500 uppercase transition-all hover:border-amber-500/20 hover:bg-amber-500/10 hover:text-amber-500 dark:text-slate-400"
 				>
 					<MoveLeft class="mr-3 h-4 w-4 transition-transform group-hover:-translate-x-2" />
 					{m.download_back_home()}
