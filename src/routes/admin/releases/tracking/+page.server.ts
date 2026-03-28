@@ -3,7 +3,7 @@ import { trackingScripts } from '$lib/server/db/schema';
 import { desc, sql, eq } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import { BUNNY_STORAGE_ZONE, BUNNY_STORAGE_ACCESS_KEY } from '$env/static/private';
+import { uploadTrackingScripts, deleteTrackingScripts, CDNErrorType } from '$lib/server/cdn';
 import { invalidateTrackingCache } from '$lib/server/cache';
 
 export const load: PageServerLoad = async () => {
@@ -36,58 +36,25 @@ export const actions: Actions = {
 			});
 		}
 
-		const folderPath = `tracking-scripts/${version}`;
+		const result = await uploadTrackingScripts(file, version);
 
-		try {
-			const arrayBuffer = await file.arrayBuffer();
+		if (result.isErr()) {
+			const errorType = result.error;
+			let message = 'Internal server failure during binary deploy';
 
-			const endpointUrl = `https://storage.bunnycdn.com/${BUNNY_STORAGE_ZONE}/${folderPath}/${file.name}`;
-
-			const response = await fetch(endpointUrl, {
-				method: 'PUT',
-				headers: {
-					AccessKey: BUNNY_STORAGE_ACCESS_KEY,
-					'Content-Type': 'application/octet-stream'
-				},
-				body: arrayBuffer
-			});
-
-			if (!response.ok) {
-				const errorText = await response.text();
-				console.error('BunnyCDN Upload Error:', errorText);
-				return fail(500, {
-					error: true,
-					message: 'Storage deploy failed at CDN network border'
-				});
+			if (errorType === CDNErrorType.UploadFailed) {
+				message = 'Storage deploy failed at CDN network border';
+			} else if (errorType === CDNErrorType.NetworkFailure) {
+				message = 'Network failure during upload';
 			}
 
-			const downloadUrl = `https://cdn.aceblocker.com/${folderPath}/${file.name}`;
-
-			// Hash file for security
-			const crypto = await import('crypto');
-			const buffer = Buffer.from(arrayBuffer);
-			const fileHash = crypto.createHash('sha256').update(buffer).digest('hex');
-
-			await db.insert(trackingScripts).values({
-				id: crypto.randomUUID(),
-				fileName: file.name,
-				version,
-				downloadUrl,
-				sha256: fileHash,
-				size: file.size,
-				canBeDownloaded: true,
-				downloadCount: 0
-			});
-
-			await invalidateTrackingCache();
-			return { success: true, message: 'Deployment to CDN and database successful' };
-		} catch (e) {
-			console.error('Upload crash:', e);
 			return fail(500, {
 				error: true,
-				message: 'Internal server failure during binary deploy'
+				message
 			});
 		}
+
+		return { success: true, message: 'Deployment to CDN and database successful' };
 	},
 
 	deleteRelease: async ({ request }) => {
@@ -97,24 +64,27 @@ export const actions: Actions = {
 		if (!id) return fail(400, { error: true, message: 'Missing ID' });
 
 		try {
-			// Fetch the record to get CDN path info
 			const release = await db.query.trackingScripts.findFirst({
 				where: eq(trackingScripts.id, id)
 			});
 
 			if (release) {
-				const folderPath = `tracking-scripts/${release.version}`;
-				const endpointUrl = `https://storage.bunnycdn.com/${BUNNY_STORAGE_ZONE}/${folderPath}/${release.fileName}`;
+				const deleteResult = await deleteTrackingScripts(release.version, release.fileName);
 
-				await fetch(endpointUrl, {
-					method: 'DELETE',
-					headers: { AccessKey: BUNNY_STORAGE_ACCESS_KEY }
-				});
+				if (deleteResult.isErr()) {
+					console.error('Failed to delete from CDN:', deleteResult.error);
+					return fail(500, {
+						error: true,
+						message: 'Failed to delete file from CDN'
+					});
+				}
+
+				await db.delete(trackingScripts).where(eq(trackingScripts.id, id));
+				await invalidateTrackingCache();
+				return { success: true, message: 'Release and CDN assets deleted successfully' };
 			}
 
-			await db.delete(trackingScripts).where(eq(trackingScripts.id, id));
-			await invalidateTrackingCache();
-			return { success: true, message: 'Release and CDN assets deleted successfully' };
+			return fail(404, { error: true, message: 'Release not found' });
 		} catch (e) {
 			console.error(e);
 			return fail(500, { error: true, message: 'Delete failed' });

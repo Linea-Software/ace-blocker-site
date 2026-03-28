@@ -22,7 +22,8 @@ export enum CDNErrorType {
 	SiteListNotFound,
 	NoReleaseAvailable,
 	UploadFailed,
-	NetworkFailure
+	NetworkFailure,
+	DeleteFailed
 }
 
 if (!env.BUNNY_SECURITY_KEY) {
@@ -196,4 +197,39 @@ export async function uploadTrackingScripts(
 	await invalidateTrackingCache();
 
 	return ok({ downloadUrl, hash });
+}
+
+async function deleteFileFromBunnyCDN(endpointUrl: URL): Promise<Result<void, CDNErrorType>> {
+	try {
+		const response = await fetch(endpointUrl, {
+			method: 'DELETE',
+			headers: {
+				AccessKey: env.BUNNY_STORAGE_ACCESS_KEY
+			}
+		});
+
+		if (!response.ok) {
+			console.error('Unable to delete file from BunnyCDN:\n' + response);
+			return err(CDNErrorType.DeleteFailed);
+		}
+
+		return ok(undefined);
+	} catch (error) {
+		console.error('Network failure during BunnyCDN file deletion:\n' + error);
+		return err(CDNErrorType.NetworkFailure);
+	}
+}
+
+export async function deleteTrackingScripts(
+	version: string,
+	fileName: string
+): Promise<Result<void, CDNErrorType>> {
+	const endpointUrl = new URL(`/${version}/${fileName}`, trackingScriptsUploadBase);
+
+	const deleteResult = await deleteFileFromBunnyCDN(endpointUrl);
+	if (deleteResult.isErr()) {
+		return err(deleteResult.error);
+	}
+
+	return ok(undefined);
 }
