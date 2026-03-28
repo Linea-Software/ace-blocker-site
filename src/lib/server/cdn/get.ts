@@ -1,9 +1,16 @@
 import { err, ok, Result } from 'neverthrow';
 import {
 	getLatestSiteLists,
-	getLatestResistanceScript
+	getLatestResistanceScript,
+	getLatestTrackingScript
 } from '$lib/server/cache';
-import { CDNErrorType, siteListsBasePath, resistanceModeScriptBasePath, generateBunnyCDNToken } from './common';
+import {
+	CDNErrorType,
+	siteListsBasePath,
+	resistanceModeScriptBasePath,
+	trackingScriptsBasePath,
+	generateBunnyCDNToken
+} from './common';
 
 export function getSiteListURL(
 	siteListUuid: string,
@@ -56,4 +63,21 @@ export function getResistanceModeScriptsURL(): Result<{ url: URL; version: strin
 	resistanceScriptsPath.searchParams.append('expiration', expiration.toString());
 
 	return ok({ url: resistanceScriptsPath, version: latestRecord.version });
+}
+
+export function getTrackingScriptsURL(): Result<{ url: URL; version: string }, CDNErrorType> {
+	const latestRecord = getLatestTrackingScript();
+
+	if (!latestRecord) {
+		return err(CDNErrorType.NoReleaseAvailable);
+	}
+
+	let trackingScriptsPath = new URL(
+		`/${latestRecord.version}/${latestRecord.fileName}`,
+		trackingScriptsBasePath
+	);
+
+	// No auth token needed for tracking scripts (publicly accessible)
+
+	return ok({ url: trackingScriptsPath, version: latestRecord.version });
 }

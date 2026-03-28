@@ -2,7 +2,7 @@ import { Elysia, t } from 'elysia';
 import { isUserPro } from '$lib/server/pro';
 import { auth } from '$lib/server/auth';
 import { env } from '$env/dynamic/private';
-import { getResistanceModeScriptsURL } from '$lib/server/cdn';
+import { getResistanceModeScriptsURL, getTrackingScriptsURL } from '$lib/server/cdn';
 
 if (!env.BUNNY_SECURITY_KEY) {
 	throw new Error('❌ BUNNY_SECURITY_KEY is missing in environment variables');
@@ -18,6 +18,34 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 			session: session?.session ?? null
 		};
 	})
+	.get(
+		'/tracking',
+		async ({ status }) => {
+			const result = getTrackingScriptsURL();
+
+			if (result.isErr()) {
+				return status(500, 'Internal server error');
+			}
+
+			const info = result._unsafeUnwrap();
+
+			return { url: info.url.toString(), version: info.version };
+		},
+		{
+			detail: {
+				operationId: 'getTrackingScripts',
+				summary: 'Get download URL for tracking scripts'
+			},
+			response: {
+				200: t.Object({
+					url: t.String(),
+					version: t.String()
+				}),
+				404: t.String(),
+				500: t.String()
+			}
+		}
+	)
 	.get(
 		'/resistance-mode',
 		async ({ user, status }) => {
