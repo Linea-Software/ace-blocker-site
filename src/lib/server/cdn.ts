@@ -28,10 +28,15 @@ if (!env.BUNNY_STORAGE_ZONE) {
 const securityKey = env.BUNNY_SECURITY_KEY;
 
 // === Base paths/URLs declarations === //
-const storageZoneBase = new URL(`https://${env.BUNNY_STORAGE_ZONE}`);
 
-const siteListsBasePath = dev ? '/dev' : '' + CDNObjectPath.SiteLists;
-const resistanceModeScriptBasePath = dev ? '/dev' : '' + CDNObjectPath.ResistanceModeScripts;
+// on dev mode we're going with /dev
+const storageZoneBase = new URL(`https://${env.BUNNY_STORAGE_ZONE}` + dev ? '/dev' : '');
+const bunnyUploadBase = new URL(
+	`https://storage.bunnycdn.com/${env.BUNNY_STORAGE_ZONE}` + dev ? '/dev' : ''
+);
+
+const siteListsBasePath = new URL(CDNObjectPath.SiteLists, storageZoneBase);
+const resistanceModeScriptBasePath = new URL(CDNObjectPath.ResistanceModeScripts, storageZoneBase);
 
 // === Token generator === //
 function generateBunnyCDNToken(path: string, expiration: number): string {
@@ -51,7 +56,7 @@ function generateBunnyCDNToken(path: string, expiration: number): string {
 export function getSiteListURL(
 	siteListUuid: string,
 	isUserPro: boolean
-): Result<string, CDNErrorType> {
+): Result<URL, CDNErrorType> {
 	const cache = getLatestSiteLists();
 
 	const latestRecord = cache.get(siteListUuid);
@@ -60,7 +65,7 @@ export function getSiteListURL(
 		return err(CDNErrorType.SiteListNotFound);
 	}
 
-	let siteListPath = siteListsBasePath + '/' + latestRecord.fileName;
+	let siteListPath = new URL('/' + latestRecord.fileName, siteListsBasePath);
 
 	if (latestRecord.requiresProSubscription) {
 		if (!isUserPro) {
@@ -69,30 +74,34 @@ export function getSiteListURL(
 
 		// We're generating a token to ensure that only pro members can access it (hopefully)
 		const expiration = Math.round(Date.now() / 1000) + 600; // 5 minutes
-		const token = generateBunnyCDNToken(siteListPath, expiration);
+		const token = generateBunnyCDNToken(siteListPath.pathname, expiration);
 
-		siteListPath += `?token=${token}&expires=${expiration}`;
+		// `?token=${token}&expires=${expiration}`
+		siteListPath.searchParams.append('token', token);
+		siteListPath.searchParams.append('expiration', expiration.toString());
 	}
 
-	return ok(storageZoneBase + siteListPath);
+	return ok(siteListPath);
 }
 
-export function getResistanceModeScriptsURL(): Result<
-	{ url: string; version: string },
-	CDNErrorType
-> {
+export function getResistanceModeScriptsURL(): Result<{ url: URL; version: string }, CDNErrorType> {
 	const latestRecord = getLatestResistanceScript();
 
 	if (!latestRecord) {
 		return err(CDNErrorType.NoReleaseAvailable);
 	}
 
-	let resistanceScriptsPath = `${resistanceModeScriptBasePath}/${latestRecord.version}/${latestRecord.fileName}`;
+	let resistanceScriptsPath = new URL(
+		`/${latestRecord.version}/${latestRecord.fileName}`,
+		resistanceModeScriptBasePath
+	);
 
 	const expiration = Math.round(Date.now() / 1000) + 600;
-	const token = generateBunnyCDNToken(resistanceScriptsPath, expiration);
+	const token = generateBunnyCDNToken(resistanceScriptsPath.pathname, expiration);
 
-	resistanceScriptsPath += `?token=${token}&expires=${expiration}`;
+	//`?token=${token}&expires=${expiration}`;
+	resistanceScriptsPath.searchParams.append('token', token);
+	resistanceScriptsPath.searchParams.append('expiration', expiration.toString());
 
-	return ok({ url: storageZoneBase + resistanceScriptsPath, version: latestRecord.version });
+	return ok({ url: resistanceScriptsPath, version: latestRecord.version });
 }

@@ -35,7 +35,7 @@ export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 			}
 
 			// We're handling the error case properly, so unsafe unwrap can be used
-			return { url: result._unsafeUnwrap() };
+			return { url: result._unsafeUnwrap().toString() };
 		},
 		{
 			params: t.Object({

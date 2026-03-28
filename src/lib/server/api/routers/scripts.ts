@@ -36,7 +36,9 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 				return status(500, 'Internal server error');
 			}
 
-			return result._unsafeUnwrap();
+			const info = result._unsafeUnwrap();
+
+			return { url: info.url.toString(), version: info.version };
 		},
 		{
 			detail: {
