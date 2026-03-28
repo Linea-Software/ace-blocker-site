@@ -1,4 +1,4 @@
-import { getLatestInstaller } from '$lib/server/api/cache';
+import { getLatestInstaller } from '$lib/server/cache';
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 
@@ -16,7 +16,7 @@ export const load: PageServerLoad = async () => {
 			os: installer.os,
 			architecture: installer.architecture,
 			createdAt: installer.createdAt,
-			hash: installer.sha256,
+			hash: installer.sha256
 		}
 	};
 };

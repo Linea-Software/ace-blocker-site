@@ -5,13 +5,15 @@ import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { BUNNY_STORAGE_ZONE, BUNNY_STORAGE_ACCESS_KEY } from '$env/static/private';
 import crypto from 'crypto';
-import { invalidateSiteListsCache } from '$lib/server/api/cache';
+import { invalidateSiteListsCache } from '$lib/server/cache';
 
 export const load: PageServerLoad = async () => {
 	const siteLists = await db.select().from(siteList).orderBy(desc(siteList.updatedAt));
-	const stats = await db.select({
-		total: sql<number>`CAST(SUM(${siteList.downloadCount}) AS INTEGER)`
-	}).from(siteList);
+	const stats = await db
+		.select({
+			total: sql<number>`CAST(SUM(${siteList.downloadCount}) AS INTEGER)`
+		})
+		.from(siteList);
 
 	return {
 		siteLists,
@@ -24,11 +26,14 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const file = formData.get('file') as File;
 		const name = formData.get('name') as string;
-		const id = formData.get('id') as string || crypto.randomUUID();
+		const id = (formData.get('id') as string) || crypto.randomUUID();
 		const requiresProSubscription = formData.get('requiresProSubscription') === 'true';
 
 		if (!file || !file.size || !name) {
-			return fail(400, { error: true, message: 'Missing required configuration for deploy (File or Name)' });
+			return fail(400, {
+				error: true,
+				message: 'Missing required configuration for deploy (File or Name)'
+			});
 		}
 
 		let arrayBuffer: ArrayBuffer;
@@ -48,45 +53,54 @@ export const actions: Actions = {
 			const cdnResponse = await fetch(endpointUrl, {
 				method: 'PUT',
 				headers: {
-					'AccessKey': BUNNY_STORAGE_ACCESS_KEY,
-					'Content-Type': 'application/octet-stream',
+					AccessKey: BUNNY_STORAGE_ACCESS_KEY,
+					'Content-Type': 'application/octet-stream'
 				},
 				body: arrayBuffer
 			});
 
-			if (!cdnResponse.ok) return fail(500, { error: true, message: 'BunnyCDN deployment failed.' });
+			if (!cdnResponse.ok)
+				return fail(500, { error: true, message: 'BunnyCDN deployment failed.' });
 
 			const cdnDownloadUrl = `https://cdn.aceblocker.com/site-lists/${listFileName}`;
 
-			await db.insert(siteList).values({
-				id: id,
-				name: name,
-				fileName: listFileName,
-				downloadUrl: cdnDownloadUrl,
-				sha256: fileHash,
-				size: size,
-				requiresProSubscription: requiresProSubscription,
-				canBeDownloaded: true,
-				downloadCount: 0
-			}).onConflictDoUpdate({
-				target: siteList.id,
-				set: {
+			await db
+				.insert(siteList)
+				.values({
+					id: id,
 					name: name,
 					fileName: listFileName,
 					downloadUrl: cdnDownloadUrl,
 					sha256: fileHash,
 					size: size,
 					requiresProSubscription: requiresProSubscription,
-					updatedAt: sql`CURRENT_TIMESTAMP`
-				}
-			});
+					canBeDownloaded: true,
+					downloadCount: 0
+				})
+				.onConflictDoUpdate({
+					target: siteList.id,
+					set: {
+						name: name,
+						fileName: listFileName,
+						downloadUrl: cdnDownloadUrl,
+						sha256: fileHash,
+						size: size,
+						requiresProSubscription: requiresProSubscription,
+						updatedAt: sql`CURRENT_TIMESTAMP`
+					}
+				});
 
 			await invalidateSiteListsCache();
-			return { success: true, message: 'Deployment to CDN and Database overwrite successful' };
-			
+			return {
+				success: true,
+				message: 'Deployment to CDN and Database overwrite successful'
+			};
 		} catch (e) {
-			console.error("Upload crash:", e);
-			return fail(500, { error: true, message: 'Internal server failure during binary deploy' });
+			console.error('Upload crash:', e);
+			return fail(500, {
+				error: true,
+				message: 'Internal server failure during binary deploy'
+			});
 		}
 	},
 
@@ -101,9 +115,10 @@ export const actions: Actions = {
 		}
 
 		try {
-			await db.update(siteList)
-				.set({ 
-					name, 
+			await db
+				.update(siteList)
+				.set({
+					name,
 					requiresProSubscription,
 					updatedAt: sql`CURRENT_TIMESTAMP`
 				})
@@ -112,7 +127,7 @@ export const actions: Actions = {
 			await invalidateSiteListsCache();
 			return { success: true, message: 'Site list updated successfully' };
 		} catch (e) {
-			console.error("Update error:", e);
+			console.error('Update error:', e);
 			return fail(500, { error: true, message: 'Failed to update site list' });
 		}
 	},
@@ -133,17 +148,17 @@ export const actions: Actions = {
 			await fetch(endpointUrl, {
 				method: 'DELETE',
 				headers: {
-					'AccessKey': BUNNY_STORAGE_ACCESS_KEY
+					AccessKey: BUNNY_STORAGE_ACCESS_KEY
 				}
 			});
 
 			// 2. Delete record from Database
 			await db.delete(siteList).where(eq(siteList.id, id));
-			
+
 			await invalidateSiteListsCache();
 			return { success: true, message: 'Site list and CDN assets deleted successfully' };
 		} catch (e) {
-			console.error("Delete error:", e);
+			console.error('Delete error:', e);
 			return fail(500, { error: true, message: 'Failed to delete site list' });
 		}
 	}

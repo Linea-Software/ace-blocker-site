@@ -3,7 +3,7 @@ import { isUserPro } from '$lib/server/pro';
 import { auth } from '$lib/server/auth';
 import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
-import { getLatestResistanceScript } from '../cache';
+import { getLatestResistanceScript } from '../../cache';
 
 if (!env.BUNNY_SECURITY_KEY) {
 	throw new Error('❌ BUNNY_SECURITY_KEY is missing in environment variables');

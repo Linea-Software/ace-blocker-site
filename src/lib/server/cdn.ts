@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
 import { err, ok, Result } from 'neverthrow';
-import { getLatestSiteLists } from './api/cache';
+import { getLatestSiteLists } from './cache';
 import { dev } from '$app/environment';
 import crypto from 'crypto';
 
