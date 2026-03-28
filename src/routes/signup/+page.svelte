@@ -6,7 +6,16 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Card from '$lib/components/ui/card';
 	import * as Alert from '$lib/components/ui/alert';
-	import { Loader2, AlertCircle, Shield, ArrowLeft, CheckCircle2, Sun, Moon, Mail } from '@lucide/svelte';
+	import {
+		Loader2,
+		AlertCircle,
+		Shield,
+		ArrowLeft,
+		CheckCircle2,
+		Sun,
+		Moon,
+		Mail
+	} from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { toggleMode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages.js';
@@ -31,7 +40,7 @@
 		loading = true;
 		error = null;
 		try {
-			const { data, error: apiError } = await apiClient.v1.account['link-engine'].post();
+			const { data, error: apiError } = await apiClient.v1.account['api-key'].create.get();
 
 			if (apiError) throw new Error((apiError.value as string) || 'Failed to link engine');
 			if (!data) throw new Error('Failed to link engine');
@@ -117,7 +126,10 @@
 			class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--color-amber-500)_0%,_transparent_70%)] opacity-10"
 		></div>
 
-		<a href="/" class="relative z-10 flex items-center gap-3 transition-opacity hover:opacity-80">
+		<a
+			href="/"
+			class="relative z-10 flex items-center gap-3 transition-opacity hover:opacity-80"
+		>
 			<Shield class="h-10 w-10 text-amber-500" />
 			<span class="text-3xl font-bold tracking-tight text-white">Ace Blocker</span>
 		</a>
@@ -186,12 +198,17 @@
 		<div class="w-full max-w-md animate-in duration-700 fade-in slide-in-from-bottom-4">
 			{#if !isSubmitted}
 				<div class="mb-8">
-					<h2 class="mb-2 text-4xl font-bold dark:text-white">{m.auth_sign_up_title()}</h2>
+					<h2 class="mb-2 text-4xl font-bold dark:text-white">
+						{m.auth_sign_up_title()}
+					</h2>
 					<p class="text-muted-foreground">{m.auth_sign_up_description()}</p>
 				</div>
 
 				{#if error}
-					<Alert.Root variant="destructive" class="mb-6 border-red-900/50 bg-red-900/10 text-red-400">
+					<Alert.Root
+						variant="destructive"
+						class="mb-6 border-red-900/50 bg-red-900/10 text-red-400"
+					>
 						<AlertCircle class="h-4 w-4" />
 						<Alert.Title>Error</Alert.Title>
 						<Alert.Description>{error}</Alert.Description>
@@ -240,7 +257,9 @@
 					</div>
 					<div class="space-y-2">
 						<div class="flex items-center justify-between">
-							<Label for="confirm-password" class="text-foreground/80 dark:text-slate-300"
+							<Label
+								for="confirm-password"
+								class="text-foreground/80 dark:text-slate-300"
 								>{m.auth_confirm_password_label()}</Label
 							>
 							{#if confirmPassword && passwordsMatch}
@@ -251,7 +270,9 @@
 									Match
 								</span>
 							{:else if confirmPassword && !passwordsMatch}
-								<span class="text-[10px] font-bold tracking-wider text-red-500 uppercase">
+								<span
+									class="text-[10px] font-bold tracking-wider text-red-500 uppercase"
+								>
 									No Match
 								</span>
 							{/if}
@@ -293,18 +314,20 @@
 					</a>
 				</div>
 			{:else}
-				<div class="text-center animate-in zoom-in-95 duration-500">
+				<div class="animate-in text-center duration-500 zoom-in-95">
 					<div class="relative mx-auto mb-6 h-24 w-24">
 						<div
 							class="absolute inset-0 animate-ping rounded-full bg-amber-500/20 duration-[3000ms]"
 						></div>
-						<div class="relative flex h-full w-full items-center justify-center rounded-full bg-amber-500/10">
+						<div
+							class="relative flex h-full w-full items-center justify-center rounded-full bg-amber-500/10"
+						>
 							<Mail class="h-12 w-12 text-amber-500" />
 						</div>
 					</div>
 					<h2 class="mb-3 text-3xl font-bold dark:text-white">Check your email</h2>
-					<p class="text-lg text-muted-foreground leading-relaxed">
-						We've sent a verification link to <span class="text-foreground font-medium"
+					<p class="text-lg leading-relaxed text-muted-foreground">
+						We've sent a verification link to <span class="font-medium text-foreground"
 							>{submittedEmail}</span
 						>.<br />
 						Click the link to activate your account and access your dashboard.

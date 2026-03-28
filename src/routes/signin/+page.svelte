@@ -27,7 +27,7 @@
 		loading = true;
 		error = null;
 		try {
-			const { data, error: apiError } = await apiClient.v1.account['link-engine'].post();
+			const { data, error: apiError } = await apiClient.v1.account['api-key'].create.get();
 
 			if (apiError) throw new Error((apiError.value as string) || 'Failed to link engine');
 			if (!data) throw new Error('Failed to link engine');
@@ -129,7 +129,10 @@
 			class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--color-amber-500)_0%,_transparent_70%)] opacity-10"
 		></div>
 
-		<a href="/" class="relative z-10 flex items-center gap-3 transition-opacity hover:opacity-80">
+		<a
+			href="/"
+			class="relative z-10 flex items-center gap-3 transition-opacity hover:opacity-80"
+		>
 			<Shield class="h-10 w-10 text-amber-500" />
 			<span class="text-3xl font-bold tracking-tight text-white">Ace Blocker</span>
 		</a>
@@ -200,7 +203,9 @@
 		<div class="w-full max-w-md animate-in duration-700 fade-in slide-in-from-bottom-4">
 			{#if step === 'credentials'}
 				<div class="mb-8">
-					<h2 class="mb-2 text-4xl font-bold dark:text-white">{m.auth_sign_in_title()}</h2>
+					<h2 class="mb-2 text-4xl font-bold dark:text-white">
+						{m.auth_sign_in_title()}
+					</h2>
 					<p class="text-muted-foreground">{m.auth_sign_in_description()}</p>
 				</div>
 
@@ -234,8 +239,9 @@
 							<Label for="password" class="text-foreground/80 dark:text-slate-300"
 								>{m.auth_password_label()}</Label
 							>
-							<a href="/forgot-password" class="text-xs text-amber-500 hover:underline"
-								>Forgot password?</a
+							<a
+								href="/forgot-password"
+								class="text-xs text-amber-500 hover:underline">Forgot password?</a
 							>
 						</div>
 						<Input
@@ -290,7 +296,8 @@
 
 				<form onsubmit={handleVerifyOtp} class="space-y-6">
 					<div class="space-y-2">
-						<Label for="otp" class="text-foreground/80 dark:text-slate-300">Verification Code</Label
+						<Label for="otp" class="text-foreground/80 dark:text-slate-300"
+							>Verification Code</Label
 						>
 						<div class="relative">
 							<Input
@@ -303,7 +310,9 @@
 								required
 								class="h-14 border-input bg-background/50 text-center text-2xl font-bold tracking-[0.5em] text-foreground placeholder:text-muted-foreground/30 focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
 							/>
-							<Key class="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+							<Key
+								class="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted-foreground"
+							/>
 						</div>
 					</div>
 
