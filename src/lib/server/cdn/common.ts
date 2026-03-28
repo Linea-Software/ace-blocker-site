@@ -50,6 +50,12 @@ const bunnyUploadBase = new URL(
 );
 
 export const trackingScriptsUploadBase = new URL(CDNObjectPath.TrackingScripts, bunnyUploadBase);
+export const siteListsUploadBase = new URL(CDNObjectPath.SiteLists, bunnyUploadBase);
+export const resistanceModeScriptsUploadBase = new URL(
+	CDNObjectPath.ResistanceModeScripts,
+	bunnyUploadBase
+);
+export const installersUploadBase = new URL(CDNObjectPath.Installer, bunnyUploadBase);
 
 export const trackingScriptsFileName = 'tracking-scripts.zip';
 

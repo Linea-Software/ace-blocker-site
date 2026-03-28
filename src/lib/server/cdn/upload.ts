@@ -2,13 +2,29 @@ import { err, ok, Result } from 'neverthrow';
 import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
 import { db } from '$lib/server/db';
-import { trackingScripts } from '$lib/server/db/schema';
-import { invalidateTrackingCache } from '$lib/server/cache';
+import { sql } from 'drizzle-orm';
+import {
+	trackingScripts,
+	siteList,
+	resistanceModeScripts,
+	aceBlockerInstaller
+} from '$lib/server/db/schema';
+import {
+	invalidateTrackingCache,
+	invalidateSiteListsCache,
+	invalidateResistanceCache,
+	invalidateInstallerCache
+} from '$lib/server/cache';
 import {
 	CDNErrorType,
 	trackingScriptsUploadBase,
 	trackingScriptsBasePath,
 	trackingScriptsFileName,
+	siteListsUploadBase,
+	siteListsBasePath,
+	resistanceModeScriptsUploadBase,
+	resistanceModeScriptBasePath,
+	installersUploadBase,
 	getArrayBufferChecksum
 } from './common';
 
@@ -75,6 +91,130 @@ export async function uploadTrackingScripts(
 	});
 
 	await invalidateTrackingCache();
+
+	return ok({ downloadUrl, hash });
+}
+
+export async function uploadSiteList(
+	file: File,
+	name: string,
+	id: string,
+	requiresProSubscription: boolean,
+	canBeDownloaded: boolean = true
+): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
+	const listFileName = `${id}.zip`;
+	const endpointUrl = new URL(`/${listFileName}`, siteListsUploadBase);
+
+	const uploadResult = await uploadFileToBunnyCDN(
+		file,
+		new URL(endpointUrl, siteListsUploadBase)
+	);
+	if (uploadResult.isErr()) {
+		return err(uploadResult.error);
+	}
+
+	const { hash } = uploadResult._unsafeUnwrap();
+	const downloadUrl = new URL(endpointUrl, siteListsBasePath).toString();
+
+	await db
+		.insert(siteList)
+		.values({
+			id: id,
+			name: name,
+			fileName: listFileName,
+			downloadUrl: downloadUrl,
+			sha256: hash,
+			size: file.size,
+			requiresProSubscription: requiresProSubscription,
+			canBeDownloaded: canBeDownloaded,
+			downloadCount: 0
+		})
+		.onConflictDoUpdate({
+			target: siteList.id,
+			set: {
+				name: name,
+				fileName: listFileName,
+				downloadUrl: downloadUrl,
+				sha256: hash,
+				size: file.size,
+				requiresProSubscription: requiresProSubscription,
+				updatedAt: sql`CURRENT_TIMESTAMP`
+			}
+		});
+
+	await invalidateSiteListsCache();
+
+	return ok({ downloadUrl, hash });
+}
+
+export async function uploadResistanceModeScript(
+	file: File,
+	version: string,
+	canBeDownloaded: boolean = true
+): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
+	const endpointUrl = new URL(`/${version}/${file.name}`, resistanceModeScriptsUploadBase);
+
+	const uploadResult = await uploadFileToBunnyCDN(
+		file,
+		new URL(endpointUrl, resistanceModeScriptsUploadBase)
+	);
+	if (uploadResult.isErr()) {
+		return err(uploadResult.error);
+	}
+
+	const { hash } = uploadResult._unsafeUnwrap();
+	const downloadUrl = new URL(endpointUrl, resistanceModeScriptBasePath).toString();
+
+	await db.insert(resistanceModeScripts).values({
+		id: crypto.randomUUID(),
+		fileName: file.name,
+		version,
+		downloadUrl,
+		sha256: hash,
+		size: file.size,
+		canBeDownloaded: canBeDownloaded,
+		downloadCount: 0
+	});
+
+	await invalidateResistanceCache();
+
+	return ok({ downloadUrl, hash });
+}
+
+export async function uploadInstaller(
+	file: File,
+	version: string,
+	os: 'windows' | 'linux' | 'macos',
+	architecture: 'x64' | 'arm64',
+	canBeDownloaded: boolean = true
+): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
+	const endpointUrl = new URL(`/${version}/${file.name}`, installersUploadBase);
+
+	const uploadResult = await uploadFileToBunnyCDN(
+		file,
+		new URL(endpointUrl, installersUploadBase)
+	);
+	if (uploadResult.isErr()) {
+		return err(uploadResult.error);
+	}
+
+	const { hash } = uploadResult._unsafeUnwrap();
+	const downloadUrl = new URL(endpointUrl, installersUploadBase).toString();
+
+	await db.insert(aceBlockerInstaller).values({
+		id: crypto.randomUUID(),
+		fileName: file.name,
+		version,
+		os: os,
+		architecture: architecture,
+		downloadUrl,
+		sha256: hash,
+		size: file.size,
+		canBeDownloaded: canBeDownloaded,
+		downloadCount: 0
+	});
+
+	await invalidateInstallerCache();
 
 	return ok({ downloadUrl, hash });
 }
