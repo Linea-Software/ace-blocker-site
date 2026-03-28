@@ -2,8 +2,7 @@ import { Elysia, t } from 'elysia';
 import { isUserPro } from '$lib/server/pro';
 import { auth } from '$lib/server/auth';
 import { env } from '$env/dynamic/private';
-import crypto from 'crypto';
-import { getLatestResistanceScript } from '../../cache';
+import { getResistanceModeScriptsURL } from '$lib/server/cdn';
 
 if (!env.BUNNY_SECURITY_KEY) {
 	throw new Error('❌ BUNNY_SECURITY_KEY is missing in environment variables');
@@ -31,31 +30,13 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 				return status(403, 'Pro license required');
 			}
 
-			const latestRecord = getLatestResistanceScript();
+			const result = getResistanceModeScriptsURL();
 
-			if (!latestRecord) {
-				return status(404, 'No resistance mode script has been uploaded yet');
+			if (result.isErr()) {
+				return status(500, 'Internal server error');
 			}
 
-			const securityKey = env.BUNNY_SECURITY_KEY;
-			// Retrieve from the new dynamic folder structure created by the admin panel
-			// Folder format: resistance-mode-scripts/<version>/<fileName>
-			const storagePath = `/resistance-mode-scripts/${latestRecord.version}/${latestRecord.fileName}`;
-
-			const expires = Math.round(Date.now() / 1000) + 600;
-			const hashableBase = securityKey + storagePath + expires;
-
-			const token = crypto
-				.createHash('sha256')
-				.update(hashableBase)
-				.digest('base64')
-				.replace(/\+/g, '-')
-				.replace(/\//g, '_')
-				.replace(/=/g, '');
-
-			const downloadUrl = `https://cdn.aceblocker.com${storagePath}?token=${token}&expires=${expires}`;
-
-			return { url: downloadUrl, version: latestRecord.version };
+			return result._unsafeUnwrap();
 		},
 		{
 			detail: {

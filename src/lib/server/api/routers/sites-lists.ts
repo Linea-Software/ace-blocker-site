@@ -2,7 +2,7 @@ import { Elysia, t } from 'elysia';
 import { isUserPro } from '$lib/server/pro';
 import { auth } from '$lib/server/auth';
 
-import { CDNErrorType, getSiteListPath } from '$lib/server/cdn';
+import { CDNErrorType, getSiteListURL } from '$lib/server/cdn';
 
 export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 	.derive(async ({ request }) => {
@@ -19,7 +19,7 @@ export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 		async ({ params: { siteListUuid }, user, status }) => {
 			const isPro = user ? await isUserPro(user.id) : false;
 
-			const result = getSiteListPath(siteListUuid, isPro);
+			const result = getSiteListURL(siteListUuid, isPro);
 
 			if (result.isErr()) {
 				switch (result.error) {
@@ -28,10 +28,14 @@ export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 
 					case CDNErrorType.SiteListNotFound:
 						return status(403, 'Site list not found');
+
+					default:
+						return status(500, 'Internal server error');
 				}
 			}
 
-			return { url: result.value.toString() };
+			// We're handling the error case properly, so unsafe unwrap can be used
+			return { url: result._unsafeUnwrap() };
 		},
 		{
 			params: t.Object({
