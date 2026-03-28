@@ -9,6 +9,7 @@ import { dev } from '$app/environment';
 import crypto from 'crypto';
 import { db } from '$lib/server/db';
 import { trackingScripts } from '$lib/server/db/schema';
+import { eq } from 'drizzle-orm';
 
 export enum CDNObjectPath {
 	Installer = '/ace-blocker-installer',
@@ -220,16 +221,27 @@ async function deleteFileFromBunnyCDN(endpointUrl: URL): Promise<Result<void, CD
 	}
 }
 
-export async function deleteTrackingScripts(
-	version: string,
-	fileName: string
-): Promise<Result<void, CDNErrorType>> {
-	const endpointUrl = new URL(`/${version}/${fileName}`, trackingScriptsUploadBase);
+export async function deleteTrackingScripts(id: string): Promise<Result<void, CDNErrorType>> {
+	const release = await db.query.trackingScripts.findFirst({
+		where: eq(trackingScripts.id, id)
+	});
+
+	if (!release) {
+		return err(CDNErrorType.DeleteFailed);
+	}
+
+	const endpointUrl = new URL(
+		`/${release.version}/${release.fileName}`,
+		trackingScriptsUploadBase
+	);
 
 	const deleteResult = await deleteFileFromBunnyCDN(endpointUrl);
 	if (deleteResult.isErr()) {
 		return err(deleteResult.error);
 	}
+
+	await db.delete(trackingScripts).where(eq(trackingScripts.id, id));
+	await invalidateTrackingCache();
 
 	return ok(undefined);
 }

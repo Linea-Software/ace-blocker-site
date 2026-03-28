@@ -1,10 +1,9 @@
 import { db } from '$lib/server/db';
 import { trackingScripts } from '$lib/server/db/schema';
-import { desc, sql, eq } from 'drizzle-orm';
+import { desc, sql } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { uploadTrackingScripts, deleteTrackingScripts, CDNErrorType } from '$lib/server/cdn';
-import { invalidateTrackingCache } from '$lib/server/cache';
 
 export const load: PageServerLoad = async () => {
 	const releases = await db
@@ -63,31 +62,16 @@ export const actions: Actions = {
 
 		if (!id) return fail(400, { error: true, message: 'Missing ID' });
 
-		try {
-			const release = await db.query.trackingScripts.findFirst({
-				where: eq(trackingScripts.id, id)
+		const deleteResult = await deleteTrackingScripts(id);
+
+		if (deleteResult.isErr()) {
+			console.error('Failed to delete tracking script:', deleteResult.error);
+			return fail(500, {
+				error: true,
+				message: 'Delete failed'
 			});
-
-			if (release) {
-				const deleteResult = await deleteTrackingScripts(release.version, release.fileName);
-
-				if (deleteResult.isErr()) {
-					console.error('Failed to delete from CDN:', deleteResult.error);
-					return fail(500, {
-						error: true,
-						message: 'Failed to delete file from CDN'
-					});
-				}
-
-				await db.delete(trackingScripts).where(eq(trackingScripts.id, id));
-				await invalidateTrackingCache();
-				return { success: true, message: 'Release and CDN assets deleted successfully' };
-			}
-
-			return fail(404, { error: true, message: 'Release not found' });
-		} catch (e) {
-			console.error(e);
-			return fail(500, { error: true, message: 'Delete failed' });
 		}
+
+		return { success: true, message: 'Release and CDN assets deleted successfully' };
 	}
 };
