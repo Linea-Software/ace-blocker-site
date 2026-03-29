@@ -1,6 +1,6 @@
 import { Elysia } from 'elysia';
 import { scriptsRouter } from './scripts';
-import { sitesListsRouter } from './sites-lists';
+import { sitesListsRouter } from './site-lists';
 import { backupsRouter } from './backups';
 import { accountRouter } from './account';
 import { adminRouter } from './admin';

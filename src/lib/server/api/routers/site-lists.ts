@@ -4,7 +4,7 @@ import { auth } from '$lib/server/auth';
 
 import { CDNErrorType, getSiteListURL } from '$lib/server/cdn';
 
-export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
+export const sitesListsRouter = new Elysia({ prefix: '/site-lists' })
 	.derive(async ({ request }) => {
 		const session = await auth.api.getSession({
 			headers: request.headers
@@ -42,8 +42,8 @@ export const sitesListsRouter = new Elysia({ prefix: '/sites-lists' })
 				siteListUuid: t.String({ format: 'uuid' })
 			}),
 			detail: {
-				operationId: 'getSitesListBackup',
-				summary: 'Get download URL for a sites list backup',
+				operationId: 'getSiteListBackup',
+				summary: 'Get download URL for a site list backup',
 				security: [{ APIKeyHeader: [] }]
 			},
 			response: {
