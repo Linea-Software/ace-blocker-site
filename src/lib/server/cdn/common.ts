@@ -26,6 +26,10 @@ if (!env.BUNNY_STORAGE_ZONE) {
 	throw Error('❌ BUNNY_STORAGE_ZONE is missing in environment variables');
 }
 
+if (!env.BUNNY_CDN_BASE_URL) {
+	throw Error('❌ BUNNY_CDN_BASE_URL is missing in environment variables');
+}
+
 if (!env.BUNNY_STORAGE_ACCESS_KEY) {
 	throw Error('❌ BUNNY_STORAGE_ACCESS_KEY is missing in environment variables');
 }
@@ -35,7 +39,7 @@ const securityKey = env.BUNNY_SECURITY_KEY;
 // === Base paths/URLs declarations === //
 
 // on dev mode we're going with /dev
-const storageZoneBase = new URL(`https://${env.BUNNY_STORAGE_ZONE}` + dev ? '/dev' : '');
+const storageZoneBase = new URL(`https://${env.BUNNY_CDN_BASE_URL}${dev ? '/dev' : ''}`);
 
 export const siteListsBasePath = new URL(CDNObjectPath.SiteLists, storageZoneBase);
 export const resistanceModeScriptBasePath = new URL(
@@ -46,7 +50,7 @@ export const trackingScriptsBasePath = new URL(CDNObjectPath.TrackingScripts, st
 
 // === Upload base paths === //
 const bunnyUploadBase = new URL(
-	`https://storage.bunnycdn.com/${env.BUNNY_STORAGE_ZONE}` + dev ? '/dev' : ''
+	`https://storage.bunnycdn.com/${env.BUNNY_STORAGE_ZONE}${dev ? '/dev' : ''}`
 );
 
 export const trackingScriptsUploadBase = new URL(CDNObjectPath.TrackingScripts, bunnyUploadBase);
