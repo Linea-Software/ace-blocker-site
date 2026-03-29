@@ -192,7 +192,12 @@ export async function uploadInstaller(
 	architecture: 'x64' | 'arm64',
 	canBeDownloaded: boolean = true
 ): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
-	const endpointUrl = new URL(`/${version}/${file.name}`, installersUploadBase);
+	const fileExt = file.name.split('.').pop();
+	const installerFileName = `Ace Blocker Installer.${fileExt}`;
+	const endpointUrl = new URL(
+		`/${version}/${os}/${architecture}/${installerFileName}`,
+		installersUploadBase
+	);
 
 	const uploadResult = await uploadFileToBunnyCDN(
 		file,
@@ -207,7 +212,7 @@ export async function uploadInstaller(
 
 	await db.insert(aceBlockerInstaller).values({
 		id: crypto.randomUUID(),
-		fileName: file.name,
+		fileName: installerFileName,
 		version,
 		os: os,
 		architecture: architecture,

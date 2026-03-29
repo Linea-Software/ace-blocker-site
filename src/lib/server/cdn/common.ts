@@ -47,6 +47,7 @@ export const resistanceModeScriptBasePath = new URL(
 	storageZoneBase
 );
 export const trackingScriptsBasePath = new URL(CDNObjectPath.TrackingScripts, storageZoneBase);
+export const installersBasePath = new URL(CDNObjectPath.Installer, storageZoneBase);
 
 // === Upload base paths === //
 const bunnyUploadBase = new URL(

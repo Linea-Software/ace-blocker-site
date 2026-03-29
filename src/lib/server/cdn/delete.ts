@@ -124,7 +124,10 @@ export async function deleteInstaller(id: string): Promise<Result<void, CDNError
 		return err(CDNErrorType.DeleteFailed);
 	}
 
-	const endpointUrl = new URL(`/${release.version}/${release.fileName}`, installersUploadBase);
+	const endpointUrl = new URL(
+		`/${release.version}/${release.os}/${release.architecture}/${release.fileName}`,
+		installersUploadBase
+	);
 
 	const deleteResult = await deleteFileFromBunnyCDN(endpointUrl);
 	if (deleteResult.isErr()) {

@@ -2,13 +2,15 @@ import { err, ok, Result } from 'neverthrow';
 import {
 	getLatestSiteLists,
 	getLatestResistanceScript,
-	getLatestTrackingScript
+	getLatestTrackingScript,
+	getLatestInstaller
 } from '$lib/server/cache';
 import {
 	CDNErrorType,
 	siteListsBasePath,
 	resistanceModeScriptBasePath,
 	trackingScriptsBasePath,
+	installersBasePath,
 	generateBunnyCDNToken
 } from './common';
 
@@ -80,4 +82,24 @@ export function getTrackingScriptsURL(): Result<{ url: URL; version: string }, C
 	// No auth token needed for tracking scripts (publicly accessible)
 
 	return ok({ url: trackingScriptsPath, version: latestRecord.version });
+}
+
+export function getInstallerURL(
+	os: 'windows' | 'linux' | 'macos',
+	architecture: 'x64' | 'arm64'
+): Result<{ url: URL; version: string }, CDNErrorType> {
+	const latestRecord = getLatestInstaller();
+
+	if (!latestRecord) {
+		return err(CDNErrorType.NoReleaseAvailable);
+	}
+
+	let installerPath = new URL(
+		`/${latestRecord.version}/${latestRecord.os}/${latestRecord.architecture}/${latestRecord.fileName}`,
+		installersBasePath
+	);
+
+	// No auth token needed for installers (publicly accessible)
+
+	return ok({ url: installerPath, version: latestRecord.version });
 }
