@@ -62,6 +62,7 @@ export const resistanceModeScriptsUploadBase = new URL(
 export const installersUploadBase = new URL(CDNObjectPath.Installer, bunnyUploadBase);
 
 export const trackingScriptsFileName = 'tracking-scripts.zip';
+export const resistanceModeScriptsFileName = 'resistance-mode-scripts.zip';
 
 // === Token generator === //
 export function generateBunnyCDNToken(path: string, expiration: number): string {

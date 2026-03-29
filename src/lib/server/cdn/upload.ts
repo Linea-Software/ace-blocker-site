@@ -24,6 +24,7 @@ import {
 	siteListsBasePath,
 	resistanceModeScriptsUploadBase,
 	resistanceModeScriptBasePath,
+	resistanceModeScriptsFileName,
 	installersUploadBase,
 	getArrayBufferChecksum
 } from './common';
@@ -152,7 +153,10 @@ export async function uploadResistanceModeScript(
 	version: string,
 	canBeDownloaded: boolean = true
 ): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
-	const endpointUrl = new URL(`/${version}/${file.name}`, resistanceModeScriptsUploadBase);
+	const endpointUrl = new URL(
+		`/${version}/${resistanceModeScriptsFileName}`,
+		resistanceModeScriptsUploadBase
+	);
 
 	const uploadResult = await uploadFileToBunnyCDN(
 		file,
@@ -167,7 +171,7 @@ export async function uploadResistanceModeScript(
 
 	await db.insert(resistanceModeScripts).values({
 		id: crypto.randomUUID(),
-		fileName: file.name,
+		fileName: resistanceModeScriptsFileName,
 		version,
 		downloadUrl,
 		sha256: hash,
