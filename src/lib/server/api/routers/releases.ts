@@ -40,16 +40,12 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 							createdAt: tracking.createdAt
 						}
 					: null,
-				siteLists: Object.fromEntries(
-					Array.from(siteLists.entries()).map(([id, list]) => [
-						id,
-						{
-							version: list.fileName.split('.')[0] || list.fileName,
-							size: list.size,
-							updatedAt: list.updatedAt
-						}
-					])
-				)
+				siteLists: Array.from(siteLists.entries()).map(([id, list]) => ({
+					id,
+					version: list.fileName.split('.')[0] || list.fileName,
+					size: list.size,
+					updatedAt: list.updatedAt
+				}))
 			};
 		} catch (e) {
 			console.error('Failed to fetch latest releases cache:', e);
@@ -87,9 +83,9 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 						createdAt: t.Date()
 					})
 				),
-				siteLists: t.Record(
-					t.String(),
+				siteLists: t.Array(
 					t.Object({
+						id: t.String(),
 						version: t.String(),
 						size: t.Number(),
 						updatedAt: t.Date()
