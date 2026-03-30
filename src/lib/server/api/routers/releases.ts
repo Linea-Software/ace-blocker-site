@@ -42,6 +42,9 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 					: null,
 				siteLists: Array.from(siteLists.entries()).map(([id, list]) => ({
 					id,
+					name: list.name,
+					description: `Site list package: ${list.name}`,
+					requiresPro: list.requiresProSubscription,
 					version: list.fileName.split('.')[0] || list.fileName,
 					size: list.size,
 					updatedAt: list.updatedAt
@@ -86,6 +89,9 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 				siteLists: t.Array(
 					t.Object({
 						id: t.String(),
+						name: t.String(),
+						description: t.String(),
+						requiresPro: t.Boolean(),
 						version: t.String(),
 						size: t.Number(),
 						updatedAt: t.Date()
