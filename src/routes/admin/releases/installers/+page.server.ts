@@ -1,15 +1,17 @@
 import type { PageServerLoad } from './$types';
-import { apiClient } from '$lib/api-client';
+import { db } from '$lib/server/db';
+import { aceBlockerInstaller } from '$lib/server/db/schema';
+import { desc } from 'drizzle-orm';
 
 export const load: PageServerLoad = async () => {
-	const response = await apiClient.v1.admin.installers.get();
-
-	if (response.error) {
-		throw new Error('Failed to load installers');
-	}
+	const installers = await db
+		.select()
+		.from(aceBlockerInstaller)
+		.orderBy(desc(aceBlockerInstaller.createdAt));
+	const totalDownloads = installers.reduce((sum, installer) => sum + installer.downloadCount, 0);
 
 	return {
-		installers: response.data.installers,
-		totalDownloads: response.data.totalDownloads
+		installers,
+		totalDownloads
 	};
 };

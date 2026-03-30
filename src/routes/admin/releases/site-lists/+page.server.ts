@@ -1,15 +1,14 @@
 import type { PageServerLoad } from './$types';
-import { apiClient } from '$lib/api-client';
+import { db } from '$lib/server/db';
+import { siteList } from '$lib/server/db/schema';
+import { desc, sql } from 'drizzle-orm';
 
 export const load: PageServerLoad = async () => {
-	const response = await apiClient.v1.admin['site-lists'].get();
-
-	if (response.error) {
-		throw new Error('Failed to load site lists');
-	}
+	const siteLists = await db.select().from(siteList).orderBy(desc(siteList.updatedAt));
+	const totalDownloads = siteLists.reduce((sum, list) => sum + list.downloadCount, 0);
 
 	return {
-		siteLists: response.data.siteLists,
-		totalDownloads: response.data.totalDownloads
+		siteLists,
+		totalDownloads
 	};
 };

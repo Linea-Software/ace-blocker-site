@@ -1,15 +1,17 @@
 import type { PageServerLoad } from './$types';
-import { apiClient } from '$lib/api-client';
+import { db } from '$lib/server/db';
+import { resistanceModeScripts } from '$lib/server/db/schema';
+import { desc } from 'drizzle-orm';
 
 export const load: PageServerLoad = async () => {
-	const response = await apiClient.v1.admin.resistance.get();
-
-	if (response.error) {
-		throw new Error('Failed to load resistance scripts');
-	}
+	const releases = await db
+		.select()
+		.from(resistanceModeScripts)
+		.orderBy(desc(resistanceModeScripts.createdAt));
+	const totalDownloads = releases.reduce((sum, release) => sum + release.downloadCount, 0);
 
 	return {
-		releases: response.data.releases,
-		totalDownloads: response.data.totalDownloads
+		releases,
+		totalDownloads
 	};
 };

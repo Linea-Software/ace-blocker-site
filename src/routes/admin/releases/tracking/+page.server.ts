@@ -1,15 +1,17 @@
 import type { PageServerLoad } from './$types';
-import { apiClient } from '$lib/api-client';
+import { db } from '$lib/server/db';
+import { trackingScripts } from '$lib/server/db/schema';
+import { desc } from 'drizzle-orm';
 
 export const load: PageServerLoad = async () => {
-	const response = await apiClient.v1.admin.tracking.get();
-
-	if (response.error) {
-		throw new Error('Failed to load tracking scripts');
-	}
+	const releases = await db
+		.select()
+		.from(trackingScripts)
+		.orderBy(desc(trackingScripts.createdAt));
+	const totalDownloads = releases.reduce((sum, release) => sum + release.downloadCount, 0);
 
 	return {
-		releases: response.data.releases,
-		totalDownloads: response.data.totalDownloads
+		releases,
+		totalDownloads
 	};
 };
