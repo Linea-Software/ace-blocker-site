@@ -38,6 +38,7 @@
 
 	// Upload Form State
 	let uploadFormState = $state({
+		id: '',
 		name: '',
 		file: null as File | null,
 		requiresProSubscription: true
@@ -79,10 +80,11 @@
 		const formData = new FormData(e.target as HTMLFormElement);
 		const file = formData.get('file') as File;
 		const name = formData.get('name') as string;
+		const id = formData.get('id') as string;
 		const requiresProSubscription = formData.get('requiresProSubscription') === 'true';
 
-		if (!file || !file.size || !name) {
-			uploadError = 'Missing required configuration for deploy (File or Name)';
+		if (!file || !file.size || !name || !id) {
+			uploadError = 'Missing required configuration for deploy (File, Name, or ID)';
 			isDeploying = false;
 			return;
 		}
@@ -90,6 +92,7 @@
 		const response = await apiClient.v1.admin['site-lists'].upload.post({
 			file,
 			name,
+			id,
 			requiresProSubscription
 		});
 
@@ -110,6 +113,7 @@
 
 		isUploadModalOpen = false;
 		uploadFormState = {
+			id: '',
 			name: '',
 			file: null,
 			requiresProSubscription: true
@@ -450,6 +454,25 @@
 							{uploadError}
 						</div>
 					{/if}
+
+					<div class="space-y-1.5">
+						<label
+							for="upload-id"
+							class="block text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+							>List ID</label
+						>
+						<input
+							id="upload-id"
+							name="id"
+							bind:value={uploadFormState.id}
+							type="text"
+							placeholder="e.g., adult-content-list"
+							required
+							pattern="[a-z0-9-]+"
+							title="Only lowercase letters, numbers, and hyphens are allowed"
+							class="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white transition-all outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+						/>
+					</div>
 
 					<div class="space-y-1.5">
 						<label

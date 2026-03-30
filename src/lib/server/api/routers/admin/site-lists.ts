@@ -4,7 +4,6 @@ import { siteList } from '$lib/server/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { uploadSiteList, deleteSiteList, CDNErrorType } from '$lib/server/cdn';
 import { invalidateSiteListsCache } from '$lib/server/cache';
-import crypto from 'crypto';
 
 export const siteListsRouter = new Elysia({ prefix: '/site-lists' })
 	.get(
@@ -42,16 +41,15 @@ export const siteListsRouter = new Elysia({ prefix: '/site-lists' })
 		async ({ body, set }) => {
 			const { file, name, id, requiresProSubscription } = body;
 
-			if (!file || !file.size || !name) {
+			if (!file || !file.size || !name || !id) {
 				set.status = 400;
 				return {
 					error: true,
-					message: 'Missing required configuration for deploy (File or Name)'
+					message: 'Missing required configuration for deploy (File, Name, or ID)'
 				};
 			}
 
-			const uploadId = id || crypto.randomUUID();
-			const result = await uploadSiteList(file, name, uploadId, requiresProSubscription);
+			const result = await uploadSiteList(file, name, id, requiresProSubscription);
 
 			if (result.isErr()) {
 				const errorType = result.error;
@@ -79,7 +77,7 @@ export const siteListsRouter = new Elysia({ prefix: '/site-lists' })
 			body: t.Object({
 				file: t.File(),
 				name: t.String(),
-				id: t.Optional(t.String()),
+				id: t.String(),
 				requiresProSubscription: t.Boolean()
 			}),
 			detail: {
