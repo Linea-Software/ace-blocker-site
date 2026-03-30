@@ -66,15 +66,9 @@ export async function uploadTrackingScripts(
 	version: string,
 	canBeDownloaded: boolean = true
 ): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
-	const endpointUrl = new URL(
-		`/${version}/${trackingScriptsFileName}`,
-		trackingScriptsUploadBase
-	);
+	const endpointUrl = new URL(`${version}/${trackingScriptsFileName}`, trackingScriptsUploadBase);
 
-	const uploadResult = await uploadFileToBunnyCDN(
-		file,
-		new URL(endpointUrl, trackingScriptsUploadBase)
-	);
+	const uploadResult = await uploadFileToBunnyCDN(file, endpointUrl);
 	if (uploadResult.isErr()) {
 		return err(uploadResult.error);
 	}
@@ -106,12 +100,9 @@ export async function uploadSiteList(
 	canBeDownloaded: boolean = true
 ): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
 	const listFileName = `${id}.zip`;
-	const endpointUrl = new URL(`/${listFileName}`, siteListsUploadBase);
+	const endpointUrl = new URL(`${listFileName}`, siteListsUploadBase);
 
-	const uploadResult = await uploadFileToBunnyCDN(
-		file,
-		new URL(endpointUrl, siteListsUploadBase)
-	);
+	const uploadResult = await uploadFileToBunnyCDN(file, endpointUrl);
 	if (uploadResult.isErr()) {
 		return err(uploadResult.error);
 	}
@@ -156,14 +147,11 @@ export async function uploadResistanceModeScript(
 	canBeDownloaded: boolean = true
 ): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
 	const endpointUrl = new URL(
-		`/${version}/${resistanceModeScriptsFileName}`,
+		`${version}/${resistanceModeScriptsFileName}`,
 		resistanceModeScriptsUploadBase
 	);
 
-	const uploadResult = await uploadFileToBunnyCDN(
-		file,
-		new URL(endpointUrl, resistanceModeScriptsUploadBase)
-	);
+	const uploadResult = await uploadFileToBunnyCDN(file, endpointUrl);
 	if (uploadResult.isErr()) {
 		return err(uploadResult.error);
 	}
@@ -197,14 +185,11 @@ export async function uploadInstaller(
 	const fileExt = file.name.split('.').pop();
 	const installerFileName = `Ace Blocker Installer.${fileExt}`;
 	const endpointUrl = new URL(
-		`/${version}/${os}/${architecture}/${installerFileName}`,
+		`${version}/${os}/${architecture}/${installerFileName}`,
 		installersUploadBase
 	);
 
-	const uploadResult = await uploadFileToBunnyCDN(
-		file,
-		new URL(endpointUrl, installersUploadBase)
-	);
+	const uploadResult = await uploadFileToBunnyCDN(file, endpointUrl);
 	if (uploadResult.isErr()) {
 		return err(uploadResult.error);
 	}
