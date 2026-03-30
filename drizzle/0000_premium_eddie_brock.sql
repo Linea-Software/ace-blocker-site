@@ -129,7 +129,7 @@ CREATE TABLE "resistance_mode_scripts" (
 );
 --> statement-breakpoint
 CREATE TABLE "site_list" (
-	"id" uuid PRIMARY KEY NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"file_name" text NOT NULL,
 	"requires_pro_subscription" boolean DEFAULT true NOT NULL,
