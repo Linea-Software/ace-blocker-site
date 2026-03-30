@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import * as m from '$lib/paraglide/messages.js';
-	import { enhance } from '$app/forms';
-	import type { ActionData, SubmitFunction } from './$types';
 	import {
 		Eye,
 		EyeOff,
@@ -17,13 +15,16 @@
 		AlertTriangle
 	} from '@lucide/svelte';
 	import { fade, scale } from 'svelte/transition';
+	import { apiClient } from '$lib/api-client';
 
-	let { data, form } = $props<{ data: any; form: ActionData }>();
+	let { data } = $props<{ data: any }>();
 
 	let isModalOpen = $state(false);
 	let isDeploying = $state(false);
+	let isDeleting = $state(false);
 	let itemToDelete = $state<any>(null);
 	let isDragging = $state(false);
+	let uploadError = $state<string | null>(null);
 
 	let uploadFormState = $state({
 		version: '',
@@ -32,6 +33,7 @@
 
 	function openModal() {
 		isModalOpen = true;
+		uploadError = null;
 	}
 
 	function formatDate(date: string | Date) {
@@ -42,21 +44,48 @@
 		});
 	}
 
-	const handleDeploy: SubmitFunction = () => {
+	async function handleDeploy(e: Event) {
+		e.preventDefault();
 		isDeploying = true;
-		return async ({ result, update }) => {
-			await update();
+		uploadError = null;
+
+		const formData = new FormData(e.target as HTMLFormElement);
+		const file = formData.get('file') as File;
+		const version = formData.get('version') as string;
+
+		if (!file || !file.size || !version) {
+			uploadError = 'Missing required configuration for deploy (File or Version)';
 			isDeploying = false;
-			if (result.type === 'success') {
-				isModalOpen = false;
-				uploadFormState = {
-					version: '',
-					file: null
-				};
-				await invalidateAll();
+			return;
+		}
+
+		const response = await apiClient.v1.admin.tracking.upload.post({
+			file,
+			version
+		});
+
+		isDeploying = false;
+
+		if (response.error) {
+			let message = 'Internal server failure during binary deploy';
+			if (
+				typeof response.error === 'object' &&
+				response.error !== null &&
+				'message' in response.error
+			) {
+				message = (response.error as { message: string }).message;
 			}
+			uploadError = message;
+			return;
+		}
+
+		isModalOpen = false;
+		uploadFormState = {
+			version: '',
+			file: null
 		};
-	};
+		await invalidateAll();
+	}
 
 	function handleDragOver(e: DragEvent) {
 		e.preventDefault();
@@ -76,6 +105,32 @@
 			e.currentTarget.files = e.dataTransfer.files;
 		}
 	}
+
+	async function handleDelete() {
+		if (!itemToDelete) return;
+
+		isDeleting = true;
+
+		const response = await apiClient.v1.admin.tracking.delete.post({ id: itemToDelete.id });
+
+		isDeleting = false;
+
+		if (response.error) {
+			let message = 'Delete failed';
+			if (
+				typeof response.error === 'object' &&
+				response.error !== null &&
+				'message' in response.error
+			) {
+				message = (response.error as { message: string }).message;
+			}
+			alert(message);
+			return;
+		}
+
+		itemToDelete = null;
+		await invalidateAll();
+	}
 </script>
 
 <svelte:head>
@@ -89,7 +144,9 @@
 	>
 		<div>
 			<div class="mb-1 flex items-center gap-3">
-				<div class="rounded-lg border border-amber-500/20 bg-amber-500/10 p-2 text-amber-500">
+				<div
+					class="rounded-lg border border-amber-500/20 bg-amber-500/10 p-2 text-amber-500"
+				>
 					<ShieldAlert class="h-5 w-5" />
 				</div>
 				<h1 class="text-2xl font-bold tracking-tight text-white lg:text-3xl">
@@ -141,17 +198,20 @@
 		<table class="w-full border-collapse text-left">
 			<thead>
 				<tr class="border-b border-white/10 bg-white/5">
-					<th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+					<th
+						class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
 						>Version</th
 					>
-					<th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+					<th
+						class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
 						>File Name</th
 					>
 					<th
 						class="px-6 py-4 text-center text-[10px] font-bold tracking-widest text-gray-400 uppercase"
 						>Downloads</th
 					>
-					<th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+					<th
+						class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
 						>Release Date</th
 					>
 					<th
@@ -208,7 +268,9 @@
 						<td colspan="5" class="px-6 py-20 text-center">
 							<div class="flex flex-col items-center justify-center">
 								<UploadCloud class="w-10 h-10 text-gray-600 mb-3" />
-								<p class="text-sm font-medium text-gray-400 mb-4">No releases uploaded yet.</p>
+								<p class="text-sm font-medium text-gray-400 mb-4">
+									No releases uploaded yet.
+								</p>
 								<button
 									onclick={openModal}
 									class="bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border border-amber-500/20 px-4 py-2 rounded-lg text-xs font-bold transition-all"
@@ -235,19 +297,18 @@
 			transition:scale={{ duration: 200, start: 0.95 }}
 			role="dialog"
 		>
-			<form
-				method="POST"
-				action="?/uploadRelease"
-				enctype="multipart/form-data"
-				use:enhance={handleDeploy}
-			>
-				<div class="flex items-center justify-between border-b border-white/5 px-6 py-5 text-white">
+			<form onsubmit={handleDeploy}>
+				<div
+					class="flex items-center justify-between border-b border-white/5 px-6 py-5 text-white"
+				>
 					<div>
 						<h3 class="flex items-center gap-2 text-lg font-bold">
 							<Upload class="h-5 w-5 text-amber-500" />
 							{m.admin_releases_upload_title()}
 						</h3>
-						<p class="mt-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+						<p
+							class="mt-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+						>
 							Targeting: <span class="text-amber-500">Tracking</span>
 						</p>
 					</div>
@@ -261,11 +322,11 @@
 				</div>
 
 				<div class="space-y-6 p-6">
-					{#if form?.error}
+					{#if uploadError}
 						<div
 							class="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs font-medium text-red-500"
 						>
-							{form?.message}
+							{uploadError}
 						</div>
 					{/if}
 
@@ -298,7 +359,8 @@
 								type="file"
 								name="file"
 								class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
-								onchange={(e) => (uploadFormState.file = e.currentTarget.files?.[0] || null)}
+								onchange={(e) =>
+									(uploadFormState.file = e.currentTarget.files?.[0] || null)}
 								ondragover={handleDragOver}
 								ondragleave={handleDragLeave}
 								ondrop={handleDrop}
@@ -309,17 +371,25 @@
 									? 'border-amber-500 bg-amber-500/5'
 									: 'border-white/10 bg-black/20 group-hover:border-white/20'}"
 							>
-								<div class="flex flex-col items-center justify-center p-5 text-center">
+								<div
+									class="flex flex-col items-center justify-center p-5 text-center"
+								>
 									<UploadCloud
-										class="h-6 w-6 {isDragging ? 'text-amber-500' : 'text-gray-500'} mb-2"
+										class="h-6 w-6 {isDragging
+											? 'text-amber-500'
+											: 'text-gray-500'} mb-2"
 									/>
 									{#if uploadFormState.file}
-										<p class="max-w-[280px] truncate font-mono text-xs text-amber-500">
+										<p
+											class="max-w-[280px] truncate font-mono text-xs text-amber-500"
+										>
 											{uploadFormState.file.name}
 										</p>
 									{:else}
 										<p class="text-[10px] font-bold text-gray-500 uppercase">
-											{isDragging ? 'Drop file to upload' : 'Click or drag & drop binary'}
+											{isDragging
+												? 'Drop file to upload'
+												: 'Click or drag & drop binary'}
 										</p>
 									{/if}
 								</div>
@@ -368,8 +438,8 @@
 					Are you sure you want to permanently delete the tracking script <span
 						class="font-semibold text-white">{itemToDelete.version}</span
 					>
-					({itemToDelete.fileName})? This action cannot be undone and will stop this version from
-					being served.
+					({itemToDelete.fileName})? This action cannot be undone and will stop this
+					version from being served.
 				</p>
 				<div class="flex justify-end gap-3 border-t border-white/5 pt-6">
 					<button
@@ -378,26 +448,21 @@
 						class="rounded-lg px-4 py-2 text-sm font-medium text-gray-400 transition-colors hover:text-white"
 						>Cancel</button
 					>
-					<form
-						method="POST"
-						action="?/deleteRelease"
-						use:enhance={() => {
-							return async ({ result, update }) => {
-								await update();
-								if (result.type === 'success') {
-									itemToDelete = null;
-									await invalidateAll();
-								}
-							};
-						}}
+					<button
+						type="button"
+						onclick={handleDelete}
+						disabled={isDeleting}
+						class="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-500/20 disabled:opacity-50"
 					>
-						<input type="hidden" name="id" value={itemToDelete.id} />
-						<button
-							type="submit"
-							class="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-500/20"
-							>Confirm Delete</button
-						>
-					</form>
+						{#if isDeleting}
+							<div
+								class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-red-500/30 border-t-red-500"
+							></div>
+							Deleting...
+						{:else}
+							Confirm Delete
+						{/if}
+					</button>
 				</div>
 			</div>
 		</div>

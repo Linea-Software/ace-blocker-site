@@ -1,0 +1,156 @@
+import { Elysia, t } from 'elysia';
+import { db } from '$lib/server/db';
+import { aceBlockerInstaller } from '$lib/server/db/schema';
+import { desc, eq, sql } from 'drizzle-orm';
+import { uploadInstaller, deleteInstaller, CDNErrorType } from '$lib/server/cdn';
+import { invalidateInstallerCache } from '$lib/server/cache';
+import crypto from 'crypto';
+
+export const installersRouter = new Elysia({ prefix: '/installers' })
+	.get(
+		'/',
+		async () => {
+			const installers = await db
+				.select()
+				.from(aceBlockerInstaller)
+				.orderBy(desc(aceBlockerInstaller.createdAt));
+			const stats = await db
+				.select({
+					total: sql<number>`CAST(SUM(${aceBlockerInstaller.downloadCount}) AS INTEGER)`
+				})
+				.from(aceBlockerInstaller);
+
+			return {
+				installers,
+				totalDownloads: stats[0]?.total || 0
+			};
+		},
+		{
+			detail: {
+				operationId: 'getInstallers',
+				summary: 'Get all installers with download stats',
+				security: [{ APIKeyHeader: [] }]
+			},
+			response: {
+				200: t.Object({
+					installers: t.Array(t.Any()),
+					totalDownloads: t.Number()
+				}),
+				403: t.String()
+			}
+		}
+	)
+	.post(
+		'/upload',
+		async ({ body, set }) => {
+			const { file, version, os, architecture } = body;
+
+			if (!file || !file.size || !version) {
+				set.status = 400;
+				return {
+					error: true,
+					message: 'Missing required configuration for deploy (File or Version)'
+				};
+			}
+
+			const result = await uploadInstaller(
+				file,
+				version,
+				os as 'windows' | 'linux' | 'macos',
+				architecture as 'x64' | 'arm64'
+			);
+
+			if (result.isErr()) {
+				const errorType = result.error;
+				let message = 'Internal server failure during binary deploy';
+
+				if (errorType === CDNErrorType.UploadFailed) {
+					message = 'Storage deploy failed at CDN network border';
+					set.status = 500;
+				} else if (errorType === CDNErrorType.NetworkFailure) {
+					message = 'Network failure during upload';
+					set.status = 500;
+				} else {
+					set.status = 500;
+				}
+
+				return { error: true, message };
+			}
+
+			return { success: true, message: 'Deployment to CDN and database successful' };
+		},
+		{
+			body: t.Object({
+				file: t.File(),
+				version: t.String(),
+				os: t.String(),
+				architecture: t.String()
+			}),
+			detail: {
+				operationId: 'uploadInstaller',
+				summary: 'Upload a new installer release',
+				security: [{ APIKeyHeader: [] }]
+			},
+			response: {
+				200: t.Object({
+					success: t.Boolean(),
+					message: t.String()
+				}),
+				400: t.Object({
+					error: t.Boolean(),
+					message: t.String()
+				}),
+				403: t.String(),
+				500: t.Object({
+					error: t.Boolean(),
+					message: t.String()
+				})
+			}
+		}
+	)
+	.post(
+		'/delete',
+		async ({ body, set }) => {
+			const { id } = body;
+
+			if (!id) {
+				set.status = 400;
+				return { error: true, message: 'Missing ID' };
+			}
+
+			const deleteResult = await deleteInstaller(id);
+
+			if (deleteResult.isErr()) {
+				console.error('Failed to delete installer:', deleteResult.error);
+				set.status = 500;
+				return { error: true, message: 'Delete failed' };
+			}
+
+			return { success: true, message: 'Release and CDN assets deleted successfully' };
+		},
+		{
+			body: t.Object({
+				id: t.String()
+			}),
+			detail: {
+				operationId: 'deleteInstaller',
+				summary: 'Delete an installer',
+				security: [{ APIKeyHeader: [] }]
+			},
+			response: {
+				200: t.Object({
+					success: t.Boolean(),
+					message: t.String()
+				}),
+				400: t.Object({
+					error: t.Boolean(),
+					message: t.String()
+				}),
+				403: t.String(),
+				500: t.Object({
+					error: t.Boolean(),
+					message: t.String()
+				})
+			}
+		}
+	);

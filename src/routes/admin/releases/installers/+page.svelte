@@ -1,15 +1,13 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import * as m from '$lib/paraglide/messages.js';
-	import { enhance } from '$app/forms';
-	import type { ActionData, SubmitFunction } from './$types';
-	import { 
-		Eye, 
-		EyeOff, 
-		Trash2, 
-		Upload, 
-		X, 
-		HardDrive, 
+	import {
+		Eye,
+		EyeOff,
+		Trash2,
+		Upload,
+		X,
+		HardDrive,
 		Terminal,
 		UploadCloud,
 		Calendar,
@@ -19,23 +17,27 @@
 		Layers
 	} from '@lucide/svelte';
 	import { fade, scale } from 'svelte/transition';
+	import { apiClient } from '$lib/api-client';
 
-	let { data, form } = $props<{ data: any; form: ActionData }>();
+	let { data } = $props<{ data: any }>();
 
 	let isModalOpen = $state(false);
 	let isDeploying = $state(false);
+	let isDeleting = $state(false);
 	let itemToDelete = $state<any>(null);
 	let isDragging = $state(false);
+	let uploadError = $state<string | null>(null);
 
 	let uploadFormState = $state({
 		version: '',
 		file: null as File | null,
 		os: 'windows',
-		architecture: 'x64',
+		architecture: 'x64'
 	});
 
 	function openModal() {
 		isModalOpen = true;
+		uploadError = null;
 	}
 
 	function formatDate(date: string | Date) {
@@ -46,23 +48,54 @@
 		});
 	}
 
-	const handleDeploy: SubmitFunction = () => {
+	async function handleDeploy(e: Event) {
+		e.preventDefault();
 		isDeploying = true;
-		return async ({ result, update }) => {
-			await update();
+		uploadError = null;
+
+		const formData = new FormData(e.target as HTMLFormElement);
+		const file = formData.get('file') as File;
+		const version = formData.get('version') as string;
+		const os = formData.get('os') as string;
+		const architecture = formData.get('architecture') as string;
+
+		if (!file || !file.size || !version) {
+			uploadError = 'Missing required configuration for deploy (File or Version)';
 			isDeploying = false;
-			if (result.type === 'success') {
-				isModalOpen = false;
-				uploadFormState = {
-					version: '',
-					file: null,
-					os: 'windows',
-					architecture: 'x64',
-				};
-				await invalidateAll();
+			return;
+		}
+
+		const response = await apiClient.v1.admin.installers.upload.post({
+			file,
+			version,
+			os,
+			architecture
+		});
+
+		isDeploying = false;
+
+		if (response.error) {
+			let message = 'Internal server failure during binary deploy';
+			if (
+				typeof response.error === 'object' &&
+				response.error !== null &&
+				'message' in response.error
+			) {
+				message = (response.error as { message: string }).message;
 			}
+			uploadError = message;
+			return;
+		}
+
+		isModalOpen = false;
+		uploadFormState = {
+			version: '',
+			file: null,
+			os: 'windows',
+			architecture: 'x64'
 		};
-	};
+		await invalidateAll();
+	}
 
 	function handleDragOver(e: DragEvent) {
 		e.preventDefault();
@@ -82,104 +115,178 @@
 			e.currentTarget.files = e.dataTransfer.files;
 		}
 	}
+
+	async function handleDelete() {
+		if (!itemToDelete) return;
+
+		isDeleting = true;
+
+		const response = await apiClient.v1.admin.installers.delete.post({ id: itemToDelete.id });
+
+		isDeleting = false;
+
+		if (response.error) {
+			let message = 'Delete failed';
+			if (
+				typeof response.error === 'object' &&
+				response.error !== null &&
+				'message' in response.error
+			) {
+				message = (response.error as { message: string }).message;
+			}
+			alert(message);
+			return;
+		}
+
+		itemToDelete = null;
+		await invalidateAll();
+	}
 </script>
 
 <svelte:head>
 	<title>{m.admin_releases_category_installers()} | Ace Blocker Admin</title>
 </svelte:head>
 
-<div class="min-h-screen bg-[#0B0F19] p-8 font-sans selection:bg-amber-500/30 text-gray-200">
+<div class="min-h-screen bg-[#0B0F19] p-8 font-sans text-gray-200 selection:bg-amber-500/30">
 	<!-- Page Header -->
-	<header class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
+	<header
+		class="mb-10 flex flex-col justify-between gap-4 border-b border-white/5 pb-6 md:flex-row md:items-center"
+	>
 		<div>
-			<div class="flex items-center gap-3 mb-1">
-				<div class="p-2 bg-amber-500/10 rounded-lg border border-amber-500/20 text-amber-500">
-					<HardDrive class="w-5 h-5" />
+			<div class="mb-1 flex items-center gap-3">
+				<div
+					class="rounded-lg border border-amber-500/20 bg-amber-500/10 p-2 text-amber-500"
+				>
+					<HardDrive class="h-5 w-5" />
 				</div>
-				<h1 class="text-2xl lg:text-3xl font-bold text-white tracking-tight">{m.admin_releases_category_installers()}</h1>
+				<h1 class="text-2xl font-bold tracking-tight text-white lg:text-3xl">
+					{m.admin_releases_category_installers()}
+				</h1>
 			</div>
-			<p class="text-sm text-gray-400 max-w-lg leading-relaxed">Manage and deploy Ace Blocker installer binaries.</p>
+			<p class="max-w-lg text-sm leading-relaxed text-gray-400">
+				Manage and deploy Ace Blocker installer binaries.
+			</p>
 		</div>
-		
+
 		<div class="flex items-center gap-3">
-			<div class="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-mono text-gray-500 uppercase tracking-wider">
-				<Database class="w-3.5 h-3.5 text-emerald-500" />
+			<div
+				class="hidden items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-[10px] tracking-wider text-gray-500 uppercase lg:flex"
+			>
+				<Database class="h-3.5 w-3.5 text-emerald-500" />
 				<span>DB Status: <span class="text-emerald-400">Connected</span></span>
 			</div>
-			<button 
+			<button
 				onclick={openModal}
-				class="inline-flex items-center gap-2 bg-amber-500 text-black px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:bg-amber-400 hover:scale-[1.02] active:scale-95 shadow-lg shadow-amber-500/10"
+				class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-amber-500/10 transition-all hover:scale-[1.02] hover:bg-amber-400 active:scale-95"
 			>
-				<Upload class="w-4 h-4" />
+				<Upload class="h-4 w-4" />
 				{m.admin_releases_deploy_new()}
 			</button>
 		</div>
 	</header>
 
 	<!-- Downloads Stats -->
-	<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-		<div class="bg-white/5 border border-white/10 p-5 rounded-xl backdrop-blur-sm">
-			<p class="text-[10px] uppercase font-bold tracking-widest text-gray-500 mb-1">Total Downloads</p>
-			<p class="text-2xl font-mono font-bold text-amber-500">{data.totalDownloads.toLocaleString()}</p>
+	<div class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+		<div class="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+			<p class="mb-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+				Total Downloads
+			</p>
+			<p class="font-mono text-2xl font-bold text-amber-500">
+				{data.totalDownloads.toLocaleString()}
+			</p>
 		</div>
-		<div class="bg-white/5 border border-white/10 p-5 rounded-xl backdrop-blur-sm">
-			<p class="text-[10px] uppercase font-bold tracking-widest text-gray-500 mb-1">Active Builds</p>
-			<p class="text-2xl font-mono font-bold text-white">{data.installers.length}</p>
+		<div class="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+			<p class="mb-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+				Active Builds
+			</p>
+			<p class="font-mono text-2xl font-bold text-white">{data.installers.length}</p>
 		</div>
 	</div>
 
 	<!-- Data Table -->
-	<div class="overflow-x-auto border border-white/10 rounded-xl bg-white/[0.02] backdrop-blur-sm">
-		<table class="w-full text-left border-collapse">
+	<div class="overflow-x-auto rounded-xl border border-white/10 bg-white/[0.02] backdrop-blur-sm">
+		<table class="w-full border-collapse text-left">
 			<thead>
-				<tr class="bg-white/5 border-b border-white/10">
-					<th class="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Version</th>
-					<th class="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">File / Manifest</th>
-					<th class="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-center">Downloads</th>
-					<th class="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold">Release Date</th>
-					<th class="px-6 py-4 text-[10px] uppercase tracking-widest text-gray-400 font-bold text-right">Actions</th>
+				<tr class="border-b border-white/10 bg-white/5">
+					<th
+						class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+						>Version</th
+					>
+					<th
+						class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+						>File / Manifest</th
+					>
+					<th
+						class="px-6 py-4 text-center text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+						>Downloads</th
+					>
+					<th
+						class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+						>Release Date</th
+					>
+					<th
+						class="px-6 py-4 text-right text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+						>Actions</th
+					>
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-white/5">
 				{#each data.installers as release, index (release.id)}
-					<tr class="hover:bg-white/5 transition-colors group">
+					<tr class="group transition-colors hover:bg-white/5">
 						<td class="px-6 py-4">
 							<div class="flex items-center gap-2">
-								<span class="text-sm font-semibold text-white group-hover:text-amber-500 transition-colors">{release.version}</span>
+								<span
+									class="text-sm font-semibold text-white transition-colors group-hover:text-amber-500"
+									>{release.version}</span
+								>
 								{#if index === 0}
-									<span class="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Latest</span>
+									<span
+										class="rounded border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-amber-500 uppercase"
+										>Latest</span
+									>
 								{/if}
 							</div>
 						</td>
 						<td class="px-6 py-4">
 							<div class="flex flex-col gap-1">
-								<code class="text-[10px] text-gray-400 font-mono truncate max-w-[200px]">{release.fileName}</code>
+								<code
+									class="max-w-[200px] truncate font-mono text-[10px] text-gray-400"
+									>{release.fileName}</code
+								>
 								<div class="flex items-center gap-2">
-									<span class="flex items-center gap-1 text-[9px] text-gray-500 uppercase font-bold">
-										<Layers class="w-3 h-3" /> {release.os}
+									<span
+										class="flex items-center gap-1 text-[9px] font-bold text-gray-500 uppercase"
+									>
+										<Layers class="h-3 w-3" />
+										{release.os}
 									</span>
-									<span class="flex items-center gap-1 text-[9px] text-gray-500 uppercase font-bold">
-										<Cpu class="w-3 h-3" /> {release.architecture}
+									<span
+										class="flex items-center gap-1 text-[9px] font-bold text-gray-500 uppercase"
+									>
+										<Cpu class="h-3 w-3" />
+										{release.architecture}
 									</span>
 								</div>
 							</div>
 						</td>
 						<td class="px-6 py-4 text-center">
-							<span class="text-xs font-mono text-gray-300">{release.downloadCount.toLocaleString()}</span>
+							<span class="font-mono text-xs text-gray-300"
+								>{release.downloadCount.toLocaleString()}</span
+							>
 						</td>
 						<td class="px-6 py-4">
-							<span class="text-xs text-gray-400 flex items-center gap-1.5">
-								<Calendar class="w-3.5 h-3.5 opacity-40" />
+							<span class="flex items-center gap-1.5 text-xs text-gray-400">
+								<Calendar class="h-3.5 w-3.5 opacity-40" />
 								{formatDate(release.createdAt)}
 							</span>
 						</td>
 						<td class="px-6 py-4 text-right">
-							<button 
-								onclick={() => itemToDelete = release}
-								class="p-2 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-red-500 hover:border-red-500/30 transition-all active:scale-90"
+							<button
+								onclick={() => (itemToDelete = release)}
+								class="rounded-lg border border-white/10 bg-white/5 p-2 text-gray-400 transition-all hover:border-red-500/30 hover:text-red-500 active:scale-90"
 								title="Delete Record"
 							>
-								<Trash2 class="w-4 h-4" />
+								<Trash2 class="h-4 w-4" />
 							</button>
 						</td>
 					</tr>
@@ -188,8 +295,10 @@
 						<td colspan="5" class="px-6 py-20 text-center">
 							<div class="flex flex-col items-center justify-center">
 								<UploadCloud class="w-10 h-10 text-gray-600 mb-3" />
-								<p class="text-sm font-medium text-gray-400 mb-4">No releases uploaded yet.</p>
-								<button 
+								<p class="text-sm font-medium text-gray-400 mb-4">
+									No releases uploaded yet.
+								</p>
+								<button
 									onclick={openModal}
 									class="bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border border-amber-500/20 px-4 py-2 rounded-lg text-xs font-bold transition-all"
 								>
@@ -206,72 +315,109 @@
 
 <!-- Upload Modal -->
 {#if isModalOpen}
-	<div 
-		class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-		transition:fade={{duration: 150}}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+		transition:fade={{ duration: 150 }}
 	>
-		<div 
-			class="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
-			transition:scale={{duration: 200, start: 0.95}}
+		<div
+			class="w-full max-w-md animate-in overflow-hidden rounded-2xl border border-white/10 bg-[#111827] shadow-2xl duration-200 zoom-in-95"
+			transition:scale={{ duration: 200, start: 0.95 }}
 			role="dialog"
 		>
-			<form method="POST" action="?/uploadRelease" enctype="multipart/form-data" use:enhance={handleDeploy}>
-				<div class="px-6 py-5 border-b border-white/5 flex justify-between items-center text-white">
+			<form onsubmit={handleDeploy}>
+				<div
+					class="flex items-center justify-between border-b border-white/5 px-6 py-5 text-white"
+				>
 					<div>
-						<h3 class="text-lg font-bold flex items-center gap-2">
-							<Upload class="w-5 h-5 text-amber-500" />
+						<h3 class="flex items-center gap-2 text-lg font-bold">
+							<Upload class="h-5 w-5 text-amber-500" />
 							{m.admin_releases_upload_title()}
 						</h3>
-						<p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-1">Targeting: <span class="text-amber-500">Installers</span></p>
+						<p
+							class="mt-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+						>
+							Targeting: <span class="text-amber-500">Installers</span>
+						</p>
 					</div>
-					<button type="button" onclick={() => isModalOpen = false} class="text-gray-500 hover:text-white transition-colors">
-						<X class="w-5 h-5" />
+					<button
+						type="button"
+						onclick={() => (isModalOpen = false)}
+						class="text-gray-500 transition-colors hover:text-white"
+					>
+						<X class="h-5 w-5" />
 					</button>
 				</div>
 
-				<div class="p-6 space-y-6">
-					{#if form?.error}
-						<div class="p-3 border border-red-500/20 bg-red-500/10 rounded-lg text-xs text-red-500 font-medium">
-							{form?.message}
+				<div class="space-y-6 p-6">
+					{#if uploadError}
+						<div
+							class="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs font-medium text-red-500"
+						>
+							{uploadError}
 						</div>
 					{/if}
 
 					<div class="space-y-1.5">
-						<label for="rel-v" class="block text-[10px] uppercase font-bold tracking-widest text-gray-500">{m.admin_releases_modal_version()}</label>
-						<input 
+						<label
+							for="rel-v"
+							class="block text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+							>{m.admin_releases_modal_version()}</label
+						>
+						<input
 							id="rel-v"
 							name="version"
 							bind:value={uploadFormState.version}
-							type="text" 
+							type="text"
 							placeholder="e.g. v1.5.0"
 							required
-							class="w-full bg-black/40 border border-white/10 text-white rounded-lg px-3 py-2 text-sm focus:border-amber-500 outline-none transition-all"
+							class="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white transition-all outline-none focus:border-amber-500"
 						/>
 					</div>
 
 					<div class="space-y-1.5">
-						<label for="rel-f" class="block text-[10px] uppercase font-bold tracking-widest text-gray-500">{m.admin_releases_modal_file()}</label>
+						<label
+							for="rel-f"
+							class="block text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+							>{m.admin_releases_modal_file()}</label
+						>
 						<div class="group relative">
-							<input 
-								id="rel-f" 
-								type="file" 
-								name="file" 
+							<input
+								id="rel-f"
+								type="file"
+								name="file"
 								class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
-								onchange={(e) => uploadFormState.file = e.currentTarget.files?.[0] || null} 
+								onchange={(e) =>
+									(uploadFormState.file = e.currentTarget.files?.[0] || null)}
 								ondragover={handleDragOver}
 								ondragleave={handleDragLeave}
 								ondrop={handleDrop}
-								required 
+								required
 							/>
-							<div 
-								class="flex h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all group-hover:bg-white/5 {isDragging ? 'border-amber-500 bg-amber-500/5' : 'border-white/10 bg-black/20 group-hover:border-white/20'}"
+							<div
+								class="flex h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all group-hover:bg-white/5 {isDragging
+									? 'border-amber-500 bg-amber-500/5'
+									: 'border-white/10 bg-black/20 group-hover:border-white/20'}"
 							>
-								<div class="flex flex-col items-center justify-center p-5 text-center">
-									<UploadCloud class="w-6 h-6 {isDragging ? 'text-amber-500' : 'text-gray-500'} mb-2" />
+								<div
+									class="flex flex-col items-center justify-center p-5 text-center"
+								>
+									<UploadCloud
+										class="h-6 w-6 {isDragging
+											? 'text-amber-500'
+											: 'text-gray-500'} mb-2"
+									/>
 									{#if uploadFormState.file}
-										<p class="text-xs font-mono text-amber-500 truncate max-w-[280px]">{uploadFormState.file.name}</p>
+										<p
+											class="max-w-[280px] truncate font-mono text-xs text-amber-500"
+										>
+											{uploadFormState.file.name}
+										</p>
 									{:else}
-										<p class="text-[10px] text-gray-500 uppercase font-bold">{isDragging ? 'Drop file to upload' : 'Click or drag & drop binary'}</p>
+										<p class="text-[10px] font-bold text-gray-500 uppercase">
+											{isDragging
+												? 'Drop file to upload'
+												: 'Click or drag & drop binary'}
+										</p>
 									{/if}
 								</div>
 							</div>
@@ -280,29 +426,49 @@
 
 					<div class="grid grid-cols-2 gap-4">
 						<div class="space-y-1.5">
-							<label for="rel-os" class="block text-[10px] uppercase font-bold tracking-widest text-gray-500">{m.admin_releases_modal_os()}</label>
-							<select id="rel-os" name="os" bind:value={uploadFormState.os} class="w-full bg-black/40 border border-white/10 text-white rounded-lg px-3 py-2 text-xs focus:border-amber-500 outline-none">
+							<label
+								for="rel-os"
+								class="block text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+								>{m.admin_releases_modal_os()}</label
+							>
+							<select
+								id="rel-os"
+								name="os"
+								bind:value={uploadFormState.os}
+								class="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white outline-none focus:border-amber-500"
+							>
 								<option value="windows">Windows</option>
 								<option value="linux">Linux</option>
 								<option value="macos">macOS</option>
 							</select>
 						</div>
 						<div class="space-y-1.5">
-							<label for="rel-arch" class="block text-[10px] uppercase font-bold tracking-widest text-gray-500">{m.admin_releases_modal_arch()}</label>
-							<select id="rel-arch" name="architecture" bind:value={uploadFormState.architecture} class="w-full bg-black/40 border border-white/10 text-white rounded-lg px-3 py-2 text-xs focus:border-amber-500 outline-none">
+							<label
+								for="rel-arch"
+								class="block text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+								>{m.admin_releases_modal_arch()}</label
+							>
+							<select
+								id="rel-arch"
+								name="architecture"
+								bind:value={uploadFormState.architecture}
+								class="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white outline-none focus:border-amber-500"
+							>
 								<option value="x64">x64</option>
 								<option value="arm64">arm64</option>
 							</select>
 						</div>
 					</div>
 
-					<button 
+					<button
 						type="submit"
 						disabled={isDeploying}
-						class="w-full bg-amber-500 text-black font-bold py-3 rounded-xl hover:bg-amber-400 disabled:opacity-50 transition-all flex items-center justify-center gap-2 text-sm"
+						class="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-bold text-black transition-all hover:bg-amber-400 disabled:opacity-50"
 					>
 						{#if isDeploying}
-							<div class="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+							<div
+								class="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black"
+							></div>
 							Deploying...
 						{:else}
 							Start Deployment
@@ -316,39 +482,50 @@
 
 <!-- Confirmation Modal -->
 {#if itemToDelete}
-	<div 
+	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
 		transition:fade={{ duration: 150 }}
 	>
-		<div 
-			class="bg-[#111827] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+		<div
+			class="w-full max-w-md animate-in overflow-hidden rounded-2xl border border-white/10 bg-[#111827] shadow-2xl duration-200 zoom-in-95 fade-in"
 			role="dialog"
 		>
 			<div class="p-6">
-				<div class="flex items-center gap-3 mb-4">
-					<div class="p-2 bg-red-500/10 rounded-lg text-red-500">
+				<div class="mb-4 flex items-center gap-3">
+					<div class="rounded-lg bg-red-500/10 p-2 text-red-500">
 						<AlertTriangle class="h-6 w-6" />
 					</div>
 					<h3 class="text-lg font-bold text-white">Confirm Deletion</h3>
 				</div>
-				<p class="text-sm text-gray-400 leading-relaxed mb-6">
-					Are you sure you want to permanently delete the installer <span class="text-white font-semibold">{itemToDelete.version}</span> ({itemToDelete.fileName})? 
-					This action cannot be undone and will stop this build from being served.
+				<p class="mb-6 text-sm leading-relaxed text-gray-400">
+					Are you sure you want to permanently delete the installer <span
+						class="font-semibold text-white">{itemToDelete.version}</span
+					>
+					({itemToDelete.fileName})? This action cannot be undone and will stop this build
+					from being served.
 				</p>
-				<div class="flex justify-end gap-3 pt-6 border-t border-white/5">
-					<button type="button" onclick={() => itemToDelete = null} class="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white transition-colors">Cancel</button>
-					<form method="POST" action="?/deleteRelease" use:enhance={() => {
-						return async ({ result, update }) => {
-							await update();
-							if (result.type === 'success') {
-								itemToDelete = null;
-								await invalidateAll();
-							}
-						};
-					}}>
-						<input type="hidden" name="id" value={itemToDelete.id} />
-						<button type="submit" class="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-500/20 transition-colors">Confirm Delete</button>
-					</form>
+				<div class="flex justify-end gap-3 border-t border-white/5 pt-6">
+					<button
+						type="button"
+						onclick={() => (itemToDelete = null)}
+						class="rounded-lg px-4 py-2 text-sm font-medium text-gray-400 transition-colors hover:text-white"
+						>Cancel</button
+					>
+					<button
+						type="button"
+						onclick={handleDelete}
+						disabled={isDeleting}
+						class="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-500/20 disabled:opacity-50"
+					>
+						{#if isDeleting}
+							<div
+								class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-red-500/30 border-t-red-500"
+							></div>
+							Deleting...
+						{:else}
+							Confirm Delete
+						{/if}
+					</button>
 				</div>
 			</div>
 		</div>
