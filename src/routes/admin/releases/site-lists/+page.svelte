@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import * as m from '$lib/paraglide/messages.js';
-	import { enhance } from '$app/forms';
-	import type { ActionData, SubmitFunction } from './$types';
 	import {
 		Eye,
 		Trash2,
@@ -22,17 +20,21 @@
 		AlertTriangle
 	} from '@lucide/svelte';
 	import { fade, scale } from 'svelte/transition';
+	import { apiClient } from '$lib/api-client';
 
-	let { data, form } = $props<{ data: any; form: ActionData }>();
+	let { data } = $props<{ data: any }>();
 
 	// Modals State
 	let isUploadModalOpen = $state(false);
 	let isDetailsModalOpen = $state(false);
 	let isDeploying = $state(false);
 	let isUpdating = $state(false);
+	let isDeleting = $state(false);
 	let selectedRelease = $state<any>(null);
 	let itemToDelete = $state<any>(null);
 	let isDragging = $state(false);
+	let uploadError = $state<string | null>(null);
+	let updateError = $state<string | null>(null);
 
 	// Upload Form State
 	let uploadFormState = $state({
@@ -43,13 +45,14 @@
 
 	function openUploadModal() {
 		isUploadModalOpen = true;
+		uploadError = null;
 	}
 
 	function openDetails(release: any) {
 		selectedRelease = { ...release };
 		isDetailsModalOpen = true;
+		updateError = null;
 	}
-
 
 	function formatBytes(bytes: number, decimals = 2) {
 		if (bytes === 0) return '0 Bytes';
@@ -68,22 +71,51 @@
 		});
 	}
 
-	const handleDeploy: SubmitFunction = () => {
+	async function handleDeploy(e: Event) {
+		e.preventDefault();
 		isDeploying = true;
-		return async ({ result, update }) => {
-			await update();
+		uploadError = null;
+
+		const formData = new FormData(e.target as HTMLFormElement);
+		const file = formData.get('file') as File;
+		const name = formData.get('name') as string;
+		const requiresProSubscription = formData.get('requiresProSubscription') === 'true';
+
+		if (!file || !file.size || !name) {
+			uploadError = 'Missing required configuration for deploy (File or Name)';
 			isDeploying = false;
-			if (result.type === 'success') {
-				isUploadModalOpen = false;
-				uploadFormState = {
-					name: '',
-					file: null,
-					requiresProSubscription: true
-				};
-				await invalidateAll();
+			return;
+		}
+
+		const response = await apiClient.v1.admin['site-lists'].upload.post({
+			file,
+			name,
+			requiresProSubscription
+		});
+
+		isDeploying = false;
+
+		if (response.error) {
+			let message = 'Internal server failure during binary deploy';
+			if (
+				typeof response.error === 'object' &&
+				response.error !== null &&
+				'message' in response.error
+			) {
+				message = (response.error as { message: string }).message;
 			}
+			uploadError = message;
+			return;
+		}
+
+		isUploadModalOpen = false;
+		uploadFormState = {
+			name: '',
+			file: null,
+			requiresProSubscription: true
 		};
-	};
+		await invalidateAll();
+	}
 
 	function handleDragOver(e: DragEvent) {
 		e.preventDefault();
@@ -104,17 +136,74 @@
 		}
 	}
 
-	const handleUpdate: SubmitFunction = () => {
+	async function handleUpdate(e: Event) {
+		e.preventDefault();
 		isUpdating = true;
-		return async ({ result, update }) => {
-			await update();
+		updateError = null;
+
+		const formData = new FormData(e.target as HTMLFormElement);
+		const id = formData.get('id') as string;
+		const name = formData.get('name') as string;
+		const requiresProSubscription = formData.get('requiresProSubscription') === 'on';
+
+		if (!id || !name) {
+			updateError = 'Missing required fields';
 			isUpdating = false;
-			if (result.type === 'success') {
-				isDetailsModalOpen = false;
-				await invalidateAll();
+			return;
+		}
+
+		const response = await apiClient.v1.admin['site-lists'].update.post({
+			id,
+			name,
+			requiresProSubscription
+		});
+
+		isUpdating = false;
+
+		if (response.error) {
+			let message = 'Failed to update site list';
+			if (
+				typeof response.error === 'object' &&
+				response.error !== null &&
+				'message' in response.error
+			) {
+				message = (response.error as { message: string }).message;
 			}
-		};
-	};
+			updateError = message;
+			return;
+		}
+
+		isDetailsModalOpen = false;
+		await invalidateAll();
+	}
+
+	async function handleDelete() {
+		if (!itemToDelete) return;
+
+		isDeleting = true;
+
+		const response = await apiClient.v1.admin['site-lists'].delete.post({
+			id: itemToDelete.id
+		});
+
+		isDeleting = false;
+
+		if (response.error) {
+			let message = 'Failed to delete site list';
+			if (
+				typeof response.error === 'object' &&
+				response.error !== null &&
+				'message' in response.error
+			) {
+				message = (response.error as { message: string }).message;
+			}
+			alert(message);
+			return;
+		}
+
+		itemToDelete = null;
+		await invalidateAll();
+	}
 </script>
 
 <svelte:head>
@@ -128,7 +217,9 @@
 	>
 		<div>
 			<div class="mb-1 flex items-center gap-3">
-				<div class="rounded-lg border border-amber-500/20 bg-amber-500/10 p-2 text-amber-500">
+				<div
+					class="rounded-lg border border-amber-500/20 bg-amber-500/10 p-2 text-amber-500"
+				>
 					<List class="h-5 w-5" />
 				</div>
 				<h1 class="text-2xl font-bold tracking-tight text-white lg:text-3xl">
@@ -168,7 +259,9 @@
 			</p>
 		</div>
 		<div class="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-			<p class="mb-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">Active Lists</p>
+			<p class="mb-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+				Active Lists
+			</p>
 			<p class="font-mono text-2xl font-bold text-white">{data.siteLists.length}</p>
 		</div>
 		<div class="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
@@ -184,19 +277,24 @@
 		<table class="w-full border-collapse text-left">
 			<thead>
 				<tr class="border-b border-white/10 bg-white/5">
-					<th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+					<th
+						class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
 						>Name</th
 					>
-					<th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase">ID</th
+					<th
+						class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+						>ID</th
 					>
-					<th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+					<th
+						class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
 						>Access</th
 					>
 					<th
 						class="px-6 py-4 text-center text-[10px] font-bold tracking-widest text-gray-400 uppercase"
 						>Downloads</th
 					>
-					<th class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
+					<th
+						class="px-6 py-4 text-[10px] font-bold tracking-widest text-gray-400 uppercase"
 						>Updated</th
 					>
 					<th
@@ -214,7 +312,8 @@
 									class="text-sm font-semibold text-white transition-colors group-hover:text-amber-500"
 									>{list.name}</span
 								>
-								<span class="mt-0.5 text-[10px] font-bold tracking-tighter text-gray-500 uppercase"
+								<span
+									class="mt-0.5 text-[10px] font-bold tracking-tighter text-gray-500 uppercase"
 									>Static Payload</span
 								>
 							</div>
@@ -265,7 +364,7 @@
 								</button>
 								<button
 									type="button"
-									onclick={() => itemToDelete = list}
+									onclick={() => (itemToDelete = list)}
 									class="rounded-lg border border-white/10 bg-white/5 p-2 text-gray-400 transition-all hover:border-red-500/30 hover:text-red-500 active:scale-90"
 									title="Delete List"
 								>
@@ -283,7 +382,9 @@
 								>
 									<UploadCloud class="w-6 h-6 text-gray-600" />
 								</div>
-								<h3 class="text-sm font-semibold text-gray-300">No release uploaded yet.</h3>
+								<h3 class="text-sm font-semibold text-gray-300">
+									No release uploaded yet.
+								</h3>
 								<p class="text-xs text-gray-500 mt-1 mb-6">
 									Start by deploying the first site list package to BunnyCDN.
 								</p>
@@ -313,12 +414,7 @@
 			transition:scale={{ duration: 200, start: 0.95 }}
 			role="dialog"
 		>
-			<form
-				method="POST"
-				action="?/uploadRelease"
-				enctype="multipart/form-data"
-				use:enhance={handleDeploy}
-			>
+			<form onsubmit={handleDeploy}>
 				<input
 					type="hidden"
 					name="requiresProSubscription"
@@ -331,7 +427,9 @@
 							<UploadCloud class="h-5 w-5 text-amber-500" />
 							Deploy New List
 						</h3>
-						<p class="mt-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+						<p
+							class="mt-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+						>
 							Package Deployment
 						</p>
 					</div>
@@ -345,11 +443,11 @@
 				</div>
 
 				<div class="space-y-6 p-6">
-					{#if form?.error}
+					{#if uploadError}
 						<div
 							class="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs font-medium text-red-500"
 						>
-							{form?.message}
+							{uploadError}
 						</div>
 					{/if}
 
@@ -382,24 +480,37 @@
 								type="file"
 								name="file"
 								class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
-								onchange={(e) => (uploadFormState.file = e.currentTarget.files?.[0] || null)}
+								onchange={(e) =>
+									(uploadFormState.file = e.currentTarget.files?.[0] || null)}
 								ondragover={handleDragOver}
 								ondragleave={handleDragLeave}
 								ondrop={handleDrop}
 								required
 							/>
 							<div
-								class="flex h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all group-hover:bg-white/5 {isDragging ? 'border-amber-500 bg-amber-500/5' : 'border-white/10 bg-black/20 group-hover:border-white/20'}"
+								class="flex h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all group-hover:bg-white/5 {isDragging
+									? 'border-amber-500 bg-amber-500/5'
+									: 'border-white/10 bg-black/20 group-hover:border-white/20'}"
 							>
-								<div class="flex flex-col items-center justify-center p-5 text-center">
-									<Upload class="mb-2 h-6 w-6 {isDragging ? 'text-amber-500' : 'text-gray-500'}" />
+								<div
+									class="flex flex-col items-center justify-center p-5 text-center"
+								>
+									<Upload
+										class="mb-2 h-6 w-6 {isDragging
+											? 'text-amber-500'
+											: 'text-gray-500'}"
+									/>
 									{#if uploadFormState.file}
-										<p class="max-w-[280px] truncate font-mono text-xs text-amber-500">
+										<p
+											class="max-w-[280px] truncate font-mono text-xs text-amber-500"
+										>
 											{uploadFormState.file.name}
 										</p>
 									{:else}
 										<p class="text-[10px] font-bold text-gray-500 uppercase">
-											{isDragging ? 'Drop file to upload' : 'Click or drag & drop binary'}
+											{isDragging
+												? 'Drop file to upload'
+												: 'Click or drag & drop binary'}
 										</p>
 									{/if}
 								</div>
@@ -416,7 +527,9 @@
 							</div>
 							<div>
 								<p class="text-xs font-bold text-white">Pro Only</p>
-								<p class="mt-0.5 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+								<p
+									class="mt-0.5 text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+								>
 									Subscription Required
 								</p>
 							</div>
@@ -470,16 +583,20 @@
 			transition:scale={{ duration: 200, start: 0.95 }}
 			role="dialog"
 		>
-			<form method="POST" action="?/updateRelease" use:enhance={handleUpdate}>
+			<form onsubmit={handleUpdate}>
 				<input type="hidden" name="id" value={selectedRelease.id} />
 
-				<div class="flex items-center justify-between border-b border-white/5 px-6 py-5 text-white">
+				<div
+					class="flex items-center justify-between border-b border-white/5 px-6 py-5 text-white"
+				>
 					<div>
 						<h3 class="flex items-center gap-2 text-lg font-bold">
 							<Settings class="h-5 w-5 text-amber-500" />
 							List Details
 						</h3>
-						<p class="mt-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+						<p
+							class="mt-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+						>
 							Config Update
 						</p>
 					</div>
@@ -495,6 +612,13 @@
 				<div class="space-y-6 p-6">
 					<!-- Editable Fields -->
 					<div class="space-y-4">
+						{#if updateError}
+							<div
+								class="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs font-medium text-red-500"
+							>
+								{updateError}
+							</div>
+						{/if}
 						<div class="space-y-1.5">
 							<label
 								for="edit-name"
@@ -519,7 +643,9 @@
 								</div>
 								<div>
 									<p class="text-xs font-bold text-white">Pro Only</p>
-									<p class="mt-0.5 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+									<p
+										class="mt-0.5 text-[10px] font-bold tracking-widest text-gray-500 uppercase"
+									>
 										Access Control
 									</p>
 								</div>
@@ -559,16 +685,25 @@
 							<div class="rounded-lg border border-white/10 bg-black/40 p-3">
 								<div class="mb-1 flex items-center gap-2">
 									<HardDrive class="h-3 w-3 text-gray-500" />
-									<span class="text-[10px] font-bold text-gray-500 uppercase">File Size</span>
+									<span class="text-[10px] font-bold text-gray-500 uppercase"
+										>File Size</span
+									>
 								</div>
-								<p class="font-mono text-xs text-white">{formatBytes(selectedRelease.size)}</p>
+								<p class="font-mono text-xs text-white">
+									{formatBytes(selectedRelease.size)}
+								</p>
 							</div>
 							<div class="rounded-lg border border-white/10 bg-black/40 p-3">
 								<div class="mb-1 flex items-center gap-2">
 									<Hash class="h-3 w-3 text-gray-500" />
-									<span class="text-[10px] font-bold text-gray-500 uppercase">SHA256</span>
+									<span class="text-[10px] font-bold text-gray-500 uppercase"
+										>SHA256</span
+									>
 								</div>
-								<p class="truncate font-mono text-xs text-white" title={selectedRelease.sha256}>
+								<p
+									class="truncate font-mono text-xs text-white"
+									title={selectedRelease.sha256}
+								>
 									{selectedRelease.sha256.substring(0, 12)}...
 								</p>
 							</div>
@@ -639,56 +774,52 @@
 
 <!-- Delete Confirmation Modal -->
 {#if itemToDelete}
-	<div 
+	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
 		transition:fade={{ duration: 150 }}
 	>
-		<div 
-			class="w-full max-w-md animate-in fade-in zoom-in-95 duration-200 overflow-hidden rounded-xl border border-white/10 bg-[#111827] shadow-2xl"
+		<div
+			class="w-full max-w-md animate-in overflow-hidden rounded-xl border border-white/10 bg-[#111827] shadow-2xl duration-200 zoom-in-95 fade-in"
 			role="dialog"
 		>
 			<div class="p-6">
-				<div class="flex items-center gap-3 mb-4">
-					<div class="p-2 bg-red-500/10 rounded-lg text-red-500">
+				<div class="mb-4 flex items-center gap-3">
+					<div class="rounded-lg bg-red-500/10 p-2 text-red-500">
 						<AlertTriangle class="h-6 w-6" />
 					</div>
 					<h3 class="text-lg font-bold text-white">Confirm Deletion</h3>
 				</div>
-				
-				<p class="text-sm text-gray-400 leading-relaxed mb-6">
-					Are you sure you want to permanently delete the site list <span class="text-white font-semibold">{itemToDelete.name}</span>? 
-					This action cannot be undone and will prevent the desktop client from downloading this package.
+
+				<p class="mb-6 text-sm leading-relaxed text-gray-400">
+					Are you sure you want to permanently delete the site list <span
+						class="font-semibold text-white">{itemToDelete.name}</span
+					>? This action cannot be undone and will prevent the desktop client from
+					downloading this package.
 				</p>
 
-				<div class="flex justify-end gap-3 pt-6 border-t border-white/5">
+				<div class="flex justify-end gap-3 border-t border-white/5 pt-6">
 					<button
 						type="button"
-						onclick={() => itemToDelete = null}
-						class="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+						onclick={() => (itemToDelete = null)}
+						class="rounded-lg px-4 py-2 text-sm font-medium text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
 					>
 						Cancel
 					</button>
-					<form 
-						method="POST" 
-						action="?/deleteRelease" 
-						use:enhance={() => {
-							return async ({ result, update }) => {
-								await update();
-								if (result.type === 'success') {
-									itemToDelete = null;
-									await invalidateAll();
-								}
-							};
-						}}
+					<button
+						type="button"
+						onclick={handleDelete}
+						disabled={isDeleting}
+						class="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:border-red-500/30 hover:bg-red-500/20 disabled:opacity-50"
 					>
-						<input type="hidden" name="id" value={itemToDelete.id} />
-						<button
-							type="submit"
-							class="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:border-red-500/30 hover:bg-red-500/20"
-						>
+						{#if isDeleting}
+							<div
+								class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-red-500/30 border-t-red-500"
+							></div>
+							Deleting...
+						{:else}
 							Delete Permanently
-						</button>
-					</form>
+						{/if}
+					</button>
 				</div>
 			</div>
 		</div>
