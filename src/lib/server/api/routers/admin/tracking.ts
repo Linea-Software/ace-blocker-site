@@ -3,8 +3,6 @@ import { db } from '$lib/server/db';
 import { trackingScripts } from '$lib/server/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { uploadTrackingScripts, deleteTrackingScripts, CDNErrorType } from '$lib/server/cdn';
-import { invalidateTrackingCache } from '$lib/server/cache';
-import crypto from 'crypto';
 
 export const trackingRouter = new Elysia({ prefix: '/tracking' })
 	.get(

@@ -3,10 +3,10 @@ import { dev } from '$app/environment';
 import crypto from 'crypto';
 
 export enum CDNObjectPath {
-	Installer = '/ace-blocker-installer',
-	ResistanceModeScripts = '/resistance-mode-scripts',
-	SiteLists = '/site-lists',
-	TrackingScripts = '/tracking-scripts'
+	Installer = 'ace-blocker-installer',
+	ResistanceModeScripts = 'resistance-mode-scripts',
+	SiteLists = 'site-lists',
+	TrackingScripts = 'tracking-scripts'
 }
 
 export enum CDNErrorType {
@@ -53,6 +53,8 @@ export const installersBasePath = new URL(CDNObjectPath.Installer, storageZoneBa
 const bunnyUploadBase = new URL(
 	`https://storage.bunnycdn.com/${env.BUNNY_STORAGE_ZONE}${dev ? '/dev' : ''}`
 );
+
+console.log('Bunny upload base URL: ' + bunnyUploadBase.toString());
 
 export const trackingScriptsUploadBase = new URL(CDNObjectPath.TrackingScripts, bunnyUploadBase);
 export const siteListsUploadBase = new URL(CDNObjectPath.SiteLists, bunnyUploadBase);

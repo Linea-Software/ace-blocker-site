@@ -37,6 +37,7 @@ async function uploadFileToBunnyCDN(
 	const hash = getArrayBufferChecksum(arrayBuffer);
 
 	try {
+		console.log(`Uploading to ${endpointUrl.toString()}`);
 		const response = await fetch(endpointUrl, {
 			method: 'PUT',
 			headers: {
@@ -48,7 +49,8 @@ async function uploadFileToBunnyCDN(
 		});
 
 		if (!response.ok) {
-			console.error('Unable to upload the file to BunnyCDN:\n' + response);
+			console.error('Unable to upload the file to BunnyCDN:\n');
+			console.log(JSON.stringify(response));
 			return err(CDNErrorType.UploadFailed);
 		}
 
