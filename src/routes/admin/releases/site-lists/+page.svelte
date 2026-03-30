@@ -89,6 +89,8 @@
 			return;
 		}
 
+		console.log('Uploading:', { file: file.name, name, id, requiresProSubscription });
+
 		const response = await apiClient.v1.admin['site-lists'].upload.post({
 			file,
 			name,
@@ -96,9 +98,12 @@
 			requiresProSubscription
 		});
 
+		console.log('Upload response:', response);
+
 		isDeploying = false;
 
 		if (response.error) {
+			console.error('Upload error:', response.error);
 			let message = 'Internal server failure during binary deploy';
 			if (
 				typeof response.error === 'object' &&

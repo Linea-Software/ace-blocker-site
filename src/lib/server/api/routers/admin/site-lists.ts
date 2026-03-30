@@ -49,7 +49,13 @@ export const siteListsRouter = new Elysia({ prefix: '/site-lists' })
 				};
 			}
 
-			const result = await uploadSiteList(file, name, id, requiresProSubscription);
+			// Convert to boolean if it's a string
+			const isPro =
+				typeof requiresProSubscription === 'string'
+					? requiresProSubscription === 'true'
+					: requiresProSubscription;
+
+			const result = await uploadSiteList(file, name, id, isPro);
 
 			if (result.isErr()) {
 				const errorType = result.error;
@@ -78,7 +84,7 @@ export const siteListsRouter = new Elysia({ prefix: '/site-lists' })
 				file: t.File(),
 				name: t.String(),
 				id: t.String(),
-				requiresProSubscription: t.Boolean()
+				requiresProSubscription: t.Union([t.Boolean(), t.String()])
 			}),
 			detail: {
 				operationId: 'uploadSiteList',
