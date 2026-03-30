@@ -56,7 +56,7 @@ async function uploadFileToBunnyCDN(
 
 		return ok({ hash: hash });
 	} catch (error) {
-		console.error('Network failure during BunnyCDN file upload:\n' + error);
+		console.error('Network failure during BunnyCDN file upload:\n' + JSON.stringify(error));
 		return err(CDNErrorType.NetworkFailure);
 	}
 }

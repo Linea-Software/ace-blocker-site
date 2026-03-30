@@ -468,8 +468,6 @@
 							type="text"
 							placeholder="e.g., adult-content-list"
 							required
-							pattern="[a-z0-9-]+"
-							title="Only lowercase letters, numbers, and hyphens are allowed"
 							class="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white transition-all outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
 						/>
 					</div>
