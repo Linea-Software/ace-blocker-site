@@ -15,11 +15,11 @@ export const sitesListsRouter = new Elysia({ prefix: '/site-lists' })
 		};
 	})
 	.get(
-		'/:siteListUuid/backup',
-		async ({ params: { siteListUuid }, user, status }) => {
+		'/:siteListId/backup',
+		async ({ params: { siteListId }, user, status }) => {
 			const isPro = user ? await isUserPro(user.id) : false;
 
-			const result = getSiteListURL(siteListUuid, isPro);
+			const result = getSiteListURL(siteListId, isPro);
 
 			if (result.isErr()) {
 				switch (result.error) {
@@ -39,7 +39,7 @@ export const sitesListsRouter = new Elysia({ prefix: '/site-lists' })
 		},
 		{
 			params: t.Object({
-				siteListUuid: t.String({ format: 'uuid' })
+				siteListId: t.String()
 			}),
 			detail: {
 				operationId: 'getSiteListBackup',
