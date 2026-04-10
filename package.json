@@ -67,6 +67,7 @@
 		"vitest-browser-svelte": "~2.1.0"
 	},
 	"dependencies": {
+		"@better-auth/api-key": "^1.6.2",
 		"@bunny.net/storage-sdk": "^0.3.1",
 		"@dodopayments/better-auth": "~1.5.0",
 		"@elysiajs/eden": "~1.4.9",

@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { betterAuth } from 'better-auth';
-import { admin, apiKey, openAPI, twoFactor } from 'better-auth/plugins';
+import { admin, openAPI, twoFactor } from 'better-auth/plugins';
+import { apiKey } from '@better-auth/api-key';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '$lib/server/db';
 import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
@@ -8,7 +9,6 @@ import DodoPayments from 'dodopayments';
 import { getTwoFactorEmailHtml, getVerificationEmailHtml, resend } from '$lib/server/email';
 import { updateProExpiration, clearProExpiration } from '$lib/server/pro';
 import * as m from '$lib/paraglide/messages.js';
-
 
 const env = process.env;
 
@@ -97,23 +97,35 @@ export const auth = betterAuth({
 
 					onSubscriptionActive: async (payload) => {
 						if (payload.data.next_billing_date) {
-							await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
+							await updateProExpiration(
+								payload.data.customer.email,
+								payload.data.next_billing_date
+							);
 						}
 					},
 					onSubscriptionRenewed: async (payload) => {
 						if (payload.data.next_billing_date) {
-							await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
+							await updateProExpiration(
+								payload.data.customer.email,
+								payload.data.next_billing_date
+							);
 						}
 					},
 					onSubscriptionPlanChanged: async (payload) => {
 						if (payload.data.next_billing_date) {
-							await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
+							await updateProExpiration(
+								payload.data.customer.email,
+								payload.data.next_billing_date
+							);
 						}
 					},
 					onSubscriptionUpdated: async (payload) => {
 						// Only activate if still active after the update
 						if (payload.data.status === 'active' && payload.data.next_billing_date) {
-							await updateProExpiration(payload.data.customer.email, payload.data.next_billing_date);
+							await updateProExpiration(
+								payload.data.customer.email,
+								payload.data.next_billing_date
+							);
 						} else {
 							await clearProExpiration(payload.data.customer.email);
 						}
@@ -129,9 +141,6 @@ export const auth = betterAuth({
 						await clearProExpiration(payload.data.customer.email);
 					},
 					onSubscriptionExpired: async (payload) => {
-						await clearProExpiration(payload.data.customer.email);
-					},
-					onSubscriptionPaused: async (payload) => {
 						await clearProExpiration(payload.data.customer.email);
 					},
 					onSubscriptionOnHold: async (payload) => {

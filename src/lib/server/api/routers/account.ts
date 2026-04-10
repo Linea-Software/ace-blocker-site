@@ -35,7 +35,7 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				200: t.Object({
 					name: t.String(),
 					email: t.String(),
-					isPro: t.Boolean(),
+					isPro: t.Boolean()
 				}),
 				401: t.String(),
 				500: t.String()
@@ -54,7 +54,7 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				headers: request.headers
 			});
 
-			for (const key of existingKeys) {
+			for (const key of existingKeys.apiKeys) {
 				if (key.name === 'Desktop App') {
 					await auth.api.deleteApiKey({
 						body: { keyId: key.id },
@@ -107,7 +107,7 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				headers: request.headers
 			});
 
-			return keys.map(
+			return keys.apiKeys.map(
 				(key: {
 					id: string;
 					name: string | null;
@@ -177,7 +177,8 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				500: t.String()
 			}
 		}
-	).get(
+	)
+	.get(
 		'/pro',
 		async ({ user, status }) => {
 			if (!user) {
