@@ -23,29 +23,38 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import * as Alert from '$lib/components/ui/alert';
-	import { cn } from '$lib/utils';
+	import { cn, linkEngine } from '$lib/utils';
 	import { engineConfig } from '$lib/states/engine.svelte';
 	import { Crown } from '@lucide/svelte';
+	import { apiClient } from '$lib/api-client';
 
 	let { data } = $props();
 	let billingCycle = $state('yearly');
 	const session = authClient.useSession();
 	const origin = $derived(page.url.searchParams.get('origin'));
+	const enginePort = $derived(Number(page.url.searchParams.get('engine_port')) || 0);
 
-	async function linkEngine() {
+	async function handleLinkEngine() {
 		engineConfig.linkState = 'loading';
 		try {
-			const res = await fetch('/api/v1/account/link-engine', {
-				method: 'POST'
-			});
-			if (!res.ok) throw new Error('Failed to link engine');
-			const data = await res.json();
-			const apiKey = data.apiKey;
+			const createApiKey = async () => {
+				const { data: apiKeyData, error: apiError } =
+					await apiClient.v1.account['api-key'].create.get();
 
-			// Strict Custom Protocol URI approach
-			window.location.assign(`aceblocker://account/api-key?apiKey=${apiKey}`);
+				if (apiError)
+					throw new Error((apiError.value as string) || 'Failed to create API key');
+				if (!apiKeyData) throw new Error('Failed to create API key');
+				return apiKeyData.apiKey;
+			};
 
-			engineConfig.linkState = 'success';
+			const result = await linkEngine(enginePort, createApiKey);
+
+			if (result.success) {
+				engineConfig.linkState = 'success';
+			} else {
+				console.error('Linking error:', result.error);
+				engineConfig.linkState = 'error';
+			}
 		} catch (err) {
 			console.error('Linking error:', err);
 			engineConfig.linkState = 'error';
@@ -58,7 +67,7 @@
 			(origin === 'ace-engine' || origin === 'aceblocker') &&
 			engineConfig.linkState === 'idle'
 		) {
-			linkEngine();
+			handleLinkEngine();
 		}
 	});
 
@@ -74,7 +83,7 @@
 	}
 </script>
 
-<Navbar isPro={isPro} />
+<Navbar {isPro} />
 
 <main
 	class="min-h-[calc(100vh-4rem)] bg-white py-16 text-slate-900 transition-colors duration-500 md:py-24 dark:bg-[#0B0B0F] dark:text-slate-50"
@@ -121,7 +130,9 @@
 			{:else}
 				<div class="flex flex-col items-center justify-center space-y-6 py-12">
 					<div class="relative">
-						<div class="absolute inset-0 animate-pulse rounded-full bg-amber-500/20 blur-2xl"></div>
+						<div
+							class="absolute inset-0 animate-pulse rounded-full bg-amber-500/20 blur-2xl"
+						></div>
 						<div
 							class="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-[#FFBF00] to-amber-600 shadow-2xl"
 						>
@@ -129,7 +140,9 @@
 						</div>
 					</div>
 					<div class="space-y-2">
-						<h1 class="text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+						<h1
+							class="text-4xl font-black tracking-tight text-slate-900 dark:text-white"
+						>
 							{m.pro_success_title()}
 						</h1>
 						<p class="mx-auto max-w-lg text-lg text-slate-600 dark:text-slate-400">
@@ -145,7 +158,7 @@
 						</Button>
 						<Button
 							variant="outline"
-							onclick={linkEngine}
+							onclick={handleLinkEngine}
 							class="border-amber-500/50 bg-transparent px-8 py-6 text-lg font-bold text-amber-500 hover:bg-amber-500/10 dark:border-amber-500/30"
 						>
 							Open Ace Blocker
@@ -210,13 +223,15 @@
 							>
 								<Shield class="h-6 w-6" />
 							</div>
-							<Card.Title class="text-2xl font-black text-slate-900 dark:text-slate-200"
+							<Card.Title
+								class="text-2xl font-black text-slate-900 dark:text-slate-200"
 								>{m.plan_free_name()}</Card.Title
 							>
 						</div>
 						<div class="flex flex-col">
 							<div class="flex items-baseline gap-1">
-								<span class="text-5xl font-black tracking-tight text-slate-900 dark:text-slate-200"
+								<span
+									class="text-5xl font-black tracking-tight text-slate-900 dark:text-slate-200"
 									>{m.plan_free_price()}</span
 								>
 								<span class="text-slate-500">/forever</span>
@@ -299,7 +314,8 @@
 									<Timer class="h-7 w-7" />
 								</div>
 							</div>
-							<Card.Title class="text-3xl font-black text-[#FFBF00]">{m.plan_pro_name()}</Card.Title
+							<Card.Title class="text-3xl font-black text-[#FFBF00]"
+								>{m.plan_pro_name()}</Card.Title
 							>
 						</div>
 
@@ -316,7 +332,9 @@
 												class="font-mono text-6xl font-black tracking-tighter text-slate-900 dark:text-white"
 												>{m.plan_pro_price_yearly()}</span
 											>
-											<span class="text-slate-500 dark:text-slate-400">/year</span>
+											<span class="text-slate-500 dark:text-slate-400"
+												>/year</span
+											>
 										</div>
 									</div>
 								{:else}
@@ -331,7 +349,9 @@
 							<p class="mt-2 text-sm font-bold text-amber-600 dark:text-amber-500/90">
 								{m.trial_subtitle()}
 							</p>
-							<p class="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+							<p
+								class="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400"
+							>
 								{m.plan_pro_description()}
 							</p>
 						</div>
@@ -342,7 +362,9 @@
 							<div
 								class="h-[1px] flex-1 bg-gradient-to-r from-[#FFBF00]/0 via-[#FFBF00]/30 to-[#FFBF00]/0"
 							></div>
-							<p class="text-[10px] font-black tracking-widest text-[#FFBF00] uppercase">
+							<p
+								class="text-[10px] font-black tracking-widest text-[#FFBF00] uppercase"
+							>
 								{m.feature_pro_plus_basic()}
 							</p>
 							<div
@@ -351,7 +373,9 @@
 						</div>
 
 						<div class="flex items-center gap-4">
-							<div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10">
+							<div
+								class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10"
+							>
 								<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
 							</div>
 							<span class="text-sm font-bold text-slate-900 dark:text-white"
@@ -359,7 +383,9 @@
 							>
 						</div>
 						<div class="flex items-center gap-4">
-							<div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10">
+							<div
+								class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10"
+							>
 								<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
 							</div>
 							<span class="text-sm font-bold text-slate-900 dark:text-white"
@@ -367,7 +393,9 @@
 							>
 						</div>
 						<div class="flex items-center gap-4">
-							<div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10">
+							<div
+								class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10"
+							>
 								<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
 							</div>
 							<span class="text-sm font-bold text-slate-900 dark:text-white"
@@ -375,7 +403,9 @@
 							>
 						</div>
 						<div class="flex items-center gap-4">
-							<div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10">
+							<div
+								class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10"
+							>
 								<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
 							</div>
 							<span class="text-sm font-bold text-slate-900 dark:text-white"
@@ -383,7 +413,9 @@
 							>
 						</div>
 						<div class="flex items-center gap-4">
-							<div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10">
+							<div
+								class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10"
+							>
 								<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
 							</div>
 							<span class="text-sm font-bold text-slate-900 dark:text-white"
@@ -392,7 +424,8 @@
 						</div>
 
 						<p class="pt-2 text-[10px] leading-relaxed text-slate-500 italic">
-							*Taxes included. Price at checkout will be converted to your local currency.
+							*Taxes included. Price at checkout will be converted to your local
+							currency.
 						</p>
 					</Card.Content>
 
@@ -504,15 +537,21 @@
 								<Shield class="h-6 w-6 text-slate-400 dark:text-slate-500" />
 							</div>
 							<div class="flex-1 space-y-2">
-								<div class="h-4 w-24 rounded bg-slate-200 dark:bg-slate-800/80"></div>
+								<div
+									class="h-4 w-24 rounded bg-slate-200 dark:bg-slate-800/80"
+								></div>
 								<div class="flex items-center gap-3">
 									<div class="flex items-center gap-1 opacity-50">
 										<Globe class="h-3 w-3 text-slate-400" />
-										<div class="h-2 w-12 rounded bg-slate-200 dark:bg-slate-800"></div>
+										<div
+											class="h-2 w-12 rounded bg-slate-200 dark:bg-slate-800"
+										></div>
 									</div>
 									<div class="flex items-center gap-1 opacity-50">
 										<Clock class="h-3 w-3 text-slate-400" />
-										<div class="h-2 w-16 rounded bg-slate-200 dark:bg-slate-800"></div>
+										<div
+											class="h-2 w-16 rounded bg-slate-200 dark:bg-slate-800"
+										></div>
 									</div>
 								</div>
 							</div>
@@ -523,12 +562,16 @@
 						<div
 							class="flex translate-x-6 transform items-center gap-4 rounded-2xl border-2 border-amber-500/50 bg-white p-4 shadow-2xl transition-all duration-500 group-hover:translate-x-0 dark:bg-[#0B0B0F]"
 						>
-							<div class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10">
+							<div
+								class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10"
+							>
 								<Lock class="h-6 w-6 text-amber-500" />
 							</div>
 							<div class="flex-1 space-y-2">
 								<div class="flex items-center gap-2">
-									<div class="h-4 w-32 rounded bg-slate-200 dark:bg-slate-800/80"></div>
+									<div
+										class="h-4 w-32 rounded bg-slate-200 dark:bg-slate-800/80"
+									></div>
 									<div
 										class="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"
 									></div>
@@ -536,11 +579,15 @@
 								<div class="flex items-center gap-3">
 									<div class="flex items-center gap-1 opacity-50">
 										<Globe class="h-3 w-3 text-slate-400" />
-										<div class="h-2 w-14 rounded bg-slate-200 dark:bg-slate-800"></div>
+										<div
+											class="h-2 w-14 rounded bg-slate-200 dark:bg-slate-800"
+										></div>
 									</div>
 									<div class="flex items-center gap-1 opacity-50">
 										<Clock class="h-3 w-3 text-slate-400" />
-										<div class="h-2 w-20 rounded bg-slate-200 dark:bg-slate-800"></div>
+										<div
+											class="h-2 w-20 rounded bg-slate-200 dark:bg-slate-800"
+										></div>
 									</div>
 								</div>
 							</div>
@@ -568,11 +615,17 @@
 				&copy; {new Date().getFullYear()}
 				{m.footer_rights_suffix()}
 			</p>
-			<div class="flex items-center gap-8 text-sm font-bold text-slate-600 dark:text-slate-400">
-				<a href="/terms" class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
+			<div
+				class="flex items-center gap-8 text-sm font-bold text-slate-600 dark:text-slate-400"
+			>
+				<a
+					href="/terms"
+					class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
 					>{m.footer_terms()}</a
 				>
-				<a href="/privacy" class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
+				<a
+					href="/privacy"
+					class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
 					>{m.footer_privacy()}</a
 				>
 			</div>
