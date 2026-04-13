@@ -3,12 +3,12 @@ import { betterAuth } from 'better-auth';
 import { admin, openAPI, twoFactor } from 'better-auth/plugins';
 import { apiKey } from '@better-auth/api-key';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { db } from '$lib/server/db';
+import { db } from './db';
 import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
 import DodoPayments from 'dodopayments';
-import { getTwoFactorEmailHtml, getVerificationEmailHtml, resend } from '$lib/server/email';
-import { updateProExpiration, clearProExpiration } from '$lib/server/pro';
-import * as m from '$lib/paraglide/messages.js';
+import { getTwoFactorEmailHtml, getVerificationEmailHtml, resend } from './email';
+import { updateProExpiration, clearProExpiration } from './pro';
+import * as m from './messages';
 
 const env = process.env;
 

@@ -27,12 +27,14 @@
 	import { engineConfig } from '$lib/states/engine.svelte';
 	import { Crown } from '@lucide/svelte';
 	import { apiClient } from '$lib/api-client';
+	import { onMount } from 'svelte';
 
 	let { data } = $props();
 	let billingCycle = $state('yearly');
 	const session = authClient.useSession();
 	const origin = $derived(page.url.searchParams.get('origin'));
 	const enginePort = $derived(Number(page.url.searchParams.get('engine_port')) || 0);
+	const isPro = $derived(data.isPro || false);
 
 	async function handleLinkEngine() {
 		engineConfig.linkState = 'loading';
@@ -61,17 +63,13 @@
 		}
 	}
 
-	$effect(() => {
-		if (
-			$session.data &&
-			(origin === 'ace-engine' || origin === 'aceblocker') &&
-			engineConfig.linkState === 'idle'
-		) {
+	onMount(() => {
+		if (isPro && (origin === 'ace-engine' || origin === 'aceblocker')) {
 			handleLinkEngine();
+		} else {
+			console.log(`isPro: ${isPro}; origin: ${origin}`);
 		}
 	});
-
-	const isPro = $derived(data.isPro || false);
 
 	function handleUpgrade() {
 		if ($session.data) {

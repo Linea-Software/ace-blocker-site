@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { Resend } from 'resend';
-import * as m from '$lib/paraglide/messages.js';
+import * as m from './messages';
 
 const env = process.env;
 
@@ -15,12 +15,12 @@ export function getTwoFactorEmailHtml(otpCode: string): string {
     <div style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0B0F19; color: #E2E8F0; padding: 60px 20px; text-align: center; line-height: 1.5;">
         <div style="max-width: 480px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden;">
             <div style="height: 4px; background-color: #D97706; width: 100%;"></div>
-            
+
             <div style="padding: 40px 32px;">
                 <div style="margin-bottom: 32px;">
                     <h1 style="color: #F8FAFC; font-size: 26px; font-weight: 700; margin: 0; letter-spacing: -0.025em;">${m.email_app_name()}</h1>
                 </div>
-                
+
                 <p style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 32px; font-weight: 400;">
                     ${m.email_2fa_body()}
                 </p>
@@ -52,7 +52,7 @@ export function getVerificationEmailHtml(verifyUrl: string): string {
                 <div style="margin-bottom: 32px;">
                     <h1 style="color: #F8FAFC; font-size: 26px; font-weight: 700; margin: 0; letter-spacing: -0.025em;">${m.email_app_name()}</h1>
                 </div>
-                
+
                 <p style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 36px; font-weight: 400;">
                     ${m.email_verification_body()}
                 </p>

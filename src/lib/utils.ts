@@ -28,10 +28,11 @@ export async function linkEngine(
 ): Promise<LinkEngineResult> {
 	try {
 		const apiKey = await createApiKey();
-		const engineUrl = `https://127.0.0.1:${enginePort}/account/api-key?api_key=${apiKey}`;
+		const engineUrl = `https://127.0.0.1:${enginePort}/account/api-key?apiKey=${apiKey}`;
 		const protocolUrl = `aceblocker://account/api-key?apiKey=${apiKey}`;
 
 		try {
+			console.log(`Calling engine at ${engineUrl}`);
 			// Try the engine directly via HTTPS
 			const res = await fetch(engineUrl, { method: 'POST' });
 			if (res.ok) {
