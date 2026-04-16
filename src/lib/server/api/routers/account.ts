@@ -1,6 +1,9 @@
 import { Elysia, t } from 'elysia';
 import { auth } from '$lib/server/auth';
 import { isUserPro, getProStatus } from '$lib/server/pro';
+import { db } from '$lib/server/db';
+import { user, apikey } from '$lib/server/db/schema';
+import { eq, like } from 'drizzle-orm';
 
 export const accountRouter = new Elysia({ prefix: '/account' })
 	.derive(async ({ request }) => {
@@ -14,16 +17,20 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 	})
 	.get(
 		'/',
-		async ({ user, status }) => {
-			if (!user) {
-				return status(401, 'Unauthorized');
+		async ({ request, status }) => {
+			const session = await auth.api.getSession({
+				headers: request.headers
+			});
+
+			if (session?.user) {
+				return {
+					name: session.user.name,
+					email: session.user.email,
+					isPro: await isUserPro(session.user.id)
+				};
 			}
 
-			return {
-				name: user.name,
-				email: user.email,
-				isPro: await isUserPro(user.email)
-			};
+			return status(401, 'Unauthorized');
 		},
 		{
 			detail: {

@@ -53,7 +53,7 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 				return status(401, 'Unauthorized');
 			}
 
-			const isPro = await isUserPro(user.email);
+			const isPro = await isUserPro(user.id);
 			if (!isPro) {
 				return status(403, 'Pro license required');
 			}

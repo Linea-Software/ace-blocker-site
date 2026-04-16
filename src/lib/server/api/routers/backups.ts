@@ -64,7 +64,7 @@ export const backupsRouter = new Elysia({ prefix: '/backups' })
 				return status(401, 'Unauthorized');
 			}
 
-			const isPro = await isUserPro(user.email);
+			const isPro = await isUserPro(user.id);
 			if (!isPro) {
 				return status(403, 'Pro license required');
 			}
@@ -76,20 +76,23 @@ export const backupsRouter = new Elysia({ prefix: '/backups' })
 			}
 
 			const backupId = uuidv7();
-			await db.insert(backups).values({
-				id: backupId,
-				userId: user.id,
-				data: JSON.stringify(body),
-				version: body.version,
-				createdAt: new Date()
-			}).onConflictDoUpdate({
-				target: backups.userId,
-				set: {
+			await db
+				.insert(backups)
+				.values({
+					id: backupId,
+					userId: user.id,
 					data: JSON.stringify(body),
 					version: body.version,
 					createdAt: new Date()
-				}
-			});
+				})
+				.onConflictDoUpdate({
+					target: backups.userId,
+					set: {
+						data: JSON.stringify(body),
+						version: body.version,
+						createdAt: new Date()
+					}
+				});
 
 			return { id: backupId };
 		},
@@ -118,7 +121,7 @@ export const backupsRouter = new Elysia({ prefix: '/backups' })
 				return status(401, 'Unauthorized');
 			}
 
-			const isPro = await isUserPro(user.email);
+			const isPro = await isUserPro(user.id);
 			if (!isPro) {
 				return status(403, 'Pro license required');
 			}
