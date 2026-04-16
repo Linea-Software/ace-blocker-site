@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(bun *)",
-      "WebFetch(better-auth.com)"
-    ]
-  },
-  "$version": 3
-}
