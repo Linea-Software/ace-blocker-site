@@ -15,7 +15,9 @@ async function main() {
 
 	// docker compose down -v removes containers AND the named volumes defined in compose.yaml
 	if (!runCommand('docker', ['compose', 'down', '-v'])) {
-		console.error('❌ Failed to delete database and volumes. Please make sure Docker is running.');
+		console.error(
+			'❌ Failed to delete database and volumes. Please make sure Docker is running.'
+		);
 		process.exit(1);
 	}
 

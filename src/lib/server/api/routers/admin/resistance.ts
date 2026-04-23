@@ -2,7 +2,11 @@ import { Elysia, t } from 'elysia';
 import { db } from '$lib/server/db';
 import { resistanceModeScripts } from '$lib/server/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
-import { uploadResistanceModeScript, deleteResistanceModeScript, CDNErrorType } from '$lib/server/cdn';
+import {
+	uploadResistanceModeScript,
+	deleteResistanceModeScript,
+	CDNErrorType
+} from '$lib/server/cdn';
 import { invalidateResistanceCache } from '$lib/server/cache';
 import crypto from 'crypto';
 

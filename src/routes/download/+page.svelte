@@ -162,9 +162,12 @@
 			</div>
 
 			<div class="space-y-4">
-				<h1 class="text-4xl font-black tracking-tighter text-slate-900 md:text-7xl dark:text-white">
+				<h1
+					class="text-4xl font-black tracking-tighter text-slate-900 md:text-7xl dark:text-white"
+				>
 					{m.download_title().replace('...', '')}<span
-						class="inline-block w-[1em] text-left text-amber-500 dark:text-amber-400">{dots}</span
+						class="inline-block w-[1em] text-left text-amber-500 dark:text-amber-400"
+						>{dots}</span
 					>
 				</h1>
 				<p
@@ -252,10 +255,14 @@
 							</div>
 
 							<div class="space-y-1">
-								<h3 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+								<h3
+									class="text-2xl font-black tracking-tight text-slate-900 dark:text-white"
+								>
 									{option.name}
 								</h3>
-								<p class="text-sm font-bold text-slate-500 dark:text-slate-400">{option.details}</p>
+								<p class="text-sm font-bold text-slate-500 dark:text-slate-400">
+									{option.details}
+								</p>
 							</div>
 
 							<div
@@ -347,7 +354,9 @@
 					href="/"
 					class="group h-12 rounded-lg border border-transparent px-8 text-[10px] font-black tracking-widest text-slate-500 uppercase transition-all hover:border-amber-500/20 hover:bg-amber-500/10 hover:text-amber-500 dark:text-slate-400"
 				>
-					<MoveLeft class="mr-3 h-4 w-4 transition-transform group-hover:-translate-x-2" />
+					<MoveLeft
+						class="mr-3 h-4 w-4 transition-transform group-hover:-translate-x-2"
+					/>
 					{m.download_back_home()}
 				</Button>
 			</div>

@@ -69,7 +69,9 @@
 								href={link.href}
 								class={cn(
 									'flex items-center gap-3 rounded-md px-3 py-2 text-lg font-medium transition-colors hover:text-primary',
-									isActive(link.href) ? 'bg-accent text-primary' : 'text-muted-foreground'
+									isActive(link.href)
+										? 'bg-accent text-primary'
+										: 'text-muted-foreground'
 								)}
 								onclick={() => (isMobileMenuOpen = false)}
 							>
@@ -155,7 +157,10 @@
 				</Sheet.Content>
 			</Sheet.Root>
 
-			<a href="/" class="mr-4 flex items-center space-x-2 transition-opacity hover:opacity-90">
+			<a
+				href="/"
+				class="mr-4 flex items-center space-x-2 transition-opacity hover:opacity-90"
+			>
 				<Shield class="h-6 w-6 text-primary dark:text-amber-500" />
 				<span
 					class="inline-block text-xl font-bold tracking-tight text-slate-900 sm:text-2xl dark:text-white"

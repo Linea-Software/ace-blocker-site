@@ -13,8 +13,8 @@ ALWAYS use **Bun** for all package management and script execution tasks.
 - **Initial Setup**: Run `bun run setup` to automatically configure the `.env` file (including secrets), start the Docker database, and apply Drizzle migrations.
 - **Database Management**: Run `bun run db:delete` to stop the Docker database and delete its associated volumes (virtual disk).
 - **Development Credentials**: In development mode, a default admin user is automatically created:
-  - **Email**: `dev@example.com`
-  - **Password**: `dev-password`
+    - **Email**: `dev@example.com`
+    - **Password**: `dev-password`
 - **Committing Changes**: You **MUST** perform git commits yourself. Once you have finished a task and verified it, run `git add .` and `git commit -m "..."` with a descriptive message. Do NOT ask the user to commit for you.
 
 ## Self-Maintenance (IMPORTANT)
@@ -39,8 +39,8 @@ Before performing ANY task related to the technologies below, you MUST use `read
 
 1. **Identify**: Determine which technologies from the list above are involved in the task.
 2. **Fetch**: Call `read_url_content` for EVERY relevant documentation URL.
-4. **Analyze**: Use only the patterns, runes, and practices found in that documentation.
-5. **Citing Source**: In your plan, briefly mention which documentation was consulted (e.g., "Consulted Svelte 5 llms.txt for proper rune usage").
+3. **Analyze**: Use only the patterns, runes, and practices found in that documentation.
+4. **Citing Source**: In your plan, briefly mention which documentation was consulted (e.g., "Consulted Svelte 5 llms.txt for proper rune usage").
 
 **FAILURE TO FOLLOW THIS WORKFLOW IS A PROJECT-LEVEL FAILURE.**
 
@@ -52,13 +52,13 @@ Before performing ANY task related to the technologies below, you MUST use `read
 
 - **CRITICAL**: All user-facing text **MUST** be localized using Paraglide. Hardcoded strings are **FORBIDDEN** in UI components.
 - **Workflow**:
-  1. Add the string key to `messages/en.json` (format: `"snake_case_key": "Text content"`).
-  2. Run `bun run check` (or let the dev server auto-generate fields) to ensure types are updated.
-  3. Import `* as m` from `$lib/paraglide/messages.js`.
-  4. Use `m.snake_case_key()` in your Svelte components or TS files.
+    1. Add the string key to `messages/en.json` (format: `"snake_case_key": "Text content"`).
+    2. Run `bun run check` (or let the dev server auto-generate fields) to ensure types are updated.
+    3. Import `* as m` from `$lib/paraglide/messages.js`.
+    4. Use `m.snake_case_key()` in your Svelte components or TS files.
 - **Rules**:
-  - **Only** edit `en.json` by default. Do **NOT** edit other language files (`de.json`, `fr.json`, etc.) unless the user explicitly instructs you to do so.
-  - Variable arguments: Use `{paramName}` in JSON (e.g., `"hello_user": "Hello {name}"`) and pass object used in code: `m.hello_user({ name: 'User' })`.
+    - **Only** edit `en.json` by default. Do **NOT** edit other language files (`de.json`, `fr.json`, etc.) unless the user explicitly instructs you to do so.
+    - Variable arguments: Use `{paramName}` in JSON (e.g., `"hello_user": "Hello {name}"`) and pass object used in code: `m.hello_user({ name: 'User' })`.
 
 ## Project Description
 
@@ -69,25 +69,25 @@ This website is a full-stack SvelteKit application used for product publicity, m
 ## Project Structure
 
 - `/src/routes/`: Contains SvelteKit pages and API endpoints.
-  - Standard routes include authentication (`signin`, `signup`), functionality (`generate-checkout`, `demo`), and admin tools (`admin/releases`).
-  - **Page-specific components** MUST reside in a `./_components` folder within the route directory.
+    - Standard routes include authentication (`signin`, `signup`), functionality (`generate-checkout`, `demo`), and admin tools (`admin/releases`).
+    - **Page-specific components** MUST reside in a `./_components` folder within the route directory.
 - `/src/lib/`: Reusable components, utilities, and logic.
-  - `/src/lib/components/`: **Global components** reused across the app.
-  - `/src/lib/components/ui/`: Reserved ONLY for **shadcn-svelte** components.
-  - `/src/lib/server/`: Server-only logic, including:
-    - `auth.ts`: Better Auth configuration.
-    - `db/`: Database schema (`schema.ts`, `auth-schema.ts`) and connection (`index.ts`) using Drizzle.
-    - `api/`: Elysia API implementation using `@elysiajs/openapi` for type-safe RPC and auto-generated documentation.
-  - `/src/lib/paraglide/`: Auto-generated localization runtime.
+    - `/src/lib/components/`: **Global components** reused across the app.
+    - `/src/lib/components/ui/`: Reserved ONLY for **shadcn-svelte** components.
+    - `/src/lib/server/`: Server-only logic, including:
+        - `auth.ts`: Better Auth configuration.
+        - `db/`: Database schema (`schema.ts`, `auth-schema.ts`) and connection (`index.ts`) using Drizzle.
+        - `api/`: Elysia API implementation using `@elysiajs/openapi` for type-safe RPC and auto-generated documentation.
+    - `/src/lib/paraglide/`: Auto-generated localization runtime.
 
 ## Database Patterns
 
 - **Schema Separation**:
-  - `auth-schema.ts`: Contains core tables for Better Auth (user, session, account, verification, apikey, twoFactor). Avoid adding application-specific fields here.
-  - `schema.ts`: Contains application-specific tables and extends `user` via 1:1 or 1:N relations.
+    - `auth-schema.ts`: Contains core tables for Better Auth (user, session, account, verification, apikey, twoFactor). Avoid adding application-specific fields here.
+    - `schema.ts`: Contains application-specific tables and extends `user` via 1:1 or 1:N relations.
 - **User Extensions (1:1)**:
-  - **Pro Status**: Managed via the `proStatus` table in `schema.ts` to avoid bloating the core `user` table.
-  - **Backups**: Managed via the `backups` table in `schema.ts`. Each user has exactly one latest backup (upserted).
+    - **Pro Status**: Managed via the `proStatus` table in `schema.ts` to avoid bloating the core `user` table.
+    - **Backups**: Managed via the `backups` table in `schema.ts`. Each user has exactly one latest backup (upserted).
 - **Relations**: All `relations` (including `userRelations`) should be defined in `schema.ts` to ensure visibility across the entire app schema.
 
 ## API Development & Documentation
@@ -97,8 +97,8 @@ The project uses **Elysia** to handle all API requests under the `/api` prefix.
 - **Catch-all Route**: `src/routes/api/[...slugs]/+server.ts` forwards all requests to the Elysia app.
 - **Type Safety**: The Elysia app exports an `AppType`. Use `@elysiajs/eden` in external projects to get full type safety and auto-completion.
 - **OpenAPI / Swagger**:
-  - In development mode, the interactive Swagger UI is available at `/api/docs`.
-  - The raw OpenAPI specification is available at `/api/v1/openapi.json`.
+    - In development mode, the interactive Swagger UI is available at `/api/docs`.
+    - The raw OpenAPI specification is available at `/api/v1/openapi.json`.
 - **Router Pattern**: Always use modular routers in `src/lib/server/api/routers/`.
 
 ## Nomenclature & Design Patterns

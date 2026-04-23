@@ -84,7 +84,9 @@
 	>
 		<div class="container mx-auto px-4">
 			<div class="mb-20 space-y-4 text-center">
-				<h2 class="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl dark:text-white">
+				<h2
+					class="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl dark:text-white"
+				>
 					{m.features_section_title()}
 				</h2>
 				<p class="mx-auto max-w-2xl text-lg text-slate-700 dark:text-slate-400">
@@ -152,7 +154,9 @@
 		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
 			<div class="flex items-center gap-3">
 				<Shield class="h-7 w-7 text-primary dark:text-amber-500" />
-				<span class="text-xl font-bold tracking-tight dark:text-white">{m.hero_title_app()}</span>
+				<span class="text-xl font-bold tracking-tight dark:text-white"
+					>{m.hero_title_app()}</span
+				>
 			</div>
 			<p class="text-sm text-muted-foreground dark:text-slate-500">
 				&copy; {new Date().getFullYear()}

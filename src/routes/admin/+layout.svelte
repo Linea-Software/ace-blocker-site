@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { Shield, LayoutDashboard, Users, ArrowLeft, ChevronDown, ChevronRight } from '@lucide/svelte';
+	import {
+		Shield,
+		LayoutDashboard,
+		Users,
+		ArrowLeft,
+		ChevronDown,
+		ChevronRight
+	} from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils';
 	import { slide } from 'svelte/transition';
@@ -20,7 +27,7 @@
 
 	// Initialize state based on current path
 	let isReleasesExpanded = $state(false);
-	
+
 	$effect(() => {
 		if (page.url.pathname.includes('/admin/releases')) {
 			isReleasesExpanded = true;
@@ -34,9 +41,7 @@
 
 <div class="flex min-h-screen bg-slate-50 dark:bg-[#0B0B0F]">
 	<!-- Admin Sidebar -->
-	<aside
-		class="w-64 border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-[#0B0B0F]"
-	>
+	<aside class="w-64 border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-[#0B0B0F]">
 		<div class="flex h-16 items-center px-6">
 			<a href="/" class="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
 				<Shield class="h-6 w-6 text-amber-500" />
@@ -63,9 +68,9 @@
 			<!-- Accordion Menu for Software Releases -->
 			<div class="pt-1">
 				<button
-					onclick={() => isReleasesExpanded = !isReleasesExpanded}
+					onclick={() => (isReleasesExpanded = !isReleasesExpanded)}
 					class={cn(
-						'w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+						'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors',
 						isReleasesExpanded || page.url.pathname.includes('/admin/releases')
 							? 'bg-amber-500/10 text-amber-600 dark:text-amber-500'
 							: 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900'
@@ -81,17 +86,17 @@
 						<ChevronRight class="h-4 w-4" />
 					{/if}
 				</button>
-				
+
 				{#if isReleasesExpanded}
 					<div class="mt-1 space-y-1" transition:slide={{ duration: 200 }}>
 						{#each releaseLinks as sublink}
 							<a
 								href={sublink.href}
 								class={cn(
-									'block rounded-r-lg py-1.5 text-sm font-medium transition-colors border-l border-border ml-4 pl-4',
+									'ml-4 block rounded-r-lg border-l border-border py-1.5 pl-4 text-sm font-medium transition-colors',
 									isActive(sublink.href)
-										? 'text-amber-500 border-amber-500 bg-amber-500/5'
-										: 'text-muted-foreground hover:text-foreground hover:border-slate-400'
+										? 'border-amber-500 bg-amber-500/5 text-amber-500'
+										: 'text-muted-foreground hover:border-slate-400 hover:text-foreground'
 								)}
 							>
 								{sublink.label}
@@ -101,7 +106,7 @@
 				{/if}
 			</div>
 
-			<div class="pt-4 mt-4 border-t border-slate-200 dark:border-slate-800">
+			<div class="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800">
 				<a
 					href="/"
 					class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900"

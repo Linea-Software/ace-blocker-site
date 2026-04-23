@@ -25,9 +25,9 @@
 	let isProModalOpen = $state(false);
 	let selectedUserId = $state<string | null>(null);
 
-	let selectedUnit = $state("Months");
+	let selectedUnit = $state('Months');
 	const selectedUnitLabel = $derived(
-		["Days", "Months", "Years"].find((u) => u === selectedUnit) ?? "Select unit"
+		['Days', 'Months', 'Years'].find((u) => u === selectedUnit) ?? 'Select unit'
 	);
 
 	function isPro(user: any) {
@@ -83,7 +83,9 @@
 					<Table.Row>
 						<Table.Cell>
 							<div class="flex flex-col">
-								<span class="font-bold text-slate-900 dark:text-white">{user.name}</span>
+								<span class="font-bold text-slate-900 dark:text-white"
+									>{user.name}</span
+								>
 								<span class="flex items-center gap-1 text-xs text-slate-500">
 									<Mail class="h-3 w-3" />
 									{user.email}
@@ -91,7 +93,8 @@
 							</div>
 						</Table.Cell>
 						<Table.Cell>
-							<Badge variant="outline" class="capitalize">{user.role ?? 'user'}</Badge>
+							<Badge variant="outline" class="capitalize">{user.role ?? 'user'}</Badge
+							>
 						</Table.Cell>
 						<Table.Cell>
 							{#if user.banned}
@@ -117,7 +120,8 @@
 							{:else}
 								<Badge
 									variant="outline"
-									class="border-slate-200 text-slate-400 dark:border-slate-800">Free</Badge
+									class="border-slate-200 text-slate-400 dark:border-slate-800"
+									>Free</Badge
 								>
 							{/if}
 						</Table.Cell>
@@ -127,7 +131,10 @@
 						<Table.Cell class="text-right">
 							<DropdownMenu.Root>
 								<DropdownMenu.Trigger
-									class={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'h-8 w-8')}
+									class={cn(
+										buttonVariants({ variant: 'ghost', size: 'icon' }),
+										'h-8 w-8'
+									)}
 								>
 									<MoreHorizontal class="h-4 w-4" />
 									<span class="sr-only">Open menu</span>
@@ -146,11 +153,22 @@
 										Grant Free Pro
 									</DropdownMenu.Item>
 
-									<form method="POST" action="/api/v1/admin/users/toggle-status" use:enhance>
+									<form
+										method="POST"
+										action="/api/v1/admin/users/toggle-status"
+										use:enhance
+									>
 										<input type="hidden" name="userId" value={user.id} />
-										<input type="hidden" name="isBanned" value={user.banned?.toString()} />
+										<input
+											type="hidden"
+											name="isBanned"
+											value={user.banned?.toString()}
+										/>
 										<DropdownMenu.Item>
-											<button type="submit" class="flex w-full items-center gap-2">
+											<button
+												type="submit"
+												class="flex w-full items-center gap-2"
+											>
 												{#if user.banned}
 													<ShieldCheck class="h-4 w-4 text-emerald-500" />
 													Restore User
@@ -164,12 +182,19 @@
 
 									<DropdownMenu.Separator />
 
-									<form method="POST" action="/api/v1/admin/users/delete" use:enhance>
+									<form
+										method="POST"
+										action="/api/v1/admin/users/delete"
+										use:enhance
+									>
 										<input type="hidden" name="userId" value={user.id} />
 										<DropdownMenu.Item
 											class="focus:text-destructive-foreground text-destructive focus:bg-destructive"
 										>
-											<button type="submit" class="flex w-full items-center gap-2">
+											<button
+												type="submit"
+												class="flex w-full items-center gap-2"
+											>
 												<Trash2 class="h-4 w-4" />
 												Delete User
 											</button>
@@ -204,15 +229,18 @@
 			<div class="grid gap-4 py-4">
 				<div class="grid grid-cols-4 items-center gap-4">
 					<Label for="duration" class="text-right">Duration</Label>
-					<Input id="duration" name="duration" type="number" min="1" required class="col-span-3" />
+					<Input
+						id="duration"
+						name="duration"
+						type="number"
+						min="1"
+						required
+						class="col-span-3"
+					/>
 				</div>
 				<div class="grid grid-cols-4 items-center gap-4">
 					<Label for="unit" class="text-right">Unit</Label>
-					<Select.Root
-						type="single"
-						name="unit"
-						bind:value={selectedUnit}
-					>
+					<Select.Root type="single" name="unit" bind:value={selectedUnit}>
 						<Select.Trigger class="col-span-3">
 							{selectedUnitLabel}
 						</Select.Trigger>

@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ url, request }) => {
 	});
 
 	return {
-		users: users.map(u => ({
+		users: users.map((u) => ({
 			...u,
 			proExpiration: u.proStatus?.expiration,
 			proStatusCachedAt: u.proStatus?.cachedAt

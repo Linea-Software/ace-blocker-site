@@ -3,7 +3,7 @@ import { db } from './db';
 import { user, proStatus } from './db/schema';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
-import { LRUCache } from 'lru-cache'
+import { LRUCache } from 'lru-cache';
 
 // ---------------------------------------------------------------------------
 // Two-level cache for pro status:
@@ -24,7 +24,7 @@ interface CacheEntry {
 // user id to cache entry
 const memoryCache = new LRUCache<string, CacheEntry>({
 	max: 5000,
-	ttl: PRO_CACHE_TTL_MS,
+	ttl: PRO_CACHE_TTL_MS
 });
 
 /** Bust the L1 in-memory cache for a given email (called by webhook handlers). */
@@ -32,9 +32,7 @@ export function invalidateProCache(userId: string): void {
 	memoryCache.delete(userId);
 }
 
-export async function isUserPro(
-	userId: string
-) : Promise<boolean> {
+export async function isUserPro(userId: string): Promise<boolean> {
 	const now = new Date();
 
 	// We're first checking for the cache has the data we need
@@ -56,8 +54,7 @@ export async function isUserPro(
 		return false;
 	}
 
-	return true
-
+	return true;
 }
 
 /**
@@ -65,7 +62,9 @@ export async function isUserPro(
  * @param userId - The user ID to check
  * @returns An object with isPro boolean and expirationDate (null if not pro)
  */
-export async function getProStatus(userId: string): Promise<{ isPro: boolean; expirationDate: Date | null }> {
+export async function getProStatus(
+	userId: string
+): Promise<{ isPro: boolean; expirationDate: Date | null }> {
 	const now = new Date();
 
 	// Check L1 cache first
@@ -110,7 +109,8 @@ export async function updateProExpiration(email: string, nextBillingDate: Date):
 				expiration: nextBillingDate
 			};
 
-			await db.insert(proStatus)
+			await db
+				.insert(proStatus)
 				.values(proData)
 				.onConflictDoUpdate({
 					target: proStatus.userId,
@@ -120,7 +120,9 @@ export async function updateProExpiration(email: string, nextBillingDate: Date):
 					}
 				});
 			invalidateProCache(email);
-			console.log(`✅ Pro status activated via webhook for ${email} until ${nextBillingDate.toISOString()}`);
+			console.log(
+				`✅ Pro status activated via webhook for ${email} until ${nextBillingDate.toISOString()}`
+			);
 		}
 	} catch (e) {
 		console.error(`❌ Failed to update pro expiration for ${email}:`, e);
@@ -135,7 +137,8 @@ export async function clearProExpiration(email: string): Promise<void> {
 		});
 
 		if (userRow) {
-			await db.update(proStatus)
+			await db
+				.update(proStatus)
 				.set({ cachedAt: new Date(), expiration: null })
 				.where(eq(proStatus.userId, userRow.id));
 			invalidateProCache(email);

@@ -25,12 +25,18 @@ export const GET: RequestHandler = async ({ params }) => {
 	}
 
 	if (arch === 'windows_x64') {
-		throw redirect(302, new URL('/' + encodeURIComponent('Ace Blocker Installer.exe'), baseUrl));
+		throw redirect(
+			302,
+			new URL('/' + encodeURIComponent('Ace Blocker Installer.exe'), baseUrl)
+		);
 	}
 
 	if (arch.includes('macos')) {
 		// Redirect to a placeholder for now or a specific macOS build if available
-		throw redirect(302, new URL('/' + encodeURIComponent('Ace Blocker Installer.dmg'), baseUrl));
+		throw redirect(
+			302,
+			new URL('/' + encodeURIComponent('Ace Blocker Installer.dmg'), baseUrl)
+		);
 	}
 
 	throw error(

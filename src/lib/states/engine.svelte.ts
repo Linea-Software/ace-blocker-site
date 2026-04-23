@@ -1,6 +1,6 @@
 // the engine injects these variables in the site
 export const engineConfig = $state({
-    linkState: 'idle' as 'idle' | 'loading' | 'success' | 'error'
+	linkState: 'idle' as 'idle' | 'loading' | 'success' | 'error'
 });
 
 // if !isPro and in the server there's a pro licence,

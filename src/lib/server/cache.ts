@@ -15,7 +15,9 @@ let latestSiteLists: Map<string, typeof siteList.$inferSelect> = new Map();
 
 // ============ INSTALLER ============
 
-export async function loadLatestInstaller(): Promise<typeof aceBlockerInstaller.$inferSelect | null> {
+export async function loadLatestInstaller(): Promise<
+	typeof aceBlockerInstaller.$inferSelect | null
+> {
 	const result = await db
 		.select()
 		.from(aceBlockerInstaller)
@@ -33,7 +35,9 @@ export function getLatestInstaller(): typeof aceBlockerInstaller.$inferSelect | 
 
 // ============ RESISTANCE SCRIPTS ============
 
-export async function loadLatestResistanceScript(): Promise<typeof resistanceModeScripts.$inferSelect | null> {
+export async function loadLatestResistanceScript(): Promise<
+	typeof resistanceModeScripts.$inferSelect | null
+> {
 	const result = await db
 		.select()
 		.from(resistanceModeScripts)
@@ -51,7 +55,9 @@ export function getLatestResistanceScript(): typeof resistanceModeScripts.$infer
 
 // ============ TRACKING SCRIPTS ============
 
-export async function loadLatestTrackingScript(): Promise<typeof trackingScripts.$inferSelect | null> {
+export async function loadLatestTrackingScript(): Promise<
+	typeof trackingScripts.$inferSelect | null
+> {
 	const result = await db
 		.select()
 		.from(trackingScripts)
@@ -70,10 +76,7 @@ export function getLatestTrackingScript(): typeof trackingScripts.$inferSelect |
 // ============ SITE LISTS ============
 
 export async function loadLatestSiteLists(): Promise<Map<string, typeof siteList.$inferSelect>> {
-	const results = await db
-		.select()
-		.from(siteList)
-		.where(eq(siteList.canBeDownloaded, true));
+	const results = await db.select().from(siteList).where(eq(siteList.canBeDownloaded, true));
 
 	latestSiteLists = new Map(results.map((item) => [item.id, item]));
 	return latestSiteLists;
@@ -86,19 +89,27 @@ export function getLatestSiteLists(): Map<string, typeof siteList.$inferSelect> 
 // ============ CACHE INVALIDATION HELPERS ============
 // These reload the cache from database and return the new values
 
-export async function invalidateInstallerCache(): Promise<typeof aceBlockerInstaller.$inferSelect | null> {
+export async function invalidateInstallerCache(): Promise<
+	typeof aceBlockerInstaller.$inferSelect | null
+> {
 	return await loadLatestInstaller();
 }
 
-export async function invalidateResistanceCache(): Promise<typeof resistanceModeScripts.$inferSelect | null> {
+export async function invalidateResistanceCache(): Promise<
+	typeof resistanceModeScripts.$inferSelect | null
+> {
 	return await loadLatestResistanceScript();
 }
 
-export async function invalidateTrackingCache(): Promise<typeof trackingScripts.$inferSelect | null> {
+export async function invalidateTrackingCache(): Promise<
+	typeof trackingScripts.$inferSelect | null
+> {
 	return await loadLatestTrackingScript();
 }
 
-export async function invalidateSiteListsCache(): Promise<Map<string, typeof siteList.$inferSelect>> {
+export async function invalidateSiteListsCache(): Promise<
+	Map<string, typeof siteList.$inferSelect>
+> {
 	return await loadLatestSiteLists();
 }
 

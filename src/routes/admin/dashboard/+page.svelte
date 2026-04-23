@@ -46,7 +46,7 @@
 			<Card.Root>
 				<Card.Header class="flex flex-row items-center justify-between pb-2">
 					<Card.Title class="text-sm font-medium">{stat.title}</Card.Title>
-					<stat.icon class={cn("h-4 w-4", stat.color)} />
+					<stat.icon class={cn('h-4 w-4', stat.color)} />
 				</Card.Header>
 				<Card.Content>
 					<div class="text-2xl font-black">{stat.value}</div>

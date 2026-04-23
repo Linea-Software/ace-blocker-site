@@ -59,7 +59,9 @@
 		<div
 			class="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-40"
 		>
-			<div class="absolute h-[600px] w-[600px] rounded-full bg-amber-500/10 blur-[150px]"></div>
+			<div
+				class="absolute h-[600px] w-[600px] rounded-full bg-amber-500/10 blur-[150px]"
+			></div>
 			<div
 				class="absolute h-[400px] w-[400px] translate-x-32 translate-y-32 rounded-full bg-blue-600/10 blur-[120px]"
 			></div>
@@ -78,7 +80,9 @@
 		<div class="relative z-10 container mx-auto px-4">
 			<div class="mx-auto grid max-w-5xl grid-cols-1 items-center gap-16 md:grid-cols-2">
 				<div class="space-y-6">
-					<h2 class="text-3xl font-black tracking-tight text-slate-900 md:text-4xl dark:text-white">
+					<h2
+						class="text-3xl font-black tracking-tight text-slate-900 md:text-4xl dark:text-white"
+					>
 						{m.about_mission_title()}
 					</h2>
 					<p class="text-lg leading-relaxed text-slate-600 dark:text-slate-400">
@@ -123,7 +127,9 @@
 					<Cpu class="h-4 w-4" />
 					{m.about_tech_badge()}
 				</div>
-				<h2 class="text-3xl font-black tracking-tight text-slate-900 md:text-4xl dark:text-white">
+				<h2
+					class="text-3xl font-black tracking-tight text-slate-900 md:text-4xl dark:text-white"
+				>
 					{m.about_tech_title()}
 				</h2>
 				<p class="mx-auto max-w-2xl text-lg text-slate-600 dark:text-slate-400">
@@ -237,7 +243,9 @@
 				</div>
 
 				<div class="relative z-10 mx-auto max-w-3xl space-y-6">
-					<h2 class="text-3xl font-black tracking-tight text-slate-900 md:text-5xl dark:text-white">
+					<h2
+						class="text-3xl font-black tracking-tight text-slate-900 md:text-5xl dark:text-white"
+					>
 						{m.about_cta_title()}
 					</h2>
 					<p class="text-lg text-slate-700 md:text-xl dark:text-slate-400">
@@ -280,11 +288,17 @@
 				&copy; {new Date().getFullYear()}
 				{m.footer_rights_suffix()}
 			</p>
-			<div class="flex items-center gap-8 text-sm font-bold text-slate-600 dark:text-slate-400">
-				<a href="/terms" class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
+			<div
+				class="flex items-center gap-8 text-sm font-bold text-slate-600 dark:text-slate-400"
+			>
+				<a
+					href="/terms"
+					class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
 					>{m.footer_terms()}</a
 				>
-				<a href="/privacy" class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
+				<a
+					href="/privacy"
+					class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
 					>{m.footer_privacy()}</a
 				>
 			</div>

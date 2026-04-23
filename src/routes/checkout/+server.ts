@@ -23,7 +23,10 @@ export async function GET({ url, locals, request }) {
 	try {
 		products = JSON.parse(rawProducts);
 	} catch (e) {
-		return json({ error: 'Server configuration error: Invalid products format' }, { status: 500 });
+		return json(
+			{ error: 'Server configuration error: Invalid products format' },
+			{ status: 500 }
+		);
 	}
 
 	const product = products.find((p: any) => p.slug === slug);

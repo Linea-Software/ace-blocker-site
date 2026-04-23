@@ -95,7 +95,9 @@ async function main() {
 		!envContent.includes('DODO_PAYMENTS_API_KEY') ||
 		envContent.includes('DODO_PAYMENTS_API_KEY=""')
 	) {
-		console.warn('⚠️  DODO_PAYMENTS_API_KEY is not set. Please add it to your .env file manually.');
+		console.warn(
+			'⚠️  DODO_PAYMENTS_API_KEY is not set. Please add it to your .env file manually.'
+		);
 	}
 
 	if (isNewFile || needsUpdate) {

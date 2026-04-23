@@ -52,29 +52,29 @@ Secure your SSH connection by disabling root login and limiting login attempts.
 
 1. Open the SSH configuration file:
 
-   ```bash
-   sudo nano /etc/ssh/sshd_config
-   ```
+    ```bash
+    sudo nano /etc/ssh/sshd_config
+    ```
 
 2. Ensure the following settings are configured:
 
-   ```ini
-   # Disable root login
-   PermitRootLogin no
+    ```ini
+    # Disable root login
+    PermitRootLogin no
 
-   # Limit authentication attempts
-   MaxAuthTries 3
+    # Limit authentication attempts
+    MaxAuthTries 3
 
-   # Disable password authentication (FORCE SSH keys)
-   PasswordAuthentication no
-   ```
+    # Disable password authentication (FORCE SSH keys)
+    PasswordAuthentication no
+    ```
 
-   **Important**: Only set `PasswordAuthentication no` if you have confirmed that your SSH key login works for the new user!
+    **Important**: Only set `PasswordAuthentication no` if you have confirmed that your SSH key login works for the new user!
 
 3. Restart the SSH service to apply changes:
-   ```bash
-   sudo systemctl restart ssh
-   ```
+    ```bash
+    sudo systemctl restart ssh
+    ```
 
 ### Setup Firewall
 
@@ -170,21 +170,21 @@ This file defines the services required for the application.
 
 ```yaml
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: ace-blocker-db
-    restart: always
-    ports:
-      - 5432:5432
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword}
-      POSTGRES_DB: ${POSTGRES_DB:-aceblocker}
-    volumes:
-      - pgdata:/var/lib/postgresql
+    db:
+        image: postgres:16-alpine
+        container_name: ace-blocker-db
+        restart: always
+        ports:
+            - 5432:5432
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER:-postgres}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword}
+            POSTGRES_DB: ${POSTGRES_DB:-aceblocker}
+        volumes:
+            - pgdata:/var/lib/postgresql
 
 volumes:
-  pgdata:
+    pgdata:
 ```
 
 > [!WARNING]
@@ -214,16 +214,16 @@ To run both the app and the DB in Docker, you can add an `app` service to your `
 
 ```yaml
 app:
-  build: .
-  restart: always
-  ports:
-    - 3000:3000
-  depends_on:
-    - db
-  env_file:
-    - .env
-  environment:
-    DATABASE_URL: postgres://postgres:mysecretpassword@db:5432/aceblocker
+    build: .
+    restart: always
+    ports:
+        - 3000:3000
+    depends_on:
+        - db
+    env_file:
+        - .env
+    environment:
+        DATABASE_URL: postgres://postgres:mysecretpassword@db:5432/aceblocker
 ```
 
 ---
@@ -367,9 +367,9 @@ After obtaining the certificates, update your Nginx configuration to enable HTTP
 
 1. Open your configuration:
 
-   ```bash
-   sudo nano /etc/nginx/sites-available/ace-blocker
-   ```
+    ```bash
+    sudo nano /etc/nginx/sites-available/ace-blocker
+    ```
 
 2. Replace the content with this robust SSL configuration:
 

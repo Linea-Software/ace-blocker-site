@@ -1,2 +1,2 @@
 //export * from "./price-seeder";
-export * from "./user-seeder";
+export * from './user-seeder';
