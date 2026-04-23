@@ -1,17 +1,18 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { randomBytes } from 'node:crypto';
-import { spawnSync } from 'node:child_process';
+import { $ } from 'bun';
+import { join } from 'path';
 
-function runCommand(command: string, args: string[]) {
+async function runCommand(command: string, args: string[]) {
 	// Use sudo on Linux for docker and apt commands
 	const isLinux = process.platform === 'linux';
 	const useSudo = isLinux && (command === 'docker' || command === 'apt');
-	const cmd = useSudo ? `sudo ${command}` : command;
 
-	console.log(`🚀 Running: ${cmd} ${args.join(' ')}...`);
-	const result = spawnSync(cmd, args, { stdio: 'inherit', shell: true });
-	return result.status === 0;
+	console.log(`🚀 Running: ${useSudo ? 'sudo ' : ''}${command} ${args.join(' ')}...`);
+
+	const result = useSudo
+		? await $`sudo ${command} ${args}`.nothrow()
+		: await $`${command} ${args}`.nothrow();
+
+	return result.exitCode === 0;
 }
 
 async function main() {
@@ -20,11 +21,11 @@ async function main() {
 	// 0. Install system dependencies (Linux only)
 	if (isLinux) {
 		console.log('\n🛠️  Checking system dependencies...');
-		const hasNss = spawnSync('dpkg', ['-l', 'libnss3-tools'], { stdio: 'ignore' }).status === 0;
+		const hasNss = (await $`dpkg -l libnss3-tools`.nothrow().quiet()).exitCode === 0;
 		if (!hasNss) {
 			console.log('📦 Installing libnss3-tools (required for SSL)...');
-			runCommand('apt', ['update']);
-			runCommand('apt', ['install', '-y', 'libnss3-tools']);
+			await runCommand('apt', ['update']);
+			await runCommand('apt', ['install', '-y', 'libnss3-tools']);
 		} else {
 			console.log('✅ libnss3-tools is already installed.');
 		}
@@ -33,7 +34,7 @@ async function main() {
 	const envPath = join(rootDir, '.env');
 	const envExamplePath = join(rootDir, '.env.example');
 
-	if (!existsSync(envExamplePath)) {
+	if (!(await Bun.file(envExamplePath).exists())) {
 		console.error('❌ .env.example not found!');
 		process.exit(1);
 	}
@@ -41,12 +42,12 @@ async function main() {
 	let envContent = '';
 	let isNewFile = false;
 
-	if (existsSync(envPath)) {
+	if (await Bun.file(envPath).exists()) {
 		console.log('ℹ️  .env file already exists. Checking configuration...');
-		envContent = readFileSync(envPath, 'utf-8');
+		envContent = await Bun.file(envPath).text();
 	} else {
 		console.log('ℹ️  Creating .env file from .env.example...');
-		envContent = readFileSync(envExamplePath, 'utf-8');
+		envContent = await Bun.file(envExamplePath).text();
 		isNewFile = true;
 	}
 
@@ -58,7 +59,7 @@ async function main() {
 
 	if (!match || match[1].trim() === '' || match[1].trim() === '""' || match[1].trim() === "''") {
 		console.log('🔑 Generating BETTER_AUTH_SECRET...');
-		const secret = randomBytes(32).toString('hex'); // 64 chars hex
+		const secret = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('hex');
 
 		if (match) {
 			// Replace existing empty definition
@@ -101,7 +102,7 @@ async function main() {
 	}
 
 	if (isNewFile || needsUpdate) {
-		writeFileSync(envPath, envContent);
+		await Bun.write(envPath, envContent);
 		console.log(`✅ ${isNewFile ? 'Created' : 'Updated'} .env file successfully.`);
 	} else {
 		console.log('✨ .env is already up to date.');
@@ -111,7 +112,7 @@ async function main() {
 	console.log('\n🗄️  Setting up database...');
 
 	// Ensure docker is running
-	if (!runCommand('docker', ['compose', 'up', '-d'])) {
+	if (!(await runCommand('docker', ['compose', 'up', '-d']))) {
 		console.warn('⚠️  Failed to start docker containers. Please make sure Docker is running.');
 	} else {
 		console.log('✅ Docker containers are running.');
@@ -122,7 +123,7 @@ async function main() {
 
 		// Push schema
 		console.log('📦 Applying database migrations...');
-		if (!runCommand('bun', ['run', 'db:migrate'])) {
+		if (!(await runCommand('bun', ['run', 'db:migrate']))) {
 			console.error('❌ Failed to apply database migrations.');
 		} else {
 			console.log('✅ Database migrations applied successfully.');

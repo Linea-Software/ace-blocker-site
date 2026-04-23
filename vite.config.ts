@@ -25,7 +25,7 @@ const config: UserConfigExport = async ({ mode }) => {
 				server.https = {
 					...certificate,
 					allowHTTP1: true
-				} as any;
+				};
 				if (!fs.existsSync(path.dirname(certPath))) {
 					fs.mkdirSync(path.dirname(certPath), { recursive: true });
 				}
