@@ -101,6 +101,10 @@ The project uses **Elysia** to handle all API requests under the `/api` prefix.
     - The raw OpenAPI specification is available at `/api/v1/openapi.json`.
 - **Router Pattern**: Always use modular routers in `src/lib/server/api/routers/`.
 
+## TypeScript & Type Safety
+
+- **Strict Typing**: The use of the `any` keyword is **STRICTLY PROHIBITED**. Using `any` defeats the purpose of TypeScript and bypasses the safety guarantees it provides. Always define proper interfaces or types for your data and variables. If a library has missing types, use `@ts-expect-error` with a descriptive comment instead of `any`, or define a local shim.
+
 ## Nomenclature & Design Patterns
 
 - **Svelte Components**: All `.svelte` files MUST use `UpperCamelCase` naming convention (e.g., `Button.svelte`, `UserCard.svelte`).
