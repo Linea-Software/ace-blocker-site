@@ -26,7 +26,7 @@ export function getSiteListURL(
 		return err(CDNErrorType.SiteListNotFound);
 	}
 
-	let siteListPath = new URL('/' + latestRecord.fileName, siteListsBasePath);
+	let siteListPath = new URL(latestRecord.fileName, siteListsBasePath);
 
 	if (latestRecord.requiresProSubscription) {
 		if (!isUserPro) {
@@ -53,7 +53,7 @@ export function getResistanceModeScriptsURL(): Result<{ url: URL; version: strin
 	}
 
 	let resistanceScriptsPath = new URL(
-		`/${latestRecord.version}/${latestRecord.fileName}`,
+		`${latestRecord.version}/${latestRecord.fileName}`,
 		resistanceModeScriptBasePath
 	);
 
@@ -75,7 +75,7 @@ export function getTrackingScriptsURL(): Result<{ url: URL; version: string }, C
 	}
 
 	let trackingScriptsPath = new URL(
-		`/${latestRecord.version}/${latestRecord.fileName}`,
+		`${latestRecord.version}/${latestRecord.fileName}`,
 		trackingScriptsBasePath
 	);
 
@@ -95,7 +95,7 @@ export function getInstallerURL(
 	}
 
 	let installerPath = new URL(
-		`/${latestRecord.version}/${latestRecord.os}/${latestRecord.architecture}/${latestRecord.fileName}`,
+		`${latestRecord.version}/${latestRecord.os}/${latestRecord.architecture}/${latestRecord.fileName}`,
 		installersBasePath
 	);
 

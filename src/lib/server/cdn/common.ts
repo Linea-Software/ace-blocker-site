@@ -39,30 +39,31 @@ const securityKey = env.BUNNY_SECURITY_KEY;
 // === Base paths/URLs declarations === //
 
 // on dev mode we're going with /dev
-const storageZoneBase = new URL(`https://${env.BUNNY_CDN_BASE_URL}${dev ? '/dev' : ''}`);
+// Trailing slash is required so that new URL(relative, base) appends rather than replaces the last segment.
+const storageZoneBase = new URL(`https://${env.BUNNY_CDN_BASE_URL}/${dev ? 'dev/' : ''}`);
 
-export const siteListsBasePath = new URL(CDNObjectPath.SiteLists, storageZoneBase);
+export const siteListsBasePath = new URL(CDNObjectPath.SiteLists + '/', storageZoneBase);
 export const resistanceModeScriptBasePath = new URL(
-	CDNObjectPath.ResistanceModeScripts,
+	CDNObjectPath.ResistanceModeScripts + '/',
 	storageZoneBase
 );
-export const trackingScriptsBasePath = new URL(CDNObjectPath.TrackingScripts, storageZoneBase);
-export const installersBasePath = new URL(CDNObjectPath.Installer, storageZoneBase);
+export const trackingScriptsBasePath = new URL(CDNObjectPath.TrackingScripts + '/', storageZoneBase);
+export const installersBasePath = new URL(CDNObjectPath.Installer + '/', storageZoneBase);
 
 // === Upload base paths === //
 const bunnyUploadBase = new URL(
-	`https://storage.bunnycdn.com/${env.BUNNY_STORAGE_ZONE}${dev ? '/dev' : ''}`
+	`https://storage.bunnycdn.com/${env.BUNNY_STORAGE_ZONE}/${dev ? 'dev/' : ''}`
 );
 
 console.log('Bunny upload base URL: ' + bunnyUploadBase.toString());
 
-export const trackingScriptsUploadBase = new URL(CDNObjectPath.TrackingScripts, bunnyUploadBase);
-export const siteListsUploadBase = new URL(CDNObjectPath.SiteLists, bunnyUploadBase);
+export const trackingScriptsUploadBase = new URL(CDNObjectPath.TrackingScripts + '/', bunnyUploadBase);
+export const siteListsUploadBase = new URL(CDNObjectPath.SiteLists + '/', bunnyUploadBase);
 export const resistanceModeScriptsUploadBase = new URL(
-	CDNObjectPath.ResistanceModeScripts,
+	CDNObjectPath.ResistanceModeScripts + '/',
 	bunnyUploadBase
 );
-export const installersUploadBase = new URL(CDNObjectPath.Installer, bunnyUploadBase);
+export const installersUploadBase = new URL(CDNObjectPath.Installer + '/', bunnyUploadBase);
 
 export const trackingScriptsFileName = 'tracking-scripts.zip';
 export const resistanceModeScriptsFileName = 'resistance-mode-scripts.zip';
