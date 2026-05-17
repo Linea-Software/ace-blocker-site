@@ -33,6 +33,7 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 
 export const handle: Handle = sequence(handleParaglide, handleAuth);
 
-// Run seeder and initialize cache
-seedDatabase();
-initializeCache();
+export async function init() {
+	await seedDatabase();
+	await initializeCache();
+}
