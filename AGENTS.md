@@ -19,7 +19,7 @@ ALWAYS use **Bun** for all package management and script execution tasks.
 
 ## Self-Maintenance (IMPORTANT)
 
-- **Maintain Context**: You MUST automatically edit this `GEMINI.md` file whenever significant changes occur in the project (e.g., new tools added, new core documentation links found, project structure changes, or new patterns established). Keep this document up-to-date as the "Source of Truth" for your behavior in this project.
+- **Maintain Context**: You MUST automatically edit this `AGENTS.md` file whenever significant changes occur in the project (e.g., new tools added, new core documentation links found, project structure changes, or new patterns established). Keep this document up-to-date as the "Source of Truth" for your behavior in this project.
 
 ## Core Documentation & Tech Stack
 
@@ -125,7 +125,62 @@ Use `bun run <script>` for these tasks:
 
 ## Agent Skills
 
-You have specialized **Skills** at your disposal located in `./.agent/skills/`. Before performing complex tasks (like setting up Auth, API logic, or Security), you should check these directories for `SKILL.md` files. These files contain project-specific patterns, instructions, and examples that MUST be followed.
+You have specialized **Skills** at your disposal located in `./.agents/skills/` (managed by `npx skills`). Before performing complex tasks, you should check these directories for `SKILL.md` files. These files contain project-specific patterns, instructions, and examples that MUST be followed.
+
+The following skills are installed for all agents:
+
+### Core Framework
+- **`svelte5-best-practices`** (`ejirocodes/agent-skills`) — Svelte 5 runes, patterns, and best practices.
+- **`sveltekit-structure`** (`spences10/svelte-skills-kit`) — SvelteKit project structure conventions.
+- **`sveltekit-data-flow`** (`spences10/svelte-skills-kit`) — SvelteKit data loading, forms, and actions.
+- **`sveltekit-svelte5-tailwind-skill`** (`claude-skills/sveltekit-svelte5-tailwind-skill`) — Combined SvelteKit + Svelte 5 + Tailwind patterns.
+
+### Database
+- **`drizzle-orm-patterns`** (`giuseppe-trisciuoglio/developer-kit`) — Drizzle ORM schema design, queries, and migrations.
+
+### Authentication
+- **`better-auth-best-practices`** (`better-auth/skills`) — Core Better Auth setup and configuration.
+- **`better-auth-security-best-practices`** (`better-auth/skills`) — Security hardening for Better Auth.
+- **`email-and-password-best-practices`** (`better-auth/skills`) — Email/password authentication patterns.
+
+### API & Documentation
+- **`elysiajs`** (`elysiajs/skills`) — Elysia API framework patterns.
+- **`openapi-spec-generation`** (`wshobson/agents`) — OpenAPI/Swagger spec generation.
+
+### UI & Styling
+- **`shadcn`** (`shadcn/ui`) — shadcn UI component patterns.
+- **`tailwind-design-system`** (`wshobson/agents`) — Tailwind CSS design system principles.
+- **`tailwind-v4-shadcn`** (`secondsky/claude-skills`) — Tailwind v4 + shadcn integration.
+
+### Validation
+- **`zod`** (`pproenca/dot-skills`) — Zod schema validation patterns.
+
+### Runtime
+- **`bun-runtime`** (`affaan-m/everything-claude-code`) — Bun runtime best practices.
+
+### Localization
+- **`paraglide-js-internationalization-i18n`** (`oimiragieo/agent-studio`) — Paraglide JS i18n patterns.
+
+### Infrastructure
+- **`docker-expert`** (`sickn33/antigravity-awesome-skills`) — Docker containerization and Compose patterns.
+
+### Payments (DodoPayments)
+- **`dodo-best-practices`** (`dodopayments/skills`) — DodoPayments SDK best practices.
+- **`checkout-integration`** (`dodopayments/skills`) — DodoPayments checkout integration.
+- **`subscription-integration`** (`dodopayments/skills`) — DodoPayments subscription management.
+
+### Testing
+- **`vitest`** (`antfu/skills`) — Vitest unit testing patterns.
+- **`playwright-cli`** (`microsoft/playwright-cli`) — Playwright CLI usage.
+- **`playwright-best-practices`** (`currents-dev/playwright-best-practices-skill`) — Playwright E2E best practices.
+- **`webapp-testing`** (`anthropics/skills`) — General web application testing strategies.
+
+### TypeScript
+- **`typescript-advanced-types`** (`wshobson/agents`) — Advanced TypeScript type patterns.
+
+### Git & Code Quality
+- **`git-commit`** (`github/awesome-copilot`) — Conventional commit message patterns.
+- **`eslint-prettier-config`** (`patricio0312rev/skills`) — ESLint + Prettier configuration and usage.
 
 ## Svelte MCP Tools usage:
 
