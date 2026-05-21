@@ -15,14 +15,19 @@ COPY . .
 RUN bun run build
 
 # Production image
-FROM oven/bun:latest
+FROM oven/bun:latest AS runtime
 
 WORKDIR /app
 
-# Copy the build output and necessary files from the builder
+# Create non-root user
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+
+# Copy package files and install only production dependencies
+COPY --from=builder /app/package.json /app/bun.lock ./
+RUN bun install --production --frozen-lockfile
+
+# Copy the build output from the builder stage
 COPY --from=builder /app/build ./build
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -30,6 +35,9 @@ ENV PORT=3000
 
 # Expose the port
 EXPOSE 3000
+
+# Switch to non-root user
+USER appuser
 
 # Run the application
 CMD ["bun", "./build/index.js"]
