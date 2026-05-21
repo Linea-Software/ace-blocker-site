@@ -281,11 +281,25 @@ prompt_env "POSTGRES_USER"     "PostgreSQL user:"              "postgres"
 prompt_env "POSTGRES_PASSWORD" "PostgreSQL password:"          ""           "true"
 prompt_env "POSTGRES_DB"       "PostgreSQL database name:"     "aceblocker"
 
-# Auto-derive DATABASE_URL
+# Auto-derive DATABASE_URL (URL-encode the password for safety)
+urlencode() {
+    local encoded=""
+    local c
+    for ((i = 0; i < ${#1}; i++)); do
+        c="${1:$i:1}"
+        case "$c" in
+            [a-zA-Z0-9.~_-]) encoded+="$c" ;;
+            *) printf -v hex '%%%02X' "'$c"; encoded+="$hex" ;;
+        esac
+    done
+    echo "$encoded"
+}
+
 PG_USER=$(grep -oP '^POSTGRES_USER="?\K[^"]+' "$ENV_FILE")
 PG_PASS=$(grep -oP '^POSTGRES_PASSWORD="?\K[^"]+' "$ENV_FILE")
 PG_DB=$(grep -oP '^POSTGRES_DB="?\K[^"]+' "$ENV_FILE")
-DATABASE_URL="postgresql://${PG_USER}:${PG_PASS}@localhost:5432/${PG_DB}"
+PG_PASS_ENCODED=$(urlencode "$PG_PASS")
+DATABASE_URL="postgresql://${PG_USER}:${PG_PASS_ENCODED}@localhost:5432/${PG_DB}"
 sed -i "s|^DATABASE_URL=.*|DATABASE_URL=\"${DATABASE_URL}\"|" "$ENV_FILE"
 ok "DATABASE_URL derived: postgresql://${PG_USER}:*****@localhost:5432/${PG_DB}"
 
