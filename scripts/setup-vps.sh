@@ -60,6 +60,15 @@ if ! id "$USERNAME" &>/dev/null; then
 fi
 usermod -aG sudo "$USERNAME" 2>/dev/null || true
 
+# Grant passwordless sudo (user has no password — created with --disabled-password)
+# This is needed because 'bun run setup' internally calls sudo for apt/docker
+SUDOERS_FILE="/etc/sudoers.d/${USERNAME}"
+if [[ ! -f "$SUDOERS_FILE" ]]; then
+    echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" > "$SUDOERS_FILE"
+    chmod 440 "$SUDOERS_FILE"
+    ok "Passwordless sudo granted for ${USERNAME}."
+fi
+
 if [[ -f /root/.ssh/authorized_keys ]]; then
     mkdir -p "/home/${USERNAME}/.ssh"
     cp /root/.ssh/authorized_keys "/home/${USERNAME}/.ssh/"
