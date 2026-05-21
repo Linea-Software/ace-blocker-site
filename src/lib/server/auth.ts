@@ -16,19 +16,25 @@ if (!env.DODO_PAYMENTS_API_KEY) {
 	throw new Error('DODO_PAYMENTS_API_KEY is not set');
 }
 
-if (!env.DODO_PAYMENTS_PRODUCTS) {
-	throw new Error('DODO_PAYMENTS_PRODUCTS is not set');
-}
-
 if (!env.DODO_PAYMENTS_WEBHOOK_SECRET) {
 	throw new Error('DODO_PAYMENTS_WEBHOOK_SECRET is not set');
 }
 
-const dodoProducts = JSON.parse(env.DODO_PAYMENTS_PRODUCTS) as Product[];
+const isProduction = env.NODE_ENV === 'production';
+
+const dodoProducts: Product[] = isProduction
+	? [
+			{ productId: 'pdt_PUT_PROD_MONTHLY_ID_HERE', slug: 'ace_blocker_monthly' },
+			{ productId: 'pdt_PUT_PROD_YEARLY_ID_HERE', slug: 'ace_blocker_yearly' }
+		]
+	: [
+			{ productId: 'pdt_0NXOnI40qSEVOqAnCUwmm', slug: 'ace_blocker_monthly' },
+			{ productId: 'pdt_0NYXyjMDNixJ55IDOC42c', slug: 'ace_blocker_yearly' }
+		];
 
 export const dodoPayments = new DodoPayments({
 	bearerToken: env.DODO_PAYMENTS_API_KEY,
-	environment: 'test_mode'
+	environment: isProduction ? 'live_mode' : 'test_mode'
 });
 
 export const auth = betterAuth({

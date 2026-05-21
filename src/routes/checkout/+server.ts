@@ -1,6 +1,5 @@
 import { json, redirect } from '@sveltejs/kit';
 import { dodoPayments } from '$lib/server/auth';
-import type { Product } from 'dodopayments/resources';
 
 export async function GET({ url, locals, request }) {
 	if (!locals.session || !locals.user) {
@@ -13,28 +12,24 @@ export async function GET({ url, locals, request }) {
 		return json({ error: 'Product slug is required' }, { status: 400 });
 	}
 
-	// 1. Resolve slug to productId against DODO_PAYMENTS_PRODUCTS
-	const rawProducts = process.env.DODO_PAYMENTS_PRODUCTS;
-	if (!rawProducts) {
-		return json({ error: 'Server configuration error: Products not defined' }, { status: 500 });
-	}
+	// 1. Resolve slug to productId
+	const isProduction = process.env.NODE_ENV === 'production';
+	const products: { productId: string; slug: string }[] = isProduction
+		? [
+				{ productId: 'pdt_PUT_PROD_MONTHLY_ID_HERE', slug: 'ace_blocker_monthly' },
+				{ productId: 'pdt_PUT_PROD_YEARLY_ID_HERE', slug: 'ace_blocker_yearly' }
+			]
+		: [
+				{ productId: 'pdt_0NXOnI40qSEVOqAnCUwmm', slug: 'ace_blocker_monthly' },
+				{ productId: 'pdt_0NYXyjMDNixJ55IDOC42c', slug: 'ace_blocker_yearly' }
+			];
 
-	let products: any[] = [];
-	try {
-		products = JSON.parse(rawProducts);
-	} catch (e) {
-		return json(
-			{ error: 'Server configuration error: Invalid products format' },
-			{ status: 500 }
-		);
-	}
-
-	const product = products.find((p: any) => p.slug === slug);
+	const product = products.find((p) => p.slug === slug);
 	if (!product) {
 		return json({ error: 'Invalid product slug' }, { status: 400 });
 	}
 
-	const productId = product.product_id || product.productId;
+	const productId = product.productId;
 
 	try {
 		// Find Dodo Customer ID by email
