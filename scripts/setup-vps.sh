@@ -50,7 +50,7 @@ info "Domain: ${DOMAIN}   User: ${USERNAME}   App: ${APP_DIR}"
 # ── 1. System Updates & Base Packages ───────────────────────────────────────
 step "1. System Updates & Base Packages"
 apt update -qq && apt upgrade -y -qq
-apt install -y -qq curl git ufw nginx
+apt install -y -qq curl git ufw nginx unzip
 ok "System updated."
 
 # ── 2. User Setup ───────────────────────────────────────────────────────────
