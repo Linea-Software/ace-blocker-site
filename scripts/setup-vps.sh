@@ -230,6 +230,7 @@ step "11. Environment Variables"
 ENV_FILE="${APP_DIR}/.env"
 [[ -f "$ENV_FILE" ]] || { err ".env missing at ${ENV_FILE}"; exit 1; }
 
+# Core helper: set a value directly (no prompt)
 set_env() {
     local k="$1" v="$2"
     if grep -q "^${k}=" "$ENV_FILE"; then
@@ -239,17 +240,101 @@ set_env() {
     fi
 }
 
+# Interactive helper: read current value and prompt for a new one
+prompt_env() {
+    local key="$1" prompt="$2" default="$3" is_secret="${4:-false}"
+    local current_val
+    current_val=$(grep -oP "^${key}=\"?\K[^\"]*" "$ENV_FILE" 2>/dev/null | tr -d '"' || true)
+    [[ -n "$current_val" ]] && default="$current_val"
+
+    if [[ "$is_secret" == "true" ]] && [[ -n "$current_val" ]]; then
+        echo -e "  ${YL}${prompt}${NC} ${BL}[***** existing value]${NC}"
+    else
+        echo -e "  ${YL}${prompt}${NC}"
+    fi
+
+    local display_default="$default"
+    [[ "$is_secret" == "true" && -n "$default" ]] && display_default="*****"
+    [[ -n "$display_default" ]] && echo -e "  ${BL}[default: ${display_default}]${NC}"
+
+    local input
+    read -rp "  > " input
+    [[ -z "$input" ]] && input="$default"
+
+    if grep -q "^${key}=" "$ENV_FILE"; then
+        sed -i "s|^${key}=.*|${key}=\"${input}\"|" "$ENV_FILE"
+    else
+        echo "${key}=\"${input}\"" >> "$ENV_FILE"
+    fi
+}
+
+echo ""
+echo -e "${B}${BL}┌──────────────────────────────────────────────────────┐${NC}"
+echo -e "${B}${BL}│${NC}  Configure Environment Variables"
+echo -e "${B}${BL}│${NC}  Press Enter to accept defaults / skip optional values"
+echo -e "${B}${BL}└──────────────────────────────────────────────────────┘${NC}"
+echo ""
+
+# ── Database ──
+echo -e "\n${B}── Database ──${NC}"
+prompt_env "POSTGRES_USER"     "PostgreSQL user:"              "postgres"
+prompt_env "POSTGRES_PASSWORD" "PostgreSQL password:"          ""           "true"
+prompt_env "POSTGRES_DB"       "PostgreSQL database name:"     "aceblocker"
+
+# Auto-derive DATABASE_URL
+PG_USER=$(grep -oP '^POSTGRES_USER="?\K[^"]+' "$ENV_FILE")
+PG_PASS=$(grep -oP '^POSTGRES_PASSWORD="?\K[^"]+' "$ENV_FILE")
+PG_DB=$(grep -oP '^POSTGRES_DB="?\K[^"]+' "$ENV_FILE")
+DATABASE_URL="postgresql://${PG_USER}:${PG_PASS}@localhost:5432/${PG_DB}"
+sed -i "s|^DATABASE_URL=.*|DATABASE_URL=\"${DATABASE_URL}\"|" "$ENV_FILE"
+ok "DATABASE_URL derived: postgresql://${PG_USER}:*****@localhost:5432/${PG_DB}"
+
+# ── Core ──
+echo -e "\n${B}── Core ──${NC}"
 set_env "BETTER_AUTH_URL" "https://${DOMAIN}"
 set_env "ORIGIN"         "https://${DOMAIN}"
 set_env "NODE_ENV"       "production"
+ok "BETTER_AUTH_URL: https://${DOMAIN}"
+ok "ORIGIN:         https://${DOMAIN}"
+
+# ── Dodo Payments ──
+echo -e "\n${B}── Dodo Payments ──${NC}"
+prompt_env "DODO_PAYMENTS_API_KEY"      "API key:"                    ""  "true"
+prompt_env "DODO_PAYMENTS_WEBHOOK_SECRET" "Webhook secret:"           ""  "true"
+prompt_env "DODO_PAYMENTS_PRODUCTS"     "Products JSON:" \
+    '[{ "productId" : "pdt_0NXOnI40qSEVOqAnCUwmm", "slug": "ace_blocker_monthly"}, { "productId" : "pdt_0NYXyjMDNixJ55IDOC42c", "slug": "ace_blocker_yearly"}]'
+
+# ── Email (Resend) ──
+echo -e "\n${B}── Email (Resend) ──${NC}"
+prompt_env "RESEND_API_KEY" "Resend API key:" "" "true"
+
+# ── BunnyCDN ──
+echo -e "\n${B}── BunnyCDN ──${NC}"
+prompt_env "BUNNY_SECURITY_KEY"    "Security key:"              ""  "true"
+prompt_env "BUNNY_STORAGE_ZONE"    "Storage zone name:"         "aceblocker-storage"
+prompt_env "BUNNY_CDN_BASE_URL"    "CDN base URL:"              "cdn.aceblocker.com"
+prompt_env "BUNNY_STORAGE_ACCESS_KEY" "Storage access key:"     ""  "true"
+
+# ── Default Admin ──
+echo -e "\n${B}── Default Admin Account ──${NC}"
+prompt_env "DEFAULT_ADMIN_EMAIL"    "Admin email:"              "admin@${DOMAIN}"
+prompt_env "DEFAULT_ADMIN_USERNAME" "Admin username:"           "admin"
+prompt_env "DEFAULT_ADMIN_PASSWORD" "Admin password:"           ""  "true"
+
+# ── Finalize ──
 chmod 600 "$ENV_FILE"
 chown "${USERNAME}:${USERNAME}" "$ENV_FILE"
-ok "Production environment configured."
 
-# Warn about optional service creds
-for key in DODO_PAYMENTS_API_KEY DODO_PAYMENTS_WEBHOOK_SECRET BUNNY_SECURITY_KEY; do
-    if ! grep -q "^${key}=..*" "$ENV_FILE" 2>/dev/null; then
-        warn "${key} is not set. Add it to ${ENV_FILE} manually."
+echo ""
+ok "Environment configured and saved to ${ENV_FILE}"
+
+# Warn about any remaining empty required values
+echo ""
+for key in POSTGRES_PASSWORD DODO_PAYMENTS_API_KEY DODO_PAYMENTS_WEBHOOK_SECRET \
+           RESEND_API_KEY BUNNY_SECURITY_KEY BUNNY_STORAGE_ACCESS_KEY DEFAULT_ADMIN_PASSWORD; do
+    val=$(grep -oP "^${key}=\"?\K[^\"]*" "$ENV_FILE" 2>/dev/null || true)
+    if [[ -z "$val" ]]; then
+        warn "${key} is EMPTY — the app may not function without it."
     fi
 done
 
