@@ -50,7 +50,7 @@ info "Domain: ${DOMAIN}   User: ${USERNAME}   App: ${APP_DIR}"
 # ── 1. System Updates & Base Packages ───────────────────────────────────────
 step "1. System Updates & Base Packages"
 apt update -qq && apt upgrade -y -qq
-apt install -y -qq curl git ufw nginx unzip libsecret-1-0
+apt install -y -qq curl git ufw nginx unzip
 ok "System updated."
 
 # ── 2. User Setup ───────────────────────────────────────────────────────────
@@ -162,16 +162,12 @@ step "9. Clone Repository"
 
 REPO_URL="https://github.com/aintDatCap/ace-blocker-site.git"
 
-# Set up libsecret credential helper so git can cache the token securely
-CRED_HELPER="/usr/libexec/git-core/git-credential-libsecret"
-if [[ ! -f "$CRED_HELPER" ]]; then
-    info "Building git-credential-libsecret..."
-    apt install -y -qq libsecret-1-dev make gcc pkg-config
-    (cd /usr/share/doc/git/contrib/credential/libsecret && make)
-fi
-
-# Configure git globally for the target user
-su - "$USERNAME" -c "git config --global credential.helper ${CRED_HELPER}"
+# Configure git credential.helper to use file-based store on disk
+# (libsecret requires D-Bus which is not available on headless servers)
+CRED_FILE="/home/${USERNAME}/.git-credentials"
+su - "$USERNAME" -c "git config --global --unset-all credential.helper 2>/dev/null; true"
+su - "$USERNAME" -c "git config --global credential.helper 'store --file ${CRED_FILE}'"
+su - "$USERNAME" -c "git config --global --add credential.helper 'cache --timeout 7200'"
 
 # Helper: prompt for GitHub credentials
 prompt_github_auth() {
@@ -195,9 +191,10 @@ if [[ ! -d "${APP_DIR}/.git" ]]; then
     # Reset remote to clean URL (no token in git config)
     su - "$USERNAME" -c "cd ${APP_DIR} && git remote set-url origin ${REPO_URL}"
 
-    # Store the credential in libsecret for future pulls
-    printf "protocol=https\nhost=github.com\nusername=%s\npassword=%s\n" "$GH_USER" "$GH_TOKEN" | \
-        su - "$USERNAME" -c "git credential approve"
+    # Store the credential in the file for future pulls
+    echo "https://${GH_USER}:${GH_TOKEN}@github.com" > "$CRED_FILE"
+    chmod 600 "$CRED_FILE"
+    chown "${USERNAME}:${USERNAME}" "$CRED_FILE"
 
     ok "Repository cloned (credentials saved)."
 else
@@ -208,9 +205,10 @@ else
         # Cached credentials missing or expired — prompt for new ones
         prompt_github_auth
 
-        # Store credential, then pull
-        printf "protocol=https\nhost=github.com\nusername=%s\npassword=%s\n" "$GH_USER" "$GH_TOKEN" | \
-            su - "$USERNAME" -c "git credential approve"
+        # Write credential directly to the store file
+        echo "https://${GH_USER}:${GH_TOKEN}@github.com" > "$CRED_FILE"
+        chmod 600 "$CRED_FILE"
+        chown "${USERNAME}:${USERNAME}" "$CRED_FILE"
 
         su - "$USERNAME" -c "cd ${APP_DIR} && git pull"
         ok "Repository updated."
