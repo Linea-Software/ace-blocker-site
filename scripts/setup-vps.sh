@@ -251,8 +251,20 @@ set_env() {
 # Interactive helper: read current value and prompt for a new one
 prompt_env() {
     local key="$1" prompt="$2" default="$3" is_secret="${4:-false}"
-    local current_val
-    current_val=$(grep -oP "^${key}=\"?\K[^\"]*" "$ENV_FILE" 2>/dev/null | tr -d '"' || true)
+    local current_val=""
+
+    # Read current value from .env, handling values with embedded quotes
+    local line
+    line=$(grep "^${key}=" "$ENV_FILE" 2>/dev/null | head -1)
+    if [[ -n "$line" ]]; then
+        # Strip key= prefix, then strip outer quotes if present
+        current_val="${line#*=}"
+        if [[ "${current_val:0:1}" == '"' && "${current_val: -1}" == '"' ]]; then
+            current_val="${current_val:1:-1}"
+        fi
+        # Unescape escaped double quotes within the value
+        current_val="${current_val//\\\"/\"}"
+    fi
     [[ -n "$current_val" ]] && default="$current_val"
 
     if [[ "$is_secret" == "true" ]] && [[ -n "$current_val" ]]; then
@@ -269,10 +281,15 @@ prompt_env() {
     read -rp "  > " input
     [[ -z "$input" ]] && input="$default"
 
+    # Escape special chars in value so .env remains safely source-able by bash
+    # (e.g., DODO_PAYMENTS_PRODUCTS contains JSON with double quotes)
+    local input_escaped="${input//\\/\\\\}"
+    input_escaped="${input_escaped//\"/\\\"}"
+
     if grep -q "^${key}=" "$ENV_FILE"; then
-        sed -i "s|^${key}=.*|${key}=\"${input}\"|" "$ENV_FILE"
+        sed -i "s|^${key}=.*|${key}=\"${input_escaped}\"|" "$ENV_FILE"
     else
-        echo "${key}=\"${input}\"" >> "$ENV_FILE"
+        echo "${key}=\"${input_escaped}\"" >> "$ENV_FILE"
     fi
 }
 
