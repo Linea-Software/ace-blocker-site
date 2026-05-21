@@ -267,6 +267,20 @@ prompt_env() {
     fi
 }
 
+# URL-encode a string for safe use in connection URIs
+urlencode() {
+    local encoded=""
+    local c
+    for ((i = 0; i < ${#1}; i++)); do
+        c="${1:$i:1}"
+        case "$c" in
+            [a-zA-Z0-9.~_-]) encoded+="$c" ;;
+            *) printf -v hex '%%%02X' "'$c"; encoded+="$hex" ;;
+        esac
+    done
+    echo "$encoded"
+}
+
 echo ""
 echo -e "${B}${BL}┌──────────────────────────────────────────────────────┐${NC}"
 echo -e "${B}${BL}│${NC}  Configure Environment Variables"
