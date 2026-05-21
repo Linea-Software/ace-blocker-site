@@ -50,7 +50,7 @@ info "Domain: ${DOMAIN}   User: ${USERNAME}   App: ${APP_DIR}"
 # ── 1. System Updates & Base Packages ───────────────────────────────────────
 step "1. System Updates & Base Packages"
 apt update -qq && apt upgrade -y -qq
-apt install -y -qq curl git ufw nginx unzip
+apt install -y -qq curl git ufw nginx unzip libsecret-1-0
 ok "System updated."
 
 # ── 2. User Setup ───────────────────────────────────────────────────────────
@@ -159,13 +159,65 @@ fi
 
 # ── 9. Clone Repository ─────────────────────────────────────────────────────
 step "9. Clone Repository"
-if [[ -d "${APP_DIR}/.git" ]]; then
+
+REPO_URL="https://github.com/aintDatCap/ace-blocker-site.git"
+
+# Set up libsecret credential helper so git can cache the token securely
+CRED_HELPER="/usr/libexec/git-core/git-credential-libsecret"
+if [[ ! -f "$CRED_HELPER" ]]; then
+    info "Building git-credential-libsecret..."
+    apt install -y -qq libsecret-1-dev make gcc pkg-config
+    (cd /usr/share/doc/git/contrib/credential/libsecret && make)
+fi
+
+# Configure git globally for the target user
+su - "$USERNAME" -c "git config --global credential.helper ${CRED_HELPER}"
+
+if [[ ! -d "${APP_DIR}/.git" ]]; then
+    echo ""
+    info "GitHub authentication required to clone the private repository."
+    read -rp "  GitHub username: " GH_USER
+    read -rsp "  GitHub token (classic or fine-grained): " GH_TOKEN
+    echo ""
+
+    if [[ -z "$GH_USER" || -z "$GH_TOKEN" ]]; then
+        err "GitHub username and token are required."
+        exit 1
+    fi
+
+    AUTH_URL="https://${GH_USER}:${GH_TOKEN}@github.com/aintDatCap/ace-blocker-site.git"
+    su - "$USERNAME" -c "git clone '${AUTH_URL}' ${APP_DIR}"
+
+    # Reset remote to clean URL (no token in git config)
+    su - "$USERNAME" -c "cd ${APP_DIR} && git remote set-url origin ${REPO_URL}"
+
+    # Store the credential in libsecret for future pulls
+    printf "protocol=https\nhost=github.com\nusername=%s\npassword=%s\n" "$GH_USER" "$GH_TOKEN" | \
+        su - "$USERNAME" -c "git credential approve"
+
+    ok "Repository cloned (credentials saved for future pulls)."
+else
+    echo ""
+    info "GitHub authentication required to pull latest changes."
+    read -rp "  GitHub username: " GH_USER
+    read -rsp "  GitHub token (classic or fine-grained): " GH_TOKEN
+    echo ""
+
+    if [[ -z "$GH_USER" || -z "$GH_TOKEN" ]]; then
+        err "GitHub username and token are required."
+        exit 1
+    fi
+
+    # Store the credential first, then pull
+    printf "protocol=https\nhost=github.com\nusername=%s\npassword=%s\n" "$GH_USER" "$GH_TOKEN" | \
+        su - "$USERNAME" -c "git credential approve"
+
     su - "$USERNAME" -c "cd ${APP_DIR} && git pull"
     ok "Repository updated."
-else
-    su - "$USERNAME" -c "git clone https://github.com/aintDatCap/ace-blocker-site.git ${APP_DIR}"
-    ok "Repository cloned."
 fi
+
+# Clear token from memory
+unset GH_USER GH_TOKEN
 
 # ── 10. Install Dependencies & Run Setup ────────────────────────────────────
 step "10. Dependencies & Setup"
