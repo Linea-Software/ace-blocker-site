@@ -173,17 +173,21 @@ fi
 # Configure git globally for the target user
 su - "$USERNAME" -c "git config --global credential.helper ${CRED_HELPER}"
 
-if [[ ! -d "${APP_DIR}/.git" ]]; then
+# Helper: prompt for GitHub credentials
+prompt_github_auth() {
     echo ""
-    info "GitHub authentication required to clone the private repository."
+    info "GitHub authentication required for the private repository."
     read -rp "  GitHub username: " GH_USER
     read -rsp "  GitHub token (classic or fine-grained): " GH_TOKEN
     echo ""
-
     if [[ -z "$GH_USER" || -z "$GH_TOKEN" ]]; then
         err "GitHub username and token are required."
         exit 1
     fi
+}
+
+if [[ ! -d "${APP_DIR}/.git" ]]; then
+    prompt_github_auth
 
     AUTH_URL="https://${GH_USER}:${GH_TOKEN}@github.com/aintDatCap/ace-blocker-site.git"
     su - "$USERNAME" -c "git clone '${AUTH_URL}' ${APP_DIR}"
@@ -195,25 +199,22 @@ if [[ ! -d "${APP_DIR}/.git" ]]; then
     printf "protocol=https\nhost=github.com\nusername=%s\npassword=%s\n" "$GH_USER" "$GH_TOKEN" | \
         su - "$USERNAME" -c "git credential approve"
 
-    ok "Repository cloned (credentials saved for future pulls)."
+    ok "Repository cloned (credentials saved)."
 else
-    echo ""
-    info "GitHub authentication required to pull latest changes."
-    read -rp "  GitHub username: " GH_USER
-    read -rsp "  GitHub token (classic or fine-grained): " GH_TOKEN
-    echo ""
+    # Try pulling with cached credentials first
+    if su - "$USERNAME" -c "cd ${APP_DIR} && git pull" 2>/dev/null; then
+        ok "Repository updated (using cached credentials)."
+    else
+        # Cached credentials missing or expired — prompt for new ones
+        prompt_github_auth
 
-    if [[ -z "$GH_USER" || -z "$GH_TOKEN" ]]; then
-        err "GitHub username and token are required."
-        exit 1
+        # Store credential, then pull
+        printf "protocol=https\nhost=github.com\nusername=%s\npassword=%s\n" "$GH_USER" "$GH_TOKEN" | \
+            su - "$USERNAME" -c "git credential approve"
+
+        su - "$USERNAME" -c "cd ${APP_DIR} && git pull"
+        ok "Repository updated."
     fi
-
-    # Store the credential first, then pull
-    printf "protocol=https\nhost=github.com\nusername=%s\npassword=%s\n" "$GH_USER" "$GH_TOKEN" | \
-        su - "$USERNAME" -c "git credential approve"
-
-    su - "$USERNAME" -c "cd ${APP_DIR} && git pull"
-    ok "Repository updated."
 fi
 
 # Clear token from memory
