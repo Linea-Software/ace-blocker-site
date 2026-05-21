@@ -272,69 +272,97 @@ prompt_env() {
 echo ""
 echo -e "${B}${BL}┌──────────────────────────────────────────────────────┐${NC}"
 echo -e "${B}${BL}│${NC}  Configure Environment Variables"
-echo -e "${B}${BL}│${NC}  Press Enter to accept defaults / skip optional values"
 echo -e "${B}${BL}└──────────────────────────────────────────────────────┘${NC}"
 echo ""
 
-# ── Database ──
-echo -e "\n${B}── Database ──${NC}"
-prompt_env "POSTGRES_USER"     "PostgreSQL user:"              "postgres"
-prompt_env "POSTGRES_PASSWORD" "PostgreSQL password:"          ""           "true"
-prompt_env "POSTGRES_DB"       "PostgreSQL database name:"     "aceblocker"
+# Check if .env is already fully configured (re-run detection)
+ALREADY_CONFIGURED=true
+for key in POSTGRES_PASSWORD BETTER_AUTH_SECRET DODO_PAYMENTS_API_KEY; do
+    val=$(grep -oP "^${key}=\"?\K[^\"]*" "$ENV_FILE" 2>/dev/null || true)
+    if [[ -z "$val" ]]; then ALREADY_CONFIGURED=false; break; fi
+done
 
-# Auto-derive DATABASE_URL (URL-encode the password for safety)
-urlencode() {
-    local encoded=""
-    local c
-    for ((i = 0; i < ${#1}; i++)); do
-        c="${1:$i:1}"
-        case "$c" in
-            [a-zA-Z0-9.~_-]) encoded+="$c" ;;
-            *) printf -v hex '%%%02X' "'$c"; encoded+="$hex" ;;
-        esac
-    done
-    echo "$encoded"
-}
+if [[ "$ALREADY_CONFIGURED" == "true" ]]; then
+    echo -e "  ${GR}All required values are already configured.${NC}"
+    echo ""
+    info "BETTER_AUTH_URL: $(grep -oP '^BETTER_AUTH_URL="?\K[^"]+' "$ENV_FILE")"
+    info "ORIGIN:         $(grep -oP '^ORIGIN="?\K[^"]+' "$ENV_FILE")"
+    info "POSTGRES_USER:  $(grep -oP '^POSTGRES_USER="?\K[^"]+' "$ENV_FILE")"
+    info "POSTGRES_DB:    $(grep -oP '^POSTGRES_DB="?\K[^"]+' "$ENV_FILE")"
+    echo ""
+    read -rp "  Press Enter to keep these values, or type 'edit' to change: " EDIT_CHOICE
+    if [[ "$EDIT_CHOICE" != "edit" ]]; then
+        # Still ensure DATABASE_URL is correctly encoded and core values updated
+        PG_USER=$(grep -oP '^POSTGRES_USER="?\K[^"]+' "$ENV_FILE")
+        PG_PASS=$(grep -oP '^POSTGRES_PASSWORD="?\K[^"]+' "$ENV_FILE")
+        PG_DB=$(grep -oP '^POSTGRES_DB="?\K[^"]+' "$ENV_FILE")
+        PG_PASS_ENCODED=$(urlencode "$PG_PASS")
+        DATABASE_URL="postgresql://${PG_USER}:${PG_PASS_ENCODED}@localhost:5432/${PG_DB}"
+        sed -i "s|^DATABASE_URL=.*|DATABASE_URL=\"${DATABASE_URL}\"|" "$ENV_FILE"
+        set_env "BETTER_AUTH_URL" "https://${DOMAIN}"
+        set_env "ORIGIN"         "https://${DOMAIN}"
+        set_env "NODE_ENV"       "production"
+        ok "Core values updated, DATABASE_URL re-encoded."
+        SKIP_PROMPTS=true
+    else
+        SKIP_PROMPTS=false
+    fi
+else
+    SKIP_PROMPTS=false
+fi
 
-PG_USER=$(grep -oP '^POSTGRES_USER="?\K[^"]+' "$ENV_FILE")
-PG_PASS=$(grep -oP '^POSTGRES_PASSWORD="?\K[^"]+' "$ENV_FILE")
-PG_DB=$(grep -oP '^POSTGRES_DB="?\K[^"]+' "$ENV_FILE")
-PG_PASS_ENCODED=$(urlencode "$PG_PASS")
-DATABASE_URL="postgresql://${PG_USER}:${PG_PASS_ENCODED}@localhost:5432/${PG_DB}"
-sed -i "s|^DATABASE_URL=.*|DATABASE_URL=\"${DATABASE_URL}\"|" "$ENV_FILE"
-ok "DATABASE_URL derived: postgresql://${PG_USER}:*****@localhost:5432/${PG_DB}"
+if [[ "$SKIP_PROMPTS" != "true" ]]; then
+    echo -e "  ${BL}Press Enter to accept defaults / skip optional values${NC}"
+    echo ""
 
-# ── Core ──
-echo -e "\n${B}── Core ──${NC}"
-set_env "BETTER_AUTH_URL" "https://${DOMAIN}"
-set_env "ORIGIN"         "https://${DOMAIN}"
-set_env "NODE_ENV"       "production"
-ok "BETTER_AUTH_URL: https://${DOMAIN}"
-ok "ORIGIN:         https://${DOMAIN}"
+    # ── Database ──
+    echo -e "\n${B}── Database ──${NC}"
+    prompt_env "POSTGRES_USER"     "PostgreSQL user:"              "postgres"
+    prompt_env "POSTGRES_PASSWORD" "PostgreSQL password:"          ""           "true"
+    prompt_env "POSTGRES_DB"       "PostgreSQL database name:"     "aceblocker"
 
-# ── Dodo Payments ──
-echo -e "\n${B}── Dodo Payments ──${NC}"
-prompt_env "DODO_PAYMENTS_API_KEY"      "API key:"                    ""  "true"
-prompt_env "DODO_PAYMENTS_WEBHOOK_SECRET" "Webhook secret:"           ""  "true"
-prompt_env "DODO_PAYMENTS_PRODUCTS"     "Products JSON:" \
-    '[{ "productId" : "pdt_0NXOnI40qSEVOqAnCUwmm", "slug": "ace_blocker_monthly"}, { "productId" : "pdt_0NYXyjMDNixJ55IDOC42c", "slug": "ace_blocker_yearly"}]'
+    # Auto-derive DATABASE_URL (URL-encode the password for safety)
+    PG_USER=$(grep -oP '^POSTGRES_USER="?\K[^"]+' "$ENV_FILE")
+    PG_PASS=$(grep -oP '^POSTGRES_PASSWORD="?\K[^"]+' "$ENV_FILE")
+    PG_DB=$(grep -oP '^POSTGRES_DB="?\K[^"]+' "$ENV_FILE")
+    PG_PASS_ENCODED=$(urlencode "$PG_PASS")
+    DATABASE_URL="postgresql://${PG_USER}:${PG_PASS_ENCODED}@localhost:5432/${PG_DB}"
+    sed -i "s|^DATABASE_URL=.*|DATABASE_URL=\"${DATABASE_URL}\"|" "$ENV_FILE"
+    ok "DATABASE_URL derived: postgresql://${PG_USER}:*****@localhost:5432/${PG_DB}"
 
-# ── Email (Resend) ──
-echo -e "\n${B}── Email (Resend) ──${NC}"
-prompt_env "RESEND_API_KEY" "Resend API key:" "" "true"
+    # ── Core ──
+    echo -e "\n${B}── Core ──${NC}"
+    set_env "BETTER_AUTH_URL" "https://${DOMAIN}"
+    set_env "ORIGIN"         "https://${DOMAIN}"
+    set_env "NODE_ENV"       "production"
+    ok "BETTER_AUTH_URL: https://${DOMAIN}"
+    ok "ORIGIN:         https://${DOMAIN}"
 
-# ── BunnyCDN ──
-echo -e "\n${B}── BunnyCDN ──${NC}"
-prompt_env "BUNNY_SECURITY_KEY"    "Security key:"              ""  "true"
-prompt_env "BUNNY_STORAGE_ZONE"    "Storage zone name:"         "aceblocker-storage"
-prompt_env "BUNNY_CDN_BASE_URL"    "CDN base URL:"              "cdn.aceblocker.com"
-prompt_env "BUNNY_STORAGE_ACCESS_KEY" "Storage access key:"     ""  "true"
+    # ── Dodo Payments ──
+    echo -e "\n${B}── Dodo Payments ──${NC}"
+    prompt_env "DODO_PAYMENTS_API_KEY"      "API key:"                    ""  "true"
+    prompt_env "DODO_PAYMENTS_WEBHOOK_SECRET" "Webhook secret:"           ""  "true"
+    prompt_env "DODO_PAYMENTS_PRODUCTS"     "Products JSON:" \
+        '[{ "productId" : "pdt_0NXOnI40qSEVOqAnCUwmm", "slug": "ace_blocker_monthly"}, { "productId" : "pdt_0NYXyjMDNixJ55IDOC42c", "slug": "ace_blocker_yearly"}]'
 
-# ── Default Admin ──
-echo -e "\n${B}── Default Admin Account ──${NC}"
-prompt_env "DEFAULT_ADMIN_EMAIL"    "Admin email:"              "admin@${DOMAIN}"
-prompt_env "DEFAULT_ADMIN_USERNAME" "Admin username:"           "admin"
-prompt_env "DEFAULT_ADMIN_PASSWORD" "Admin password:"           ""  "true"
+    # ── Email (Resend) ──
+    echo -e "\n${B}── Email (Resend) ──${NC}"
+    prompt_env "RESEND_API_KEY" "Resend API key:" "" "true"
+
+    # ── BunnyCDN ──
+    echo -e "\n${B}── BunnyCDN ──${NC}"
+    prompt_env "BUNNY_SECURITY_KEY"    "Security key:"              ""  "true"
+    prompt_env "BUNNY_STORAGE_ZONE"    "Storage zone name:"         "aceblocker-storage"
+    prompt_env "BUNNY_CDN_BASE_URL"    "CDN base URL:"              "cdn.aceblocker.com"
+    prompt_env "BUNNY_STORAGE_ACCESS_KEY" "Storage access key:"     ""  "true"
+
+    # ── Default Admin ──
+    echo -e "\n${B}── Default Admin Account ──${NC}"
+    prompt_env "DEFAULT_ADMIN_EMAIL"    "Admin email:"              "admin@${DOMAIN}"
+    prompt_env "DEFAULT_ADMIN_USERNAME" "Admin username:"           "admin"
+    prompt_env "DEFAULT_ADMIN_PASSWORD" "Admin password:"           ""  "true"
+
+fi  # end SKIP_PROMPTS
 
 # ── Finalize ──
 chmod 600 "$ENV_FILE"
