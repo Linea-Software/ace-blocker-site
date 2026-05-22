@@ -476,11 +476,73 @@ else
     err "Service failed to start. Check: journalctl -u ace-blocker -n 50"
 fi
 
-# ── 14. Nginx ───────────────────────────────────────────────────────────────
+# ── 14. Nginx Configuration ──────────────────────────────────────────────
 step "14. Nginx Configuration"
 SITE="/etc/nginx/sites-available/ace-blocker"
+CERT_DIR="/etc/letsencrypt/live/${DOMAIN}"
 
-cat > "$SITE" << NGX
+if [[ -d "$CERT_DIR" ]]; then
+    # Certs already exist — write full SSL config immediately
+    info "SSL certificates found — writing HTTPS configuration."
+    cat > "$SITE" << SSLNGX
+server {
+    listen 80;
+    server_name ${DOMAIN} www.${DOMAIN};
+
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://\$host\$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name ${DOMAIN} www.${DOMAIN};
+
+    ssl_certificate         ${CERT_DIR}/fullchain.pem;
+    ssl_certificate_key     ${CERT_DIR}/privkey.pem;
+    ssl_trusted_certificate ${CERT_DIR}/chain.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    resolver 1.1.1.1 8.8.8.8 valid=300s;
+    resolver_timeout 5s;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:50m;
+    ssl_session_tickets off;
+
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+
+    client_max_body_size 10m;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}
+SSLNGX
+    SSL_SKIP=true
+else
+    # No certs yet — write HTTP-only so Certbot can work
+    info "No SSL certificates yet — writing HTTP-only configuration."
+    cat > "$SITE" << NGX
 server {
     listen 80;
     server_name ${DOMAIN} www.${DOMAIN};
@@ -502,17 +564,19 @@ server {
     }
 }
 NGX
+    SSL_SKIP=false
+fi
 
 mkdir -p /var/www/html
 rm -f /etc/nginx/sites-enabled/default
 ln -sf "$SITE" /etc/nginx/sites-enabled/
 nginx -t && systemctl restart nginx
-ok "Nginx configured (HTTP only — SSL next)."
+ok "Nginx configured."
 # ── 15. SSL Certificate (Cloudflare DNS Challenge) ──────────────────────────
 step "15. SSL Certificate"
 
-if [[ -d "/etc/letsencrypt/live/${DOMAIN}" ]]; then
-    info "SSL certificate already exists for ${DOMAIN}."
+if [[ "$SSL_SKIP" == "true" ]]; then
+    info "SSL already configured (skipped)."
 else
     echo ""
     info "A Cloudflare API token is required to obtain an SSL certificate"
@@ -553,7 +617,9 @@ fi
 # ── 16. Update Nginx with SSL ───────────────────────────────────────────────
 step "16. Nginx SSL Configuration"
 
-if [[ -d "/etc/letsencrypt/live/${DOMAIN}" ]]; then
+if [[ "$SSL_SKIP" == "true" ]]; then
+    info "SSL Nginx config already applied (skipped)."
+else
     cat > "$SITE" << NGXSSL
 # ── HTTP → HTTPS redirect ──
 server {
@@ -613,8 +679,6 @@ NGXSSL
 
     nginx -t && systemctl restart nginx
     ok "Nginx SSL configuration applied."
-else
-    warn "No certificate found. Restart with --cf-token to enable SSL."
 fi
 
 # ── 17. Database Backups ────────────────────────────────────────────────────
