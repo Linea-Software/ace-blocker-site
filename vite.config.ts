@@ -18,22 +18,26 @@ const config: UserConfigExport = async ({ mode }) => {
 				server.https = {
 					key: Buffer.from(cached.key),
 					cert: Buffer.from(cached.cert),
+					ca: cached.ca ? Buffer.from(cached.ca) : undefined,
 					allowHTTP1: true
 				} as any;
 			} else {
 				const certificate = await devcert('localhost');
 				server.https = {
-					...certificate,
+					key: certificate.key,
+					cert: certificate.cert,
+					ca: certificate.ca,
 					allowHTTP1: true
-				};
+				} as any;
 				if (!fs.existsSync(path.dirname(certPath))) {
 					fs.mkdirSync(path.dirname(certPath), { recursive: true });
 				}
 				fs.writeFileSync(
 					certPath,
 					JSON.stringify({
-						key: certificate.key.toString(),
-						cert: certificate.cert.toString()
+						key: certificate.key,
+						cert: certificate.cert,
+						ca: certificate.ca
 					})
 				);
 			}
