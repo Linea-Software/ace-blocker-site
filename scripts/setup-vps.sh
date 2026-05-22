@@ -5,11 +5,11 @@
 # Automates the full VPS deployment described in docs/DEPLOY.md.
 #
 # Usage:
-#   export CF_TOKEN="your-cloudflare-token"
 #   sudo bash scripts/setup-vps.sh --domain aceblocker.com [--email admin@aceblocker.com]
 #
 # Required:  --domain <domain>
 # Optional:  --username <name> --email <email> --cf-token <token>
+#   If --cf-token is omitted, the script will prompt for it during the SSL step.
 # =============================================================================
 
 set -euo pipefail
@@ -508,45 +508,48 @@ rm -f /etc/nginx/sites-enabled/default
 ln -sf "$SITE" /etc/nginx/sites-enabled/
 nginx -t && systemctl restart nginx
 ok "Nginx configured (HTTP only — SSL next)."
-
-# ── 15. SSL Certificate ─────────────────────────────────────────────────────
+# ── 15. SSL Certificate (Cloudflare DNS Challenge) ──────────────────────────
 step "15. SSL Certificate"
 
 if [[ -d "/etc/letsencrypt/live/${DOMAIN}" ]]; then
-    info "SSL certificate already exists."
+    info "SSL certificate already exists for ${DOMAIN}."
 else
-    if [[ -n "$CF_TOKEN" ]]; then
-        apt install -y -qq certbot python3-certbot-dns-cloudflare
+    echo ""
+    info "A Cloudflare API token is required to obtain an SSL certificate"
+    info "via DNS challenge (required when using Cloudflare proxying)."
+    info "The token needs Zone:DNS:Edit permission scoped to your domain."
+    echo ""
 
-        CF_INI="/root/.cloudflare.ini"
-        cat > "$CF_INI" <<< "dns_cloudflare_api_token = ${CF_TOKEN}"
-        chmod 600 "$CF_INI"
-
-        EMAIL_ARG=""
-        [[ -n "$EMAIL" ]] && EMAIL_ARG="--email ${EMAIL}"
-
-        info "Requesting SSL certificate via DNS challenge..."
-        certbot certonly --non-interactive --agree-tos \
-            --dns-cloudflare --dns-cloudflare-credentials "$CF_INI" \
-            $EMAIL_ARG \
-            -d "${DOMAIN}" -d "www.${DOMAIN}"
-        ok "SSL certificate obtained."
-    else
-        warn "No Cloudflare API token. Attempting HTTP challenge..."
-        apt install -y -qq certbot
-
-        EMAIL_ARG="--register-unsafely-without-email"
-        [[ -n "$EMAIL" ]] && EMAIL_ARG="--email ${EMAIL}"
-
-        certbot certonly --non-interactive --agree-tos \
-            --webroot -w /var/www/html \
-            $EMAIL_ARG \
-            -d "${DOMAIN}" -d "www.${DOMAIN}" || {
-            warn "HTTP challenge failed. Install SSL manually later."
-        }
+    # Use existing token if passed via --cf-token, otherwise prompt
+    if [[ -z "$CF_TOKEN" ]]; then
+        read -rsp "  Cloudflare API token: " CF_TOKEN
+        echo ""
+        if [[ -z "$CF_TOKEN" ]]; then
+            err "Cloudflare API token is required for SSL."
+            err "Run the script again with --cf-token or paste the token above."
+            exit 1
+        fi
     fi
-fi
 
+    apt install -y -qq certbot python3-certbot-dns-cloudflare
+
+    CF_INI="/root/.cloudflare.ini"
+    cat > "$CF_INI" <<< "dns_cloudflare_api_token = ${CF_TOKEN}"
+    chmod 600 "$CF_INI"
+
+    EMAIL_ARG=""
+    [[ -n "$EMAIL" ]] && EMAIL_ARG="--email ${EMAIL}"
+
+    info "Requesting SSL certificate for ${DOMAIN}..."
+    certbot certonly --non-interactive --agree-tos \
+        --dns-cloudflare --dns-cloudflare-credentials "$CF_INI" \
+        $EMAIL_ARG \
+        -d "${DOMAIN}" -d "www.${DOMAIN}" || {
+        err "Certbot failed. Check that the token has Zone:DNS:Edit permissions."
+        exit 1
+    }
+    ok "SSL certificate obtained."
+fi
 # ── 16. Update Nginx with SSL ───────────────────────────────────────────────
 step "16. Nginx SSL Configuration"
 
