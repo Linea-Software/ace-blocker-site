@@ -4,6 +4,9 @@ import { siteList } from '$lib/server/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { uploadSiteList, deleteSiteList, CDNErrorType } from '$lib/server/cdn';
 import { invalidateSiteListsCache } from '$lib/server/cache';
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('api:admin:site-lists');
 
 export const siteListsRouter = new Elysia({ prefix: '/site-lists' })
 	.get(
@@ -131,7 +134,7 @@ export const siteListsRouter = new Elysia({ prefix: '/site-lists' })
 				await invalidateSiteListsCache();
 				return { success: true, message: 'Site list updated successfully' };
 			} catch (e) {
-				console.error('Update error:', e);
+				log.error({ err: e }, 'Failed to update site list');
 				set.status = 500;
 				return { error: true, message: 'Failed to update site list' };
 			}
@@ -177,7 +180,7 @@ export const siteListsRouter = new Elysia({ prefix: '/site-lists' })
 			const deleteResult = await deleteSiteList(id);
 
 			if (deleteResult.isErr()) {
-				console.error('Failed to delete site list:', deleteResult.error);
+				log.error({ err: deleteResult.error }, 'Failed to delete site list');
 				set.status = 500;
 				return { error: true, message: 'Failed to delete site list' };
 			}

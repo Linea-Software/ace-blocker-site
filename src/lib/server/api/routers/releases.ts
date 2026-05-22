@@ -5,6 +5,9 @@ import {
 	getLatestTrackingScript,
 	getLatestSiteLists
 } from '../../cache';
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('api:releases');
 
 export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 	'/latest',
@@ -51,7 +54,7 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 				}))
 			};
 		} catch (e) {
-			console.error('Failed to fetch latest releases cache:', e);
+			log.error({ err: e }, 'Failed to fetch latest releases cache');
 			return status(500, 'Internal Server Error');
 		}
 	},

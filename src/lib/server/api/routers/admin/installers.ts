@@ -5,6 +5,9 @@ import { desc, eq, sql } from 'drizzle-orm';
 import { uploadInstaller, deleteInstaller, CDNErrorType } from '$lib/server/cdn';
 import { invalidateInstallerCache } from '$lib/server/cache';
 import crypto from 'crypto';
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('api:admin:installers');
 
 export const installersRouter = new Elysia({ prefix: '/installers' })
 	.get(
@@ -121,7 +124,7 @@ export const installersRouter = new Elysia({ prefix: '/installers' })
 			const deleteResult = await deleteInstaller(id);
 
 			if (deleteResult.isErr()) {
-				console.error('Failed to delete installer:', deleteResult.error);
+				log.error({ err: deleteResult.error }, 'Failed to delete installer');
 				set.status = 500;
 				return { error: true, message: 'Delete failed' };
 			}

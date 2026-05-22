@@ -4,6 +4,9 @@ import { user, proStatus } from './db/schema';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
 import { LRUCache } from 'lru-cache';
+import { createLogger } from './logger';
+
+const log = createLogger('pro');
 
 // ---------------------------------------------------------------------------
 // Two-level cache for pro status:
@@ -120,12 +123,13 @@ export async function updateProExpiration(email: string, nextBillingDate: Date):
 					}
 				});
 			invalidateProCache(email);
-			console.log(
-				`✅ Pro status activated via webhook for ${email} until ${nextBillingDate.toISOString()}`
+			log.info(
+				{ email, nextBillingDate: nextBillingDate.toISOString() },
+				'Pro status activated via webhook'
 			);
 		}
 	} catch (e) {
-		console.error(`❌ Failed to update pro expiration for ${email}:`, e);
+		log.error({ err: e, email }, 'Failed to update pro expiration');
 	}
 }
 
@@ -142,9 +146,9 @@ export async function clearProExpiration(email: string): Promise<void> {
 				.set({ cachedAt: new Date(), expiration: null })
 				.where(eq(proStatus.userId, userRow.id));
 			invalidateProCache(email);
-			console.log(`⛔ Pro status revoked via webhook for ${email}`);
+			log.info({ email }, 'Pro status revoked via webhook');
 		}
 	} catch (e) {
-		console.error(`❌ Failed to clear pro expiration for ${email}:`, e);
+		log.error({ err: e, email }, 'Failed to clear pro expiration');
 	}
 }

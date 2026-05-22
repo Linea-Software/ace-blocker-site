@@ -4,6 +4,8 @@ import { type Handle } from '@sveltejs/kit';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { seedDatabase } from '$lib/server/seeder';
 import { initializeCache } from '$lib/server/cache';
+import { logger } from '$lib/server/logger';
+import crypto from 'crypto';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
@@ -13,6 +15,12 @@ const handleParaglide: Handle = ({ event, resolve }) =>
 			transformPageChunk: ({ html }) => html.replace('%paraglide.lang%', locale)
 		});
 	});
+
+const handleLogger: Handle = async ({ event, resolve }) => {
+	const requestId = crypto.randomUUID().slice(0, 8);
+	event.locals.log = logger.child({ requestId, path: event.url.pathname });
+	return resolve(event);
+};
 
 const handleAuth: Handle = async ({ event, resolve }) => {
 	const session = await auth.api.getSession({
@@ -31,9 +39,11 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(handleParaglide, handleAuth);
+export const handle: Handle = sequence(handleParaglide, handleLogger, handleAuth);
 
 export async function init() {
+	logger.info('Initializing application...');
 	await seedDatabase();
 	await initializeCache();
+	logger.info('Application initialized');
 }

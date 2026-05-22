@@ -3,6 +3,9 @@ import { auth, dodoPayments } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { proStatus, user } from '$lib/server/db/schema';
 import crypto from 'crypto';
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('api:admin:users');
 
 export const usersRouter = new Elysia({ prefix: '/users' })
 	.post(
@@ -86,7 +89,7 @@ export const usersRouter = new Elysia({ prefix: '/users' })
 					}
 				}
 			} catch (e) {
-				console.error('Error checking Dodo subscriptions:', e);
+				log.error({ err: e }, 'Error checking Dodo subscriptions');
 			}
 
 			if (dodoSubscriptionId) {

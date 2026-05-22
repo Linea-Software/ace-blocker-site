@@ -28,6 +28,9 @@ import {
 	installersUploadBase,
 	getArrayBufferChecksum
 } from './common';
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('cdn:upload');
 
 async function uploadFileToBunnyCDN(
 	file: File,
@@ -37,7 +40,7 @@ async function uploadFileToBunnyCDN(
 	const hash = getArrayBufferChecksum(arrayBuffer);
 
 	try {
-		console.log(`Uploading to ${endpointUrl.toString()}`);
+		log.info({ url: endpointUrl.toString() }, 'Uploading to BunnyCDN');
 		const response = await fetch(endpointUrl, {
 			method: 'PUT',
 			headers: {
@@ -49,14 +52,19 @@ async function uploadFileToBunnyCDN(
 		});
 
 		if (!response.ok) {
-			console.error('Unable to upload the file to BunnyCDN:\n');
-			console.log(JSON.stringify(response));
+			log.error(
+				{ status: response.status, url: endpointUrl.toString() },
+				'BunnyCDN upload failed'
+			);
 			return err(CDNErrorType.UploadFailed);
 		}
 
 		return ok({ hash: hash });
 	} catch (error) {
-		console.error('Network failure during BunnyCDN file upload:\n' + JSON.stringify(error));
+		log.error(
+			{ err: error, url: endpointUrl.toString() },
+			'Network failure during BunnyCDN upload'
+		);
 		return err(CDNErrorType.NetworkFailure);
 	}
 }

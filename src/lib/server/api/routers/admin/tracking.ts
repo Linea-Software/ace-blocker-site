@@ -3,6 +3,9 @@ import { db } from '$lib/server/db';
 import { trackingScripts } from '$lib/server/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { uploadTrackingScripts, deleteTrackingScripts, CDNErrorType } from '$lib/server/cdn';
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('api:admin:tracking');
 
 export const trackingRouter = new Elysia({ prefix: '/tracking' })
 	.get(
@@ -112,7 +115,7 @@ export const trackingRouter = new Elysia({ prefix: '/tracking' })
 			const deleteResult = await deleteTrackingScripts(id);
 
 			if (deleteResult.isErr()) {
-				console.error('Failed to delete tracking script:', deleteResult.error);
+				log.error({ err: deleteResult.error }, 'Failed to delete tracking script');
 				set.status = 500;
 				return { error: true, message: 'Delete failed' };
 			}

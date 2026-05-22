@@ -21,6 +21,9 @@ import {
 	resistanceModeScriptsUploadBase,
 	installersUploadBase
 } from './common';
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('cdn:delete');
 
 async function deleteFileFromBunnyCDN(endpointUrl: URL): Promise<Result<void, CDNErrorType>> {
 	try {
@@ -32,13 +35,19 @@ async function deleteFileFromBunnyCDN(endpointUrl: URL): Promise<Result<void, CD
 		});
 
 		if (!response.ok) {
-			console.error('Unable to delete file from BunnyCDN:\n' + response);
+			log.error(
+				{ status: response.status, url: endpointUrl.toString() },
+				'BunnyCDN delete failed'
+			);
 			return err(CDNErrorType.DeleteFailed);
 		}
 
 		return ok(undefined);
 	} catch (error) {
-		console.error('Network failure during BunnyCDN file deletion:\n' + error);
+		log.error(
+			{ err: error, url: endpointUrl.toString() },
+			'Network failure during BunnyCDN delete'
+		);
 		return err(CDNErrorType.NetworkFailure);
 	}
 }

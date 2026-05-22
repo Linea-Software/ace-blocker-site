@@ -9,6 +9,9 @@ import {
 } from '$lib/server/cdn';
 import { invalidateResistanceCache } from '$lib/server/cache';
 import crypto from 'crypto';
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('api:admin:resistance');
 
 export const resistanceRouter = new Elysia({ prefix: '/resistance' })
 	.get(
@@ -118,7 +121,7 @@ export const resistanceRouter = new Elysia({ prefix: '/resistance' })
 			const deleteResult = await deleteResistanceModeScript(id);
 
 			if (deleteResult.isErr()) {
-				console.error('Failed to delete resistance script:', deleteResult.error);
+				log.error({ err: deleteResult.error }, 'Failed to delete resistance script');
 				set.status = 500;
 				return { error: true, message: 'Delete failed' };
 			}

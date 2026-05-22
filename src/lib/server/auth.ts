@@ -9,6 +9,7 @@ import DodoPayments from 'dodopayments';
 import { getTwoFactorEmailHtml, getVerificationEmailHtml, resend } from './email';
 import { updateProExpiration, clearProExpiration } from './pro';
 import * as m from './messages';
+import { createLogger } from './logger';
 
 const env = process.env;
 
@@ -52,14 +53,24 @@ export const auth = betterAuth({
 	},
 	emailVerification: {
 		sendVerificationEmail: async ({ user, url, token }, request) => {
-			const result = await resend.emails.send({
-				from: 'noreply@aceblocker.com',
-				to: user.email,
-				subject: m.email_verification_subject(),
-				html: getVerificationEmailHtml(url)
-			});
+			const log = createLogger('auth:email-verification');
 
-			console.log(result);
+			try {
+				const result = await resend.emails.send({
+					from: 'noreply@aceblocker.com',
+					to: user.email,
+					subject: m.email_verification_subject(),
+					html: getVerificationEmailHtml(url)
+				});
+
+				if (result.error) {
+					log.error({ err: result.error }, 'Failed to send verification email');
+				} else {
+					log.info({ messageId: result.data?.id }, 'Verification email sent');
+				}
+			} catch (err) {
+				log.error({ err }, 'Exception while sending verification email');
+			}
 		},
 		autoSignInAfterVerification: true
 	},
@@ -73,12 +84,24 @@ export const auth = betterAuth({
 			issuer: m.email_app_name(),
 			otpOptions: {
 				sendOTP: async ({ user, otp }) => {
-					await resend.emails.send({
-						from: 'noreply@aceblocker.com',
-						to: user.email,
-						subject: m.email_2fa_subject(),
-						html: getTwoFactorEmailHtml(otp)
-					});
+					const log = createLogger('auth:2fa-otp');
+
+					try {
+						const result = await resend.emails.send({
+							from: 'noreply@aceblocker.com',
+							to: user.email,
+							subject: m.email_2fa_subject(),
+							html: getTwoFactorEmailHtml(otp)
+						});
+
+						if (result.error) {
+							log.error({ err: result.error }, 'Failed to send 2FA OTP email');
+						} else {
+							log.info({ messageId: result.data?.id }, '2FA OTP email sent');
+						}
+					} catch (err) {
+						log.error({ err }, 'Exception while sending 2FA OTP email');
+					}
 				}
 			}
 		}),
@@ -95,7 +118,8 @@ export const auth = betterAuth({
 					webhookKey: env.DODO_PAYMENTS_WEBHOOK_SECRET!,
 
 					onPayload: async (payload) => {
-						console.log('📦 Received webhook:', payload.type);
+						const log = createLogger('auth:dodo-webhook');
+						log.info({ type: payload.type }, 'DodoPayments webhook received');
 					},
 
 					// ── Pro activation events ─────────────────────────────────────────────

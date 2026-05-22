@@ -1,6 +1,9 @@
 import { env } from '$env/dynamic/private';
 import { dev } from '$app/environment';
 import crypto from 'crypto';
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('cdn');
 
 export enum CDNObjectPath {
 	Installer = 'ace-blocker-installer',
@@ -47,7 +50,10 @@ export const resistanceModeScriptBasePath = new URL(
 	CDNObjectPath.ResistanceModeScripts + '/',
 	storageZoneBase
 );
-export const trackingScriptsBasePath = new URL(CDNObjectPath.TrackingScripts + '/', storageZoneBase);
+export const trackingScriptsBasePath = new URL(
+	CDNObjectPath.TrackingScripts + '/',
+	storageZoneBase
+);
 export const installersBasePath = new URL(CDNObjectPath.Installer + '/', storageZoneBase);
 
 // === Upload base paths === //
@@ -55,9 +61,12 @@ const bunnyUploadBase = new URL(
 	`https://storage.bunnycdn.com/${env.BUNNY_STORAGE_ZONE}/${dev ? 'dev/' : ''}`
 );
 
-console.log('Bunny upload base URL: ' + bunnyUploadBase.toString());
+log.info({ url: bunnyUploadBase.toString() }, 'Bunny upload base URL configured');
 
-export const trackingScriptsUploadBase = new URL(CDNObjectPath.TrackingScripts + '/', bunnyUploadBase);
+export const trackingScriptsUploadBase = new URL(
+	CDNObjectPath.TrackingScripts + '/',
+	bunnyUploadBase
+);
 export const siteListsUploadBase = new URL(CDNObjectPath.SiteLists + '/', bunnyUploadBase);
 export const resistanceModeScriptsUploadBase = new URL(
 	CDNObjectPath.ResistanceModeScripts + '/',
