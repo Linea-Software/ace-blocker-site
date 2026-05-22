@@ -1,9 +1,9 @@
 import { createAuthClient } from 'better-auth/svelte';
 import { dodopaymentsClient } from '@dodopayments/better-auth';
 import { adminClient, twoFactorClient } from 'better-auth/client/plugins';
-import { env } from '$env/dynamic/public';
+import { PUBLIC_BETTER_AUTH_URL } from '$env/static/public';
 
 export const authClient = createAuthClient({
-	baseURL: env.PUBLIC_BETTER_AUTH_URL,
+	baseURL: PUBLIC_BETTER_AUTH_URL,
 	plugins: [dodopaymentsClient(), adminClient(), twoFactorClient()]
 });
