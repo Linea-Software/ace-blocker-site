@@ -10,18 +10,18 @@ import { getTwoFactorEmailHtml, getVerificationEmailHtml, resend } from './email
 import { updateProExpiration, clearProExpiration } from './pro';
 import * as m from './messages';
 import { createLogger } from './logger';
+import { dev } from '$app/environment';
+import { DODO_PAYMENTS_API_KEY, DODO_PAYMENTS_WEBHOOK_SECRET } from '$env/static/private';
 
-const env = process.env;
-
-if (!env.DODO_PAYMENTS_API_KEY) {
+if (DODO_PAYMENTS_API_KEY) {
 	throw new Error('DODO_PAYMENTS_API_KEY is not set');
 }
 
-if (!env.DODO_PAYMENTS_WEBHOOK_SECRET) {
+if (DODO_PAYMENTS_WEBHOOK_SECRET) {
 	throw new Error('DODO_PAYMENTS_WEBHOOK_SECRET is not set');
 }
 
-const isProduction = env.NODE_ENV === 'production';
+const isProduction = !dev;
 
 const dodoProducts: Product[] = isProduction
 	? [
@@ -34,7 +34,7 @@ const dodoProducts: Product[] = isProduction
 		];
 
 export const dodoPayments = new DodoPayments({
-	bearerToken: env.DODO_PAYMENTS_API_KEY,
+	bearerToken: DODO_PAYMENTS_API_KEY,
 	environment: isProduction ? 'live_mode' : 'test_mode'
 });
 
@@ -43,7 +43,7 @@ export const auth = betterAuth({
 		provider: 'pg'
 	}),
 	rateLimit: {
-		enabled: env.NODE_ENV === 'production',
+		enabled: isProduction,
 		window: 5 * 60,
 		max: 50
 	},
@@ -115,7 +115,7 @@ export const auth = betterAuth({
 					authenticatedUsersOnly: true
 				}),
 				webhooks({
-					webhookKey: env.DODO_PAYMENTS_WEBHOOK_SECRET!,
+					webhookKey: DODO_PAYMENTS_WEBHOOK_SECRET!,
 
 					onPayload: async (payload) => {
 						const log = createLogger('auth:dodo-webhook');

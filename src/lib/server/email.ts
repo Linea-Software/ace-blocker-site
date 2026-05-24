@@ -1,14 +1,9 @@
 import 'dotenv/config';
 import { Resend } from 'resend';
 import * as m from './messages';
+import { RESEND_API_KEY } from '$env/static/private';
 
-const env = process.env;
-
-if (!env.RESEND_API_KEY) {
-	throw new Error('RESEND_API_KEY is not set');
-}
-
-export const resend = new Resend(env.RESEND_API_KEY);
+export const resend = new Resend(RESEND_API_KEY);
 
 // Shared <head> for both templates.
 // Dark mode is the inline-style default (fallback for clients that strip <style>).
