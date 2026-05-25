@@ -50,8 +50,8 @@
 				detectedArch = 'linux_x64';
 			}
 
-			// Automatically trigger download on first arrival
-			if (!downloadStarted) {
+			// Automatically trigger download on first arrival (only if installer available)
+			if (!downloadStarted && data.installer) {
 				downloadStarted = true;
 				setTimeout(() => {
 					window.location.href = `/download/${arch}`;
@@ -82,7 +82,7 @@
 			size: formattedSize,
 			ext: '.exe',
 			details: 'x64 Installer',
-			isAvailable: data.installer?.os === 'windows' || data.installer === undefined
+			isAvailable: data.installer?.os === 'windows' || !data.installer
 		},
 		{
 			id: 'macos',
@@ -91,7 +91,7 @@
 			size: formattedSize,
 			ext: '.dmg',
 			details: 'Universal Binary',
-			isAvailable: data.installer?.os === 'macos' || data.installer === undefined
+			isAvailable: data.installer?.os === 'macos' || !data.installer
 		},
 		{
 			id: 'linux',
@@ -100,7 +100,7 @@
 			size: formattedSize,
 			ext: '.deb',
 			details: 'Debian / Ubuntu',
-			isAvailable: data.installer?.os === 'linux' || data.installer === undefined
+			isAvailable: data.installer?.os === 'linux' || !data.installer
 		}
 	]);
 
@@ -181,7 +181,7 @@
 				<Button
 					size="lg"
 					onclick={handleManualDownload}
-					disabled={isManualLoading}
+					disabled={isManualLoading || !data.installer}
 					class="relative h-14 overflow-hidden rounded-lg bg-amber-500 px-10 text-lg font-bold text-black shadow-xl shadow-amber-500/20 transition-all hover:scale-105 hover:bg-amber-400 active:scale-95 dark:shadow-amber-500/10"
 				>
 					{#if isManualLoading}
@@ -192,18 +192,23 @@
 					{m.download_manual_button()}
 				</Button>
 
-				<a
-					href="https://github.com/aintDatCap/ace-blocker/releases"
-					target="_blank"
-					class="group flex items-center gap-1.5 text-sm font-bold text-slate-500 transition-all hover:text-amber-500 dark:text-slate-400"
-				>
-					<IconFileText size={16} class="transition-transform group-hover:rotate-12" />
-					Version {data.installer?.version} - Build Notes
-					<IconExternalLink
-						size={12}
-						class="opacity-0 transition-opacity group-hover:opacity-100"
-					/>
-				</a>
+				{#if data.installer}
+					<a
+						href="https://github.com/aintDatCap/ace-blocker/releases"
+						target="_blank"
+						class="group flex items-center gap-1.5 text-sm font-bold text-slate-500 transition-all hover:text-amber-500 dark:text-slate-400"
+					>
+						<IconFileText
+							size={16}
+							class="transition-transform group-hover:rotate-12"
+						/>
+						Version {data.installer.version} - Build Notes
+						<IconExternalLink
+							size={12}
+							class="opacity-0 transition-opacity group-hover:opacity-100"
+						/>
+					</a>
+				{/if}
 			</div>
 		</div>
 
@@ -299,53 +304,59 @@
 		<!-- Footer Info & Utils -->
 		<div class="mx-auto max-w-2xl space-y-16">
 			<!-- Checksums Toggle (Security Conscious) -->
-			<div class="space-y-4 px-4">
-				<button
-					onclick={() => (showChecksums = !showChecksums)}
-					class="group flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-6 py-4 text-left shadow-sm transition-all hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/10 dark:hover:bg-slate-900/30"
-				>
-					<span
-						class="text-sm font-black tracking-widest text-slate-700 uppercase group-hover:text-amber-500 dark:text-slate-300"
-						>{m.download_checksums_toggle()}</span
+			{#if data.installer}
+				<div class="space-y-4 px-4">
+					<button
+						onclick={() => (showChecksums = !showChecksums)}
+						class="group flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-6 py-4 text-left shadow-sm transition-all hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/10 dark:hover:bg-slate-900/30"
 					>
-					<div
-						class="text-muted-foreground transition-transform duration-300"
-						class:rotate-180={showChecksums}
-					>
-						<ChevronDown size={20} />
-					</div>
-				</button>
+						<span
+							class="text-sm font-black tracking-widest text-slate-700 uppercase group-hover:text-amber-500 dark:text-slate-300"
+							>{m.download_checksums_toggle()}</span
+						>
+						<div
+							class="text-muted-foreground transition-transform duration-300"
+							class:rotate-180={showChecksums}
+						>
+							<ChevronDown size={20} />
+						</div>
+					</button>
 
-				{#if showChecksums}
-					<div
-						transition:fade={{ duration: 300 }}
-						class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-8 text-left dark:border-slate-800 dark:bg-slate-900/20"
-					>
-						<div class="space-y-6 font-mono text-[10px]">
-							<div class="space-y-2">
-								<p class="font-black tracking-widest text-amber-500/70 uppercase">
-									Windows (x64) SHA-256
-								</p>
-								<p
-									class="rounded-xl border border-slate-200 bg-white p-4 break-all text-slate-600 select-all dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400"
-								>
-									{data.installer.hash}
-								</p>
-							</div>
-							<div class="space-y-2">
-								<p class="font-black tracking-widest text-blue-500/70 uppercase">
-									Linux (x64) SHA-256
-								</p>
-								<p
-									class="rounded-xl border border-slate-200 bg-white p-4 break-all text-slate-600 select-all dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400"
-								>
-									TODO
-								</p>
+					{#if showChecksums}
+						<div
+							transition:fade={{ duration: 300 }}
+							class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-8 text-left dark:border-slate-800 dark:bg-slate-900/20"
+						>
+							<div class="space-y-6 font-mono text-[10px]">
+								<div class="space-y-2">
+									<p
+										class="font-black tracking-widest text-amber-500/70 uppercase"
+									>
+										Windows (x64) SHA-256
+									</p>
+									<p
+										class="rounded-xl border border-slate-200 bg-white p-4 break-all text-slate-600 select-all dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400"
+									>
+										{data.installer.hash}
+									</p>
+								</div>
+								<div class="space-y-2">
+									<p
+										class="font-black tracking-widest text-blue-500/70 uppercase"
+									>
+										Linux (x64) SHA-256
+									</p>
+									<p
+										class="rounded-xl border border-slate-200 bg-white p-4 break-all text-slate-600 select-all dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400"
+									>
+										TODO
+									</p>
+								</div>
 							</div>
 						</div>
-					</div>
-				{/if}
-			</div>
+					{/if}
+				</div>
+			{/if}
 
 			<!-- Home Navigation -->
 			<div class="pt-8">
