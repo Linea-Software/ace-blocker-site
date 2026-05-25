@@ -13,14 +13,6 @@ import { createLogger } from './logger';
 import { dev } from '$app/environment';
 import { DODO_PAYMENTS_API_KEY, DODO_PAYMENTS_WEBHOOK_SECRET } from '$env/static/private';
 
-if (DODO_PAYMENTS_API_KEY) {
-	throw new Error('DODO_PAYMENTS_API_KEY is not set');
-}
-
-if (DODO_PAYMENTS_WEBHOOK_SECRET) {
-	throw new Error('DODO_PAYMENTS_WEBHOOK_SECRET is not set');
-}
-
 const isProduction = !dev;
 
 const dodoProducts: Product[] = isProduction

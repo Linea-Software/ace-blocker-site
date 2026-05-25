@@ -128,8 +128,7 @@ Use `bun run <script>` for these tasks:
 All server-side logging uses **Pino** for structured JSON logging.
 
 - **Core module**: `src/lib/server/logger.ts` — exports the root `logger` instance and a `createLogger(component)` helper.
-- **Elysia integration**: `@bogeychan/elysia-logger` — used via `wrap(logger)` in `src/lib/server/api/app.ts` to provide auto-logging of request/response lifecycle.
-- **Component-level loggers**: In standalone server modules (CDN, pro, auth), create a module-level logger with `createLogger('component:name')`. In Elysia route files (admin routers, releases), do the same.
+- **Component-level loggers**: In standalone server modules (CDN, pro, auth) and Elysia route files (admin routers, releases), create a module-level logger with `createLogger('component:name')`.
 - **SvelteKit hooks**: `src/hooks.server.ts` injects a per-request child logger into `event.locals.log` with a unique `requestId`.
 - **Dev vs Prod**: In development, logs are pretty-printed with colors via `pino-pretty`. In production, logs are raw JSON to stdout.
 - **Redaction**: Sensitive fields (`password`, `token`, `secret`, `apiKey`, `accessKey`, `headers.authorization`, `headers.cookie`) are automatically redacted from nested objects.

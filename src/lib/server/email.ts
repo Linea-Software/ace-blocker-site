@@ -2,9 +2,13 @@ import 'dotenv/config';
 import { Resend } from 'resend';
 import * as m from './messages';
 import { RESEND_API_KEY } from '$env/static/private';
+import { dev } from '$app/environment';
 
 export const resend = new Resend(RESEND_API_KEY);
 
+if (dev) {
+	console.log(`Resend API key: ${RESEND_API_KEY}`);
+}
 // Shared <head> for both templates.
 // Dark mode is the inline-style default (fallback for clients that strip <style>).
 // Light mode overrides are applied via @media (prefers-color-scheme: light) with !important.
