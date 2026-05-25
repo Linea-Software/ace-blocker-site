@@ -62,7 +62,7 @@ export async function deleteTrackingScripts(id: string): Promise<Result<void, CD
 	}
 
 	const endpointUrl = new URL(
-		`/${release.version}/${release.fileName}`,
+		`${release.version}/${release.fileName}`,
 		trackingScriptsUploadBase
 	);
 
@@ -86,7 +86,7 @@ export async function deleteSiteList(id: string): Promise<Result<void, CDNErrorT
 		return err(CDNErrorType.DeleteFailed);
 	}
 
-	const endpointUrl = new URL(`/${release.fileName}`, siteListsUploadBase);
+	const endpointUrl = new URL(`${release.fileName}`, siteListsUploadBase);
 
 	const deleteResult = await deleteFileFromBunnyCDN(endpointUrl);
 	if (deleteResult.isErr()) {
@@ -109,7 +109,7 @@ export async function deleteResistanceModeScript(id: string): Promise<Result<voi
 	}
 
 	const endpointUrl = new URL(
-		`/${release.version}/${release.fileName}`,
+		`${release.version}/${release.fileName}`,
 		resistanceModeScriptsUploadBase
 	);
 
@@ -134,7 +134,7 @@ export async function deleteInstaller(id: string): Promise<Result<void, CDNError
 	}
 
 	const endpointUrl = new URL(
-		`/${release.version}/${release.os}/${release.architecture}/${release.fileName}`,
+		`${release.version}/${release.os}/${release.architecture}/${release.fileName}`,
 		installersUploadBase
 	);
 
