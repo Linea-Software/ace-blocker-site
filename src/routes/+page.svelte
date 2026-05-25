@@ -18,7 +18,7 @@
 <main class="flex min-h-[calc(100vh-4rem)] flex-col antialiased">
 	<!-- Hero Section -->
 	<section
-		class="relative overflow-hidden bg-gradient-to-b from-white to-slate-50 pt-20 pb-16 transition-colors duration-500 md:pt-32 md:pb-24 dark:from-slate-950 dark:to-slate-950"
+		class="relative overflow-hidden bg-gradient-to-b from-background to-muted pt-20 pb-16 transition-colors duration-500 md:pt-32 md:pb-24 dark:from-slate-950 dark:to-slate-950"
 	>
 		<div class="relative z-10 container mx-auto px-4">
 			<div class="mx-auto max-w-3xl space-y-8 text-center">
@@ -41,14 +41,14 @@
 					<span class="text-amber-500 dark:text-amber-400">{m.hero_title_app()}</span>
 				</h1>
 				<p
-					class="mx-auto max-w-2xl text-xl leading-relaxed text-slate-700 md:text-2xl dark:text-slate-400"
+					class="mx-auto max-w-2xl text-xl leading-relaxed text-muted-foreground md:text-2xl dark:text-slate-400"
 				>
 					{m.hero_description()}
 				</p>
 				<div class="flex flex-col items-center justify-center gap-4 pt-4 sm:flex-row">
 					<Button
 						size="lg"
-						class="h-12 w-full bg-slate-900 px-8 text-lg font-semibold text-white shadow-lg shadow-primary/20 hover:bg-slate-800 sm:w-auto dark:bg-slate-50 dark:text-slate-950 dark:shadow-amber-500/10 dark:hover:bg-white"
+						class="h-12 w-full bg-foreground px-8 text-lg font-semibold text-background shadow-lg shadow-foreground/10 hover:bg-foreground/85 sm:w-auto dark:bg-slate-50 dark:text-slate-950 dark:shadow-amber-500/10 dark:hover:bg-white"
 						href={downloadUrl}
 					>
 						<Download class="mr-2 h-5 w-5" />
@@ -57,7 +57,7 @@
 					<Button
 						variant="outline"
 						size="lg"
-						class="h-12 w-full border-2 border-slate-200 px-8 text-lg font-semibold text-slate-900 hover:bg-slate-100 sm:w-auto dark:border-amber-500 dark:text-amber-500 dark:hover:bg-amber-500/10"
+						class="h-12 w-full border-2 border-foreground/60 px-8 text-lg font-semibold text-foreground hover:bg-foreground/5 sm:w-auto dark:border-amber-500 dark:text-amber-500 dark:hover:bg-amber-500/10"
 						href="/get-pro"
 					>
 						{m.hero_pro_button()}
@@ -80,65 +80,65 @@
 
 	<!-- Features Section -->
 	<section
-		class="relative z-10 bg-slate-50 py-24 transition-colors duration-500 dark:bg-slate-900/50"
+		class="relative z-10 bg-muted py-24 transition-colors duration-500 dark:bg-slate-900/50"
 	>
 		<div class="container mx-auto px-4">
 			<div class="mb-20 space-y-4 text-center">
 				<h2
-					class="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl dark:text-white"
+					class="text-3xl font-bold tracking-tight text-card-foreground md:text-4xl dark:text-white"
 				>
 					{m.features_section_title()}
 				</h2>
-				<p class="mx-auto max-w-2xl text-lg text-slate-700 dark:text-slate-400">
+				<p class="mx-auto max-w-2xl text-lg text-muted-foreground dark:text-slate-400">
 					{m.features_section_description()}
 				</p>
 			</div>
 
 			<div class="grid grid-cols-1 gap-8 md:grid-cols-3">
 				<div
-					class="group rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900"
+					class="group rounded-2xl border border-border bg-card p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
 				>
 					<div
 						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20 dark:bg-amber-500/10 dark:group-hover:bg-amber-500/20"
 					>
 						<Lock class="h-7 w-7 text-primary dark:text-amber-500" />
 					</div>
-					<h3 class="mb-4 text-2xl font-bold text-slate-900 dark:text-white">
+					<h3 class="mb-4 text-2xl font-bold text-card-foreground dark:text-white">
 						{m.feature_blocks_title()}
 					</h3>
-					<p class="leading-relaxed text-slate-600 dark:text-slate-400">
+					<p class="leading-relaxed text-muted-foreground dark:text-slate-400">
 						{m.feature_blocks_description()}
 					</p>
 				</div>
 
 				<div
-					class="group rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900"
+					class="group rounded-2xl border border-border bg-card p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
 				>
 					<div
 						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-500/10 transition-colors group-hover:bg-blue-500/20 dark:bg-blue-500/10 dark:group-hover:bg-blue-500/20"
 					>
 						<Zap class="h-7 w-7 text-blue-500" />
 					</div>
-					<h3 class="mb-4 text-2xl font-bold text-slate-900 dark:text-white">
+					<h3 class="mb-4 text-2xl font-bold text-card-foreground dark:text-white">
 						{m.feature_scripts_title()}
 					</h3>
-					<p class="leading-relaxed text-slate-600 dark:text-slate-400">
+					<p class="leading-relaxed text-muted-foreground dark:text-slate-400">
 						{m.feature_scripts_description()}
 					</p>
 				</div>
 
 				<div
-					class="group rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900"
+					class="group rounded-2xl border border-border bg-card p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
 				>
 					<div
 						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-green-500/10 transition-colors group-hover:bg-green-500/20 dark:bg-green-500/10 dark:group-hover:bg-green-500/20"
 					>
 						<BarChart3 class="h-7 w-7 text-green-500" />
 					</div>
-					<h3 class="mb-4 text-2xl font-bold text-slate-900 dark:text-white">
+					<h3 class="mb-4 text-2xl font-bold text-card-foreground dark:text-white">
 						{m.feature_analytics_title()}
 					</h3>
-					<p class="leading-relaxed text-slate-600 dark:text-slate-400">
+					<p class="leading-relaxed text-muted-foreground dark:text-slate-400">
 						{m.feature_analytics_description()}
 					</p>
 				</div>
@@ -148,7 +148,7 @@
 </main>
 
 <footer
-	class="border-t border-slate-200 bg-slate-50 py-16 transition-colors duration-500 dark:border-slate-800 dark:bg-slate-950"
+	class="border-t border-border bg-muted py-16 transition-colors duration-500 dark:border-slate-800 dark:bg-slate-950"
 >
 	<div class="container mx-auto px-4">
 		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">

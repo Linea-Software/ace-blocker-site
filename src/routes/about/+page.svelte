@@ -31,14 +31,14 @@
 <Navbar isPro={data.isPro} />
 
 <main
-	class="flex min-h-[calc(100vh-4rem)] flex-col bg-white text-slate-900 transition-colors duration-500 dark:bg-[#0B0B0F] dark:text-slate-50"
+	class="flex min-h-[calc(100vh-4rem)] flex-col bg-background text-foreground transition-colors duration-500 dark:bg-[#0B0B0F] dark:text-slate-50"
 >
 	<!-- Hero Section -->
 	<section class="relative overflow-hidden pt-16 pb-16 md:pt-24 md:pb-24">
 		<div class="relative z-10 container mx-auto px-4">
 			<div class="mx-auto max-w-4xl space-y-8 text-center">
 				<h1
-					class="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl md:text-6xl dark:text-slate-50"
+					class="text-4xl font-black tracking-tight text-foreground sm:text-5xl md:text-6xl dark:text-slate-50"
 				>
 					{m.about_hero_title()}
 					<span
@@ -70,7 +70,7 @@
 
 	<!-- Mission Section -->
 	<section
-		class="relative overflow-hidden border-y border-slate-200 bg-slate-50 py-20 dark:border-slate-900 dark:bg-slate-950/50"
+		class="relative overflow-hidden border-y border-border bg-muted py-20 dark:border-slate-900 dark:bg-slate-950/50"
 	>
 		<!-- Subtle radial backdrop -->
 		<div
@@ -91,7 +91,7 @@
 				</div>
 				<div class="group relative flex justify-center">
 					<div
-						class="relative flex h-64 w-64 items-center justify-center rounded-[3rem] border border-slate-200 bg-white shadow-xl backdrop-blur-md transition-all duration-500 group-hover:border-amber-500/50 group-hover:shadow-[0_0_40px_rgba(255,191,0,0.1)] dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-2xl"
+						class="relative flex h-64 w-64 items-center justify-center rounded-[3rem] border border-border bg-card shadow-md backdrop-blur-md transition-all duration-500 group-hover:border-amber-500/50 group-hover:shadow-[0_0_40px_rgba(255,191,0,0.1)] dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-2xl"
 					>
 						<!-- Official Logo Equivalent (Shield + Timer) -->
 						<div class="relative flex items-center justify-center">
@@ -140,7 +140,7 @@
 			<div class="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">
 				<!-- System-Wide -->
 				<div
-					class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
+					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
 					<div
 						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"
@@ -161,7 +161,7 @@
 
 				<!-- Intelligent DB -->
 				<div
-					class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
+					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
 					<div
 						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"
@@ -182,7 +182,7 @@
 
 				<!-- Resistance Mode -->
 				<div
-					class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
+					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
 					<div
 						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"
@@ -203,7 +203,7 @@
 
 				<!-- Hardened Locks -->
 				<div
-					class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
+					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
 					<div
 						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"
@@ -229,7 +229,7 @@
 	<section class="relative mb-24 py-12">
 		<div class="container mx-auto px-4">
 			<div
-				class="relative space-y-8 overflow-hidden rounded-[3rem] border border-slate-200 bg-slate-50 px-8 py-16 text-center shadow-2xl backdrop-blur-md md:py-24 dark:border-slate-800 dark:bg-slate-950/80"
+				class="relative space-y-8 overflow-hidden rounded-[3rem] border border-border bg-muted px-8 py-16 text-center shadow-2xl backdrop-blur-md md:py-24 dark:border-slate-800 dark:bg-slate-950/80"
 			>
 				<!-- Decorative pattern & Glows -->
 				<div class="absolute inset-0 z-0">
@@ -275,7 +275,7 @@
 	</section>
 </main>
 
-<footer class="border-t border-slate-200 bg-slate-50 py-16 dark:border-slate-900 dark:bg-[#0B0B0F]">
+<footer class="border-t border-border bg-muted py-16 dark:border-slate-900 dark:bg-[#0B0B0F]">
 	<div class="container mx-auto px-4">
 		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
 			<div class="flex items-center gap-3">
@@ -284,7 +284,7 @@
 					>{m.hero_title_app()}</span
 				>
 			</div>
-			<p class="text-sm text-slate-500">
+			<p class="text-sm text-muted-foreground">
 				&copy; {new Date().getFullYear()}
 				{m.footer_rights_suffix()}
 			</p>
