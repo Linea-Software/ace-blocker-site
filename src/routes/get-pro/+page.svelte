@@ -72,12 +72,13 @@
 	});
 
 	function handleUpgrade() {
-		if ($session.data) {
-			const slug = billingCycle === 'yearly' ? 'ace_blocker_yearly' : 'ace_blocker_monthly';
-			goto(`/checkout?slug=${slug}${origin ? `&origin=${origin}` : ''}`);
-		} else {
+		if (!$session.data) {
 			goto(`/signin${origin ? `?origin=${origin}` : ''}`);
+			return;
 		}
+
+		const slug = billingCycle === 'yearly' ? 'ace_blocker_yearly' : 'ace_blocker_monthly';
+		authClient.dodopayments.checkoutSession({ slug });
 	}
 </script>
 

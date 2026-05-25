@@ -27,7 +27,7 @@ const dodoProducts: Product[] = isProduction
 
 export const dodoPayments = new DodoPayments({
 	bearerToken: DODO_PAYMENTS_API_KEY,
-	environment: isProduction ? 'live_mode' : 'test_mode'
+	environment: 'test_mode'
 });
 
 export const auth = betterAuth({
