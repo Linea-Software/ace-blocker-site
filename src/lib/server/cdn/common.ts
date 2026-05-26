@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
-import { dev } from '$app/environment';
 import crypto from 'crypto';
+import { isProduction } from '$lib/server/env';
 import { createLogger } from '$lib/server/logger';
 
 const log = createLogger('cdn');
@@ -41,9 +41,9 @@ const securityKey = env.BUNNY_SECURITY_KEY;
 
 // === Base paths/URLs declarations === //
 
-// on dev mode we're going with /dev
+// In production, files are served from the root. In dev, use /dev/ prefix.
 // Trailing slash is required so that new URL(relative, base) appends rather than replaces the last segment.
-const storageZoneBase = new URL(`https://${env.BUNNY_CDN_BASE_URL}/${dev ? 'dev/' : ''}`);
+const storageZoneBase = new URL(`https://${env.BUNNY_CDN_BASE_URL}/${isProduction ? '' : 'dev/'}`);
 
 export const siteListsBasePath = new URL(CDNObjectPath.SiteLists + '/', storageZoneBase);
 export const resistanceModeScriptBasePath = new URL(
@@ -58,7 +58,7 @@ export const installersBasePath = new URL(CDNObjectPath.Installer + '/', storage
 
 // === Upload base paths === //
 const bunnyUploadBase = new URL(
-	`https://storage.bunnycdn.com/${env.BUNNY_STORAGE_ZONE}/${dev ? 'dev/' : ''}`
+	`https://storage.bunnycdn.com/${env.BUNNY_STORAGE_ZONE}/${isProduction ? '' : 'dev/'}`
 );
 
 log.info({ url: bunnyUploadBase.toString() }, 'Bunny upload base URL configured');
