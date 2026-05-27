@@ -80,6 +80,25 @@ else
     warn "No SSH keys found in /root/.ssh/. Set up SSH keys manually."
 fi
 
+# Set a password for the user (was created with --disabled-password above)
+echo ""
+while true; do
+    read -rsp "  Set password for ${USERNAME}: " USER_PASS
+    echo ""
+    read -rsp "  Confirm password: " USER_PASS_CONFIRM
+    echo ""
+    if [[ "$USER_PASS" != "$USER_PASS_CONFIRM" ]]; then
+        warn "Passwords do not match. Try again."
+    elif [[ -z "$USER_PASS" ]]; then
+        warn "Password cannot be empty."
+    else
+        echo "${USERNAME}:${USER_PASS}" | chpasswd
+        ok "Password set for ${USERNAME}."
+        break
+    fi
+done
+unset USER_PASS USER_PASS_CONFIRM
+
 # ── 3. SSH Hardening ────────────────────────────────────────────────────────
 step "3. SSH Hardening"
 SSHD="/etc/ssh/sshd_config"
@@ -432,12 +451,19 @@ else
     EMAIL_ARG=""
     [[ -n "$EMAIL" ]] && EMAIL_ARG="--email ${EMAIL}"
 
+    if [[ -z "$EMAIL" ]]; then
+        warn "No --email provided. Certbot requires an email for non-interactive registration."
+        read -rp "  Email for Let's Encrypt registration: " EMAIL
+        [[ -z "$EMAIL" ]] && { err "Email is required for SSL certificate."; exit 1; }
+        EMAIL_ARG="--email ${EMAIL}"
+    fi
+
     info "Requesting SSL certificate for ${DOMAIN}..."
     certbot certonly --non-interactive --agree-tos \
         --dns-cloudflare --dns-cloudflare-credentials "$CF_INI" \
         $EMAIL_ARG \
         -d "${DOMAIN}" -d "www.${DOMAIN}" || {
-        err "Certbot failed. Check that the token has Zone:DNS:Edit permissions."
+        err "Certbot failed. Check the Cloudflare token and try:\n         sudo certbot certificates\n         sudo certbot renew --dry-run"
         exit 1
     }
     ok "SSL certificate obtained."
