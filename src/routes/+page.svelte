@@ -1,7 +1,9 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Shield, Zap, Lock, BarChart3, ArrowRight, Download } from '@lucide/svelte';
+	import { Zap, Lock, BarChart3, ArrowRight, Download } from '@lucide/svelte';
+	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
+	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
 	import * as m from '$lib/paraglide/messages';
 	import { getDownloadUrl } from '$lib/utils/platform';
 
@@ -153,10 +155,8 @@
 	<div class="container mx-auto px-4">
 		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
 			<div class="flex items-center gap-3">
-				<Shield class="h-7 w-7 text-primary dark:text-amber-500" />
-				<span class="text-xl font-bold tracking-tight dark:text-white"
-					>{m.hero_title_app()}</span
-				>
+				<img src={darkFullLogo} alt="Ace Blocker" class="block h-8 w-auto dark:hidden" />
+				<img src={lightFullLogo} alt="Ace Blocker" class="hidden h-8 w-auto dark:block" />
 			</div>
 			<p class="text-sm text-muted-foreground dark:text-slate-500">
 				&copy; {new Date().getFullYear()}

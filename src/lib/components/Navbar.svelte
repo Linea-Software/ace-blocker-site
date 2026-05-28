@@ -8,13 +8,14 @@
 		Info,
 		LogIn,
 		UserPlus,
-		Shield,
 		Menu,
 		LayoutDashboard,
 		LogOut,
 		Sun,
 		Moon
 	} from '@lucide/svelte';
+	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
+	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
 	import { authClient } from '$lib/auth-client';
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils';
@@ -58,8 +59,7 @@
 				<Sheet.Content side="left" class="flex w-[300px] flex-col sm:w-[400px]">
 					<Sheet.Header class="text-left">
 						<Sheet.Title class="flex items-center gap-2">
-							<Shield class="h-6 w-6 text-primary" />
-							<span>Ace Blocker</span>
+							<img src={darkFullLogo} alt="Ace Blocker" class="h-6 w-auto" />
 						</Sheet.Title>
 						<Sheet.Description>Manage your digital well-being.</Sheet.Description>
 					</Sheet.Header>
@@ -157,15 +157,9 @@
 				</Sheet.Content>
 			</Sheet.Root>
 
-			<a
-				href="/"
-				class="mr-4 flex items-center space-x-2 transition-opacity hover:opacity-90"
-			>
-				<Shield class="h-6 w-6 text-primary dark:text-amber-500" />
-				<span
-					class="inline-block text-xl font-bold tracking-tight text-slate-900 sm:text-2xl dark:text-white"
-					>Ace Blocker</span
-				>
+			<a href="/" class="mr-4 flex items-center transition-opacity hover:opacity-90">
+				<img src={darkFullLogo} alt="Ace Blocker" class="block h-8 w-auto dark:hidden" />
+				<img src={lightFullLogo} alt="Ace Blocker" class="hidden h-8 w-auto dark:block" />
 			</a>
 
 			<nav class="hidden h-full items-center gap-1 md:flex">

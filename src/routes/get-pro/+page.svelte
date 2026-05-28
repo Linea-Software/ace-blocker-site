@@ -19,6 +19,8 @@
 		MoreVertical
 	} from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
+	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
+	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
 	import { authClient } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -605,10 +607,8 @@
 	<div class="container mx-auto px-4">
 		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
 			<div class="flex items-center gap-3">
-				<Shield class="h-7 w-7 text-amber-500" />
-				<span class="text-xl font-black tracking-tight text-slate-900 dark:text-white"
-					>{m.hero_title_app()}</span
-				>
+				<img src={darkFullLogo} alt="Ace Blocker" class="block h-8 w-auto dark:hidden" />
+				<img src={lightFullLogo} alt="Ace Blocker" class="hidden h-8 w-auto dark:block" />
 			</div>
 			<p class="text-sm text-slate-500">
 				&copy; {new Date().getFullYear()}

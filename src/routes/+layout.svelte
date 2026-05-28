@@ -3,7 +3,7 @@
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
 	import { ModeWatcher } from 'mode-watcher';
 	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
+	import favicon from '$lib/assets/logo/SVG/icon.svg';
 
 	let { children } = $props();
 </script>

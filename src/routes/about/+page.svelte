@@ -1,17 +1,9 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import {
-		Shield,
-		Timer,
-		Cpu,
-		Layers,
-		Lock,
-		Code2,
-		ArrowRight,
-		Sparkles,
-		Globe
-	} from '@lucide/svelte';
+	import { Cpu, Layers, Lock, Code2, ArrowRight, Sparkles, Globe } from '@lucide/svelte';
+	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
+	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
 	import * as m from '$lib/paraglide/messages';
 	import { getDownloadUrl } from '$lib/utils/platform';
 
@@ -93,12 +85,12 @@
 					<div
 						class="relative flex h-64 w-64 items-center justify-center rounded-[3rem] border border-border bg-card shadow-md backdrop-blur-md transition-all duration-500 group-hover:border-amber-500/50 group-hover:shadow-[0_0_40px_rgba(255,191,0,0.1)] dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-2xl"
 					>
-						<!-- Official Logo Equivalent (Shield + Timer) -->
 						<div class="relative flex items-center justify-center">
-							<Shield
-								class="absolute h-40 w-40 text-amber-500 opacity-20 transition-transform duration-700 group-hover:scale-110"
+							<img
+								src={darkFullLogo}
+								alt="Ace Blocker"
+								class="h-24 w-auto transition-transform duration-700 group-hover:scale-110"
 							/>
-							<Timer class="relative z-10 h-24 w-24 text-[#FFBF00]" />
 						</div>
 					</div>
 					<!-- Decorative Glow Circles -->
@@ -279,10 +271,8 @@
 	<div class="container mx-auto px-4">
 		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
 			<div class="flex items-center gap-3">
-				<Shield class="h-7 w-7 text-amber-500" />
-				<span class="text-xl font-black tracking-tight text-slate-900 dark:text-white"
-					>{m.hero_title_app()}</span
-				>
+				<img src={darkFullLogo} alt="Ace Blocker" class="block h-8 w-auto dark:hidden" />
+				<img src={lightFullLogo} alt="Ace Blocker" class="hidden h-8 w-auto dark:block" />
 			</div>
 			<p class="text-sm text-muted-foreground">
 				&copy; {new Date().getFullYear()}
