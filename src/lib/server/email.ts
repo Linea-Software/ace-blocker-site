@@ -22,6 +22,8 @@ const emailHead = `<head>
     .email-otp-code { color: #0F172A !important; }
     .email-divider  { border-top-color: #E2E8F0 !important; }
     .email-footer   { color: #94A3B8 !important; }
+    .email-logo-dark  { display: none !important; }
+    .email-logo-light { display: block !important; }
   }
 </style>
 </head>`;
@@ -37,7 +39,20 @@ ${emailHead}
 
             <div style="padding: 40px 32px;">
                 <div style="margin-bottom: 32px;">
-                    <h1 class="email-heading" style="color: #F8FAFC; font-size: 26px; font-weight: 700; margin: 0; letter-spacing: -0.025em;">${m.email_app_name()}</h1>
+                    <!-- Dark mode default -->
+                    <img class="email-logo-dark"
+                         src="https://aceblocker-storage.b-cdn.net/dark-full-logo.png"
+                         alt="Ace Blocker"
+                         width="180"
+                         height="42"
+                         style="display:block; margin:0 auto; width:180px; height:auto; border:0;" />
+                    <!-- Light mode override -->
+                    <img class="email-logo-light"
+                         src="https://aceblocker-storage.b-cdn.net/light-full-logo.png"
+                         alt="Ace Blocker"
+                         width="180"
+                         height="42"
+                         style="display:none; margin:0 auto; width:180px; height:auto; border:0;" />
                 </div>
 
                 <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 32px; font-weight: 400;">
@@ -73,7 +88,20 @@ ${emailHead}
 
             <div style="padding: 40px 32px;">
                 <div style="margin-bottom: 32px;">
-                    <h1 class="email-heading" style="color: #F8FAFC; font-size: 26px; font-weight: 700; margin: 0; letter-spacing: -0.025em;">${m.email_app_name()}</h1>
+                    <!-- Dark mode default -->
+                    <img class="email-logo-dark"
+                         src="https://aceblocker-storage.b-cdn.net/dark-full-logo.png"
+                         alt="Ace Blocker"
+                         width="180"
+                         height="42"
+                         style="display:block; margin:0 auto; width:180px; height:auto; border:0;" />
+                    <!-- Light mode override -->
+                    <img class="email-logo-light"
+                         src="https://aceblocker-storage.b-cdn.net/light-full-logo.png"
+                         alt="Ace Blocker"
+                         width="180"
+                         height="42"
+                         style="display:none; margin:0 auto; width:180px; height:auto; border:0;" />
                 </div>
 
                 <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 36px; font-weight: 400;">
