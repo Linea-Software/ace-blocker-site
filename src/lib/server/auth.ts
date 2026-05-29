@@ -10,10 +10,10 @@ import { getTwoFactorEmailHtml, getVerificationEmailHtml, resend } from './email
 import { updateProExpiration, clearProExpiration } from './pro';
 import * as m from './messages';
 import { createLogger } from './logger';
-import { dev } from '$app/environment';
-import { DODO_PAYMENTS_API_KEY, DODO_PAYMENTS_WEBHOOK_SECRET } from '$env/static/private';
 
-const isProduction = !dev;
+// Use process.env so Better Auth CLI (`auth generate`) can resolve these
+// without needing SvelteKit's $app/environment or $env/static/private aliases.
+const isProduction = process.env.NODE_ENV === 'production';
 
 const dodoProducts: Product[] = isProduction
 	? [
@@ -26,7 +26,7 @@ const dodoProducts: Product[] = isProduction
 		];
 
 export const dodoPayments = new DodoPayments({
-	bearerToken: DODO_PAYMENTS_API_KEY,
+	bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
 	environment: 'test_mode'
 });
 
@@ -46,13 +46,14 @@ export const auth = betterAuth({
 	emailVerification: {
 		sendVerificationEmail: async ({ user, url, token }, request) => {
 			const log = createLogger('auth:email-verification');
+			const locale = (user as any).locale ?? 'en';
 
 			try {
 				const result = await resend.emails.send({
 					from: 'noreply@aceblocker.com',
 					to: user.email,
-					subject: m.email_verification_subject(),
-					html: getVerificationEmailHtml(url)
+					subject: m.email_verification_subject(locale),
+					html: getVerificationEmailHtml(url, locale)
 				});
 
 				if (result.error) {
@@ -77,13 +78,14 @@ export const auth = betterAuth({
 			otpOptions: {
 				sendOTP: async ({ user, otp }) => {
 					const log = createLogger('auth:2fa-otp');
+					const locale = (user as any).locale ?? 'en';
 
 					try {
 						const result = await resend.emails.send({
 							from: 'noreply@aceblocker.com',
 							to: user.email,
-							subject: m.email_2fa_subject(),
-							html: getTwoFactorEmailHtml(otp)
+							subject: m.email_2fa_subject(locale),
+							html: getTwoFactorEmailHtml(otp, locale)
 						});
 
 						if (result.error) {
@@ -107,7 +109,7 @@ export const auth = betterAuth({
 					authenticatedUsersOnly: true
 				}),
 				webhooks({
-					webhookKey: DODO_PAYMENTS_WEBHOOK_SECRET!,
+					webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
 
 					onPayload: async (payload) => {
 						const log = createLogger('auth:dodo-webhook');

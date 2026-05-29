@@ -1,5 +1,8 @@
 import pino from 'pino';
-import { dev } from '$app/environment';
+
+// Use process.env so Better Auth CLI (`auth generate`) can resolve this
+// without needing SvelteKit's $app/environment alias.
+const isDev = process.env.NODE_ENV !== 'production';
 
 /**
  * Root application logger.
@@ -11,8 +14,8 @@ import { dev } from '$app/environment';
  */
 export const logger = pino({
 	name: 'ace-blocker',
-	level: dev ? 'debug' : 'info',
-	...(dev && {
+	level: isDev ? 'debug' : 'info',
+	...(isDev && {
 		transport: {
 			target: 'pino-pretty',
 			options: {

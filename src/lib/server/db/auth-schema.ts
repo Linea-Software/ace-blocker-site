@@ -17,7 +17,8 @@ export const user = pgTable('user', {
 	banReason: text('ban_reason'),
 	banExpires: timestamp('ban_expires'),
 	twoFactorEnabled: boolean('two_factor_enabled').default(false),
-	dodoCustomerId: text('dodo_customer_id')
+	dodoCustomerId: text('dodo_customer_id'),
+	locale: text('locale').default('en').notNull()
 });
 
 export const session = pgTable(
@@ -130,11 +131,11 @@ export const twoFactor = pgTable(
 	]
 );
 
-// export const userRelations = relations(user, ({ many }) => ({
-// 	sessions: many(session),
-// 	accounts: many(account),
-// 	twoFactors: many(twoFactor)
-// }));
+export const userRelations = relations(user, ({ many }) => ({
+	sessions: many(session),
+	accounts: many(account),
+	twoFactors: many(twoFactor)
+}));
 
 export const sessionRelations = relations(session, ({ one }) => ({
 	user: one(user, {

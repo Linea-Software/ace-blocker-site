@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { Resend } from 'resend';
 import * as m from './messages';
+import type { Locale } from './messages';
 import { RESEND_API_KEY } from '$env/static/private';
 
 export const resend = new Resend(RESEND_API_KEY);
@@ -28,9 +29,9 @@ const emailHead = `<head>
 </style>
 </head>`;
 
-export function getTwoFactorEmailHtml(otpCode: string): string {
+export function getTwoFactorEmailHtml(otpCode: string, locale: Locale = 'en'): string {
 	return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${locale}">
 ${emailHead}
 <body style="margin:0;padding:0;">
     <div class="email-body" style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0B0F19; color: #E2E8F0; padding: 60px 20px; text-align: center; line-height: 1.5;">
@@ -56,7 +57,7 @@ ${emailHead}
                 </div>
 
                 <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 32px; font-weight: 400;">
-                    ${m.email_2fa_body()}
+                    ${m.email_2fa_body(locale)}
                 </p>
 
                 <div class="email-otp-box" style="background-color: #0B0F19; border: 1px solid #334155; border-radius: 12px; padding: 24px; margin-bottom: 32px;">
@@ -68,7 +69,7 @@ ${emailHead}
                 <hr class="email-divider" style="border: none; border-top: 1px solid #1F2937; margin: 0 0 24px 0;" />
 
                 <p class="email-footer" style="font-size: 13px; line-height: 20px; color: #64748B; margin: 0;">
-                    ${m.email_2fa_footer()}
+                    ${m.email_2fa_footer(locale)}
                 </p>
             </div>
         </div>
@@ -77,9 +78,9 @@ ${emailHead}
 </html>`;
 }
 
-export function getVerificationEmailHtml(verifyUrl: string): string {
+export function getVerificationEmailHtml(verifyUrl: string, locale: Locale = 'en'): string {
 	return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${locale}">
 ${emailHead}
 <body style="margin:0;padding:0;">
     <div class="email-body" style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0B0F19; color: #E2E8F0; padding: 60px 20px; text-align: center; line-height: 1.5;">
@@ -105,19 +106,19 @@ ${emailHead}
                 </div>
 
                 <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 36px; font-weight: 400;">
-                    ${m.email_verification_body()}
+                    ${m.email_verification_body(locale)}
                 </p>
 
                 <div style="margin-bottom: 36px;">
                     <a href="${verifyUrl}" style="display: inline-block; background-color: #D97706; color: #FFFFFF; font-weight: 600; font-size: 16px; text-decoration: none; padding: 16px 36px; border-radius: 10px;">
-                        ${m.email_verification_button()}
+                        ${m.email_verification_button(locale)}
                     </a>
                 </div>
 
                 <hr class="email-divider" style="border: none; border-top: 1px solid #1F2937; margin: 0 0 24px 0;" />
 
                 <p class="email-footer" style="font-size: 13px; line-height: 20px; color: #64748B; margin: 0;">
-                    ${m.email_verification_footer()}
+                    ${m.email_verification_footer(locale)}
                 </p>
             </div>
         </div>
