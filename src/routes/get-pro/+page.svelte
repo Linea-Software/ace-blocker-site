@@ -89,7 +89,7 @@
 <Navbar {isPro} />
 
 <main
-	class="min-h-[calc(100vh-4rem)] bg-white py-16 text-slate-900 transition-colors duration-500 md:py-24 dark:bg-[#0B0B0F] dark:text-slate-50"
+	class="min-h-[calc(100vh-4rem)] bg-background py-16 transition-colors duration-500 md:py-24 dark:bg-[#0B0B0F] dark:text-slate-50"
 >
 	<div class="container mx-auto px-4">
 		<!-- Header -->

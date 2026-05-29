@@ -121,14 +121,14 @@
 <Navbar isPro={data.isPro} />
 
 <main
-	class="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-white px-4 pt-16 pb-12 transition-colors duration-500 dark:bg-[#0B0B0F]"
+	class="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-4 pt-16 pb-12 transition-colors duration-500 dark:bg-[#0B0B0F]"
 >
 	<!-- Background Aesthetics (Resistance Mode Theme) -->
 	<div
-		class="pointer-events-none absolute inset-0 -z-10 bg-slate-50 transition-colors duration-500 dark:bg-[#0B0B0F]"
+		class="pointer-events-none absolute inset-0 -z-10 bg-background transition-colors duration-500 dark:bg-[#0B0B0F]"
 	>
 		<div
-			class="absolute inset-0 bg-radial-[at_50%_50%] from-slate-50 via-slate-50 to-amber-500/5 dark:from-[#0B0B0F] dark:via-[#0B0B0F] dark:to-amber-500/10"
+			class="absolute inset-0 bg-radial-[at_50%_50%] from-background via-background to-amber-500/5 dark:from-[#0B0B0F] dark:via-[#0B0B0F] dark:to-amber-500/10"
 		></div>
 		<div
 			class="absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-200/50 blur-[120px] dark:bg-primary/10"
