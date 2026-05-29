@@ -4,6 +4,7 @@
 	import { Cpu, Layers, Lock, Code2, ArrowRight, Sparkles, Globe } from '@lucide/svelte';
 	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
 	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
+	import icon from '$lib/assets/logo/SVG/icon.svg';
 	import { mode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages';
 	import { getDownloadUrl } from '$lib/utils/platform';
@@ -85,22 +86,14 @@
 				</div>
 				<div class="group relative flex justify-center">
 					<div
-						class="relative flex h-64 w-64 items-center justify-center rounded-[3rem] border border-border bg-card shadow-md backdrop-blur-md transition-all duration-500 group-hover:border-amber-500/50 group-hover:shadow-[0_0_40px_rgba(255,191,0,0.1)] dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-2xl"
+						class="relative flex h-64 w-64 items-center justify-center rounded-[3rem] border border-border bg-card p-6 shadow-md backdrop-blur-md transition-all duration-500 group-hover:border-amber-500/50 group-hover:shadow-[0_0_40px_rgba(255,191,0,0.1)] dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-2xl"
 					>
 						<div class="relative flex items-center justify-center">
-							{#if isDark}
-								<img
-									src={darkFullLogo}
-									alt="Ace Blocker"
-									class="h-24 w-auto transition-transform duration-700 group-hover:scale-110"
-								/>
-							{:else}
-								<img
-									src={lightFullLogo}
-									alt="Ace Blocker"
-									class="h-24 w-auto transition-transform duration-700 group-hover:scale-110"
-								/>
-							{/if}
+							<img
+								src={icon}
+								alt="Ace Blocker"
+								class="h-auto w-[60%] transition-transform duration-700 group-hover:scale-110"
+							/>
 						</div>
 					</div>
 					<!-- Decorative Glow Circles -->
