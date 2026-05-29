@@ -6,18 +6,11 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Card from '$lib/components/ui/card';
 	import * as Alert from '$lib/components/ui/alert';
-	import {
-		Loader2,
-		AlertCircle,
-		Shield,
-		ArrowLeft,
-		CheckCircle2,
-		Sun,
-		Moon,
-		Mail
-	} from '@lucide/svelte';
+	import { Loader2, AlertCircle, ArrowLeft, CheckCircle2, Sun, Moon, Mail } from '@lucide/svelte';
+	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
+	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
 	import { page } from '$app/state';
-	import { toggleMode } from 'mode-watcher';
+	import { toggleMode, mode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages.js';
 
 	import { apiClient } from '$lib/api-client';
@@ -30,6 +23,7 @@
 	let loading = $state(false);
 	let isSubmitted = $state(false);
 	let submittedEmail = $state('');
+	let isDark = $derived(mode.current === 'dark');
 
 	const session = authClient.useSession();
 	const origin = $derived(page.url.searchParams.get('origin'));
@@ -126,12 +120,8 @@
 			class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--color-amber-500)_0%,_transparent_70%)] opacity-10"
 		></div>
 
-		<a
-			href="/"
-			class="relative z-10 flex items-center gap-3 transition-opacity hover:opacity-80"
-		>
-			<Shield class="h-10 w-10 text-amber-500" />
-			<span class="text-3xl font-bold tracking-tight text-white">Ace Blocker</span>
+		<a href="/" class="relative z-10 flex items-center transition-opacity hover:opacity-80">
+			<img src={darkFullLogo} alt="Ace Blocker" class="h-9 w-auto" />
 		</a>
 
 		<div class="relative z-10 space-y-6">
@@ -156,8 +146,11 @@
 	<div class="flex w-full flex-col items-center justify-center p-6 lg:w-1/2">
 		<div class="mb-8 flex w-full max-w-md items-center justify-between lg:hidden">
 			<a href="/" class="flex items-center gap-2 font-bold dark:text-white">
-				<Shield class="h-6 w-6 text-amber-500" />
-				<span>Ace Blocker</span>
+				{#if isDark}
+					<img src={darkFullLogo} alt="Ace Blocker" class="h-6 w-auto" />
+				{:else}
+					<img src={lightFullLogo} alt="Ace Blocker" class="h-6 w-auto" />
+				{/if}
 			</a>
 			<Button
 				variant="ghost"
