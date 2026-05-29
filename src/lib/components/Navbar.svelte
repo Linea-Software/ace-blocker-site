@@ -32,6 +32,7 @@
 	];
 
 	let isMobileMenuOpen = $state(false);
+	let isDark = $derived(mode.current === 'dark');
 
 	function isActive(href: string) {
 		return page.url.pathname === href;
@@ -59,7 +60,11 @@
 				<Sheet.Content side="left" class="flex w-[300px] flex-col sm:w-[400px]">
 					<Sheet.Header class="text-left">
 						<Sheet.Title class="flex items-center gap-2">
-							<img src={darkFullLogo} alt="Ace Blocker" class="h-6 w-auto" />
+							{#if isDark}
+								<img src={darkFullLogo} alt="Ace Blocker" class="h-6 w-auto" />
+							{:else}
+								<img src={lightFullLogo} alt="Ace Blocker" class="h-6 w-auto" />
+							{/if}
 						</Sheet.Title>
 						<Sheet.Description>Manage your digital well-being.</Sheet.Description>
 					</Sheet.Header>
@@ -158,8 +163,11 @@
 			</Sheet.Root>
 
 			<a href="/" class="mr-4 flex items-center transition-opacity hover:opacity-90">
-				<img src={darkFullLogo} alt="Ace Blocker" class="block h-8 w-auto dark:hidden" />
-				<img src={lightFullLogo} alt="Ace Blocker" class="hidden h-8 w-auto dark:block" />
+				{#if isDark}
+					<img src={darkFullLogo} alt="Ace Blocker" class="h-[30px] w-auto md:h-9" />
+				{:else}
+					<img src={lightFullLogo} alt="Ace Blocker" class="h-[30px] w-auto md:h-9" />
+				{/if}
 			</a>
 
 			<nav class="hidden h-full items-center gap-1 md:flex">

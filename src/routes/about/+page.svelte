@@ -4,11 +4,13 @@
 	import { Cpu, Layers, Lock, Code2, ArrowRight, Sparkles, Globe } from '@lucide/svelte';
 	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
 	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
+	import { mode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages';
 	import { getDownloadUrl } from '$lib/utils/platform';
 
 	let { data } = $props();
 	let downloadUrl = $state('/download');
+	let isDark = $derived(mode.current === 'dark');
 
 	$effect(() => {
 		downloadUrl = getDownloadUrl();
@@ -86,11 +88,19 @@
 						class="relative flex h-64 w-64 items-center justify-center rounded-[3rem] border border-border bg-card shadow-md backdrop-blur-md transition-all duration-500 group-hover:border-amber-500/50 group-hover:shadow-[0_0_40px_rgba(255,191,0,0.1)] dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-2xl"
 					>
 						<div class="relative flex items-center justify-center">
-							<img
-								src={darkFullLogo}
-								alt="Ace Blocker"
-								class="h-24 w-auto transition-transform duration-700 group-hover:scale-110"
-							/>
+							{#if isDark}
+								<img
+									src={darkFullLogo}
+									alt="Ace Blocker"
+									class="h-24 w-auto transition-transform duration-700 group-hover:scale-110"
+								/>
+							{:else}
+								<img
+									src={lightFullLogo}
+									alt="Ace Blocker"
+									class="h-24 w-auto transition-transform duration-700 group-hover:scale-110"
+								/>
+							{/if}
 						</div>
 					</div>
 					<!-- Decorative Glow Circles -->
@@ -271,8 +281,11 @@
 	<div class="container mx-auto px-4">
 		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
 			<div class="flex items-center gap-3">
-				<img src={darkFullLogo} alt="Ace Blocker" class="block h-8 w-auto dark:hidden" />
-				<img src={lightFullLogo} alt="Ace Blocker" class="hidden h-8 w-auto dark:block" />
+				{#if isDark}
+					<img src={darkFullLogo} alt="Ace Blocker" class="h-8 w-auto" />
+				{:else}
+					<img src={lightFullLogo} alt="Ace Blocker" class="h-8 w-auto" />
+				{/if}
 			</div>
 			<p class="text-sm text-muted-foreground">
 				&copy; {new Date().getFullYear()}

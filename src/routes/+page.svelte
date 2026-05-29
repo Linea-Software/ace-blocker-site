@@ -4,11 +4,13 @@
 	import { Zap, Lock, BarChart3, ArrowRight, Download } from '@lucide/svelte';
 	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
 	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
+	import { mode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages';
 	import { getDownloadUrl } from '$lib/utils/platform';
 
 	let { data } = $props();
 	let downloadUrl = $state('/download');
+	let isDark = $derived(mode.current === 'dark');
 
 	$effect(() => {
 		downloadUrl = getDownloadUrl();
@@ -155,8 +157,11 @@
 	<div class="container mx-auto px-4">
 		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
 			<div class="flex items-center gap-3">
-				<img src={darkFullLogo} alt="Ace Blocker" class="block h-8 w-auto dark:hidden" />
-				<img src={lightFullLogo} alt="Ace Blocker" class="hidden h-8 w-auto dark:block" />
+				{#if isDark}
+					<img src={darkFullLogo} alt="Ace Blocker" class="h-8 w-auto" />
+				{:else}
+					<img src={lightFullLogo} alt="Ace Blocker" class="h-8 w-auto" />
+				{/if}
 			</div>
 			<p class="text-sm text-muted-foreground dark:text-slate-500">
 				&copy; {new Date().getFullYear()}
