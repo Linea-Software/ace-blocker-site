@@ -233,7 +233,7 @@
 							placeholder="you@example.com"
 							bind:value={email}
 							required
-							class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+							class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
 						/>
 					</div>
 					<div class="space-y-2">
@@ -252,7 +252,7 @@
 							placeholder="••••••••"
 							bind:value={password}
 							required
-							class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+							class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
 						/>
 					</div>
 
@@ -310,7 +310,7 @@
 								maxlength={6}
 								bind:value={otpCode}
 								required
-								class="h-14 border-input bg-background/50 text-center text-2xl font-bold tracking-[0.5em] text-foreground placeholder:text-muted-foreground/30 focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+								class="h-14 border-input bg-card text-center text-2xl font-bold tracking-[0.5em] text-foreground placeholder:text-muted-foreground/30 focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
 							/>
 							<Key
 								class="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted-foreground"

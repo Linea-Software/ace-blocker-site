@@ -219,7 +219,7 @@
 							placeholder="John Doe"
 							bind:value={name}
 							required
-							class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+							class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
 						/>
 					</div>
 					<div class="space-y-2">
@@ -232,7 +232,7 @@
 							placeholder="you@example.com"
 							bind:value={email}
 							required
-							class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+							class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
 						/>
 					</div>
 					<div class="space-y-2">
@@ -245,7 +245,7 @@
 							placeholder="••••••••"
 							bind:value={password}
 							required
-							class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+							class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
 						/>
 					</div>
 					<div class="space-y-2">
@@ -276,7 +276,7 @@
 							placeholder="••••••••"
 							bind:value={confirmPassword}
 							required
-							class="border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white {confirmPassword &&
+							class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white {confirmPassword &&
 							!passwordsMatch
 								? 'border-red-900/50 ring-red-900/20'
 								: ''}"
