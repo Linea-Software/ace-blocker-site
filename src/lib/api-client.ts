@@ -4,7 +4,7 @@ import { dev } from '$app/environment';
 
 const getBaseUrl = () => {
 	if (dev) {
-		return 'https://localhost:5173';
+		return 'http://localhost:5173';
 	}
 	return 'https://aceblocker.com';
 };
