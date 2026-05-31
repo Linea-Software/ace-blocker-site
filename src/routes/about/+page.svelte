@@ -92,7 +92,7 @@
 							<img
 								src={icon}
 								alt="Ace Blocker"
-								class="h-auto w-[60%] transition-transform duration-700 group-hover:scale-110"
+								class="h-auto w-[70%] transition-transform duration-700 group-hover:scale-110"
 							/>
 						</div>
 					</div>
