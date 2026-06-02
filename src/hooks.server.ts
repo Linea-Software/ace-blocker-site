@@ -5,6 +5,7 @@ import { paraglideMiddleware } from '$lib/paraglide/server';
 import { seedDatabase } from '$lib/server/seeder';
 import { initializeCache } from '$lib/server/cache';
 import { logger } from '$lib/server/logger';
+import { app } from '$lib/server/api/app';
 import crypto from 'crypto';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
@@ -39,7 +40,17 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(handleParaglide, handleLogger, handleAuth);
+// Bypass SvelteKit body parsing for API routes. SvelteKit internally calls
+// request.formData() on multipart requests before reaching fallback handlers,
+// which drains the body stream. We intercept early and forward to Elysia directly.
+const handleApi: Handle = async ({ event, resolve }) => {
+	if (event.url.pathname.startsWith('/api')) {
+		return app.handle(event.request);
+	}
+	return resolve(event);
+};
+
+export const handle: Handle = sequence(handleApi, handleParaglide, handleLogger, handleAuth);
 
 export async function init() {
 	logger.info('Initializing application...');
