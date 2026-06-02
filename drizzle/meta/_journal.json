@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1776068475071,
-      "tag": "0000_next_crusher_hogan",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1780074495106,
-      "tag": "0001_strong_morbius",
+      "when": 1780397884561,
+      "tag": "0000_bizarre_northstar",
       "breakpoints": true
     }
   ]
