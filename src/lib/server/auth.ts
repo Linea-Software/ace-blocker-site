@@ -27,7 +27,7 @@ const dodoProducts: Product[] = isProduction
 
 export const dodoPayments = new DodoPayments({
 	bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
-	environment: 'test_mode'
+	environment: 'test_mode' // we're still in early dev phase, so we won't risk charging any user
 });
 
 export const auth = betterAuth({

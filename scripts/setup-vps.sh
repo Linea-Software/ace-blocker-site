@@ -260,6 +260,18 @@ ENV_FILE="${APP_DIR}/.env"
 # Delegate .env configuration to Bun (handles prompts, derivation, and validation)
 su - "$USERNAME" -c "cd ${APP_DIR} && ${BUN} run setup-env -- --domain ${DOMAIN} --env-file ${ENV_FILE}"
 
+# ── Recreate Docker container with updated .env credentials ──
+# (The DB container was started in step 10 with dev defaults, but .env has now
+#  been reconfigured with production values. Postgres only reads POSTGRES_PASSWORD
+#  on first init of the data dir, so we must destroy the old volume and restart.)
+su - "$USERNAME" -c "cd ${APP_DIR} && docker compose down -v"
+su - "$USERNAME" -c "cd ${APP_DIR} && docker compose up -d"
+info "Waiting 5s for database to become ready..."
+sleep 5
+
+# Re-run migrations on the fresh database
+su - "$USERNAME" -c "cd ${APP_DIR} && ${BUN} run db:migrate"
+
 # ── Finalize ──
 chmod 600 "$ENV_FILE"
 chown "${USERNAME}:${USERNAME}" "$ENV_FILE"
@@ -292,6 +304,12 @@ EnvironmentFile=${APP_DIR}/.env
 ExecStart=${BUN} ${APP_DIR}/build/index.js
 Restart=always
 RestartSec=10
+
+# Bun's Node-compat layer doesn't forward SIGTERM to server.close().
+# SIGINT is handled natively by Bun (closes HTTP server cleanly).
+KillSignal=SIGINT
+TimeoutStopSec=15
+SendSIGKILL=yes
 
 NoNewPrivileges=yes
 ProtectSystem=strict
@@ -458,11 +476,11 @@ else
         EMAIL_ARG="--email ${EMAIL}"
     fi
 
-    info "Requesting SSL certificate for ${DOMAIN}..."
+    info "Requesting SSL certificate for ${DOMAIN} and *.${DOMAIN}..."
     certbot certonly --non-interactive --agree-tos \
         --dns-cloudflare --dns-cloudflare-credentials "$CF_INI" \
         $EMAIL_ARG \
-        -d "${DOMAIN}" -d "www.${DOMAIN}" || {
+        -d "${DOMAIN}" -d "*.${DOMAIN}" || {
         err "Certbot failed. Check the Cloudflare token and try:\n         sudo certbot certificates\n         sudo certbot renew --dry-run"
         exit 1
     }
