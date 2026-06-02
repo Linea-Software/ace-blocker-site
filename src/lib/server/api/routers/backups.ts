@@ -15,7 +15,7 @@ const BackupSitesListSourceSchema = t.Object({
 const BackupSitesListSchema = t.Object({
 	id: t.String({ format: 'uuid' }),
 	name: t.String(),
-	description: t.Nullable(t.String()),
+	description: t.Optional(t.Nullable(t.String())),
 	sources: t.Array(BackupSitesListSourceSchema)
 });
 
