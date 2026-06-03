@@ -3,8 +3,25 @@ import { Resend } from 'resend';
 import * as m from './messages';
 import type { Locale } from './messages';
 import { RESEND_API_KEY } from '$env/static/private';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export const resend = new Resend(RESEND_API_KEY);
+
+// Inline logo images as base64 data URIs so they always render immediately in
+// email clients — no external image blocking, no "Show images" prompt needed.
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+function readLogoBase64(filename: string): string {
+	const path = resolve(__dirname, '../assets/logo/PNG', filename);
+	const buffer = readFileSync(path);
+	return `data:image/png;base64,${buffer.toString('base64')}`;
+}
+
+const DARK_LOGO_DATA_URI = readLogoBase64('dark-full-logo.png');
+const LIGHT_LOGO_DATA_URI = readLogoBase64('light-full-logo.png');
+
 // Shared <head> for both templates.
 // Dark mode is the inline-style default (fallback for clients that strip <style>).
 // Light mode overrides are applied via @media (prefers-color-scheme: light) with !important.
@@ -29,6 +46,24 @@ const emailHead = `<head>
 </style>
 </head>`;
 
+function logoHtml(): string {
+	return `
+                    <!-- Dark mode default -->
+                    <img class="email-logo-dark"
+                         src="${DARK_LOGO_DATA_URI}"
+                         alt="Ace Blocker"
+                         width="180"
+                         height="42"
+                         style="display:block; margin:0 auto; width:180px; height:auto; border:0;" />
+                    <!-- Light mode override -->
+                    <img class="email-logo-light"
+                         src="${LIGHT_LOGO_DATA_URI}"
+                         alt="Ace Blocker"
+                         width="180"
+                         height="42"
+                         style="display:none; margin:0 auto; width:180px; height:auto; border:0;" />`;
+}
+
 export function getTwoFactorEmailHtml(otpCode: string, locale: Locale = 'en'): string {
 	return `<!DOCTYPE html>
 <html lang="${locale}">
@@ -39,21 +74,7 @@ ${emailHead}
             <div style="height: 4px; background-color: #D97706; width: 100%;"></div>
 
             <div style="padding: 40px 32px;">
-                <div style="margin-bottom: 32px;">
-                    <!-- Dark mode default -->
-                    <img class="email-logo-dark"
-                         src="https://aceblocker-storage.b-cdn.net/dark-full-logo.png"
-                         alt="Ace Blocker"
-                         width="180"
-                         height="42"
-                         style="display:block; margin:0 auto; width:180px; height:auto; border:0;" />
-                    <!-- Light mode override -->
-                    <img class="email-logo-light"
-                         src="https://aceblocker-storage.b-cdn.net/light-full-logo.png"
-                         alt="Ace Blocker"
-                         width="180"
-                         height="42"
-                         style="display:none; margin:0 auto; width:180px; height:auto; border:0;" />
+                <div style="margin-bottom: 32px;">${logoHtml()}
                 </div>
 
                 <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 32px; font-weight: 400;">
@@ -88,21 +109,7 @@ ${emailHead}
             <div style="height: 4px; background-color: #D97706; width: 100%;"></div>
 
             <div style="padding: 40px 32px;">
-                <div style="margin-bottom: 32px;">
-                    <!-- Dark mode default -->
-                    <img class="email-logo-dark"
-                         src="https://aceblocker-storage.b-cdn.net/dark-full-logo.png"
-                         alt="Ace Blocker"
-                         width="180"
-                         height="42"
-                         style="display:block; margin:0 auto; width:180px; height:auto; border:0;" />
-                    <!-- Light mode override -->
-                    <img class="email-logo-light"
-                         src="https://aceblocker-storage.b-cdn.net/light-full-logo.png"
-                         alt="Ace Blocker"
-                         width="180"
-                         height="42"
-                         style="display:none; margin:0 auto; width:180px; height:auto; border:0;" />
+                <div style="margin-bottom: 32px;">${logoHtml()}
                 </div>
 
                 <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 36px; font-weight: 400;">
