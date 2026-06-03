@@ -109,7 +109,7 @@
 
 	{#if isFailed}
 		<div
-			class="relative flex w-full max-w-2xl flex-col rounded-2xl border border-border bg-card p-10 text-center shadow-2xl"
+			class="relative flex w-full max-w-lg flex-col rounded-2xl border border-border bg-card p-10 text-center shadow-2xl"
 			in:fly={{ y: 20, duration: 800 }}
 		>
 			<div class="flex flex-col items-center">
