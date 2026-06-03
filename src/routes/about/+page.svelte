@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Cpu, Layers, Lock, Code2, ArrowRight, Sparkles, Globe } from '@lucide/svelte';
+	import { Cpu, Layers, Lock, Sparkles } from '@lucide/svelte';
 	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
 	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
 	import icon from '$lib/assets/logo/SVG/icon.svg';
@@ -96,13 +96,6 @@
 							/>
 						</div>
 					</div>
-					<!-- Decorative Glow Circles -->
-					<div
-						class="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl"
-					></div>
-					<div
-						class="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-[#FFBF00]/10 blur-3xl"
-					></div>
 				</div>
 			</div>
 		</div>
@@ -116,12 +109,6 @@
 
 		<div class="relative z-10 container mx-auto px-4">
 			<div class="mb-16 space-y-4 text-center">
-				<div
-					class="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-bold tracking-wider text-amber-500 uppercase"
-				>
-					<Cpu class="h-4 w-4" />
-					{m.about_tech_badge()}
-				</div>
 				<h2
 					class="text-3xl font-black tracking-tight text-slate-900 md:text-4xl dark:text-white"
 				>
@@ -175,27 +162,6 @@
 					</p>
 				</div>
 
-				<!-- Resistance Mode -->
-				<div
-					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
-				>
-					<div
-						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"
-					></div>
-
-					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 transition-transform duration-300 group-hover:scale-110"
-					>
-						<Sparkles class="h-7 w-7 text-[#FFBF00]" />
-					</div>
-					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
-						{m.about_feature_scripts_title()}
-					</h3>
-					<p class="leading-relaxed text-slate-600 dark:text-slate-400">
-						{m.about_feature_scripts_description()}
-					</p>
-				</div>
-
 				<!-- Hardened Locks -->
 				<div
 					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
@@ -214,6 +180,29 @@
 					</h3>
 					<p class="leading-relaxed text-slate-600 dark:text-slate-400">
 						{m.about_feature_locks_description()}
+					</p>
+				</div>
+			</div>
+
+			<!-- Break the Habit Loop (full-width) -->
+			<div class="mx-auto mt-6 max-w-5xl">
+				<div
+					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
+				>
+					<div
+						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"
+					></div>
+
+					<div
+						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 transition-transform duration-300 group-hover:scale-110"
+					>
+						<Sparkles class="h-7 w-7 text-[#FFBF00]" />
+					</div>
+					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
+						{m.about_feature_scripts_title()}
+					</h3>
+					<p class="leading-relaxed text-slate-600 dark:text-slate-400">
+						{m.about_feature_scripts_description()}
 					</p>
 				</div>
 			</div>
@@ -252,7 +241,7 @@
 					class="relative z-10 mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
 				>
 					<Button
-						class="h-14 w-full bg-gradient-to-r from-[#FFBF00] to-orange-500 px-10 text-lg font-black text-slate-950 shadow-[0_10px_30px_rgba(255,191,0,0.3)] transition-all hover:scale-[1.02] active:scale-95 sm:w-auto"
+						class="h-14 w-full bg-gradient-to-r from-[#FFBF00] to-orange-500 px-10 text-lg font-black text-white shadow-[0_10px_30px_rgba(255,191,0,0.3)] transition-all hover:scale-[1.02] active:scale-95 sm:w-auto"
 						href={downloadUrl}
 					>
 						{m.hero_download_button()}
