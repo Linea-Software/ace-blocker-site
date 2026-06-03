@@ -15,26 +15,24 @@
 	import MoveLeft from '@lucide/svelte/icons/move-left';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import Loader2 from '@lucide/svelte/icons/loader-2';
-	import { onMount, type Component } from 'svelte';
-	import { fade, fly } from 'svelte/transition';
+	import { onMount } from 'svelte';
+	import { fade } from 'svelte/transition';
 
 	let { data } = $props();
 
-	// Svelte 5 state management
-	let arch = $derived(page.url.searchParams.get('arch') || 'windows');
-	let downloadStarted = $state(false);
-	let dots = $state('');
+	// Map display arch IDs (used in UI) to the route-compatible arch strings
+	const ARCH_IDS: Record<string, string> = {
+		windows: 'windows_x64',
+		macos: 'macos_universal',
+		linux: 'linux_x64'
+	};
+
+	const DISPLAY_ARCH = page.url.searchParams.get('arch') || 'windows_x64';
+	let arch = $state(DISPLAY_ARCH);
+	let downloadStarting = $state(false);
 	let isManualLoading = $state(false);
 	let showChecksums = $state(false);
-	let detectedArch = $state('windows');
-
-	// Active "downloading" animation for the title
-	$effect(() => {
-		const interval = setInterval(() => {
-			dots = dots.length >= 3 ? '' : dots + '.';
-		}, 500);
-		return () => clearInterval(interval);
-	});
+	let detectedArch = $state('windows_x64');
 
 	onMount(() => {
 		// Detect platform for recommendation
@@ -43,7 +41,7 @@
 			const ua = window.navigator.userAgent.toLowerCase();
 
 			if (platform.includes('win') || ua.includes('windows')) {
-				detectedArch = 'windows';
+				detectedArch = 'windows_x64';
 			} else if (platform.includes('mac') || ua.includes('macintosh')) {
 				detectedArch = 'macos_universal';
 			} else if (platform.includes('linux') || ua.includes('linux')) {
@@ -51,8 +49,8 @@
 			}
 
 			// Automatically trigger download on first arrival (only if installer available)
-			if (!downloadStarted && data.installer) {
-				downloadStarted = true;
+			if (!downloadStarting && data.installer) {
+				downloadStarting = true;
 				setTimeout(() => {
 					window.location.href = `/download/${arch}`;
 				}, 2000);
@@ -62,6 +60,7 @@
 
 	interface PlatformOption {
 		id: string;
+		routeArch: string;
 		name: string;
 		icon: any;
 		size: string;
@@ -71,43 +70,45 @@
 	}
 
 	let formattedSize = $derived(
-		data.installer ? (data.installer.size / (1024 * 1024)).toFixed(1) + 'MB' : '12MB'
+		data.installer ? Math.round(data.installer.size / 1024 / 1024) + 'MB' : null
 	);
 
 	let platformOptions: PlatformOption[] = $derived([
 		{
 			id: 'windows',
+			routeArch: 'windows_x64',
 			name: 'Windows',
 			icon: IconBrandWindows,
-			size: formattedSize,
+			size: formattedSize ?? '—',
 			ext: '.exe',
 			details: 'x64 Installer',
 			isAvailable: data.installer?.os === 'windows' || !data.installer
 		},
 		{
 			id: 'macos',
+			routeArch: 'macos_universal',
 			name: 'macOS',
 			icon: IconBrandApple,
-			size: formattedSize,
+			size: '—',
 			ext: '.dmg',
 			details: 'Universal Binary',
-			isAvailable: data.installer?.os === 'macos' || !data.installer
+			isAvailable: data.installer?.os === 'macos'
 		},
 		{
 			id: 'linux',
+			routeArch: 'linux_x64',
 			name: 'Linux',
 			icon: IconBrandUbuntu,
-			size: formattedSize,
+			size: '—',
 			ext: '.deb',
 			details: 'Debian / Ubuntu',
-			isAvailable: data.installer?.os === 'linux' || !data.installer
+			isAvailable: data.installer?.os === 'linux'
 		}
 	]);
 
 	function handleManualDownload() {
 		isManualLoading = true;
 		window.location.href = `/download/${arch}`;
-		// Reset loading state after some time
 		setTimeout(() => {
 			isManualLoading = false;
 		}, 2000);
@@ -165,16 +166,23 @@
 				<h1
 					class="text-4xl font-black tracking-tighter text-slate-900 md:text-7xl dark:text-white"
 				>
-					{m.download_title().replace('...', '')}<span
-						class="inline-block w-[1em] text-left text-amber-500 dark:text-amber-400"
-						>{dots}</span
-					>
+					{m.download_title().replace('...', '')}
 				</h1>
-				<p
-					class="mx-auto max-w-xl text-lg font-medium tracking-tight text-slate-600 opacity-80 sm:text-xl dark:text-slate-400"
-				>
-					{m.download_description()}
-				</p>
+
+				{#if downloadStarting}
+					<p
+						class="flex items-center justify-center gap-2 text-sm font-medium text-amber-600 dark:text-amber-500"
+					>
+						<Loader2 class="h-4 w-4 animate-spin" />
+						Your download is starting…
+					</p>
+				{:else}
+					<p
+						class="mx-auto max-w-xl text-lg font-medium tracking-tight text-slate-600 opacity-80 sm:text-xl dark:text-slate-400"
+					>
+						{m.download_description()}
+					</p>
+				{/if}
 			</div>
 
 			<div class="flex flex-col items-center gap-6">
@@ -229,15 +237,13 @@
 
 			<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
 				{#each platformOptions as option (option.id)}
-					{@const isRecommended = detectedArch === option.id && option.isAvailable}
+					{@const isRecommended = detectedArch === option.routeArch && option.isAvailable}
 					{@const PlatformIcon = option.icon}
-					<div class="group relative">
+					<div class="group relative" class:opacity-60={!option.isAvailable}>
 						<a
-							href={option.isAvailable ? `/download/${option.id}` : undefined}
+							href={option.isAvailable ? `/download/${option.routeArch}` : undefined}
 							class="relative flex flex-col items-start gap-5 rounded-2xl p-8 text-left transition-all duration-500
-								{option.isAvailable
-								? 'hover:scale-[1.02] active:scale-[0.98]'
-								: 'cursor-not-allowed opacity-50 grayscale'}
+								{option.isAvailable ? 'hover:scale-[1.02] active:scale-[0.98]' : 'cursor-default'}
 								{isRecommended
 								? 'border-2 border-amber-500/50 bg-amber-50 shadow-2xl shadow-amber-500/10 dark:bg-amber-500/5'
 								: 'border border-slate-200 bg-white shadow-sm hover:border-amber-500/30 hover:bg-amber-50 dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-amber-500/30 dark:hover:bg-amber-500/5 dark:hover:shadow-xl'}"
@@ -251,9 +257,17 @@
 								</div>
 							{/if}
 
+							{#if !option.isAvailable}
+								<div
+									class="absolute top-6 right-8 rounded-md bg-muted px-3 py-1 text-xs font-medium text-muted-foreground"
+								>
+									Coming soon
+								</div>
+							{/if}
+
 							<div
 								class="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 transition-all duration-300 dark:border-slate-800 dark:bg-slate-900/50 {option.isAvailable
-									? 'group-hover:border-amber-500 group-hover:bg-amber-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-amber-500/30 dark:group-hover:text-black'
+									? 'group-hover:border-amber-500 group-hover:bg-amber-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-amber-500/30 dark:group-hover:border-amber-500/50 dark:group-hover:bg-amber-500/15 dark:group-hover:text-amber-500'
 									: ''}"
 							>
 								<PlatformIcon size={32} stroke={1.5} />
@@ -284,18 +298,6 @@
 								</span>
 							</div>
 						</a>
-
-						{#if !option.isAvailable}
-							<div
-								class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl bg-white/50 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100 dark:bg-black/50"
-							>
-								<div
-									class="rounded-md bg-amber-500 px-4 py-2 text-xs font-black tracking-[0.2em] text-black uppercase shadow-xl shadow-amber-500/40"
-								>
-									Coming Soon
-								</div>
-							</div>
-						{/if}
 					</div>
 				{/each}
 			</div>
