@@ -188,7 +188,7 @@ fi
 # ── 9. Clone Repository ─────────────────────────────────────────────────────
 step "9. Clone Repository"
 
-REPO_URL="https://github.com/aintDatCap/ace-blocker-site.git"
+REPO_URL="https://github.com/Linea-Software/ace-blocker-site.git"
 
 # Configure git credential.helper to use file-based store on disk
 # (libsecret requires D-Bus which is not available on headless servers)
@@ -213,7 +213,7 @@ prompt_github_auth() {
 if [[ ! -d "${APP_DIR}/.git" ]]; then
     prompt_github_auth
 
-    AUTH_URL="https://${GH_USER}:${GH_TOKEN}@github.com/aintDatCap/ace-blocker-site.git"
+    AUTH_URL="https://${GH_USER}:${GH_TOKEN}@github.com/Linea-Software/ace-blocker-site.git"
     su - "$USERNAME" -c "git clone '${AUTH_URL}' ${APP_DIR}"
 
     # Reset remote to clean URL (no token in git config)
