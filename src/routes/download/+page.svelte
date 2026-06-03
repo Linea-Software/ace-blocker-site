@@ -12,9 +12,10 @@
 		IconShieldCheck,
 		IconExternalLink
 	} from '@tabler/icons-svelte';
-	import MoveLeft from '@lucide/svelte/icons/move-left';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import Loader2 from '@lucide/svelte/icons/loader-2';
+	import Clipboard from '@lucide/svelte/icons/clipboard';
+	import ClipboardCheck from '@lucide/svelte/icons/clipboard-check';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 
@@ -32,6 +33,7 @@
 	let downloadStarting = $state(false);
 	let isManualLoading = $state(false);
 	let showChecksums = $state(false);
+	let copied = $state(false);
 	let detectedArch = $state('windows_x64');
 
 	onMount(() => {
@@ -113,6 +115,13 @@
 			isManualLoading = false;
 		}, 2000);
 	}
+
+	async function copyHash() {
+		if (!data.installer?.hash) return;
+		await navigator.clipboard.writeText(data.installer.hash);
+		copied = true;
+		setTimeout(() => (copied = false), 2000);
+	}
 </script>
 
 <svelte:head>
@@ -149,17 +158,14 @@
 		<!-- Hero Section -->
 		<div class="space-y-10" in:fade={{ delay: 100, duration: 800 }}>
 			<div class="flex justify-center">
-				<div class="group relative">
-					<!-- Pulsing Glow Indicating Active Processing -->
-					<div
-						class="absolute inset-0 animate-pulse rounded-2xl bg-amber-500/20 blur-2xl transition-all duration-500 group-hover:bg-amber-500/30"
-					></div>
-					<div
-						class="relative flex h-24 w-24 items-center justify-center rounded-2xl border border-slate-200 bg-white text-amber-500 shadow-xl shadow-slate-200/50 backdrop-blur-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:border-amber-500/50 dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-2xl"
-					>
-						<IconDownload size={44} stroke={1.5} />
-					</div>
-				</div>
+				<img
+					src="https://cdn.aceblocker.com/icon.png"
+					alt="Ace Blocker"
+					width="88"
+					height="88"
+					style="border-radius: 20px;"
+					class="shadow-xl"
+				/>
 			</div>
 
 			<div class="space-y-4">
@@ -282,6 +288,11 @@
 								<p class="text-sm font-bold text-slate-500 dark:text-slate-400">
 									{option.details}
 								</p>
+								{#if option.id === 'windows' && data.installer?.version}
+									<p class="text-xs text-muted-foreground">
+										v{data.installer.version}
+									</p>
+								{/if}
 							</div>
 
 							<div
@@ -303,76 +314,75 @@
 			</div>
 		</div>
 
-		<!-- Footer Info & Utils -->
-		<div class="mx-auto max-w-2xl space-y-16">
-			<!-- Checksums Toggle (Security Conscious) -->
-			{#if data.installer}
+		<!-- SHA-256 Verification -->
+		{#if data.installer?.hash}
+			<div class="mx-auto max-w-2xl space-y-16">
 				<div class="space-y-4 px-4">
 					<button
 						onclick={() => (showChecksums = !showChecksums)}
-						class="group flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-6 py-4 text-left shadow-sm transition-all hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/10 dark:hover:bg-slate-900/30"
+						class="group mx-auto flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
 					>
+						<IconShieldCheck
+							size={16}
+							class="transition-colors group-hover:text-foreground"
+						/>
+						Verify download integrity
 						<span
-							class="text-sm font-black tracking-widest text-slate-700 uppercase group-hover:text-amber-500 dark:text-slate-300"
-							>{m.download_checksums_toggle()}</span
-						>
-						<div
-							class="text-muted-foreground transition-transform duration-300"
+							class="transition-transform duration-300"
 							class:rotate-180={showChecksums}
 						>
-							<ChevronDown size={20} />
-						</div>
+							<ChevronDown size={14} />
+						</span>
 					</button>
 
 					{#if showChecksums}
 						<div
-							transition:fade={{ duration: 300 }}
-							class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-8 text-left dark:border-slate-800 dark:bg-slate-900/20"
+							transition:fade={{ duration: 200 }}
+							class="space-y-3 rounded-xl border border-border bg-card p-6 text-left"
 						>
-							<div class="space-y-6 font-mono text-[10px]">
-								<div class="space-y-2">
-									<p
-										class="font-black tracking-widest text-amber-500/70 uppercase"
-									>
-										Windows (x64) SHA-256
-									</p>
-									<p
-										class="rounded-xl border border-slate-200 bg-white p-4 break-all text-slate-600 select-all dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400"
-									>
-										{data.installer.hash}
-									</p>
-								</div>
-								<div class="space-y-2">
-									<p
-										class="font-black tracking-widest text-blue-500/70 uppercase"
-									>
-										Linux (x64) SHA-256
-									</p>
-									<p
-										class="rounded-xl border border-slate-200 bg-white p-4 break-all text-slate-600 select-all dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400"
-									>
-										TODO
-									</p>
-								</div>
+							<p
+								class="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+							>
+								SHA-256
+							</p>
+							<div class="flex items-start gap-2 rounded-md bg-muted px-3 py-2">
+								<code class="flex-1 font-mono text-xs break-all text-foreground">
+									{data.installer.hash}
+								</code>
+								<button
+									onclick={copyHash}
+									class="mt-0.5 shrink-0 rounded p-1 text-muted-foreground transition-colors hover:text-foreground"
+									aria-label="Copy hash"
+								>
+									{#if copied}
+										<ClipboardCheck size={14} class="text-green-500" />
+									{:else}
+										<Clipboard size={14} />
+									{/if}
+								</button>
 							</div>
+							{#if copied}
+								<p
+									class="text-xs text-green-600 dark:text-green-400"
+									transition:fade={{ duration: 150 }}
+								>
+									Copied to clipboard
+								</p>
+							{/if}
 						</div>
 					{/if}
 				</div>
-			{/if}
-
-			<!-- Home Navigation -->
-			<div class="pt-8">
-				<Button
-					variant="ghost"
-					href="/"
-					class="group h-12 rounded-lg border border-transparent px-8 text-[10px] font-black tracking-widest text-slate-500 uppercase transition-all hover:border-amber-500/20 hover:bg-amber-500/10 hover:text-amber-500 dark:text-slate-400"
-				>
-					<MoveLeft
-						class="mr-3 h-4 w-4 transition-transform group-hover:-translate-x-2"
-					/>
-					{m.download_back_home()}
-				</Button>
 			</div>
+		{/if}
+
+		<!-- Home Navigation -->
+		<div class="pt-8">
+			<a
+				href="/"
+				class="text-sm text-muted-foreground transition-colors hover:text-foreground"
+			>
+				← Back to homepage
+			</a>
 		</div>
 	</div>
 </main>
