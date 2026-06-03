@@ -284,6 +284,9 @@
 						>
 							{m.cta_get_started()}
 						</Button>
+						<p class="mt-3 text-center text-xs text-muted-foreground">
+							No credit card required. Free forever.
+						</p>
 					</Card.Footer>
 				</Card.Root>
 
@@ -434,7 +437,7 @@
 
 					<Card.Footer class="flex flex-col gap-3 pt-8 pb-10">
 						<Button
-							class="group relative h-16 w-full overflow-hidden bg-[#FFBF00] text-xl font-black text-slate-950 shadow-[0_10px_30px_rgba(255,191,0,0.3)] transition-all hover:scale-[1.02] hover:bg-amber-400 active:scale-95"
+							class="group relative h-16 w-full overflow-hidden bg-[#FFBF00] text-xl font-black text-white shadow-[0_10px_30px_rgba(255,191,0,0.3)] transition-all hover:scale-[1.02] hover:bg-amber-400 active:scale-95"
 							onclick={handleUpgrade}
 						>
 							<span class="relative z-10">{m.cta_upgrade_now()}</span>
@@ -520,83 +523,15 @@
 					</div>
 				</div>
 
-				<!-- Visual Representation Section -->
-				<div
-					class="group relative flex aspect-square items-center justify-center overflow-hidden rounded-[3rem] border border-slate-200 bg-slate-50 p-12 dark:border-slate-800 dark:bg-slate-950/50"
-				>
-					<!-- Glow effect -->
-					<div
-						class="pointer-events-none absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-500/10 blur-[120px] transition-all duration-500 group-hover:bg-amber-500/15"
-					></div>
-
-					<div class="relative w-full max-w-sm space-y-4">
-						<!-- Card 1 (Standard Block Skeleton) -->
-						<div
-							class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl transition-all duration-500 group-hover:-translate-y-1 dark:border-slate-800 dark:bg-[#0B0B0F]"
-						>
-							<div
-								class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800/50"
-							>
-								<Shield class="h-6 w-6 text-slate-400 dark:text-slate-500" />
-							</div>
-							<div class="flex-1 space-y-2">
-								<div
-									class="h-4 w-24 rounded bg-slate-200 dark:bg-slate-800/80"
-								></div>
-								<div class="flex items-center gap-3">
-									<div class="flex items-center gap-1 opacity-50">
-										<Globe class="h-3 w-3 text-slate-400" />
-										<div
-											class="h-2 w-12 rounded bg-slate-200 dark:bg-slate-800"
-										></div>
-									</div>
-									<div class="flex items-center gap-1 opacity-50">
-										<Clock class="h-3 w-3 text-slate-400" />
-										<div
-											class="h-2 w-16 rounded bg-slate-200 dark:bg-slate-800"
-										></div>
-									</div>
-								</div>
-							</div>
-							<MoreVertical class="h-4 w-4 text-slate-400" />
-						</div>
-
-						<!-- Card 2 (Locked Block Skeleton) -->
-						<div
-							class="flex translate-x-6 transform items-center gap-4 rounded-2xl border-2 border-amber-500/50 bg-white p-4 shadow-2xl transition-all duration-500 group-hover:translate-x-0 dark:bg-[#0B0B0F]"
-						>
-							<div
-								class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10"
-							>
-								<Lock class="h-6 w-6 text-amber-500" />
-							</div>
-							<div class="flex-1 space-y-2">
-								<div class="flex items-center gap-2">
-									<div
-										class="h-4 w-32 rounded bg-slate-200 dark:bg-slate-800/80"
-									></div>
-									<div
-										class="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"
-									></div>
-								</div>
-								<div class="flex items-center gap-3">
-									<div class="flex items-center gap-1 opacity-50">
-										<Globe class="h-3 w-3 text-slate-400" />
-										<div
-											class="h-2 w-14 rounded bg-slate-200 dark:bg-slate-800"
-										></div>
-									</div>
-									<div class="flex items-center gap-1 opacity-50">
-										<Clock class="h-3 w-3 text-slate-400" />
-										<div
-											class="h-2 w-20 rounded bg-slate-200 dark:bg-slate-800"
-										></div>
-									</div>
-								</div>
-							</div>
-							<MoreVertical class="h-4 w-4 text-slate-400" />
-						</div>
-					</div>
+				<!-- App Screenshot -->
+				<div class="group relative flex items-center justify-center overflow-hidden">
+					<img
+						src={isDark
+							? 'https://cdn.aceblocker.com/showcase/resistance-mode-sites-section-dark.png'
+							: 'https://cdn.aceblocker.com/showcase/resistance-mode-sites-section-light.png'}
+						alt="Resistance Scripts feature showing active friction scripts for Instagram, Reddit, TikTok, Twitch and YouTube"
+						class="w-full rounded-xl border border-border shadow-sm"
+					/>
 				</div>
 			</div>
 		</div>
