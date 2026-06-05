@@ -1,9 +1,12 @@
 import { Elysia, t } from 'elysia';
-import { auth } from '$lib/server/auth';
-import { isUserPro, getProStatus } from '$lib/server/pro';
+import { auth, dodoPayments } from '$lib/server/auth';
+import { isUserPro, getProStatus, invalidateProCache } from '$lib/server/pro';
 import { db } from '$lib/server/db';
-import { user, apikey } from '$lib/server/db/schema';
+import { user as userTable, apikey, proStatus, backups, session } from '$lib/server/db/schema';
 import { eq, like } from 'drizzle-orm';
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('api:account');
 
 export const accountRouter = new Elysia({ prefix: '/account' })
 	.derive(async ({ request }) => {
@@ -73,6 +76,7 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 			const isDev = process.env.NODE_ENV === 'development';
 
 			// Create a new one
+			// @ts-ignore - Better Auth schema extensions might not be fully typed here
 			const apiKeyResponse = await auth.api.createApiKey({
 				body: {
 					name: 'Desktop App',
@@ -210,6 +214,179 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 					isPro: t.Boolean(),
 					expiration: t.Nullable(t.Date())
 				}),
+				401: t.String(),
+				500: t.String()
+			}
+		}
+	)
+	// ── Cancel Subscription ─────────────────────────────────────────────────
+	.post(
+		'/cancel-subscription',
+		async ({ user, status }) => {
+			if (!user) {
+				return status(401, 'Unauthorized');
+			}
+
+			try {
+				const userRow = await db.query.user.findFirst({
+					where: (u, { eq }) => eq(u.id, user.id),
+					columns: { dodoCustomerId: true }
+				});
+
+				if (!userRow?.dodoCustomerId) {
+					return status(400, 'No Dodo Payments customer found');
+				}
+
+				const subscriptionsPage = await dodoPayments.subscriptions.list({
+					customer_id: userRow.dodoCustomerId
+				});
+
+				const subscriptionItems = subscriptionsPage.items ?? [];
+
+				if (subscriptionItems.length === 0) {
+					return status(404, 'No active subscription found');
+				}
+
+				// Cancel all active subscriptions for this customer
+				for (const sub of subscriptionItems) {
+					await dodoPayments.subscriptions.update(sub.subscription_id, {
+						cancel_at_next_billing_date: true,
+						cancel_reason: 'cancelled_by_customer'
+					});
+				}
+
+				// Update proStatus to clear expiration
+				await db
+					.update(proStatus)
+					.set({ cachedAt: new Date(), expiration: null })
+					.where(eq(proStatus.userId, user.id));
+
+				invalidateProCache(user.id);
+
+				log.info({ userId: user.id }, 'Subscription cancelled');
+
+				return { success: true };
+			} catch (err) {
+				log.error({ err, userId: user.id }, 'Failed to cancel subscription');
+				return status(500, 'Failed to cancel subscription');
+			}
+		},
+		{
+			detail: {
+				operationId: 'cancelSubscription',
+				summary: 'Cancel the user Pro subscription',
+				security: [{ APIKeyHeader: [] }]
+			},
+			response: {
+				200: t.Object({
+					success: t.Boolean()
+				}),
+				400: t.String(),
+				401: t.String(),
+				404: t.String(),
+				500: t.String()
+			}
+		}
+	)
+	// ── Delete Account ──────────────────────────────────────────────────────
+	.post(
+		'/delete',
+		async ({ user, body, status }) => {
+			if (!user) {
+				return status(401, 'Unauthorized');
+			}
+
+			if (body.email !== user.email) {
+				return status(400, 'Email does not match');
+			}
+
+			try {
+				// Delete backups
+				await db.delete(backups).where(eq(backups.userId, user.id));
+
+				// Delete proStatus
+				await db.delete(proStatus).where(eq(proStatus.userId, user.id));
+
+				// Delete all sessions
+				await db.delete(session).where(eq(session.userId, user.id));
+
+				// Delete the user (cascades via DB relations)
+				// @ts-ignore - Drizzle table instance typing
+				await db.delete(userTable).where(eq(userTable.id, user.id));
+
+				log.info({ userId: user.id }, 'Account deleted');
+
+				return { success: true };
+			} catch (err) {
+				log.error({ err, userId: user.id }, 'Failed to delete account');
+				return status(500, 'Failed to delete account');
+			}
+		},
+		{
+			body: t.Object({
+				email: t.String()
+			}),
+			detail: {
+				operationId: 'deleteAccount',
+				summary: 'Permanently delete user account and all associated data',
+				security: [{ APIKeyHeader: [] }]
+			},
+			response: {
+				200: t.Object({
+					success: t.Boolean()
+				}),
+				400: t.String(),
+				401: t.String(),
+				500: t.String()
+			}
+		}
+	)
+	// ── Export Data ─────────────────────────────────────────────────────────
+	.get(
+		'/export',
+		async ({ user, status }) => {
+			if (!user) {
+				return status(401, 'Unauthorized');
+			}
+
+			try {
+				const proStatusResult = await getProStatus(user.id);
+
+				const backupData = await db.query.backups.findFirst({
+					where: (b, { eq }) => eq(b.userId, user.id)
+				});
+
+				const exportData = {
+					name: user.name,
+					email: user.email,
+					createdAt: user.createdAt,
+					locale: (user as any).locale ?? 'en',
+					proStatus: {
+						isPro: proStatusResult.isPro,
+						expiration: proStatusResult.expirationDate?.toISOString() ?? null
+					},
+					backup: backupData ? JSON.parse(backupData.data) : null
+				};
+
+				return new Response(JSON.stringify(exportData, null, 2), {
+					headers: {
+						'Content-Type': 'application/json',
+						'Content-Disposition': 'attachment; filename="ace-blocker-data.json"'
+					}
+				});
+			} catch (err) {
+				log.error({ err, userId: user.id }, 'Failed to export data');
+				return status(500, 'Failed to export data');
+			}
+		},
+		{
+			detail: {
+				operationId: 'exportAccountData',
+				summary: 'Export user account data as JSON download',
+				security: [{ APIKeyHeader: [] }]
+			},
+			response: {
+				200: t.Any(),
 				401: t.String(),
 				500: t.String()
 			}

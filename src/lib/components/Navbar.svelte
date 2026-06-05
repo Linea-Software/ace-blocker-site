@@ -12,16 +12,18 @@
 		LayoutDashboard,
 		LogOut,
 		Sun,
-		Moon
+		Moon,
+		User
 	} from '@lucide/svelte';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
 	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
 	import { authClient } from '$lib/auth-client';
 	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import { cn } from '$lib/utils';
 	import { toggleMode, mode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages';
-	import { apiClient } from '$lib/api-client';
 
 	let { isPro = false } = $props();
 	const session = authClient.useSession();
@@ -33,6 +35,15 @@
 
 	let isMobileMenuOpen = $state(false);
 	let isDark = $derived(mode.current === 'dark');
+
+	const userInitial = $derived(
+		$session.data?.user
+			? ($session.data.user.name?.[0] ?? $session.data.user.email[0]).toUpperCase()
+			: '?'
+	);
+
+	const userDisplayName = $derived($session.data?.user?.name ?? $session.data?.user?.email ?? '');
+	const userDisplayEmail = $derived($session.data?.user?.email ?? '');
 
 	function isActive(href: string) {
 		return page.url.pathname === href;
@@ -106,15 +117,25 @@
 						{/if}
 
 						<Separator />
-						{#if $session.data?.user.role === 'admin'}
+						{#if $session.data}
 							<a
-								href="/admin/dashboard"
-								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
+								href="/account"
+								class="flex items-center gap-3 rounded-md px-3 py-2 text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
 								onclick={() => (isMobileMenuOpen = false)}
 							>
-								<LayoutDashboard class="h-5 w-5" />
-								Admin Dashboard
+								<User class="h-5 w-5" />
+								{m.account_settings()}
 							</a>
+							{#if $session.data?.user.role === 'admin'}
+								<a
+									href="/admin/dashboard"
+									class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
+									onclick={() => (isMobileMenuOpen = false)}
+								>
+									<LayoutDashboard class="h-5 w-5" />
+									Admin Dashboard
+								</a>
+							{/if}
 							<button
 								class="flex flex-1 items-center gap-3 rounded-md px-3 py-2 text-lg font-medium text-destructive transition-all duration-200 hover:bg-red-600 hover:text-white active:scale-95"
 								onclick={() => {
@@ -123,7 +144,7 @@
 								}}
 							>
 								<LogOut class="h-5 w-5" />
-								Sign Out
+								{m.sign_out()}
 							</button>
 						{:else}
 							<a
@@ -233,14 +254,34 @@
 						Admin Dashboard
 					</Button>
 				{/if}
-				<Button
-					onclick={() => handleSignOut()}
-					variant="ghost"
-					class="hidden items-center text-destructive transition-all duration-200 hover:bg-red-600 hover:text-white active:scale-95 sm:inline-flex"
-				>
-					<LogOut class="mr-2 h-4 w-4" />
-					Sign Out
-				</Button>
+
+				<DropdownMenu.DropdownMenu>
+					<DropdownMenu.Trigger
+						class="hidden h-9 w-9 items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/15 text-sm font-medium text-amber-600 sm:inline-flex dark:text-amber-400"
+					>
+						{userInitial}
+					</DropdownMenu.Trigger>
+					<DropdownMenu.Content class="w-56" align="end">
+						<DropdownMenu.Label class="font-normal">
+							<span class="block text-sm font-medium">{userDisplayName}</span>
+							<span class="block text-xs text-muted-foreground"
+								>{userDisplayEmail}</span
+							>
+						</DropdownMenu.Label>
+						<DropdownMenu.Separator />
+						<DropdownMenu.Item class="cursor-pointer" onclick={() => goto('/account')}>
+							<User class="mr-2 h-4 w-4" />
+							{m.account_settings()}
+						</DropdownMenu.Item>
+						<DropdownMenu.Item
+							class="cursor-pointer text-destructive"
+							onclick={() => handleSignOut()}
+						>
+							<LogOut class="mr-2 h-4 w-4" />
+							{m.sign_out()}
+						</DropdownMenu.Item>
+					</DropdownMenu.Content>
+				</DropdownMenu.DropdownMenu>
 			{:else}
 				<Button
 					href="/signin"

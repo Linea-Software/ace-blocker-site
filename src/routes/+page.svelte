@@ -1,16 +1,19 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Zap, Lock, BarChart3, ArrowRight, Download } from '@lucide/svelte';
+	import { Zap, Lock, BarChart3, ArrowRight, Download, Info } from '@lucide/svelte';
 	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
 	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
 	import { mode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages';
 	import { getDownloadUrl } from '$lib/utils/platform';
+	import { page } from '$app/state';
 
 	let { data } = $props();
 	let downloadUrl = $state('/download');
 	let isDark = $derived(mode.current === 'dark');
+
+	const showFarewell = $derived(page.url.searchParams.get('deleted') === 'true');
 
 	$effect(() => {
 		downloadUrl = getDownloadUrl();
@@ -18,6 +21,15 @@
 </script>
 
 <Navbar isPro={data.isPro} />
+
+{#if showFarewell}
+	<div
+		class="flex items-center gap-3 border-b border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300"
+	>
+		<Info class="h-4 w-4 shrink-0" />
+		<p>{m.account_farewell_banner()}</p>
+	</div>
+{/if}
 
 <main class="flex min-h-[calc(100vh-4rem)] flex-col antialiased">
 	<!-- Hero Section -->
