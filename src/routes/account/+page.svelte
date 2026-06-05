@@ -20,7 +20,7 @@
 	} from '@lucide/svelte';
 	import { authClient } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
-	import { toast } from 'svelte-sonner';
+	import { toast, Toaster } from 'svelte-sonner';
 	import * as m from '$lib/paraglide/messages';
 
 	let { data } = $props();
@@ -636,3 +636,5 @@
 		</Dialog.Root>
 	</div>
 </div>
+
+<Toaster position="bottom-right" />
