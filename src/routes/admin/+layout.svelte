@@ -22,7 +22,7 @@
 		{ href: '/admin/releases/installers', label: 'Installers' },
 		{ href: '/admin/releases/resistance', label: 'Resistance Mode' },
 		{ href: '/admin/releases/tracking', label: 'Tracking' },
-		{ href: '/admin/releases/site-lists', label: 'Site Lists' }
+		{ href: '/admin/releases/site-packs', label: 'Site Packs' }
 	];
 
 	// Initialize state based on current path

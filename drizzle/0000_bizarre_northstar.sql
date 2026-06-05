@@ -132,7 +132,7 @@ CREATE TABLE "resistance_mode_scripts" (
 	"download_count" integer DEFAULT 0 NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "site_list" (
+CREATE TABLE "site_pack" (
 	"id" text PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"file_name" text NOT NULL,

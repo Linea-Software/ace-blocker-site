@@ -5,13 +5,13 @@ import { db } from '$lib/server/db';
 import { sql } from 'drizzle-orm';
 import {
 	trackingScripts,
-	siteList,
+	sitePack,
 	resistanceModeScripts,
 	aceBlockerInstaller
 } from '$lib/server/db/schema';
 import {
 	invalidateTrackingCache,
-	invalidateSiteListsCache,
+	invalidateSitePacksCache,
 	invalidateResistanceCache,
 	invalidateInstallerCache
 } from '$lib/server/cache';
@@ -20,8 +20,8 @@ import {
 	trackingScriptsUploadBase,
 	trackingScriptsBasePath,
 	trackingScriptsFileName,
-	siteListsUploadBase,
-	siteListsBasePath,
+	sitePacksUploadBase,
+	sitePacksBasePath,
 	resistanceModeScriptsUploadBase,
 	resistanceModeScriptBasePath,
 	resistanceModeScriptsFileName,
@@ -100,7 +100,7 @@ export async function uploadTrackingScripts(
 	return ok({ downloadUrl, hash });
 }
 
-export async function uploadSiteList(
+export async function uploadSitePack(
 	file: File,
 	name: string,
 	id: string,
@@ -108,7 +108,7 @@ export async function uploadSiteList(
 	canBeDownloaded: boolean = true
 ): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
 	const listFileName = `${id}.zip`;
-	const endpointUrl = new URL(`${listFileName}`, siteListsUploadBase);
+	const endpointUrl = new URL(`${listFileName}`, sitePacksUploadBase);
 
 	const uploadResult = await uploadFileToBunnyCDN(file, endpointUrl);
 	if (uploadResult.isErr()) {
@@ -116,10 +116,10 @@ export async function uploadSiteList(
 	}
 
 	const { hash } = uploadResult._unsafeUnwrap();
-	const downloadUrl = new URL(endpointUrl, siteListsBasePath).toString();
+	const downloadUrl = new URL(endpointUrl, sitePacksBasePath).toString();
 
 	await db
-		.insert(siteList)
+		.insert(sitePack)
 		.values({
 			id: id,
 			name: name,
@@ -132,7 +132,7 @@ export async function uploadSiteList(
 			downloadCount: 0
 		})
 		.onConflictDoUpdate({
-			target: siteList.id,
+			target: sitePack.id,
 			set: {
 				name: name,
 				fileName: listFileName,
@@ -144,7 +144,7 @@ export async function uploadSiteList(
 			}
 		});
 
-	await invalidateSiteListsCache();
+	await invalidateSitePacksCache();
 
 	return ok({ downloadUrl, hash });
 }

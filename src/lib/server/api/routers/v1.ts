@@ -1,6 +1,6 @@
 import { Elysia } from 'elysia';
 import { scriptsRouter } from './scripts';
-import { sitesListsRouter } from './site-lists';
+import { sitePacksRouter } from './site-packs';
 import { backupsRouter } from './backups';
 import { accountRouter } from './account';
 import { adminRouter } from './admin';
@@ -8,7 +8,7 @@ import { releasesRouter } from './releases';
 
 export const v1Router = new Elysia({ prefix: '/v1' })
 	.use(scriptsRouter)
-	.use(sitesListsRouter)
+	.use(sitePacksRouter)
 	.use(backupsRouter)
 	.use(accountRouter)
 	.use(adminRouter)

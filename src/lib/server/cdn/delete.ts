@@ -4,20 +4,20 @@ import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import {
 	trackingScripts,
-	siteList,
+	sitePack,
 	resistanceModeScripts,
 	aceBlockerInstaller
 } from '$lib/server/db/schema';
 import {
 	invalidateTrackingCache,
-	invalidateSiteListsCache,
+	invalidateSitePacksCache,
 	invalidateResistanceCache,
 	invalidateInstallerCache
 } from '$lib/server/cache';
 import {
 	CDNErrorType,
 	trackingScriptsUploadBase,
-	siteListsUploadBase,
+	sitePacksUploadBase,
 	resistanceModeScriptsUploadBase,
 	installersUploadBase
 } from './common';
@@ -77,24 +77,24 @@ export async function deleteTrackingScripts(id: string): Promise<Result<void, CD
 	return ok(undefined);
 }
 
-export async function deleteSiteList(id: string): Promise<Result<void, CDNErrorType>> {
-	const release = await db.query.siteList.findFirst({
-		where: eq(siteList.id, id)
+export async function deleteSitePack(id: string): Promise<Result<void, CDNErrorType>> {
+	const release = await db.query.sitePack.findFirst({
+		where: eq(sitePack.id, id)
 	});
 
 	if (!release) {
 		return err(CDNErrorType.DeleteFailed);
 	}
 
-	const endpointUrl = new URL(`${release.fileName}`, siteListsUploadBase);
+	const endpointUrl = new URL(`${release.fileName}`, sitePacksUploadBase);
 
 	const deleteResult = await deleteFileFromBunnyCDN(endpointUrl);
 	if (deleteResult.isErr()) {
 		return err(deleteResult.error);
 	}
 
-	await db.delete(siteList).where(eq(siteList.id, id));
-	await invalidateSiteListsCache();
+	await db.delete(sitePack).where(eq(sitePack.id, id));
+	await invalidateSitePacksCache();
 
 	return ok(undefined);
 }

@@ -991,8 +991,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.site_list": {
-      "name": "site_list",
+    "public.site_pack": {
+      "name": "site_pack",
       "schema": "",
       "columns": {
         "id": {

@@ -1,38 +1,38 @@
 import { Elysia, t } from 'elysia';
 import { db } from '$lib/server/db';
-import { siteList } from '$lib/server/db/schema';
+import { sitePack } from '$lib/server/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
-import { uploadSiteList, deleteSiteList, CDNErrorType } from '$lib/server/cdn';
-import { invalidateSiteListsCache } from '$lib/server/cache';
+import { uploadSitePack, deleteSitePack, CDNErrorType } from '$lib/server/cdn';
+import { invalidateSitePacksCache } from '$lib/server/cache';
 import { createLogger } from '$lib/server/logger';
 
-const log = createLogger('api:admin:site-lists');
+const log = createLogger('api:admin:site-packs');
 
-export const siteListsRouter = new Elysia({ prefix: '/site-lists' })
+export const sitePacksRouter = new Elysia({ prefix: '/site-packs' })
 	.get(
 		'/',
 		async () => {
-			const siteLists = await db.select().from(siteList).orderBy(desc(siteList.updatedAt));
+			const sitePacks = await db.select().from(sitePack).orderBy(desc(sitePack.updatedAt));
 			const stats = await db
 				.select({
-					total: sql<number>`CAST(SUM(${siteList.downloadCount}) AS INTEGER)`
+					total: sql<number>`CAST(SUM(${sitePack.downloadCount}) AS INTEGER)`
 				})
-				.from(siteList);
+				.from(sitePack);
 
 			return {
-				siteLists,
+				sitePacks,
 				totalDownloads: stats[0]?.total || 0
 			};
 		},
 		{
 			detail: {
-				operationId: 'getSiteLists',
-				summary: 'Get all site lists with download stats',
+				operationId: 'getSitePacks',
+				summary: 'Get all site packs with download stats',
 				security: [{ APIKeyHeader: [] }]
 			},
 			response: {
 				200: t.Object({
-					siteLists: t.Array(t.Any()),
+					sitePacks: t.Array(t.Any()),
 					totalDownloads: t.Number()
 				}),
 				403: t.String()
@@ -58,7 +58,7 @@ export const siteListsRouter = new Elysia({ prefix: '/site-lists' })
 					? requiresProSubscription === 'true'
 					: requiresProSubscription;
 
-			const result = await uploadSiteList(file, name, id, isPro);
+			const result = await uploadSitePack(file, name, id, isPro);
 
 			if (result.isErr()) {
 				const errorType = result.error;
@@ -90,8 +90,8 @@ export const siteListsRouter = new Elysia({ prefix: '/site-lists' })
 				requiresProSubscription: t.Union([t.Boolean(), t.String()])
 			}),
 			detail: {
-				operationId: 'uploadSiteList',
-				summary: 'Upload a new site list release',
+				operationId: 'uploadSitePack',
+				summary: 'Upload a new site pack release',
 				security: [{ APIKeyHeader: [] }]
 			},
 			response: {
@@ -123,20 +123,20 @@ export const siteListsRouter = new Elysia({ prefix: '/site-lists' })
 
 			try {
 				await db
-					.update(siteList)
+					.update(sitePack)
 					.set({
 						name,
 						requiresProSubscription,
 						updatedAt: sql`CURRENT_TIMESTAMP`
 					})
-					.where(eq(siteList.id, id));
+					.where(eq(sitePack.id, id));
 
-				await invalidateSiteListsCache();
-				return { success: true, message: 'Site list updated successfully' };
+				await invalidateSitePacksCache();
+				return { success: true, message: 'Site pack updated successfully' };
 			} catch (e) {
-				log.error({ err: e }, 'Failed to update site list');
+				log.error({ err: e }, 'Failed to update site pack');
 				set.status = 500;
-				return { error: true, message: 'Failed to update site list' };
+				return { error: true, message: 'Failed to update site pack' };
 			}
 		},
 		{
@@ -146,8 +146,8 @@ export const siteListsRouter = new Elysia({ prefix: '/site-lists' })
 				requiresProSubscription: t.Boolean()
 			}),
 			detail: {
-				operationId: 'updateSiteList',
-				summary: 'Update an existing site list',
+				operationId: 'updateSitePack',
+				summary: 'Update an existing site pack',
 				security: [{ APIKeyHeader: [] }]
 			},
 			response: {
@@ -177,23 +177,23 @@ export const siteListsRouter = new Elysia({ prefix: '/site-lists' })
 				return { error: true, message: 'Missing ID for deletion' };
 			}
 
-			const deleteResult = await deleteSiteList(id);
+			const deleteResult = await deleteSitePack(id);
 
 			if (deleteResult.isErr()) {
-				log.error({ err: deleteResult.error }, 'Failed to delete site list');
+				log.error({ err: deleteResult.error }, 'Failed to delete site pack');
 				set.status = 500;
-				return { error: true, message: 'Failed to delete site list' };
+				return { error: true, message: 'Failed to delete site pack' };
 			}
 
-			return { success: true, message: 'Site list and CDN assets deleted successfully' };
+			return { success: true, message: 'Site pack and CDN assets deleted successfully' };
 		},
 		{
 			body: t.Object({
 				id: t.String()
 			}),
 			detail: {
-				operationId: 'deleteSiteList',
-				summary: 'Delete a site list',
+				operationId: 'deleteSitePack',
+				summary: 'Delete a site pack',
 				security: [{ APIKeyHeader: [] }]
 			},
 			response: {

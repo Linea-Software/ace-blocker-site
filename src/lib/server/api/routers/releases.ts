@@ -3,7 +3,7 @@ import {
 	getLatestInstaller,
 	getLatestResistanceScript,
 	getLatestTrackingScript,
-	getLatestSiteLists
+	getLatestSitePacks
 } from '../../cache';
 import { createLogger } from '$lib/server/logger';
 
@@ -16,7 +16,7 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 			const installer = getLatestInstaller();
 			const resistance = getLatestResistanceScript();
 			const tracking = getLatestTrackingScript();
-			const siteLists = getLatestSiteLists();
+			const sitePacks = getLatestSitePacks();
 
 			// Strip file paths, keeping only version and basic metadata
 			return {
@@ -43,14 +43,14 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 							createdAt: tracking.createdAt
 						}
 					: null,
-				siteLists: Array.from(siteLists.entries()).map(([id, list]) => ({
+				sitePacks: Array.from(sitePacks.entries()).map(([id, pack]) => ({
 					id,
-					name: list.name,
-					description: `Site list package: ${list.name}`,
-					requiresPro: list.requiresProSubscription,
-					version: list.fileName.split('.')[0] || list.fileName,
-					size: list.size,
-					updatedAt: list.updatedAt
+					name: pack.name,
+					description: `Site pack package: ${pack.name}`,
+					requiresPro: pack.requiresProSubscription,
+					version: pack.fileName.split('.')[0] || pack.fileName,
+					size: pack.size,
+					updatedAt: pack.updatedAt
 				}))
 			};
 		} catch (e) {
@@ -89,7 +89,7 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 						createdAt: t.Date()
 					})
 				),
-				siteLists: t.Array(
+				sitePacks: t.Array(
 					t.Object({
 						id: t.String(),
 						name: t.String(),

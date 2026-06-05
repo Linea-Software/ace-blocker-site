@@ -1,32 +1,32 @@
 import { err, ok, Result } from 'neverthrow';
 import {
-	getLatestSiteLists,
+	getLatestSitePacks,
 	getLatestResistanceScript,
 	getLatestTrackingScript,
 	getLatestInstaller
 } from '$lib/server/cache';
 import {
 	CDNErrorType,
-	siteListsBasePath,
+	sitePacksBasePath,
 	resistanceModeScriptBasePath,
 	trackingScriptsBasePath,
 	installersBasePath,
 	generateBunnyCDNToken
 } from './common';
 
-export function getSiteListURL(
-	siteListUuid: string,
+export function getSitePackURL(
+	sitePackUuid: string,
 	isUserPro: boolean
 ): Result<URL, CDNErrorType> {
-	const cache = getLatestSiteLists();
+	const cache = getLatestSitePacks();
 
-	const latestRecord = cache.get(siteListUuid);
+	const latestRecord = cache.get(sitePackUuid);
 
 	if (!latestRecord) {
-		return err(CDNErrorType.SiteListNotFound);
+		return err(CDNErrorType.SitePackNotFound);
 	}
 
-	let siteListPath = new URL(latestRecord.fileName, siteListsBasePath);
+	let sitePackPath = new URL(latestRecord.fileName, sitePacksBasePath);
 
 	if (latestRecord.requiresProSubscription) {
 		if (!isUserPro) {
@@ -35,14 +35,14 @@ export function getSiteListURL(
 
 		// We're generating a token to ensure that only pro members can access it (hopefully)
 		const expiration = Math.round(Date.now() / 1000) + 600; // 5 minutes
-		const token = generateBunnyCDNToken(siteListPath.pathname, expiration);
+		const token = generateBunnyCDNToken(sitePackPath.pathname, expiration);
 
 		// `?token=${token}&expires=${expiration}`
-		siteListPath.searchParams.append('token', token);
-		siteListPath.searchParams.append('expiration', expiration.toString());
+		sitePackPath.searchParams.append('token', token);
+		sitePackPath.searchParams.append('expiration', expiration.toString());
 	}
 
-	return ok(siteListPath);
+	return ok(sitePackPath);
 }
 
 export function getResistanceModeScriptsURL(): Result<{ url: URL; version: string }, CDNErrorType> {

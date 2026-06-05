@@ -91,7 +91,7 @@
 
 		console.log('Uploading:', { file: file.name, name, id, requiresProSubscription });
 
-		const response = await apiClient.v1.admin['site-lists'].upload.post({
+		const response = await apiClient.v1.admin['site-packs'].upload.post({
 			file,
 			name,
 			id,
@@ -161,7 +161,7 @@
 			return;
 		}
 
-		const response = await apiClient.v1.admin['site-lists'].update.post({
+		const response = await apiClient.v1.admin['site-packs'].update.post({
 			id,
 			name,
 			requiresProSubscription
@@ -170,7 +170,7 @@
 		isUpdating = false;
 
 		if (response.error) {
-			let message = 'Failed to update site list';
+			let message = 'Failed to update site pack';
 			if (
 				typeof response.error === 'object' &&
 				response.error !== null &&
@@ -191,14 +191,14 @@
 
 		isDeleting = true;
 
-		const response = await apiClient.v1.admin['site-lists'].delete.post({
+		const response = await apiClient.v1.admin['site-packs'].delete.post({
 			id: itemToDelete.id
 		});
 
 		isDeleting = false;
 
 		if (response.error) {
-			let message = 'Failed to delete site list';
+			let message = 'Failed to delete site pack';
 			if (
 				typeof response.error === 'object' &&
 				response.error !== null &&
@@ -216,7 +216,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.admin_releases_category_sitelists()} | Ace Blocker Admin</title>
+	<title>{m.admin_releases_category_sitepacks()} | Ace Blocker Admin</title>
 </svelte:head>
 
 <div class="min-h-screen bg-[#0B0F19] p-8 font-sans text-gray-200 selection:bg-amber-500/30">
@@ -232,11 +232,11 @@
 					<List class="h-5 w-5" />
 				</div>
 				<h1 class="text-2xl font-bold tracking-tight text-white lg:text-3xl">
-					{m.admin_releases_category_sitelists()}
+					{m.admin_releases_category_sitepacks()}
 				</h1>
 			</div>
 			<p class="max-w-lg text-sm leading-relaxed text-gray-400">
-				Manage and deploy blocked site lists packages for the Ace Blocker engine.
+				Manage and deploy blocked site packs packages for the Ace Blocker engine.
 			</p>
 		</div>
 
@@ -269,9 +269,9 @@
 		</div>
 		<div class="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
 			<p class="mb-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
-				Active Lists
+				Active Packs
 			</p>
-			<p class="font-mono text-2xl font-bold text-white">{data.siteLists.length}</p>
+			<p class="font-mono text-2xl font-bold text-white">{data.sitePacks.length}</p>
 		</div>
 		<div class="rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
 			<p class="mb-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
@@ -313,13 +313,13 @@
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-white/5">
-				{#each data.siteLists as list (list.id)}
+				{#each data.sitePacks as pack (pack.id)}
 					<tr class="group transition-colors hover:bg-white/5">
 						<td class="px-6 py-4">
 							<div class="flex flex-col">
 								<span
 									class="text-sm font-semibold text-white transition-colors group-hover:text-amber-500"
-									>{list.name}</span
+									>{pack.name}</span
 								>
 								<span
 									class="mt-0.5 text-[10px] font-bold tracking-tighter text-gray-500 uppercase"
@@ -331,11 +331,11 @@
 							<code
 								class="rounded border border-white/10 bg-white/5 px-2 py-1 font-mono text-[10px] text-gray-400"
 							>
-								{list.id.substring(0, 8)}...
+								{pack.id.substring(0, 8)}...
 							</code>
 						</td>
 						<td class="px-6 py-4 text-xs">
-							{#if list.requiresProSubscription}
+							{#if pack.requiresProSubscription}
 								<span
 									class="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 font-medium text-amber-500"
 								>
@@ -353,19 +353,19 @@
 						</td>
 						<td class="px-6 py-4 text-center">
 							<span class="font-mono text-xs text-gray-300"
-								>{list.downloadCount.toLocaleString()}</span
+								>{pack.downloadCount.toLocaleString()}</span
 							>
 						</td>
 						<td class="px-6 py-4">
 							<span class="flex items-center gap-1.5 text-xs text-gray-400">
 								<Calendar class="h-3.5 w-3.5 opacity-40" />
-								{formatDate(list.updatedAt)}
+								{formatDate(pack.updatedAt)}
 							</span>
 						</td>
 						<td class="px-6 py-4 text-right">
 							<div class="flex items-center justify-end gap-2">
 								<button
-									onclick={() => openDetails(list)}
+									onclick={() => openDetails(pack)}
 									class="rounded-lg border border-white/10 bg-white/5 p-2 text-gray-400 transition-all hover:border-white/20 hover:text-white active:scale-90"
 									title="View/Edit Details"
 								>
@@ -373,9 +373,9 @@
 								</button>
 								<button
 									type="button"
-									onclick={() => (itemToDelete = list)}
+									onclick={() => (itemToDelete = pack)}
 									class="rounded-lg border border-white/10 bg-white/5 p-2 text-gray-400 transition-all hover:border-red-500/30 hover:text-red-500 active:scale-90"
-									title="Delete List"
+									title="Delete Pack"
 								>
 									<Trash2 class="h-4 w-4" />
 								</button>
@@ -395,7 +395,7 @@
 									No release uploaded yet.
 								</h3>
 								<p class="text-xs text-gray-500 mt-1 mb-6">
-									Start by deploying the first site list package to BunnyCDN.
+									Start by deploying the first site pack package to BunnyCDN.
 								</p>
 								<button
 									onclick={openUploadModal}
@@ -434,7 +434,7 @@
 					<div>
 						<h3 class="flex items-center gap-2 text-lg font-bold text-white">
 							<UploadCloud class="h-5 w-5 text-amber-500" />
-							Deploy New List
+							Deploy New Pack
 						</h3>
 						<p
 							class="mt-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase"
@@ -464,14 +464,14 @@
 						<label
 							for="upload-id"
 							class="block text-[10px] font-bold tracking-widest text-gray-500 uppercase"
-							>List ID</label
+							>Pack ID</label
 						>
 						<input
 							id="upload-id"
 							name="id"
 							bind:value={uploadFormState.id}
 							type="text"
-							placeholder="e.g., adult-content-list"
+							placeholder="e.g., adult-content-pack"
 							required
 							class="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white transition-all outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
 						/>
@@ -488,7 +488,7 @@
 							name="name"
 							bind:value={uploadFormState.name}
 							type="text"
-							placeholder="e.g., Adult Content List"
+							placeholder="e.g., Adult Content Pack"
 							required
 							class="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white transition-all outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
 						/>
@@ -618,7 +618,7 @@
 					<div>
 						<h3 class="flex items-center gap-2 text-lg font-bold">
 							<Settings class="h-5 w-5 text-amber-500" />
-							List Details
+							Pack Details
 						</h3>
 						<p
 							class="mt-1 text-[10px] font-bold tracking-widest text-gray-500 uppercase"
@@ -817,7 +817,7 @@
 				</div>
 
 				<p class="mb-6 text-sm leading-relaxed text-gray-400">
-					Are you sure you want to permanently delete the site list <span
+					Are you sure you want to permanently delete the site pack <span
 						class="font-semibold text-white">{itemToDelete.name}</span
 					>? This action cannot be undone and will prevent the desktop client from
 					downloading this package.

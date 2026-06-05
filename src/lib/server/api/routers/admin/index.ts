@@ -1,7 +1,7 @@
 import { Elysia } from 'elysia';
 import { auth } from '$lib/server/auth';
 import { usersRouter } from './users';
-import { siteListsRouter } from './site-lists';
+import { sitePacksRouter } from './site-packs';
 import { installersRouter } from './installers';
 import { resistanceRouter } from './resistance';
 import { trackingRouter } from './tracking';
@@ -31,7 +31,7 @@ export const adminRouter = new Elysia({ prefix: '/admin' })
 		}
 	})
 	.use(usersRouter)
-	.use(siteListsRouter)
+	.use(sitePacksRouter)
 	.use(installersRouter)
 	.use(resistanceRouter)
 	.use(trackingRouter);

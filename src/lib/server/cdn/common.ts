@@ -8,13 +8,13 @@ const log = createLogger('cdn');
 export enum CDNObjectPath {
 	Installer = 'ace-blocker-installer',
 	ResistanceModeScripts = 'resistance-mode-scripts',
-	SiteLists = 'site-lists',
+	SitePacks = 'site-packs',
 	TrackingScripts = 'tracking-scripts'
 }
 
 export enum CDNErrorType {
 	ProSubscriptionRequired,
-	SiteListNotFound,
+	SitePackNotFound,
 	NoReleaseAvailable,
 	UploadFailed,
 	NetworkFailure,
@@ -45,7 +45,7 @@ const securityKey = env.BUNNY_SECURITY_KEY;
 // Trailing slash is required so that new URL(relative, base) appends rather than replaces the last segment.
 const storageZoneBase = new URL(`https://${env.BUNNY_CDN_BASE_URL}/${isProduction ? '' : 'dev/'}`);
 
-export const siteListsBasePath = new URL(CDNObjectPath.SiteLists + '/', storageZoneBase);
+export const sitePacksBasePath = new URL(CDNObjectPath.SitePacks + '/', storageZoneBase);
 export const resistanceModeScriptBasePath = new URL(
 	CDNObjectPath.ResistanceModeScripts + '/',
 	storageZoneBase
@@ -67,7 +67,7 @@ export const trackingScriptsUploadBase = new URL(
 	CDNObjectPath.TrackingScripts + '/',
 	bunnyUploadBase
 );
-export const siteListsUploadBase = new URL(CDNObjectPath.SiteLists + '/', bunnyUploadBase);
+export const sitePacksUploadBase = new URL(CDNObjectPath.SitePacks + '/', bunnyUploadBase);
 export const resistanceModeScriptsUploadBase = new URL(
 	CDNObjectPath.ResistanceModeScripts + '/',
 	bunnyUploadBase

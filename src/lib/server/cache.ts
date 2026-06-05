@@ -3,7 +3,7 @@ import {
 	aceBlockerInstaller,
 	resistanceModeScripts,
 	trackingScripts,
-	siteList
+	sitePack
 } from '$lib/server/db/schema';
 import { desc, eq } from 'drizzle-orm';
 
@@ -11,7 +11,7 @@ import { desc, eq } from 'drizzle-orm';
 let latestInstaller: typeof aceBlockerInstaller.$inferSelect | null = null;
 let latestResistanceScript: typeof resistanceModeScripts.$inferSelect | null = null;
 let latestTrackingScript: typeof trackingScripts.$inferSelect | null = null;
-let latestSiteLists: Map<string, typeof siteList.$inferSelect> = new Map();
+let latestSitePacks: Map<string, typeof sitePack.$inferSelect> = new Map();
 
 // ============ INSTALLER ============
 
@@ -73,17 +73,17 @@ export function getLatestTrackingScript(): typeof trackingScripts.$inferSelect |
 	return latestTrackingScript;
 }
 
-// ============ SITE LISTS ============
+// ============ SITE PACKS ============
 
-export async function loadLatestSiteLists(): Promise<Map<string, typeof siteList.$inferSelect>> {
-	const results = await db.select().from(siteList).where(eq(siteList.canBeDownloaded, true));
+export async function loadLatestSitePacks(): Promise<Map<string, typeof sitePack.$inferSelect>> {
+	const results = await db.select().from(sitePack).where(eq(sitePack.canBeDownloaded, true));
 
-	latestSiteLists = new Map(results.map((item) => [item.id, item]));
-	return latestSiteLists;
+	latestSitePacks = new Map(results.map((item) => [item.id, item]));
+	return latestSitePacks;
 }
 
-export function getLatestSiteLists(): Map<string, typeof siteList.$inferSelect> {
-	return latestSiteLists;
+export function getLatestSitePacks(): Map<string, typeof sitePack.$inferSelect> {
+	return latestSitePacks;
 }
 
 // ============ CACHE INVALIDATION HELPERS ============
@@ -107,10 +107,10 @@ export async function invalidateTrackingCache(): Promise<
 	return await loadLatestTrackingScript();
 }
 
-export async function invalidateSiteListsCache(): Promise<
-	Map<string, typeof siteList.$inferSelect>
+export async function invalidateSitePacksCache(): Promise<
+	Map<string, typeof sitePack.$inferSelect>
 > {
-	return await loadLatestSiteLists();
+	return await loadLatestSitePacks();
 }
 
 // ============ INITIALIZE ALL CACHES ============
@@ -120,6 +120,6 @@ export async function initializeCache(): Promise<void> {
 		loadLatestInstaller(),
 		loadLatestResistanceScript(),
 		loadLatestTrackingScript(),
-		loadLatestSiteLists()
+		loadLatestSitePacks()
 	]);
 }
