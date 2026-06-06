@@ -244,7 +244,7 @@
 							</p>
 						</div>
 					</Card.Header>
-					<Card.Content class="flex-1 space-y-5">
+					<Card.Content class="flex flex-1 flex-col space-y-5">
 						<div class="flex items-center gap-4">
 							<div
 								class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/30"
@@ -275,6 +275,11 @@
 								>{m.feature_lists_basic()}</span
 							>
 						</div>
+						<div class="mt-auto">
+							<p class="text-center text-xs text-muted-foreground">
+								No credit card required. Free forever.
+							</p>
+						</div>
 					</Card.Content>
 					<Card.Footer class="pt-8">
 						<Button
@@ -284,9 +289,6 @@
 						>
 							{m.cta_get_started()}
 						</Button>
-						<p class="mt-3 text-center text-xs text-muted-foreground">
-							No credit card required. Free forever.
-						</p>
 					</Card.Footer>
 				</Card.Root>
 
