@@ -6,6 +6,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Badge } from '$lib/components/ui/badge';
+	import * as Tabs from '$lib/components/ui/tabs';
 	import {
 		User,
 		Crown,
@@ -264,15 +265,31 @@
 			<p class="mt-2 text-muted-foreground">{m.account_description()}</p>
 		</div>
 
-		<!-- Section 1: Profile -->
-		<Card.Root class="mb-8">
-			<Card.Header>
-				<Card.Title class="flex items-center gap-2">
-					<User class="h-5 w-5 text-muted-foreground" />
+		<!-- Tabs -->
+		<Tabs.Tabs value="profile" class="flex flex-col">
+			<Tabs.TabsList class="rounded-lg bg-muted p-1">
+				<Tabs.TabsTrigger value="profile" class="rounded-md text-sm font-medium">
 					{m.account_profile_title()}
-				</Card.Title>
-			</Card.Header>
-			<Card.Content class="space-y-6">
+				</Tabs.TabsTrigger>
+				<Tabs.TabsTrigger value="subscription" class="rounded-md text-sm font-medium">
+					{m.account_subscription_title()}
+				</Tabs.TabsTrigger>
+				<Tabs.TabsTrigger value="security" class="rounded-md text-sm font-medium">
+					{m.account_security_title()}
+				</Tabs.TabsTrigger>
+				<Tabs.TabsTrigger
+					value="danger-zone"
+					class="rounded-md text-sm font-medium data-[state=active]:bg-destructive/10 data-[state=active]:text-destructive"
+				>
+					{m.account_danger_zone_title()}
+				</Tabs.TabsTrigger>
+			</Tabs.TabsList>
+
+			<!-- Tab: Profile -->
+			<Tabs.TabsContent
+				value="profile"
+				class="mt-4 rounded-xl border border-border bg-card p-6"
+			>
 				<div class="grid gap-4 sm:grid-cols-2">
 					<div>
 						<Label class="text-xs text-muted-foreground">{m.account_name_label()}</Label
@@ -343,18 +360,13 @@
 						</Button>
 					</form>
 				</div>
-			</Card.Content>
-		</Card.Root>
+			</Tabs.TabsContent>
 
-		<!-- Section 2: Subscription -->
-		<Card.Root class="mb-8">
-			<Card.Header>
-				<Card.Title class="flex items-center gap-2">
-					<Crown class="h-5 w-5 text-muted-foreground" />
-					{m.account_subscription_title()}
-				</Card.Title>
-			</Card.Header>
-			<Card.Content class="space-y-4">
+			<!-- Tab: Subscription -->
+			<Tabs.TabsContent
+				value="subscription"
+				class="mt-4 rounded-xl border border-border bg-card p-6"
+			>
 				<div class="flex items-center justify-between">
 					<div>
 						<p class="font-medium">
@@ -381,45 +393,13 @@
 						</Button>
 					{/if}
 				</div>
-			</Card.Content>
-		</Card.Root>
+			</Tabs.TabsContent>
 
-		<!-- Cancel Subscription Dialog -->
-		<Dialog.Root bind:open={showCancelDialog}>
-			<Dialog.Content class="sm:max-w-md">
-				<Dialog.Header>
-					<Dialog.Title>{m.account_cancel_title()}</Dialog.Title>
-					<Dialog.Description>
-						{m.account_cancel_description()}
-					</Dialog.Description>
-				</Dialog.Header>
-				<Dialog.Footer class="flex justify-end gap-2">
-					<Button variant="outline" onclick={() => (showCancelDialog = false)}
-						>Cancel</Button
-					>
-					<Button
-						variant="destructive"
-						disabled={cancelLoading}
-						onclick={handleCancelSubscription}
-					>
-						{#if cancelLoading}
-							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
-						{/if}
-						{m.account_cancel_confirm()}
-					</Button>
-				</Dialog.Footer>
-			</Dialog.Content>
-		</Dialog.Root>
-
-		<!-- Section 3: Security -->
-		<Card.Root class="mb-8">
-			<Card.Header>
-				<Card.Title class="flex items-center gap-2">
-					<Shield class="h-5 w-5 text-muted-foreground" />
-					{m.account_security_title()}
-				</Card.Title>
-			</Card.Header>
-			<Card.Content class="space-y-6">
+			<!-- Tab: Security -->
+			<Tabs.TabsContent
+				value="security"
+				class="mt-4 rounded-xl border border-border bg-card p-6"
+			>
 				<!-- 2FA -->
 				<div>
 					<div class="flex items-center justify-between">
@@ -511,45 +491,13 @@
 						{/each}
 					</div>
 				</div>
-			</Card.Content>
-		</Card.Root>
+			</Tabs.TabsContent>
 
-		<!-- Disable 2FA Dialog -->
-		<Dialog.Root bind:open={show2faDisableDialog}>
-			<Dialog.Content class="sm:max-w-md">
-				<Dialog.Header>
-					<Dialog.Title>{m.account_disable_2fa()}</Dialog.Title>
-					<Dialog.Description>
-						{m.account_disable_2fa_confirm()}
-					</Dialog.Description>
-				</Dialog.Header>
-				<Dialog.Footer class="flex justify-end gap-2">
-					<Button variant="outline" onclick={() => (show2faDisableDialog = false)}
-						>Cancel</Button
-					>
-					<Button
-						variant="destructive"
-						disabled={twoFactorLoading}
-						onclick={handleDisable2FA}
-					>
-						{#if twoFactorLoading}
-							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
-						{/if}
-						{m.account_disable_2fa()}
-					</Button>
-				</Dialog.Footer>
-			</Dialog.Content>
-		</Dialog.Root>
-
-		<!-- Section 4: Danger Zone -->
-		<Card.Root class="border-destructive/30 bg-destructive/5">
-			<Card.Header>
-				<Card.Title class="flex items-center gap-2 text-destructive">
-					<Trash2 class="h-5 w-5" />
-					{m.account_danger_zone_title()}
-				</Card.Title>
-			</Card.Header>
-			<Card.Content class="space-y-4">
+			<!-- Tab: Danger Zone -->
+			<Tabs.TabsContent
+				value="danger-zone"
+				class="mt-4 rounded-xl border border-border bg-card p-6"
+			>
 				<div class="flex items-center justify-between rounded-lg border p-4">
 					<div>
 						<p class="font-medium">{m.account_export_data()}</p>
@@ -581,10 +529,62 @@
 						{m.account_delete_account()}
 					</Button>
 				</div>
-			</Card.Content>
-		</Card.Root>
+			</Tabs.TabsContent>
+		</Tabs.Tabs>
 
-		<!-- Delete Account Dialog -->
+		<!-- Dialogs (outside tabs) -->
+		<Dialog.Root bind:open={showCancelDialog}>
+			<Dialog.Content class="sm:max-w-md">
+				<Dialog.Header>
+					<Dialog.Title>{m.account_cancel_title()}</Dialog.Title>
+					<Dialog.Description>
+						{m.account_cancel_description()}
+					</Dialog.Description>
+				</Dialog.Header>
+				<Dialog.Footer class="flex justify-end gap-2">
+					<Button variant="outline" onclick={() => (showCancelDialog = false)}
+						>Cancel</Button
+					>
+					<Button
+						variant="destructive"
+						disabled={cancelLoading}
+						onclick={handleCancelSubscription}
+					>
+						{#if cancelLoading}
+							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+						{/if}
+						{m.account_cancel_confirm()}
+					</Button>
+				</Dialog.Footer>
+			</Dialog.Content>
+		</Dialog.Root>
+
+		<Dialog.Root bind:open={show2faDisableDialog}>
+			<Dialog.Content class="sm:max-w-md">
+				<Dialog.Header>
+					<Dialog.Title>{m.account_disable_2fa()}</Dialog.Title>
+					<Dialog.Description>
+						{m.account_disable_2fa_confirm()}
+					</Dialog.Description>
+				</Dialog.Header>
+				<Dialog.Footer class="flex justify-end gap-2">
+					<Button variant="outline" onclick={() => (show2faDisableDialog = false)}
+						>Cancel</Button
+					>
+					<Button
+						variant="destructive"
+						disabled={twoFactorLoading}
+						onclick={handleDisable2FA}
+					>
+						{#if twoFactorLoading}
+							<Loader2 class="h-4 w-4 animate-spin" />
+						{/if}
+						{m.account_disable_2fa()}
+					</Button>
+				</Dialog.Footer>
+			</Dialog.Content>
+		</Dialog.Root>
+
 		<Dialog.Root bind:open={showDeleteDialog}>
 			<Dialog.Content class="sm:max-w-md">
 				<Dialog.Header>
