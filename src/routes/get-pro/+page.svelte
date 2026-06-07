@@ -506,7 +506,7 @@
 							</div>
 						</div>
 
-						<!-- Cloud Sync & Backup -->
+						<!-- Cloud Backup -->
 						<div class="flex gap-5">
 							<div
 								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
@@ -515,10 +515,10 @@
 							</div>
 							<div class="space-y-1">
 								<h3 class="text-lg font-bold text-slate-900 dark:text-slate-200">
-									{m.toolbox_cloud_sync_title()}
+									{m.toolbox_cloud_backup_title()}
 								</h3>
 								<p class="text-slate-600 dark:text-slate-400">
-									{m.toolbox_cloud_sync_description()}
+									{m.toolbox_cloud_backup_description()}
 								</p>
 							</div>
 						</div>
