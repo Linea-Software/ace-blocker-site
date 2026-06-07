@@ -3,23 +3,12 @@ import { Resend } from 'resend';
 import * as m from './messages';
 import type { Locale } from './messages';
 import { RESEND_API_KEY } from '$env/static/private';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 
 export const resend = new Resend(RESEND_API_KEY);
 
-// Inline logo images as base64 data URIs so they always render immediately in
-// email clients — no external image blocking, no "Show images" prompt needed.
-const LOGO_DIR = 'src/lib/assets/logo/PNG';
-
-function readLogoBase64(filename: string): string {
-	const path = resolve(LOGO_DIR, filename);
-	const buffer = readFileSync(path);
-	return `data:image/png;base64,${buffer.toString('base64')}`;
-}
-
-const DARK_LOGO_DATA_URI = readLogoBase64('dark-full-logo.png');
-const LIGHT_LOGO_DATA_URI = readLogoBase64('light-full-logo.png');
+// Logo images served from the CDN.
+const DARK_LOGO_URL = 'https://cnd.aceblocker.com/dark-full-logo.png';
+const LIGHT_LOGO_URL = 'https://cnd.aceblocker.com/light-full-logo.png';
 
 // Shared <head> for both templates.
 // Dark mode is the inline-style default (fallback for clients that strip <style>).
@@ -49,14 +38,14 @@ function logoHtml(): string {
 	return `
                     <!-- Dark mode default -->
                     <img class="email-logo-dark"
-                         src="${DARK_LOGO_DATA_URI}"
+                         src="${DARK_LOGO_URL}"
                          alt="Ace Blocker"
                          width="180"
                          height="42"
                          style="display:block; margin:0 auto; width:180px; height:auto; border:0;" />
                     <!-- Light mode override -->
                     <img class="email-logo-light"
-                         src="${LIGHT_LOGO_DATA_URI}"
+                         src="${LIGHT_LOGO_URL}"
                          alt="Ace Blocker"
                          width="180"
                          height="42"
