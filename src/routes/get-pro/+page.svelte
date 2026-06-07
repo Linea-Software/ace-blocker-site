@@ -407,7 +407,7 @@
 								<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
 							</div>
 							<span class="text-sm font-bold text-slate-900 dark:text-white"
-								>{m.feature_sync_cloud()}</span
+								>{m.feature_cloud_backup()}</span
 							>
 						</div>
 						<div class="flex items-center gap-4">
