@@ -4,17 +4,16 @@ import * as m from './messages';
 import type { Locale } from './messages';
 import { RESEND_API_KEY } from '$env/static/private';
 import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 
 export const resend = new Resend(RESEND_API_KEY);
 
 // Inline logo images as base64 data URIs so they always render immediately in
 // email clients — no external image blocking, no "Show images" prompt needed.
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const LOGO_DIR = 'src/lib/assets/logo/PNG';
 
 function readLogoBase64(filename: string): string {
-	const path = resolve(__dirname, '../assets/logo/PNG', filename);
+	const path = resolve(LOGO_DIR, filename);
 	const buffer = readFileSync(path);
 	return `data:image/png;base64,${buffer.toString('base64')}`;
 }
