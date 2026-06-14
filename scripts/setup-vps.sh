@@ -5,11 +5,16 @@
 # Automates the full VPS deployment described in docs/DEPLOY.md.
 #
 # Usage:
-#   sudo bash scripts/setup-vps.sh --domain aceblocker.com [--email admin@aceblocker.com]
+#   sudo bash scripts/setup-vps.sh [--domain aceblocker.com] [--email admin@aceblocker.com]
 #
-# Required:  --domain <domain>
-# Optional:  --username <name> --email <email> --cf-token <token>
-#   If --cf-token is omitted, the script will prompt for it during the SSL step.
+# Optional:  --domain <domain>        (default: aceblocker.com)
+#            --username <name>        (default: aceblocker)
+#            --email <email>          --cf-token <token>  --docker-group
+#            --b2-key-id <id>  --b2-app-key <key>  --b2-bucket <bucket>
+#   If --cf-token is omitted, the script prompts for it during the SSL step.
+#   If the B2 values are omitted, the script prompts for them during the backup
+#   step; leave them blank there to set up local-only backups (no off-site copy).
+#   B2 values may also be supplied via env: B2_KEY_ID, B2_APP_KEY, B2_BUCKET.
 # =============================================================================
 
 set -euo pipefail
@@ -23,14 +28,20 @@ err()   { echo -e "${RD}[ERROR]${NC}   $*"; }
 step()  { echo -e "\n${B}${BL}═══ $* ═══${NC}\n"; }
 
 # ── Parse Arguments ─────────────────────────────────────────────────────────
-DOMAIN=""; USERNAME="aceblocker"; EMAIL=""; CF_TOKEN="${CF_TOKEN:-}"
+DOMAIN="aceblocker.com"; USERNAME="aceblocker"; EMAIL=""; CF_TOKEN="${CF_TOKEN:-}"; DOCKER_GROUP=false
+# Backblaze B2 (optional off-site backups). Can be supplied via flags or env.
+B2_KEY_ID="${B2_KEY_ID:-}"; B2_APP_KEY="${B2_APP_KEY:-}"; B2_BUCKET="${B2_BUCKET:-}"
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --domain)   DOMAIN="$2";  shift 2 ;;
-        --username) USERNAME="$2"; shift 2 ;;
-        --email)    EMAIL="$2";   shift 2 ;;
-        --cf-token) CF_TOKEN="$2"; shift 2 ;;
-        --help)     sed -n '/^#/{/^#!/d;/^# =/d;p;}' "$0"; exit 0 ;;
+        --domain)     DOMAIN="$2";  shift 2 ;;
+        --username)   USERNAME="$2"; shift 2 ;;
+        --email)      EMAIL="$2";   shift 2 ;;
+        --cf-token)   CF_TOKEN="$2"; shift 2 ;;
+        --docker-group) DOCKER_GROUP=true; shift ;;
+        --b2-key-id)  B2_KEY_ID="$2"; shift 2 ;;
+        --b2-app-key) B2_APP_KEY="$2"; shift 2 ;;
+        --b2-bucket)  B2_BUCKET="$2"; shift 2 ;;
+        --help)       sed -n '/^#/{/^#!/d;/^# =/d;p;}' "$0"; exit 0 ;;
         *) err "Unknown option: $1"; exit 1 ;;
     esac
 done
@@ -38,19 +49,30 @@ done
 APP_DIR="/home/${USERNAME}/ace-blocker-site"
 BUN="/home/${USERNAME}/.bun/bin/bun"
 
+# When the user is NOT in the docker group, their docker calls must go through
+# the scoped sudo rule. This prefix is injected into commands run as the user.
+if [[ "$DOCKER_GROUP" == true ]]; then
+    DOCKER_PREFIX=""
+else
+    DOCKER_PREFIX="sudo "
+fi
+
 # ── Pre-flight ──────────────────────────────────────────────────────────────
 echo -e "\n${B}${BL}┌──────────────────────────────────────────────────────┐${NC}"
 echo -e   "${B}${BL}│${NC}  Ace Blocker VPS Setup"
 echo -e   "${B}${BL}└──────────────────────────────────────────────────────┘${NC}\n"
 
-[[ -z "$DOMAIN" ]] && { err "--domain is required."; exit 1; }
+[[ -z "$DOMAIN" ]] && { err "Domain resolved empty (default is aceblocker.com; pass --domain to override)."; exit 1; }
 [[ "$EUID" -ne 0 ]] && { err "Run as root (use sudo)."; exit 1; }
 info "Domain: ${DOMAIN}   User: ${USERNAME}   App: ${APP_DIR}"
 
 # ── 1. System Updates & Base Packages ───────────────────────────────────────
 step "1. System Updates & Base Packages"
+# Note: 'apt upgrade -y' runs on every invocation. On a fresh box this is what
+# you want; on re-runs it will pull the latest packages too. If you need
+# reproducible re-runs, pin versions or gate this behind a first-run check.
 apt update -qq && apt upgrade -y -qq
-apt install -y -qq curl git ufw nginx unzip
+apt install -y -qq curl git ufw nginx unzip gnupg
 ok "System updated."
 
 # ── 2. User Setup ───────────────────────────────────────────────────────────
@@ -60,27 +82,59 @@ if ! id "$USERNAME" &>/dev/null; then
 fi
 usermod -aG sudo "$USERNAME" 2>/dev/null || true
 
-# Grant passwordless sudo (user has no password — created with --disabled-password)
-# This is needed because 'bun run setup' internally calls sudo for apt/docker
+# Grant sudo. We deliberately DO NOT use 'NOPASSWD: ALL' — that makes the
+# service account root-equivalent, so any app/SSH/dependency compromise becomes
+# instant root. Instead:
+#   - General sudo requires the user's password (set below).
+#   - Only the handful of commands 'bun run setup' actually needs are NOPASSWD,
+#     and they are pinned to absolute paths so they can't be shadowed by a
+#     malicious binary earlier on PATH.
+# If 'bun run setup' does not actually need passwordless sudo at runtime, you can
+# delete the NOPASSWD block entirely and run setup steps as root from this script.
 SUDOERS_FILE="/etc/sudoers.d/${USERNAME}"
 if [[ ! -f "$SUDOERS_FILE" ]]; then
-    echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" > "$SUDOERS_FILE"
+    APT_BIN="$(command -v apt || echo /usr/bin/apt)"
+    APTGET_BIN="$(command -v apt-get || echo /usr/bin/apt-get)"
+    DOCKER_BIN="$(command -v docker || echo /usr/bin/docker)"
+    SYSTEMCTL_BIN="$(command -v systemctl || echo /usr/bin/systemctl)"
+    cat > "$SUDOERS_FILE" << SUDOERS
+# General sudo for ${USERNAME} requires a password.
+${USERNAME} ALL=(ALL) ALL
+# Narrow exceptions needed by 'bun run setup' (passwordless, pinned paths).
+${USERNAME} ALL=(ALL) NOPASSWD: ${APT_BIN}, ${APTGET_BIN}, ${DOCKER_BIN}, ${SYSTEMCTL_BIN}
+SUDOERS
     chmod 440 "$SUDOERS_FILE"
-    ok "Passwordless sudo granted for ${USERNAME}."
+    # Validate syntax; a broken sudoers file can lock out sudo entirely.
+    if ! visudo -cf "$SUDOERS_FILE" >/dev/null 2>&1; then
+        err "Generated sudoers file failed validation — removing it."
+        rm -f "$SUDOERS_FILE"
+        exit 1
+    fi
+    ok "Scoped sudo granted for ${USERNAME} (password required except for setup commands)."
 fi
 
-if [[ -f /root/.ssh/authorized_keys ]]; then
+SSH_KEY_OK=false
+if [[ -f /root/.ssh/authorized_keys ]] && [[ -s /root/.ssh/authorized_keys ]]; then
     mkdir -p "/home/${USERNAME}/.ssh"
     cp /root/.ssh/authorized_keys "/home/${USERNAME}/.ssh/"
     chown -R "${USERNAME}:${USERNAME}" "/home/${USERNAME}/.ssh"
     chmod 700 "/home/${USERNAME}/.ssh"
     chmod 600 "/home/${USERNAME}/.ssh/authorized_keys"
-    ok "SSH keys copied to ${USERNAME}."
+    # Confirm the destination is actually populated before we trust it.
+    if [[ -s "/home/${USERNAME}/.ssh/authorized_keys" ]]; then
+        SSH_KEY_OK=true
+        ok "SSH keys copied to ${USERNAME}."
+    else
+        warn "authorized_keys copy ended up empty for ${USERNAME}."
+    fi
 else
-    warn "No SSH keys found in /root/.ssh/. Set up SSH keys manually."
+    warn "No (non-empty) SSH keys found in /root/.ssh/. Set up SSH keys manually."
 fi
 
-# Set a password for the user (was created with --disabled-password above)
+# Set a password for the user (was created with --disabled-password above).
+# This password is NOT used for SSH (PasswordAuthentication is disabled in the
+# hardening step). It IS used for 'sudo' and for console/recovery login, so it
+# is no longer dead weight — choose a strong one.
 echo ""
 while true; do
     read -rsp "  Set password for ${USERNAME}: " USER_PASS
@@ -103,25 +157,43 @@ unset USER_PASS USER_PASS_CONFIRM
 step "3. SSH Hardening"
 SSHD="/etc/ssh/sshd_config"
 if ! grep -q "^PermitRootLogin no" "$SSHD" 2>/dev/null; then
-    cp "$SSHD" "${SSHD}.bak.$(date +%Y%m%d%H%M%S)"
-    for key in PermitRootLogin PasswordAuthentication PermitEmptyPasswords \
-               MaxAuthTries MaxStartups ClientAliveInterval ClientAliveCountMax \
-               X11Forwarding AllowUsers; do
-        sed -i "/^#\{0,1\}${key} /d" "$SSHD"
-    done
-    cat >> "$SSHD" << EOF
+    # SAFETY: disabling PasswordAuthentication + PermitRootLogin with no working
+    # key is a guaranteed lockout. Only proceed if a key is confirmed present.
+    if [[ "$SSH_KEY_OK" != true ]]; then
+        warn "No verified SSH key for ${USERNAME}; SKIPPING SSH hardening to avoid lockout."
+        warn "Add a key to /home/${USERNAME}/.ssh/authorized_keys, confirm you can log in,"
+        warn "then re-run this script (or harden sshd manually)."
+    else
+        cp "$SSHD" "${SSHD}.bak.$(date +%Y%m%d%H%M%S)"
+        for key in PermitRootLogin PasswordAuthentication PermitEmptyPasswords \
+                   MaxAuthTries MaxStartups ClientAliveInterval ClientAliveCountMax \
+                   X11Forwarding AllowUsers; do
+            sed -i "/^#\{0,1\}${key} /d" "$SSHD"
+        done
+        cat >> "$SSHD" << EOF
 PermitRootLogin no
 PasswordAuthentication no
 PermitEmptyPasswords no
 MaxAuthTries 3
 MaxStartups 3:50:10
 ClientAliveInterval 300
-ClientAliveCountMax 0
+ClientAliveCountMax 2
 X11Forwarding no
 AllowUsers ${USERNAME}
 EOF
-    systemctl restart ssh
-    ok "SSH hardened."
+        # Validate before applying; a bad config + restart can drop sshd entirely.
+        if sshd -t 2>/dev/null; then
+            # reload keeps existing connections alive if the new config is faulty
+            # in a way -t didn't catch; restart would kill your current session.
+            systemctl reload ssh 2>/dev/null || systemctl reload sshd 2>/dev/null \
+                || systemctl restart ssh
+            ok "SSH hardened. (Keep this session open and test a NEW login before closing it.)"
+        else
+            err "sshd config validation failed — reverting to backup."
+            cp "${SSHD}.bak."* "$SSHD" 2>/dev/null || true
+            exit 1
+        fi
+    fi
 else
     info "SSH already hardened."
 fi
@@ -173,7 +245,15 @@ if ! command -v docker &>/dev/null; then
 else
     info "Docker already installed."
 fi
-usermod -aG docker "$USERNAME" 2>/dev/null || true
+if [[ "$DOCKER_GROUP" == true ]]; then
+    # NOTE: docker group membership is effectively root (a container can mount
+    # the host fs as root). Only enabled because you passed --docker-group.
+    usermod -aG docker "$USERNAME" 2>/dev/null || true
+    warn "${USERNAME} added to 'docker' group — this is root-equivalent access."
+else
+    info "Not adding ${USERNAME} to 'docker' group (root-equivalent). Docker commands"
+    info "in setup run via the scoped sudo rule. Pass --docker-group to override."
+fi
 systemctl start docker 2>/dev/null || true
 
 # ── 8. Bun ──────────────────────────────────────────────────────────────────
@@ -190,19 +270,27 @@ step "9. Clone Repository"
 
 REPO_URL="https://github.com/Linea-Software/ace-blocker-site.git"
 
-# Configure git credential.helper to use file-based store on disk
-# (libsecret requires D-Bus which is not available on headless servers)
+# SECURITY NOTE on repo auth:
+# The most secure option for a private repo is a read-only DEPLOY KEY (an SSH
+# key registered to this one repo). To use it: drop the key at
+# /home/${USERNAME}/.ssh/id_ed25519, set REPO_URL to the git@github.com: form,
+# and skip the token prompt below. The token path here is a convenience
+# fallback. We deliberately do NOT write the token to ~/.git-credentials in
+# plaintext, and we do NOT persist it into .git/config. Within a single run we
+# pass it inline only for the operations that need it, then unset it.
 CRED_FILE="/home/${USERNAME}/.git-credentials"
+# Make sure no persistent helper is configured and remove any stale plaintext
+# credential file left by previous versions of this script.
 su - "$USERNAME" -c "git config --global --unset-all credential.helper 2>/dev/null; true"
-su - "$USERNAME" -c "git config --global credential.helper 'store --file ${CRED_FILE}'"
-su - "$USERNAME" -c "git config --global --add credential.helper 'cache --timeout 7200'"
+rm -f "$CRED_FILE"
 
 # Helper: prompt for GitHub credentials
 prompt_github_auth() {
     echo ""
     info "GitHub authentication required for the private repository."
+    info "Tip: a read-only deploy key avoids storing any token. See note above."
     read -rp "  GitHub username: " GH_USER
-    read -rsp "  GitHub token (classic or fine-grained): " GH_TOKEN
+    read -rsp "  GitHub token (classic or fine-grained, scoped to this repo): " GH_TOKEN
     echo ""
     if [[ -z "$GH_USER" || -z "$GH_TOKEN" ]]; then
         err "GitHub username and token are required."
@@ -213,38 +301,27 @@ prompt_github_auth() {
 if [[ ! -d "${APP_DIR}/.git" ]]; then
     prompt_github_auth
 
+    # Clone with an inline token URL, then immediately reset the remote to the
+    # clean URL so the token is never written into .git/config on disk.
     AUTH_URL="https://${GH_USER}:${GH_TOKEN}@github.com/Linea-Software/ace-blocker-site.git"
     su - "$USERNAME" -c "git clone '${AUTH_URL}' ${APP_DIR}"
-
-    # Reset remote to clean URL (no token in git config)
     su - "$USERNAME" -c "cd ${APP_DIR} && git remote set-url origin ${REPO_URL}"
-
-    # Store the credential in the file for future pulls
-    echo "https://${GH_USER}:${GH_TOKEN}@github.com" > "$CRED_FILE"
-    chmod 600 "$CRED_FILE"
-    chown "${USERNAME}:${USERNAME}" "$CRED_FILE"
-
-    ok "Repository cloned (credentials saved)."
+    ok "Repository cloned (token not persisted to disk)."
 else
-    # Try pulling with cached credentials first
+    # Try an unauthenticated/cached pull first; if it fails, prompt and pull once
+    # using an inline token URL without persisting anything.
     if su - "$USERNAME" -c "cd ${APP_DIR} && git pull" 2>/dev/null; then
-        ok "Repository updated (using cached credentials)."
-    else
-        # Cached credentials missing or expired — prompt for new ones
-        prompt_github_auth
-
-        # Write credential directly to the store file
-        echo "https://${GH_USER}:${GH_TOKEN}@github.com" > "$CRED_FILE"
-        chmod 600 "$CRED_FILE"
-        chown "${USERNAME}:${USERNAME}" "$CRED_FILE"
-
-        su - "$USERNAME" -c "cd ${APP_DIR} && git pull"
         ok "Repository updated."
+    else
+        prompt_github_auth
+        AUTH_URL="https://${GH_USER}:${GH_TOKEN}@github.com/Linea-Software/ace-blocker-site.git"
+        su - "$USERNAME" -c "cd ${APP_DIR} && git pull '${AUTH_URL}'"
+        ok "Repository updated (token not persisted to disk)."
     fi
 fi
 
 # Clear token from memory
-unset GH_USER GH_TOKEN
+unset GH_USER GH_TOKEN AUTH_URL
 
 # ── 10. Install Dependencies & Run Setup ────────────────────────────────────
 step "10. Dependencies & Setup"
@@ -264,8 +341,8 @@ su - "$USERNAME" -c "cd ${APP_DIR} && ${BUN} run setup-env -- --domain ${DOMAIN}
 # (The DB container was started in step 10 with dev defaults, but .env has now
 #  been reconfigured with production values. Postgres only reads POSTGRES_PASSWORD
 #  on first init of the data dir, so we must destroy the old volume and restart.)
-su - "$USERNAME" -c "cd ${APP_DIR} && docker compose down -v"
-su - "$USERNAME" -c "cd ${APP_DIR} && docker compose up -d"
+su - "$USERNAME" -c "cd ${APP_DIR} && ${DOCKER_PREFIX}docker compose down -v"
+su - "$USERNAME" -c "cd ${APP_DIR} && ${DOCKER_PREFIX}docker compose up -d"
 info "Waiting 5s for database to become ready..."
 sleep 5
 
@@ -462,6 +539,9 @@ else
 
     apt install -y -qq certbot python3-certbot-dns-cloudflare
 
+    # This token lives on disk at /root/.cloudflare.ini (chmod 600) because
+    # certbot's automatic renewal needs it. Scope it to Zone:DNS:Edit on ONLY
+    # this domain's zone — never an account-wide token — so a leak is contained.
     CF_INI="/root/.cloudflare.ini"
     cat > "$CF_INI" <<< "dns_cloudflare_api_token = ${CF_TOKEN}"
     chmod 600 "$CF_INI"
@@ -556,33 +636,152 @@ fi
 # ── 17. Database Backups ────────────────────────────────────────────────────
 step "17. Database Backups"
 
-BACKUP_SCRIPT="/home/${USERNAME}/backups/backup_db.sh"
-mkdir -p "/home/${USERNAME}/backups"
+BACKUP_DIR_HOST="/home/${USERNAME}/backups"
+BACKUP_SCRIPT="${BACKUP_DIR_HOST}/backup_db.sh"
+mkdir -p "$BACKUP_DIR_HOST"
 
+# ── Backblaze B2 (optional off-site copy) ──
+# Prompt for credentials if not already supplied via flags/env. Leaving the
+# Key ID blank disables the off-site copy and sets up LOCAL-ONLY backups.
+echo ""
+info "Off-site backups to Backblaze B2 (recommended). A backup that only lives"
+info "on this server is lost if the server is. You need a B2 'application key'"
+info "(Key ID + Application Key) scoped to one bucket, plus the bucket name."
+info "Create one at: B2 Cloud Storage → Application Keys. Leave blank to skip."
+echo ""
+
+if [[ -z "$B2_KEY_ID" ]]; then
+    read -rp "  B2 Key ID (blank = local-only backups): " B2_KEY_ID
+fi
+if [[ -n "$B2_KEY_ID" ]]; then
+    if [[ -z "$B2_APP_KEY" ]]; then
+        read -rsp "  B2 Application Key: " B2_APP_KEY; echo ""
+    fi
+    if [[ -z "$B2_BUCKET" ]]; then
+        read -rp "  B2 Bucket name: " B2_BUCKET
+    fi
+    if [[ -z "$B2_APP_KEY" || -z "$B2_BUCKET" ]]; then
+        err "B2 Application Key and Bucket are required when a Key ID is given."
+        exit 1
+    fi
+fi
+
+B2_ENABLED=false
+if [[ -n "$B2_KEY_ID" ]]; then
+    B2_ENABLED=true
+
+    # Install rclone (official static install; falls back to apt if curl blocked).
+    if ! command -v rclone &>/dev/null; then
+        info "Installing rclone..."
+        curl -fsSL https://rclone.org/install.sh | bash \
+            || apt install -y -qq rclone \
+            || { err "rclone install failed."; exit 1; }
+    fi
+
+    # Write rclone config as the service user (secrets live here, chmod 600).
+    # rclone obscures the app key in its own config format.
+    RCLONE_DIR="/home/${USERNAME}/.config/rclone"
+    mkdir -p "$RCLONE_DIR"
+    OBSCURED_KEY="$(rclone obscure "$B2_APP_KEY")"
+    cat > "${RCLONE_DIR}/rclone.conf" << RCLONECONF
+[b2backup]
+type = b2
+account = ${B2_KEY_ID}
+key = ${OBSCURED_KEY}
+RCLONECONF
+    chmod 700 "$RCLONE_DIR"
+    chmod 600 "${RCLONE_DIR}/rclone.conf"
+    chown -R "${USERNAME}:${USERNAME}" "/home/${USERNAME}/.config"
+
+    # Verify the bucket is reachable with these credentials before relying on it.
+    if su - "$USERNAME" -c "rclone lsd 'b2backup:${B2_BUCKET}'" &>/dev/null; then
+        ok "B2 bucket '${B2_BUCKET}' reachable — off-site backups enabled."
+    else
+        warn "Could not reach B2 bucket '${B2_BUCKET}' with the given key."
+        warn "Backups will still run locally; fix the key/bucket and re-run to enable off-site."
+        B2_ENABLED=false
+    fi
+fi
+
+# Clear B2 secrets from this script's memory.
+unset B2_APP_KEY OBSCURED_KEY
+
+# ── Backup script ──
 cat > "$BACKUP_SCRIPT" << 'BACKUPSCRIPT'
 #!/bin/bash
 set -euo pipefail
+umask 077  # backups readable only by owner
 source /home/REPLACE_USER/ace-blocker-site/.env
 BACKUP_DIR="/home/REPLACE_USER/backups"
 BACKUP_PATH="${BACKUP_DIR}/db_$(date +%Y%m%d_%H%M%S).sql"
-docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" ace-blocker-db \
+
+# 1. Dump the database from the running container.
+REPLACE_DOCKER_PREFIXdocker exec -e PGPASSWORD="$POSTGRES_PASSWORD" ace-blocker-db \
     pg_dump -U "${POSTGRES_USER:-postgres}" "${POSTGRES_DB:-aceblocker}" > "$BACKUP_PATH"
 gzip "$BACKUP_PATH"
-find "$BACKUP_DIR" -type f -name "*.sql.gz" -mtime +7 -delete
-echo "Backup completed: ${BACKUP_PATH}.gz"
+
+# 2. Encrypt at rest if BACKUP_PASSPHRASE is set in .env. Requires 'gpg'.
+if [[ -n "${BACKUP_PASSPHRASE:-}" ]] && command -v gpg >/dev/null 2>&1; then
+    gpg --batch --yes --pinentry-mode loopback \
+        --passphrase "$BACKUP_PASSPHRASE" \
+        -c "${BACKUP_PATH}.gz"
+    rm -f "${BACKUP_PATH}.gz"
+    EXT="sql.gz.gpg"
+    FINAL="${BACKUP_PATH}.gz.gpg"
+else
+    EXT="sql.gz"
+    FINAL="${BACKUP_PATH}.gz"
+fi
+
+# 3. Off-site copy to Backblaze B2 (only if configured at setup time).
+B2_BUCKET="REPLACE_B2_BUCKET"
+if [[ -n "$B2_BUCKET" ]] && command -v rclone >/dev/null 2>&1; then
+    if rclone copy "$FINAL" "b2backup:${B2_BUCKET}/db-backups/"; then
+        echo "Off-site copy uploaded to b2backup:${B2_BUCKET}/db-backups/"
+        # Prune remote copies older than 30 days. --b2-hard-delete actually
+        # removes them (B2 otherwise just hides old versions, which keep
+        # accruing storage). For belt-and-suspenders, also set a Lifecycle rule
+        # on the bucket in the B2 console.
+        rclone delete --b2-hard-delete --fast-list --min-age 30d \
+            "b2backup:${B2_BUCKET}/db-backups/" || true
+    else
+        echo "WARNING: off-site upload to B2 failed (local backup retained)." >&2
+        exit 1
+    fi
+fi
+
+# 4. Local retention: keep 7 days locally.
+find "$BACKUP_DIR" -type f -name "*.${EXT}" -mtime +7 -delete
+echo "Backup completed: ${FINAL}"
 BACKUPSCRIPT
 
 sed -i "s/REPLACE_USER/${USERNAME}/g" "$BACKUP_SCRIPT"
-chmod +x "$BACKUP_SCRIPT"
-chown -R "${USERNAME}:${USERNAME}" "/home/${USERNAME}/backups"
+sed -i "s/REPLACE_DOCKER_PREFIX/${DOCKER_PREFIX}/g" "$BACKUP_SCRIPT"
+# Inject the bucket name only if B2 was successfully enabled; otherwise leave it
+# empty so the upload block is skipped and backups stay local-only.
+if [[ "$B2_ENABLED" == true ]]; then
+    sed -i "s/REPLACE_B2_BUCKET/${B2_BUCKET}/g" "$BACKUP_SCRIPT"
+else
+    sed -i "s/REPLACE_B2_BUCKET//g" "$BACKUP_SCRIPT"
+fi
+chmod 700 "$BACKUP_SCRIPT"
+chmod 700 "$BACKUP_DIR_HOST"
+chown -R "${USERNAME}:${USERNAME}" "$BACKUP_DIR_HOST"
 
 # Add cron job if not already present
 if ! crontab -u "$USERNAME" -l 2>/dev/null | grep -q "backup_db"; then
     (crontab -u "$USERNAME" -l 2>/dev/null || true
-     echo "0 3 * * * ${BACKUP_SCRIPT}") | crontab -u "$USERNAME" -
-    ok "Daily backup cron job added (runs at 3 AM)."
+     echo "0 3 * * * ${BACKUP_SCRIPT} >> ${BACKUP_DIR_HOST}/backup.log 2>&1") | crontab -u "$USERNAME" -
+    ok "Daily backup cron job added (runs at 3 AM, logs to ${BACKUP_DIR_HOST}/backup.log)."
 else
     info "Backup cron job already exists."
+fi
+
+if [[ "$B2_ENABLED" == true ]]; then
+    ok "Backups: local (7-day) + Backblaze B2 off-site (30-day)."
+else
+    warn "Backups are LOCAL-ONLY. Re-run with --b2-key-id/--b2-app-key/--b2-bucket"
+    warn "to enable off-site copies, or a disk/server loss will lose your backups."
 fi
 
 # ── 18. Permissions & Final Checks ──────────────────────────────────────────
