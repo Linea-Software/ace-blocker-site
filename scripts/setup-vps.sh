@@ -711,7 +711,30 @@ cat > "$BACKUP_SCRIPT" << 'BACKUPSCRIPT'
 #!/bin/bash
 set -euo pipefail
 umask 077  # backups readable only by owner
-source /home/REPLACE_USER/ace-blocker-site/.env
+
+# Safely load only the vars we need, WITHOUT executing the .env as shell.
+# Using 'source' breaks (and is a minor injection risk) when a secret contains
+# characters like '$', backticks, or spaces; under 'set -u' a '$VAR' inside a
+# password aborts the whole script. This reads KEY=VALUE literally instead,
+# matching how systemd's EnvironmentFile parses the same file for the app.
+ENV_FILE="/home/REPLACE_USER/ace-blocker-site/.env"
+while IFS='=' read -r _k _v; do
+    case "$_k" in
+        POSTGRES_USER|POSTGRES_DB|POSTGRES_PASSWORD|BACKUP_PASSPHRASE)
+            _v="${_v%\"}"; _v="${_v#\"}"; _v="${_v%\'}"; _v="${_v#\'}"
+            printf -v "$_k" '%s' "$_v"
+            ;;
+    esac
+done < "$ENV_FILE"
+# Provide safe defaults so 'set -u' doesn't abort on optional/missing vars.
+POSTGRES_USER="${POSTGRES_USER:-postgres}"
+POSTGRES_DB="${POSTGRES_DB:-aceblocker}"
+BACKUP_PASSPHRASE="${BACKUP_PASSPHRASE:-}"
+if [[ -z "${POSTGRES_PASSWORD:-}" ]]; then
+    echo "ERROR: POSTGRES_PASSWORD not found in ${ENV_FILE}" >&2
+    exit 1
+fi
+
 BACKUP_DIR="/home/REPLACE_USER/backups"
 BACKUP_PATH="${BACKUP_DIR}/db_$(date +%Y%m%d_%H%M%S).sql"
 
