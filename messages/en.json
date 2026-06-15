@@ -179,6 +179,8 @@
 	"account_cancel_confirm": "Confirm Cancellation",
 	"account_cancel_success": "Subscription cancelled. You'll retain Pro access until the end of your billing period.",
 	"account_cancel_error": "Failed to cancel subscription.",
+	"account_subscription_cancelled": "Subscription cancelled",
+	"account_pro_cancels": "Pro \u00b7 Cancels {date}",
 	"account_get_pro": "Get Pro",
 	"account_security_title": "Security",
 	"account_enable_2fa": "Enable Two-Factor Authentication",

@@ -67,6 +67,7 @@
 	const user = $derived(data.user);
 	const isPro = $derived(data.isPro);
 	const proExpiration = $derived(data.proExpiration);
+	const isCancelled = $derived(data.isCancelled);
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
 	function parseUserAgent(ua: string | null): string {
@@ -355,7 +356,7 @@
 				value="profile"
 				class="mt-4 rounded-xl border border-border bg-card p-6"
 			>
-				<div class="grid gap-4 sm:grid-cols-2">
+				<div class="grid gap-4 pb-6 sm:grid-cols-2">
 					<div>
 						<Label class="text-xs text-muted-foreground">{m.account_name_label()}</Label
 						>
@@ -369,7 +370,7 @@
 					</div>
 				</div>
 
-				<Separator />
+				<Separator class="my-6" />
 
 				<div>
 					<h3 class="mb-4 text-sm font-semibold">
@@ -434,23 +435,36 @@
 			>
 				<div class="flex items-center justify-between">
 					<div>
-						<p class="font-medium">
-							{isPro ? m.account_plan_pro() : m.account_plan_free()}
-						</p>
-						{#if isPro && proExpiration}
+						<div class="flex items-center gap-2">
+							<p class="font-medium">
+								{isPro ? m.account_plan_pro() : m.account_plan_free()}
+							</p>
+							{#if isPro && isCancelled && proExpiration}
+								<Badge variant="secondary" class="text-xs">
+									{m.account_pro_cancels({ date: formatDate(proExpiration) })}
+								</Badge>
+							{/if}
+						</div>
+						{#if isPro && proExpiration && !isCancelled}
 							<p class="text-sm text-muted-foreground">
 								{m.account_pro_expires({ date: formatDate(proExpiration) })}
 							</p>
 						{/if}
 					</div>
 					{#if isPro}
-						<Button
-							variant="outline"
-							class="border-destructive text-destructive hover:bg-destructive/10"
-							onclick={() => (showCancelDialog = true)}
-						>
-							{m.account_cancel_subscription()}
-						</Button>
+						{#if isCancelled}
+							<p class="text-sm text-muted-foreground">
+								{m.account_subscription_cancelled()}
+							</p>
+						{:else}
+							<Button
+								variant="outline"
+								class="border-destructive text-destructive hover:bg-destructive/10"
+								onclick={() => (showCancelDialog = true)}
+							>
+								{m.account_cancel_subscription()}
+							</Button>
+						{/if}
 					{:else}
 						<Button
 							href="/get-pro"
@@ -554,7 +568,7 @@
 					</div>
 				</div>
 
-				<Separator />
+				<Separator class="my-6" />
 
 				<!-- Sessions -->
 				<div>
@@ -606,36 +620,38 @@
 				value="danger-zone"
 				class="mt-4 rounded-xl border border-border bg-card p-6"
 			>
-				<div class="flex items-center justify-between rounded-lg border p-4">
-					<div>
-						<p class="font-medium">{m.account_export_data()}</p>
-						<p class="text-sm text-muted-foreground">
-							{m.account_export_data_description()}
-						</p>
+				<div class="flex flex-col gap-4">
+					<div class="flex items-center justify-between rounded-lg border p-4">
+						<div class="min-w-0 flex-1 pr-4">
+							<p class="font-medium">{m.account_export_data()}</p>
+							<p class="text-sm text-muted-foreground">
+								{m.account_export_data_description()}
+							</p>
+						</div>
+						<Button variant="outline" size="sm" onclick={handleExportData}>
+							<Download class="mr-2 h-4 w-4" />
+							{m.account_export_data()}
+						</Button>
 					</div>
-					<Button variant="outline" size="sm" onclick={handleExportData}>
-						<Download class="mr-2 h-4 w-4" />
-						{m.account_export_data()}
-					</Button>
-				</div>
 
-				<div class="flex items-center justify-between rounded-lg border p-4">
-					<div>
-						<p class="font-medium text-destructive">
+					<div class="flex items-center justify-between rounded-lg border p-4">
+						<div class="min-w-0 flex-1 pr-4">
+							<p class="font-medium text-destructive">
+								{m.account_delete_account()}
+							</p>
+							<p class="text-sm text-muted-foreground">
+								{m.account_delete_warning()}
+							</p>
+						</div>
+						<Button
+							variant="destructive"
+							size="sm"
+							onclick={() => (showDeleteDialog = true)}
+						>
+							<Trash2 class="mr-2 h-4 w-4" />
 							{m.account_delete_account()}
-						</p>
-						<p class="text-sm text-muted-foreground">
-							{m.account_delete_warning()}
-						</p>
+						</Button>
 					</div>
-					<Button
-						variant="destructive"
-						size="sm"
-						onclick={() => (showDeleteDialog = true)}
-					>
-						<Trash2 class="mr-2 h-4 w-4" />
-						{m.account_delete_account()}
-					</Button>
 				</div>
 			</Tabs.TabsContent>
 		</Tabs.Tabs>

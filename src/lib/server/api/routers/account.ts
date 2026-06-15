@@ -261,12 +261,8 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 					});
 				}
 
-				// Update proStatus to clear expiration
-				await db
-					.update(proStatus)
-					.set({ cachedAt: new Date(), expiration: null })
-					.where(eq(proStatus.userId, user.id));
-
+				// Keep proStatus expiration intact — user retains Pro until billing period ends.
+				// The webhook will clear it when the subscription actually expires.
 				invalidateProCache(user.id);
 
 				log.info({ userId: user.id }, 'Subscription cancelled');

@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { auth } from '$lib/server/auth';
+import { auth, dodoPayments } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { getProStatus } from '$lib/server/pro';
 import { eq } from 'drizzle-orm';
@@ -28,6 +28,28 @@ export const load: PageServerLoad = async ({ request }) => {
 	// Get all user sessions from DB for richer info (IP, userAgent, etc.)
 	const dbSessions = await db.select().from(session).where(eq(session.userId, user.id));
 
+	// Check if subscription is scheduled for cancellation
+	let isCancelled = false;
+	if (proStatus.isPro) {
+		try {
+			const dodoCustomerId = (user as any).dodoCustomerId as string | undefined;
+			if (dodoCustomerId) {
+				const subs = await dodoPayments.subscriptions.list({
+					customer_id: dodoCustomerId,
+					status: 'active'
+				});
+				for (const sub of subs.items ?? []) {
+					if (sub.cancel_at_next_billing_date) {
+						isCancelled = true;
+						break;
+					}
+				}
+			}
+		} catch {
+			// If DodoPayments query fails, default to not cancelled
+		}
+	}
+
 	return {
 		user: {
 			name: user.name,
@@ -45,6 +67,7 @@ export const load: PageServerLoad = async ({ request }) => {
 			isCurrent: s.token === authSession.session?.token
 		})),
 		isPro: proStatus.isPro,
-		proExpiration: proStatus.expirationDate?.toISOString() ?? null
+		proExpiration: proStatus.expirationDate?.toISOString() ?? null,
+		isCancelled
 	};
 };
