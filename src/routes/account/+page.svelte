@@ -17,7 +17,8 @@
 		KeyRound,
 		Smartphone,
 		X,
-		Check
+		Check,
+		RefreshCw
 	} from '@lucide/svelte';
 	import { authClient } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
@@ -40,6 +41,12 @@
 	// ── Subscription state ───────────────────────────────────────────────────
 	let cancelLoading = $state(false);
 	let showCancelDialog = $state(false);
+
+	// ── Subscription sync state ──────────────────────────────────────────────
+	let syncLoading = $state(false);
+	let syncCooldown = $state(0);
+	let syncTimer: ReturnType<typeof setInterval> | null = $state(null);
+	let syncResult = $state<'success' | 'failure' | null>(null);
 
 	// ── Delete account state ─────────────────────────────────────────────────
 	let deleteEmailConfirm = $state('');
@@ -153,6 +160,64 @@
 		} finally {
 			cancelLoading = false;
 		}
+	}
+
+	async function handleSyncSubscription() {
+		if (syncLoading || syncCooldown > 0) return;
+
+		syncLoading = true;
+		syncResult = null;
+		try {
+			const res = await fetch('/api/v1/account/sync-subscription', {
+				method: 'POST',
+				credentials: 'include'
+			});
+
+			if (!res.ok) {
+				const body = await res.text();
+				throw new Error(body || 'Sync failed');
+			}
+
+			const result: {
+				success: boolean;
+				changed: boolean;
+				isPro: boolean;
+				expiration: string | null;
+			} = await res.json();
+
+			syncResult = 'success';
+
+			if (result.changed) {
+				if (result.isPro) {
+					toast.success(m.account_sync_pro_activated());
+				} else {
+					toast.success(m.account_sync_pro_expired());
+				}
+			} else {
+				toast.success(m.account_sync_success_unchanged());
+			}
+
+			// Reload the page to reflect updated pro status
+			window.location.reload();
+		} catch (err: any) {
+			syncResult = 'failure';
+			toast.error(m.account_sync_failure());
+		} finally {
+			syncLoading = false;
+			startSyncCooldown();
+		}
+	}
+
+	function startSyncCooldown() {
+		syncCooldown = 30;
+		if (syncTimer) clearInterval(syncTimer);
+		syncTimer = setInterval(() => {
+			syncCooldown -= 1;
+			if (syncCooldown <= 0) {
+				if (syncTimer) clearInterval(syncTimer);
+				syncTimer = null;
+			}
+		}, 1000);
 	}
 
 	async function handleEnable2FA() {
@@ -387,11 +452,54 @@
 							{m.account_cancel_subscription()}
 						</Button>
 					{:else}
-						<Button href="/get-pro">
-							<Crown class="mr-2 h-4 w-4" />
+						<Button
+							href="/get-pro"
+							class="group h-11 shrink-0 rounded-xl bg-amber-500 px-8 font-bold text-amber-950 shadow-sm transition-all duration-300 hover:bg-amber-600 hover:text-amber-50"
+						>
+							<Crown
+								class="mr-2 h-4 w-4 transition-transform group-hover:scale-110 group-hover:rotate-12"
+							/>
 							{m.account_get_pro()}
 						</Button>
 					{/if}
+				</div>
+
+				<!-- Sync subscription status -->
+				<div class="mt-4 flex items-center justify-between border-t border-border pt-4">
+					<div>
+						<p
+							class="text-sm"
+							class:text-destructive={syncResult === 'failure'}
+							class:text-muted-foreground={syncResult !== 'failure'}
+						>
+							{#if syncResult === 'success'}
+								{#if syncCooldown > 0}
+									{m.account_sync_cooldown({ seconds: syncCooldown })}
+								{:else}
+									{m.account_sync_success()}
+								{/if}
+							{:else if syncResult === 'failure'}
+								{m.account_sync_failure()}
+							{/if}
+						</p>
+					</div>
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={syncLoading || syncCooldown > 0}
+						onclick={handleSyncSubscription}
+					>
+						{#if syncLoading}
+							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+							{m.account_sync_syncing()}
+						{:else if syncCooldown > 0}
+							<RefreshCw class="mr-2 h-4 w-4" />
+							{syncCooldown}s
+						{:else}
+							<RefreshCw class="mr-2 h-4 w-4" />
+							{m.account_sync_subscription()}
+						{/if}
+					</Button>
 				</div>
 			</Tabs.TabsContent>
 

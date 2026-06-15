@@ -203,5 +203,13 @@
 	"account_loading_user": "Loading account information...",
 	"account_export_success_title": "Export Ready",
 	"account_export_description": "Your file is being prepared for download...",
+	"account_sync_subscription": "Sync subscription status",
+	"account_sync_syncing": "Syncing...",
+	"account_sync_success": "Subscription status synced successfully.",
+	"account_sync_success_unchanged": "Subscription status is up to date.",
+	"account_sync_failure": "Failed to sync subscription status.",
+	"account_sync_cooldown": "Please wait {seconds}s before syncing again",
+	"account_sync_pro_activated": "Your Pro subscription has been activated.",
+	"account_sync_pro_expired": "Your Pro subscription has expired.",
 	"account_farewell_banner": "Your account has been deleted. We're sorry to see you go."
 }

@@ -1,6 +1,12 @@
 import { Elysia, t } from 'elysia';
 import { auth, dodoPayments } from '$lib/server/auth';
-import { isUserPro, getProStatus, invalidateProCache } from '$lib/server/pro';
+import {
+	isUserPro,
+	getProStatus,
+	invalidateProCache,
+	updateProExpiration,
+	clearProExpiration
+} from '$lib/server/pro';
 import { db } from '$lib/server/db';
 import { user as userTable, apikey, proStatus, backups, session } from '$lib/server/db/schema';
 import { eq, like } from 'drizzle-orm';
@@ -284,6 +290,93 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				400: t.String(),
 				401: t.String(),
 				404: t.String(),
+				500: t.String()
+			}
+		}
+	)
+	// ── Sync Subscription ─────────────────────────────────────────────────
+	.post(
+		'/sync-subscription',
+		async ({ user, status }) => {
+			if (!user) {
+				return status(401, 'Unauthorized');
+			}
+
+			try {
+				const userRow = await db.query.user.findFirst({
+					where: (u, { eq }) => eq(u.id, user.id),
+					columns: { dodoCustomerId: true, email: true }
+				});
+
+				if (!userRow?.dodoCustomerId) {
+					return status(400, 'No Dodo Payments customer found');
+				}
+
+				const subscriptionsPage = await dodoPayments.subscriptions.list({
+					customer_id: userRow.dodoCustomerId,
+					status: 'active'
+				});
+
+				const subscriptionItems = subscriptionsPage.items ?? [];
+
+				// Check current pro status before updating
+				const currentProStatus = await getProStatus(user.id);
+
+				if (subscriptionItems.length > 0) {
+					// User has an active subscription — sync the next billing date
+					const activeSub = subscriptionItems[0];
+
+					if (activeSub.next_billing_date) {
+						await updateProExpiration(
+							userRow.email,
+							new Date(activeSub.next_billing_date)
+						);
+					}
+
+					log.info({ userId: user.id }, 'Subscription synced — active');
+
+					return {
+						success: true,
+						changed: !currentProStatus.isPro,
+						isPro: true,
+						expiration: activeSub.next_billing_date
+					};
+				}
+
+				// No active subscription — clear pro status if it was set
+				const wasPro = currentProStatus.isPro;
+				if (wasPro) {
+					await clearProExpiration(userRow.email);
+				}
+
+				log.info({ userId: user.id }, 'Subscription synced — inactive');
+
+				return {
+					success: true,
+					changed: wasPro,
+					isPro: false,
+					expiration: null
+				};
+			} catch (err) {
+				log.error({ err, userId: user.id }, 'Failed to sync subscription');
+				return status(500, 'Failed to sync subscription');
+			}
+		},
+		{
+			detail: {
+				operationId: 'syncSubscription',
+				summary: 'Sync subscription status from Dodo Payments',
+				security: [{ APIKeyHeader: [] }]
+			},
+			response: {
+				200: t.Object({
+					success: t.Boolean(),
+					changed: t.Boolean(),
+					isPro: t.Boolean(),
+					expiration: t.Nullable(t.String())
+				}),
+				400: t.String(),
+				401: t.String(),
 				500: t.String()
 			}
 		}
