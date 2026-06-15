@@ -8,6 +8,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import {
+		ArrowLeft,
 		User,
 		Crown,
 		Shield,
@@ -349,6 +350,16 @@
 
 <div class="min-h-screen bg-background">
 	<div class="container mx-auto max-w-3xl px-4 py-12">
+		<!-- Back to home -->
+		<Button
+			variant="ghost"
+			href="/"
+			class="mb-6 text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-white"
+		>
+			<ArrowLeft class="mr-2 h-4 w-4" />
+			Back to home
+		</Button>
+
 		<!-- Header -->
 		<div class="mb-10">
 			<h1 class="text-3xl font-bold tracking-tight">{m.account_title()}</h1>
