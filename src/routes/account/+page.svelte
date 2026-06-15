@@ -21,7 +21,7 @@
 		RefreshCw
 	} from '@lucide/svelte';
 	import { authClient } from '$lib/auth-client';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { toast, Toaster } from 'svelte-sonner';
 	import * as m from '$lib/paraglide/messages';
 
@@ -33,6 +33,7 @@
 	let confirmPassword = $state('');
 	let passwordLoading = $state(false);
 	let passwordError = $state<string | null>(null);
+	let showPasswordDialog = $state(false);
 
 	// ── Two-factor state ─────────────────────────────────────────────────────
 	let twoFactorLoading = $state(false);
@@ -41,6 +42,8 @@
 	// ── Subscription state ───────────────────────────────────────────────────
 	let cancelLoading = $state(false);
 	let showCancelDialog = $state(false);
+	let cancelCountdown = $state(0);
+	let cancelCountdownTimer: ReturnType<typeof setInterval> | null = $state(null);
 
 	// ── Subscription sync state ──────────────────────────────────────────────
 	let syncLoading = $state(false);
@@ -137,6 +140,8 @@
 			currentPassword = '';
 			newPassword = '';
 			confirmPassword = '';
+			passwordError = null;
+			showPasswordDialog = false;
 		} catch (err: any) {
 			passwordError = err.message || m.account_password_error();
 		} finally {
@@ -156,11 +161,30 @@
 
 			toast.success(m.account_cancel_success());
 			showCancelDialog = false;
+			stopCancelCountdown();
 		} catch (err: any) {
 			toast.error(m.account_cancel_error());
 		} finally {
 			cancelLoading = false;
 		}
+	}
+
+	function startCancelCountdown() {
+		cancelCountdown = 5;
+		if (cancelCountdownTimer) clearInterval(cancelCountdownTimer);
+		cancelCountdownTimer = setInterval(() => {
+			cancelCountdown -= 1;
+			if (cancelCountdown <= 0) {
+				if (cancelCountdownTimer) clearInterval(cancelCountdownTimer);
+				cancelCountdownTimer = null;
+			}
+		}, 1000);
+	}
+
+	function stopCancelCountdown() {
+		cancelCountdown = 0;
+		if (cancelCountdownTimer) clearInterval(cancelCountdownTimer);
+		cancelCountdownTimer = null;
 	}
 
 	async function handleSyncSubscription() {
@@ -198,8 +222,8 @@
 				toast.success(m.account_sync_success_unchanged());
 			}
 
-			// Reload the page to reflect updated pro status
-			window.location.reload();
+			// Refresh server data to reflect updated pro status reactively
+			await invalidateAll();
 		} catch (err: any) {
 			syncResult = 'failure';
 			toast.error(m.account_sync_failure());
@@ -376,55 +400,19 @@
 					<h3 class="mb-4 text-sm font-semibold">
 						{m.account_change_password_title()}
 					</h3>
-					<form onsubmit={handleChangePassword} class="space-y-4">
-						<div>
-							<Label for="current-password" class="text-xs text-muted-foreground">
-								{m.account_current_password_label()}
-							</Label>
-							<Input
-								id="current-password"
-								type="password"
-								bind:value={currentPassword}
-								required
-								class="mt-1"
-							/>
-						</div>
-						<div class="grid gap-4 sm:grid-cols-2">
-							<div>
-								<Label for="new-password" class="text-xs text-muted-foreground">
-									{m.account_new_password_label()}
-								</Label>
-								<Input
-									id="new-password"
-									type="password"
-									bind:value={newPassword}
-									required
-									class="mt-1"
-								/>
-							</div>
-							<div>
-								<Label for="confirm-password" class="text-xs text-muted-foreground">
-									{m.account_confirm_new_password_label()}
-								</Label>
-								<Input
-									id="confirm-password"
-									type="password"
-									bind:value={confirmPassword}
-									required
-									class="mt-1"
-								/>
-							</div>
-						</div>
-						{#if passwordError}
-							<p class="text-sm text-destructive">{passwordError}</p>
-						{/if}
-						<Button type="submit" disabled={passwordLoading}>
-							{#if passwordLoading}
-								<Loader2 class="mr-2 h-4 w-4 animate-spin" />
-							{/if}
-							{m.account_change_password_button()}
-						</Button>
-					</form>
+					<Button
+						variant="outline"
+						onclick={() => {
+							passwordError = null;
+							currentPassword = '';
+							newPassword = '';
+							confirmPassword = '';
+							showPasswordDialog = true;
+						}}
+					>
+						<KeyRound class="mr-2 h-4 w-4" />
+						{m.account_change_password_button()}
+					</Button>
 				</div>
 			</Tabs.TabsContent>
 
@@ -657,7 +645,95 @@
 		</Tabs.Tabs>
 
 		<!-- Dialogs (outside tabs) -->
-		<Dialog.Root bind:open={showCancelDialog}>
+
+		<!-- Change Password Dialog -->
+		<Dialog.Root bind:open={showPasswordDialog}>
+			<Dialog.Content class="sm:max-w-md">
+				<Dialog.Header>
+					<Dialog.Title>{m.account_change_password_title()}</Dialog.Title>
+					<Dialog.Description>
+						Enter your current password and choose a new one.
+					</Dialog.Description>
+				</Dialog.Header>
+				<form onsubmit={handleChangePassword}>
+					<div class="space-y-4 py-4">
+						<div>
+							<Label
+								for="modal-current-password"
+								class="text-xs text-muted-foreground"
+							>
+								{m.account_current_password_label()}
+							</Label>
+							<Input
+								id="modal-current-password"
+								type="password"
+								bind:value={currentPassword}
+								required
+								class="mt-1"
+							/>
+						</div>
+						<div class="grid gap-4 sm:grid-cols-2">
+							<div>
+								<Label
+									for="modal-new-password"
+									class="text-xs text-muted-foreground"
+								>
+									{m.account_new_password_label()}
+								</Label>
+								<Input
+									id="modal-new-password"
+									type="password"
+									bind:value={newPassword}
+									required
+									class="mt-1"
+								/>
+							</div>
+							<div>
+								<Label
+									for="modal-confirm-password"
+									class="text-xs text-muted-foreground"
+								>
+									{m.account_confirm_new_password_label()}
+								</Label>
+								<Input
+									id="modal-confirm-password"
+									type="password"
+									bind:value={confirmPassword}
+									required
+									class="mt-1"
+								/>
+							</div>
+						</div>
+						{#if passwordError}
+							<p class="text-sm text-destructive">{passwordError}</p>
+						{/if}
+					</div>
+					<Dialog.Footer class="flex justify-end gap-2">
+						<Button
+							variant="outline"
+							type="button"
+							onclick={() => (showPasswordDialog = false)}
+						>
+							Cancel
+						</Button>
+						<Button type="submit" disabled={passwordLoading}>
+							{#if passwordLoading}
+								<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+							{/if}
+							{m.account_change_password_button()}
+						</Button>
+					</Dialog.Footer>
+				</form>
+			</Dialog.Content>
+		</Dialog.Root>
+
+		<Dialog.Root
+			bind:open={showCancelDialog}
+			onOpenChange={(open) => {
+				if (open) startCancelCountdown();
+				else stopCancelCountdown();
+			}}
+		>
 			<Dialog.Content class="sm:max-w-md">
 				<Dialog.Header>
 					<Dialog.Title>{m.account_cancel_title()}</Dialog.Title>
@@ -666,18 +742,26 @@
 					</Dialog.Description>
 				</Dialog.Header>
 				<Dialog.Footer class="flex justify-end gap-2">
-					<Button variant="outline" onclick={() => (showCancelDialog = false)}
-						>Cancel</Button
+					<Button
+						variant="outline"
+						onclick={() => {
+							showCancelDialog = false;
+							stopCancelCountdown();
+						}}>Cancel</Button
 					>
 					<Button
 						variant="destructive"
-						disabled={cancelLoading}
+						disabled={cancelLoading || cancelCountdown > 0}
 						onclick={handleCancelSubscription}
 					>
 						{#if cancelLoading}
 							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+							{m.account_cancel_confirm()}
+						{:else if cancelCountdown > 0}
+							{m.account_cancel_confirm()} ({cancelCountdown}s)
+						{:else}
+							{m.account_cancel_confirm()}
 						{/if}
-						{m.account_cancel_confirm()}
 					</Button>
 				</Dialog.Footer>
 			</Dialog.Content>
