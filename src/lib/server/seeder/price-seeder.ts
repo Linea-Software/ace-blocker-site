@@ -12,7 +12,7 @@ import {
 	type SupportedCurrency
 } from '$lib/utils/locale-currency';
 import { registerProduct, productCount } from '$lib/server/products';
-import { MONTHLY_PRICE_MAP, YEARLY_PRICE_MAP } from './price-maps';
+import { MONTHLY_PRICE_MAP, YEARLY_PRICE_MAP } from '$lib/server/seeder/price-maps';
 
 const BILLING_PERIODS = ['monthly', 'yearly'] as const;
 
