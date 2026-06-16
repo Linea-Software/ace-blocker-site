@@ -35,6 +35,7 @@ const BackupNetworkBlockSchema = t.Object({
 	id: t.String({ format: 'uuid' }),
 	name: t.String(),
 	safe_search: t.Boolean(),
+	icon: t.Optional(t.Nullable(t.String())),
 	schedules: t.Array(BackupScheduleEntrySchema),
 	userRules: t.Array(t.String()),
 	connectedSitesLists: t.Array(t.String({ format: 'uuid' }))
