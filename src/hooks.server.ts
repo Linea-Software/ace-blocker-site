@@ -2,7 +2,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { auth } from '$lib/server/auth';
 import { type Handle } from '@sveltejs/kit';
 import { paraglideMiddleware } from '$lib/paraglide/server';
-import { seedDatabase } from '$lib/server/seeder';
+import { seedDatabase, seedPrices } from '$lib/server/seeder';
 import { initializeCache } from '$lib/server/cache';
 import { logger } from '$lib/server/logger';
 import { app } from '$lib/server/api/app';
@@ -54,6 +54,7 @@ export const handle: Handle = sequence(handleApi, handleParaglide, handleLogger,
 
 export async function init() {
 	logger.info('Initializing application...');
+	await seedPrices(); // creates Dodo products and populates the checkout plugin's product list
 	await seedDatabase();
 	await initializeCache();
 	logger.info('Application initialized');

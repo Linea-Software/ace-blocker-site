@@ -31,6 +31,11 @@
 	import { Crown } from '@lucide/svelte';
 	import { apiClient } from '$lib/api-client';
 	import { onMount } from 'svelte';
+	import {
+		getCurrencyFromLocale,
+		makeSlug,
+		type SupportedCurrency
+	} from '$lib/utils/locale-currency';
 
 	let { data } = $props();
 	let billingCycle = $state('yearly');
@@ -81,7 +86,9 @@
 			return;
 		}
 
-		const slug = billingCycle === 'yearly' ? 'ace_blocker_yearly' : 'ace_blocker_monthly';
+		const currency = getCurrencyFromLocale();
+		const period = billingCycle === 'yearly' ? 'yearly' : 'monthly';
+		const slug = makeSlug(period, currency as SupportedCurrency);
 		authClient.dodopayments.checkoutSession({ slug });
 	}
 </script>
