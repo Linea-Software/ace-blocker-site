@@ -2,9 +2,27 @@ import { Elysia } from 'elysia';
 import { openapi } from '@elysiajs/openapi';
 import { v1Router } from './routers/v1';
 import { auth } from '$lib/server/auth';
+import { createLogger } from '$lib/server/logger';
 import { dev } from '$app/environment';
 
-export const app = new Elysia({ prefix: '/api' }).mount(auth.handler).use(v1Router);
+const log = createLogger('api');
+
+export const app = new Elysia({ prefix: '/api' })
+	.onError(({ code, error, request, set }) => {
+		log.error(
+			{
+				err:
+					error instanceof Error ? { message: error.message, stack: error.stack } : error,
+				statusCode: set.status,
+				code,
+				method: request.method,
+				path: request.url
+			},
+			'API error'
+		);
+	})
+	.mount(auth.handler)
+	.use(v1Router);
 
 if (dev) {
 	app.use(
