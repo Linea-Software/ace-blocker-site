@@ -45,10 +45,23 @@ export const installersRouter = new Elysia({ prefix: '/installers' })
 	)
 	.post(
 		'/upload',
-		async ({ body, set }) => {
+		async ({ body, set, request }) => {
 			const { file, version, os, architecture } = body;
 
 			if (!file || !file.size || !version) {
+				log.error(
+					{
+						hasFile: !!file,
+						fileSize: file?.size,
+						version,
+						hasOs: !!os,
+						hasArchitecture: !!architecture,
+						contentType: request.headers.get('content-type'),
+						method: request.method,
+						path: request.url
+					},
+					'Upload validation failed'
+				);
 				set.status = 400;
 				return {
 					error: true,
