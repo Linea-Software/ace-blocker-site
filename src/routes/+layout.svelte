@@ -7,6 +7,13 @@
 	let { children } = $props();
 </script>
 
+<svelte:head>
+	<link rel="icon" type="image/png" sizes="16x16" href="https://cdn.aceblocker.com/icon.png" />
+	<link rel="icon" type="image/png" sizes="32x32" href="https://cdn.aceblocker.com/icon.png" />
+	<link rel="apple-touch-icon" sizes="180x180" href="https://cdn.aceblocker.com/icon.png" />
+	<link rel="shortcut icon" href="https://cdn.aceblocker.com/icon.png" />
+</svelte:head>
+
 <ModeWatcher defaultMode="light" track={true} />
 
 {@render children()}

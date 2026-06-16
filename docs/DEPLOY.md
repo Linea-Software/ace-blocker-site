@@ -2,13 +2,23 @@
 
 This guide provides a step-by-step walkthrough for deploying the Ace Blocker website to a Linux VPS (Ubuntu 22.04+ recommended) using **Docker**, **Bun**, **Nginx**, and **Certbot**.
 
+> [!TIP]
+> **Automated path:** Most of the steps below are automated by `scripts/setup-vps.sh`. To use it:
+> ```bash
+> sudo bash scripts/setup-vps.sh            # uses defaults (domain: aceblocker.com)
+> # or override:
+> sudo bash scripts/setup-vps.sh --domain aceblocker.com --email admin@aceblocker.com \
+>     --b2-key-id <id> --b2-app-key <key> --b2-bucket <bucket>
+> ```
+> The flags are optional — the script prompts for anything it needs (Cloudflare token, B2 credentials). The manual steps in this guide remain useful for understanding what the script does and for troubleshooting. Where the script and this guide differ, **the script is the source of truth.**
+
 ---
 
 ## 📋 Prerequisites
 
-1.  **A VPS**: (DigitalOcean, Hetzner, AWS, etc.) with at least 1GB RAM.
+1.  **A VPS**: (DigitalOcean, Hetzner, AWS, etc.) with at least 1GB RAM, running Ubuntu 22.04 or 24.04.
 2.  **A Domain Name**: Pointed to your VPS IP address (A record).
-3.  **Basic Linux knowledge**: Ability to SSH and run commands.
+3.  **SSH key access**: You should be able to log in via SSH key (password SSH login is disabled during hardening).
 
 ---
 
@@ -20,8 +30,8 @@ Login to your server and perform basic security steps.
 # Update system
 sudo apt update && sudo apt upgrade -y
 
-# Install basic tools
-sudo apt install -y curl git ufw nginx
+# Install basic tools (gnupg is used later for encrypting backups)
+sudo apt install -y curl git ufw nginx gnupg
 ```
 
 ### Create a New User
@@ -29,11 +39,8 @@ sudo apt install -y curl git ufw nginx
 It is highly recommended not to run everything as `root`.
 
 ```bash
-# Create a new user (replace 'ace' with your preferred username)
+# Create a new user (replace 'aceblocker' with your preferred username)
 adduser aceblocker
-
-# Add the user to the sudo group
-usermod -aG sudo aceblocker
 
 # Copy your SSH keys to the new user (assuming you logged in via SSH key as root)
 mkdir -p /home/aceblocker/.ssh
@@ -41,10 +48,37 @@ cp /root/.ssh/authorized_keys /home/aceblocker/.ssh/
 chown -R aceblocker:aceblocker /home/aceblocker/.ssh
 chmod 700 /home/aceblocker/.ssh
 chmod 600 /home/aceblocker/.ssh/authorized_keys
+```
+
+#### Sudo access (scoped, not blanket)
+
+Avoid adding the service user to the `sudo` group with passwordless access — that
+makes the account effectively root, so any app or dependency compromise becomes a
+full root compromise. Instead, grant general sudo that **requires a password**,
+plus a narrow passwordless exception (pinned to absolute paths) for the few
+commands the deployment needs:
+
+```bash
+# Set a password for the user (used for sudo and console login, NOT for SSH)
+passwd aceblocker
+
+# Create a scoped sudoers file
+cat > /etc/sudoers.d/aceblocker << 'EOF'
+aceblocker ALL=(ALL) ALL
+aceblocker ALL=(ALL) NOPASSWD: /usr/bin/apt, /usr/bin/apt-get, /usr/bin/docker, /usr/bin/systemctl
+EOF
+chmod 440 /etc/sudoers.d/aceblocker
+
+# Validate — a broken sudoers file can lock out sudo entirely
+visudo -cf /etc/sudoers.d/aceblocker
 
 # Switch to the new user
 su - aceblocker
 ```
+
+> [!NOTE]
+> The automated `setup-vps.sh` creates exactly this scoped sudoers file. Adjust the
+> paths if your distro installs these binaries elsewhere (check with `command -v docker`).
 
 ### SSH Hardening
 
@@ -74,9 +108,9 @@ Secure your SSH connection by disabling root login and limiting login attempts.
     # Limit concurrent unauthenticated connections (throttle brute force)
     MaxStartups 3:50:10
 
-    # Disconnect idle sessions after 5 minutes of inactivity
+    # Disconnect idle sessions after ~15 minutes (300s x 2 missed probes)
     ClientAliveInterval 300
-    ClientAliveCountMax 0
+    ClientAliveCountMax 2
 
     # Disable password authentication (FORCE SSH keys)
     PasswordAuthentication no
@@ -89,10 +123,22 @@ Secure your SSH connection by disabling root login and limiting login attempts.
 
     **Important**: Replace `aceblocker` in `AllowUsers` with your actual username.
 
-3. Restart the SSH service to apply changes:
+3. Validate the config, then reload (don't blindly restart — a bad config plus a restart can drop sshd and lock you out):
+
     ```bash
-    sudo systemctl restart ssh
+    # Confirm there are no syntax errors BEFORE applying
+    sudo sshd -t
+
+    # Reload (keeps your current session alive); only proceeds if -t passed
+    sudo systemctl reload ssh
     ```
+
+> [!WARNING]
+> Before you disable `PasswordAuthentication`, confirm key-based login works for
+> the new user **in a separate terminal**, and keep your current session open
+> until you've verified a fresh login succeeds. If the key copy failed and you've
+> already disabled passwords + root login, you'll be locked out and will need your
+> provider's recovery console.
 
 ### Setup Firewall
 
@@ -148,11 +194,20 @@ The database (and optionally the application) runs in Docker.
 # Install Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
-
-# Add your user to the docker group
-sudo usermod -aG docker $USER
-# (Log out and back in for this to take effect)
 ```
+
+> [!WARNING]
+> **Do not add the service user to the `docker` group by default.** Membership in
+> the `docker` group is effectively root (a container can mount the host
+> filesystem as root), which undermines the scoped-sudo setup above. The
+> deployment runs Docker commands through the scoped `sudo` rule instead
+> (`sudo docker ...`). Only add the user to the group if you have a specific need
+> and accept that it grants root-equivalent access:
+>
+> ```bash
+> # Optional, root-equivalent — only if you really need it:
+> sudo usermod -aG docker $USER   # then log out and back in
+> ```
 
 ### Install Bun
 
@@ -173,6 +228,13 @@ source ~/.bashrc
 git clone https://github.com/aintDatCap/ace-blocker-site.git
 cd ace-blocker-site
 ```
+
+> [!NOTE]
+> Confirm the correct repository URL — `setup-vps.sh` currently clones from
+> `https://github.com/Linea-Software/ace-blocker-site.git`. If the repo has moved,
+> update whichever of these is wrong so they match. For a **private** repo, prefer a
+> read-only deploy key over a personal access token; the automated script avoids
+> writing any token to disk (no plaintext `~/.git-credentials`).
 
 ### Initial Setup
 
@@ -203,6 +265,7 @@ Ensure the following are set correctly:
 - `POSTGRES_USER`: Database user (default: `postgres`).
 - `POSTGRES_PASSWORD`: **CRITICAL** - Set a strong password for your database.
 - `POSTGRES_DB`: Database name (default: `aceblocker`).
+- `BACKUP_PASSPHRASE`: Optional. If set, daily backups are GPG-encrypted at rest before being copied off-site (see Section 10). Store it somewhere safe and separate — without it the backups cannot be restored.
 - `BUNNY_SECURITY_KEY`: Required for Resistance Mode script token generation.
 - `DODO_PAYMENTS_API_KEY`: Your production API key.
 - `DODO_PAYMENTS_WEBHOOK_SECRET`: Your production webhook secret.
@@ -588,51 +651,141 @@ Since the project uses Dodo Payments, you must configure the webhook URL in your
 
 ## 💾 10. Database Backups (Crucial)
 
-To prevent data loss, schedule a daily backup of your Postgres container.
+To prevent data loss, schedule a daily backup of your Postgres container. A good
+strategy has three parts: a consistent dump, an **off-site copy** (a backup that
+only lives on the same server is lost if the server is), and **encryption at rest**.
 
-1. Create a backup script:
+> [!TIP]
+> The automated `setup-vps.sh` builds this entire backup pipeline (local + Backblaze
+> B2 off-site + optional GPG encryption) and installs the cron job. The steps below
+> document what it produces and how to set it up by hand.
+
+### 10a. Set up off-site storage (Backblaze B2)
+
+B2's free tier covers the first 10 GB of storage, and uploads/transactions are free,
+so compressed database dumps typically cost nothing.
+
+1. In the B2 console, **create a bucket** (keep it **Private**). Note the exact name.
+2. Optionally set a **Lifecycle rule** on the bucket to delete files after ~30 days
+   (server-side retention backstop).
+3. Go to **Application Keys** and create a key **scoped to that one bucket** with
+   read & write access. Copy the **keyID** and the **applicationKey** (the secret is
+   shown only once).
+4. Under **Caps & Alerts**, set a low cap/alert so cost can't surprise you.
+
+Install and configure `rclone` as the service user:
+
+```bash
+curl -fsSL https://rclone.org/install.sh | sudo bash
+
+sudo -u aceblocker mkdir -p /home/aceblocker/.config/rclone
+sudo -u aceblocker bash -c 'cat > /home/aceblocker/.config/rclone/rclone.conf << EOF
+[b2backup]
+type = b2
+account = YOUR_KEY_ID
+key = YOUR_APPLICATION_KEY
+EOF'
+sudo chmod 600 /home/aceblocker/.config/rclone/rclone.conf
+
+# Verify the credentials and bucket are reachable:
+sudo -u aceblocker rclone lsd b2backup:               # lists buckets the key can see
+sudo -u aceblocker rclone lsd b2backup:YOUR_BUCKET    # confirms the specific bucket
+```
+
+> [!NOTE]
+> Use the **keyID** as the `account` value (not your master Account ID — B2 rejects
+> that with a 401). B2 bucket names may contain uppercase; match the exact case.
+
+### 10b. Backup script
 
 ```bash
 mkdir -p ~/backups
 nano ~/backups/backup_db.sh
 ```
 
-2. Add this content:
-
 ```bash
 #!/bin/bash
 set -euo pipefail
+umask 077  # backups readable only by owner
 
-# Load database password from .env file
-source /home/aceblocker/ace-blocker-site/.env
+# Load only the vars we need, WITHOUT executing the .env as shell. Using
+# 'source' breaks under 'set -u' when a secret contains characters like '$'
+# (the shell tries to expand them), and is a minor injection risk. This reads
+# KEY=VALUE literally, matching how systemd's EnvironmentFile parses the file.
+ENV_FILE="/home/aceblocker/ace-blocker-site/.env"
+while IFS='=' read -r _k _v; do
+    case "$_k" in
+        POSTGRES_USER|POSTGRES_DB|POSTGRES_PASSWORD|BACKUP_PASSPHRASE)
+            _v="${_v%\"}"; _v="${_v#\"}"; _v="${_v%\'}"; _v="${_v#\'}"
+            printf -v "$_k" '%s' "$_v"
+            ;;
+    esac
+done < "$ENV_FILE"
+POSTGRES_USER="${POSTGRES_USER:-postgres}"
+POSTGRES_DB="${POSTGRES_DB:-aceblocker}"
+BACKUP_PASSPHRASE="${BACKUP_PASSPHRASE:-}"
+if [[ -z "${POSTGRES_PASSWORD:-}" ]]; then
+    echo "ERROR: POSTGRES_PASSWORD not found in ${ENV_FILE}" >&2
+    exit 1
+fi
 
 BACKUP_DIR="/home/aceblocker/backups"
 BACKUP_PATH="${BACKUP_DIR}/db_$(date +%Y%m%d_%H%M%S).sql"
 
-# Run pg_dump inside the container, passing password securely via env var
-docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" ace-blocker-db pg_dump -U "${POSTGRES_USER:-postgres}" "${POSTGRES_DB:-aceblocker}" > "$BACKUP_PATH"
-
-# Compress the backup to save space
+# 1. Dump the database (uses scoped sudo since the user isn't in the docker group)
+sudo docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" ace-blocker-db \
+    pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > "$BACKUP_PATH"
 gzip "$BACKUP_PATH"
 
-# Delete backups older than 7 days
-find "$BACKUP_DIR" -type f -name "*.sql.gz" -mtime +7 -delete
+# 2. Encrypt at rest if BACKUP_PASSPHRASE is set in .env (requires gpg)
+if [[ -n "$BACKUP_PASSPHRASE" ]] && command -v gpg >/dev/null 2>&1; then
+    gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_PASSPHRASE" \
+        -c "${BACKUP_PATH}.gz"
+    rm -f "${BACKUP_PATH}.gz"
+    EXT="sql.gz.gpg"; FINAL="${BACKUP_PATH}.gz.gpg"
+else
+    EXT="sql.gz"; FINAL="${BACKUP_PATH}.gz"
+fi
 
-echo "Backup completed: ${BACKUP_PATH}.gz"
+# 3. Off-site copy to Backblaze B2 (set B2_BUCKET to enable; leave blank to skip)
+B2_BUCKET="YOUR_BUCKET"
+if [[ -n "$B2_BUCKET" ]] && command -v rclone >/dev/null 2>&1; then
+    rclone copy "$FINAL" "b2backup:${B2_BUCKET}/db-backups/"
+    rclone delete --b2-hard-delete --fast-list --min-age 30d \
+        "b2backup:${B2_BUCKET}/db-backups/" || true
+fi
+
+# 4. Local retention: keep 7 days
+find "$BACKUP_DIR" -type f -name "*.${EXT}" -mtime +7 -delete
+echo "Backup completed: ${FINAL}"
 ```
 
 > [!WARNING]
-> Make sure your `.env` file has `chmod 600` permissions before sourcing it in this script.
+> Ensure `.env` is `chmod 600`. If you set `BACKUP_PASSPHRASE`, the dumps are
+> encrypted before leaving the server — recommended, since they're full database
+> dumps. **Store the passphrase somewhere safe and separate; without it the
+> backups cannot be restored.** If you omit it, the dumps are uploaded
+> unencrypted.
 
-_(Check your actual container name with `docker ps` — it should be `ace-blocker-db`.)
+_(Check your actual container name with `docker ps` — it should be `ace-blocker-db`.)_
 
-3. Make it executable and add to crontab:
+### 10c. Schedule it
 
 ```bash
-chmod +x ~/backups/backup_db.sh
+chmod 700 ~/backups/backup_db.sh
 crontab -e
-# Add this line at the end:
-0 3 * * * /home/aceblocker/backups/backup_db.sh
+# Add this line (logs each run so failures aren't silent):
+0 3 * * * /home/aceblocker/backups/backup_db.sh >> /home/aceblocker/backups/backup.log 2>&1
+```
+
+### 10d. Verify before trusting it
+
+A backup you've never restored is a guess. After setup, run it once by hand and
+confirm the off-site copy appears in the B2 console:
+
+```bash
+sudo -u aceblocker /home/aceblocker/backups/backup_db.sh
+gunzip -t ~/backups/db_*.sql.gz 2>/dev/null && echo "archive OK"   # if unencrypted
 ```
 
 ---
