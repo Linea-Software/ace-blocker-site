@@ -22,6 +22,7 @@
 	let loading = $state(false);
 	let step = $state<'credentials' | 'otp'>('credentials');
 	let isDark = $derived(mode.current === 'dark');
+	const resetSuccess = $derived(page.url.searchParams.get('reset') === 'success');
 
 	const session = authClient.useSession();
 	const origin = $derived(page.url.searchParams.get('origin'));
@@ -223,6 +224,18 @@
 						<AlertCircle class="h-4 w-4" />
 						<Alert.Title>Error</Alert.Title>
 						<Alert.Description>{error}</Alert.Description>
+					</Alert.Root>
+				{/if}
+
+				{#if resetSuccess}
+					<Alert.Root
+						class="mb-6 border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+					>
+						<AlertCircle class="h-4 w-4" />
+						<Alert.Description>
+							Your password has been reset successfully. Please sign in with your new
+							password.
+						</Alert.Description>
 					</Alert.Root>
 				{/if}
 

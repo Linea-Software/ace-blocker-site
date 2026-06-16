@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { betterAuth } from 'better-auth';
-import { admin, openAPI, twoFactor } from 'better-auth/plugins';
+import { admin, openAPI, twoFactor, emailOTP } from 'better-auth/plugins';
 import { apiKey } from '@better-auth/api-key';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from './db';
@@ -85,6 +85,26 @@ export const auth = betterAuth({
 					} catch (err) {
 						log.error({ err }, 'Exception while sending 2FA OTP email');
 					}
+				}
+			}
+		}),
+		emailOTP({
+			async sendVerificationOTP({ email, otp, type }) {
+				const log = createLogger('auth:email-otp');
+				try {
+					const result = await resend.emails.send({
+						from: 'noreply@aceblocker.com',
+						to: email,
+						subject: `Your verification code: ${otp}`,
+						html: `<p>Your verification code is: <strong>${otp}</strong></p><p>This code expires in 5 minutes.</p>`
+					});
+					if (result.error) {
+						log.error({ err: result.error, type }, 'Failed to send OTP email');
+					} else {
+						log.info({ messageId: result.data?.id, type }, 'OTP email sent');
+					}
+				} catch (err) {
+					log.error({ err, type }, 'Exception while sending OTP email');
 				}
 			}
 		}),
