@@ -38,6 +38,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Checkout — Ace Blocker</title>
+</svelte:head>
+
 <div class="flex min-h-screen items-center justify-center bg-muted/40 p-4">
 	<Card.Root class="w-full max-w-md shadow-lg">
 		<Card.Header>

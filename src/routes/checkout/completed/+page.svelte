@@ -85,7 +85,7 @@
 </script>
 
 <svelte:head>
-	<title>{pageTitle} | Ace Blocker</title>
+	<title>{pageTitle} — Ace Blocker</title>
 </svelte:head>
 
 <Navbar {isPro} />

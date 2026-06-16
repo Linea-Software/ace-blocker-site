@@ -216,7 +216,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.admin_releases_category_sitepacks()} | Ace Blocker Admin</title>
+	<title>{m.admin_releases_category_sitepacks()} — Ace Blocker Admin</title>
 </svelte:head>
 
 <div class="min-h-screen bg-[#0B0F19] p-8 font-sans text-gray-200 selection:bg-amber-500/30">

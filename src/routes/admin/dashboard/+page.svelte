@@ -31,6 +31,10 @@
 	]);
 </script>
 
+<svelte:head>
+	<title>Dashboard — Ace Blocker Admin</title>
+</svelte:head>
+
 <div class="space-y-8">
 	<div>
 		<h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">

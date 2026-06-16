@@ -111,6 +111,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Sign Up — Ace Blocker</title>
+</svelte:head>
+
 <div class="flex min-h-screen w-full bg-background text-foreground transition-colors duration-300">
 	<!-- Left Side: Branded Panel (Desktop Only) -->
 	<div

@@ -40,6 +40,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Users — Ace Blocker Admin</title>
+</svelte:head>
+
 <div class="space-y-8">
 	<div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
 		<div>

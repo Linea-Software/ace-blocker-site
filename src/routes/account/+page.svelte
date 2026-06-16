@@ -348,6 +348,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Account Settings — Ace Blocker</title>
+</svelte:head>
+
 <div class="min-h-screen bg-background">
 	<div class="container mx-auto max-w-3xl px-4 py-12">
 		<!-- Back to home -->

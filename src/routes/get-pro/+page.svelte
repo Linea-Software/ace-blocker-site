@@ -86,6 +86,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Get Pro — Ace Blocker</title>
+</svelte:head>
+
 <Navbar {isPro} />
 
 <main

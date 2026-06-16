@@ -19,7 +19,7 @@
 </script>
 
 <svelte:head>
-	<title>{m.about_hero_app()} | About</title>
+	<title>{m.about_hero_app()} — About</title>
 	<meta name="description" content={m.about_hero_description()} />
 </svelte:head>
 

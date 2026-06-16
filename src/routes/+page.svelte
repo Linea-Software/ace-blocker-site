@@ -20,6 +20,10 @@
 	});
 </script>
 
+<svelte:head>
+	<title>Ace Blocker — Reclaim Your Focus</title>
+</svelte:head>
+
 <Navbar isPro={data.isPro} />
 
 {#if showFarewell}

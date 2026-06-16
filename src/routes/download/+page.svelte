@@ -125,7 +125,7 @@
 </script>
 
 <svelte:head>
-	<title>Download Ace Blocker</title>
+	<title>Download — Ace Blocker</title>
 </svelte:head>
 
 <Navbar isPro={data.isPro} />
