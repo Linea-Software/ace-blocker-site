@@ -31,11 +31,6 @@
 	import { Crown } from '@lucide/svelte';
 	import { apiClient } from '$lib/api-client';
 	import { onMount } from 'svelte';
-	import {
-		getCurrencyFromLocale,
-		makeSlug,
-		type SupportedCurrency
-	} from '$lib/utils/locale-currency';
 
 	let { data } = $props();
 	let billingCycle = $state('yearly');
@@ -86,9 +81,7 @@
 			return;
 		}
 
-		const currency = getCurrencyFromLocale();
-		const period = billingCycle === 'yearly' ? 'yearly' : 'monthly';
-		const slug = makeSlug(period, currency as SupportedCurrency);
+		const slug = billingCycle === 'yearly' ? data.pricing.yearlySlug : data.pricing.monthlySlug;
 		authClient.dodopayments.checkoutSession({ slug });
 	}
 </script>
@@ -218,7 +211,7 @@
 									: 'bg-amber-500/20 text-amber-600 dark:text-amber-500'
 							)}
 						>
-							-48%
+							-{data.pricing.discountPercent}%
 						</span>
 					</button>
 				</div>
@@ -307,14 +300,14 @@
 				<Card.Root
 					class="relative flex flex-col overflow-hidden border-2 border-[#FFBF00] bg-white shadow-xl transition-all duration-300 md:-mt-4 md:-mb-4 dark:bg-slate-900/60 dark:shadow-[0_0_50px_rgba(255,191,0,0.15)] dark:backdrop-blur-sm"
 				>
-					<!-- SAVE 30% Badge -->
+					<!-- Savings Badge -->
 					{#if billingCycle === 'yearly'}
 						<div class="absolute top-0 right-0 p-4">
 							<div class="flex flex-col items-end gap-1">
 								<Badge
 									class="border-none bg-[#FFBF00] px-4 py-1.5 text-[10px] font-black text-[#0B0B0F] shadow-lg"
 								>
-									{m.savings_badge()}
+									{m.savings_badge({ percent: data.pricing.discountPercent })}
 								</Badge>
 							</div>
 						</div>
@@ -344,12 +337,14 @@
 									<div class="flex flex-col">
 										<span
 											class="text-sm font-bold text-slate-400 line-through decoration-[#FFBF00]/50 dark:text-slate-500"
-											>{m.plan_pro_price_yearly_old()}</span
+											>{data.pricing.symbol}{data.pricing
+												.yearlyStrikethrough}</span
 										>
 										<div class="flex items-baseline gap-1">
 											<span
 												class="font-mono text-6xl font-black tracking-tighter text-slate-900 dark:text-white"
-												>{m.plan_pro_price_yearly()}</span
+												>{data.pricing.symbol}{data.pricing
+													.yearlyPrice}</span
 											>
 											<span class="text-slate-500 dark:text-slate-400"
 												>/year</span
@@ -359,7 +354,7 @@
 								{:else}
 									<span
 										class="font-mono text-6xl font-black tracking-tighter text-slate-900 dark:text-white"
-										>{m.plan_pro_price_monthly()}</span
+										>{data.pricing.symbol}{data.pricing.monthlyPrice}</span
 									>
 									<span class="text-slate-500 dark:text-slate-400">/month</span>
 								{/if}
