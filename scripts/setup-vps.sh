@@ -466,7 +466,7 @@ server {
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
 
-    client_max_body_size 500m;
+    client_max_body_size 30m;
 
     location / {
         proxy_pass http://localhost:3000;
@@ -614,7 +614,7 @@ server {
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
 
-    client_max_body_size 500m;
+    client_max_body_size 30m;
 
     location / {
         proxy_pass http://localhost:3000;
