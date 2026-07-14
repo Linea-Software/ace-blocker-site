@@ -4,8 +4,8 @@ import { auth } from '$lib/server/auth';
 import { env } from '$env/dynamic/private';
 import { getResistanceModeScriptsURL, getTrackingScriptsURL } from '$lib/server/cdn';
 
-if (!env.BUNNY_SECURITY_KEY) {
-	throw new Error('❌ BUNNY_SECURITY_KEY is missing in environment variables');
+if (!env.BUNNY_URL_TOKEN_AUTH_KEY) {
+	throw new Error('❌ BUNNY_URL_TOKEN_AUTH_KEY is missing in environment variables');
 }
 
 export const scriptsRouter = new Elysia({ prefix: '/scripts' })

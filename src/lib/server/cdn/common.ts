@@ -21,8 +21,8 @@ export enum CDNErrorType {
 	DeleteFailed
 }
 
-if (!env.BUNNY_SECURITY_KEY) {
-	throw Error('❌ BUNNY_SECURITY_KEY is missing in environment variables');
+if (!env.BUNNY_URL_TOKEN_AUTH_KEY) {
+	throw Error('❌ BUNNY_URL_TOKEN_AUTH_KEY is missing in environment variables');
 }
 
 if (!env.BUNNY_STORAGE_ZONE) {
@@ -37,7 +37,7 @@ if (!env.BUNNY_STORAGE_ACCESS_KEY) {
 	throw Error('❌ BUNNY_STORAGE_ACCESS_KEY is missing in environment variables');
 }
 
-const securityKey = env.BUNNY_SECURITY_KEY;
+const securityKey = env.BUNNY_URL_TOKEN_AUTH_KEY;
 
 // === Base paths/URLs declarations === //
 

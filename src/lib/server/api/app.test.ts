@@ -19,7 +19,7 @@ vi.mock('$lib/server/auth', () => {
 // Mock environment variables for scripts router
 vi.mock('$env/dynamic/private', () => ({
 	env: {
-		BUNNY_SECURITY_KEY: 'test-secret-key'
+		BUNNY_URL_TOKEN_AUTH_KEY: 'test-secret-key'
 	}
 }));
 

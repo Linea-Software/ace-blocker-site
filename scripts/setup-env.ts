@@ -91,7 +91,7 @@ function formatEnv(env: EnvMap, extraLines: { key: string; comment?: string }[] 
 		['# ── Auth ──', 'BETTER_AUTH_SECRET'],
 		['# ── Dodo Payments ──', 'DODO_PAYMENTS_API_KEY', 'DODO_PAYMENTS_WEBHOOK_SECRET', 'DODO_PAYMENTS_PRODUCTS'],
 		['# ── Email (Resend) ──', 'RESEND_API_KEY'],
-		['# ── BunnyCDN ──', 'BUNNY_SECURITY_KEY', 'BUNNY_STORAGE_ZONE', 'BUNNY_CDN_BASE_URL', 'BUNNY_STORAGE_ACCESS_KEY'],
+		['# ── BunnyCDN ──', 'BUNNY_URL_TOKEN_AUTH_KEY', 'BUNNY_STORAGE_ZONE', 'BUNNY_CDN_BASE_URL', 'BUNNY_STORAGE_ACCESS_KEY'],
 		['# ── Default Admin ──', 'DEFAULT_ADMIN_EMAIL', 'DEFAULT_ADMIN_USERNAME', 'DEFAULT_ADMIN_PASSWORD'],
 	];
 
@@ -175,7 +175,7 @@ const REQUIRED_KEYS = [
 	'DODO_PAYMENTS_API_KEY',
 	'DODO_PAYMENTS_WEBHOOK_SECRET',
 	'RESEND_API_KEY',
-	'BUNNY_SECURITY_KEY',
+	'BUNNY_URL_TOKEN_AUTH_KEY',
 	'BUNNY_STORAGE_ACCESS_KEY',
 	'DEFAULT_ADMIN_PASSWORD',
 ];
@@ -279,7 +279,7 @@ async function main() {
 
 	// ── BunnyCDN ──
 	console.log(`\n${C.bold}── BunnyCDN ──${C.reset}`);
-	env.set('BUNNY_SECURITY_KEY', await promptValue(rl, 'Security key:', env.get('BUNNY_SECURITY_KEY') || '', true));
+	env.set('BUNNY_URL_TOKEN_AUTH_KEY', await promptValue(rl, 'URL token auth key:', env.get('BUNNY_URL_TOKEN_AUTH_KEY') || '', true));
 	env.set('BUNNY_STORAGE_ZONE', await promptValue(rl, 'Storage zone name:', env.get('BUNNY_STORAGE_ZONE') || DEFAULTS_BY_KEY.BUNNY_STORAGE_ZONE, false));
 	env.set('BUNNY_CDN_BASE_URL', await promptValue(rl, 'CDN base URL:', env.get('BUNNY_CDN_BASE_URL') || DEFAULTS_BY_KEY.BUNNY_CDN_BASE_URL, false));
 	env.set('BUNNY_STORAGE_ACCESS_KEY', await promptValue(rl, 'Storage access key:', env.get('BUNNY_STORAGE_ACCESS_KEY') || '', true));

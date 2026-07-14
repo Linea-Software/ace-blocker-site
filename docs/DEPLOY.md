@@ -266,7 +266,7 @@ Ensure the following are set correctly:
 - `POSTGRES_PASSWORD`: **CRITICAL** - Set a strong password for your database.
 - `POSTGRES_DB`: Database name (default: `aceblocker`).
 - `BACKUP_PASSPHRASE`: Optional. If set, daily backups are GPG-encrypted at rest before being copied off-site (see Section 10). Store it somewhere safe and separate — without it the backups cannot be restored.
-- `BUNNY_SECURITY_KEY`: Required for Resistance Mode script token generation.
+- `BUNNY_URL_TOKEN_AUTH_KEY`: Required for BunnyCDN URL token authentication (used for Resistance Mode script token generation).
 - `DODO_PAYMENTS_API_KEY`: Your production API key.
 - `DODO_PAYMENTS_WEBHOOK_SECRET`: Your production webhook secret.
 

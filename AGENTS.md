@@ -62,22 +62,39 @@ Before performing ANY task related to the technologies below, you MUST use `read
 
 ## Project Description
 
-**Ace Blocker** is a blocker application designed to help users overcome internet addictions. It blocks addictive network sites (porn, social media, betting, etc.) and provides a suite of scripts to make these sites less appealing and more boring.
-
-This website is a full-stack SvelteKit application used for product publicity, managing users, subscriptions, and providing a REST API.
+This is the **Ace Blocker** marketing and subscription website — a full-stack SvelteKit application for product publicity, user management, subscriptions, and REST API access. It handles authentication (Better Auth), payments (DodoPayments), file hosting (BunnyCDN), and serves as the upstream content provider for the Ace Engine (site packs, resistance scripts, tracking scripts, and binary releases).
 
 ## Project Structure
 
 - `/src/routes/`: Contains SvelteKit pages and API endpoints.
-    - Standard routes include authentication (`signin`, `signup`) and functionality (`generate-checkout`, `demo`).
+    - **Authentication:** `signin/`, `signup/`, `forgot-password/`
+    - **Account:** `account/`
+    - **Admin:** `admin/`
+    - **Checkout & Marketing:** `checkout/`, `download/`, `get-pro/`
+    - **Content:** `about/`, `privacy/`, `terms/`
+    - **API Forwarding:** `api/[...slugs]/` (catch-all route forwarding to Elysia)
+    - **Development:** `dev/`
     - **Page-specific components** MUST reside in a `./_components` folder within the route directory.
 - `/src/lib/`: Reusable components, utilities, and logic.
     - `/src/lib/components/`: **Global components** reused across the app.
     - `/src/lib/components/ui/`: Reserved ONLY for **shadcn-svelte** components.
+    - `/src/lib/states/`: Svelte state modules (e.g., `engine.svelte.ts`).
+    - `/src/lib/assets/`: Static assets (logo, favicon).
+    - `/src/lib/utils/`: Utility functions (`platform.ts`, `locale-currency.ts`, `list-icons.ts`).
+    - `/src/lib/api-client.ts`: Elysia Eden client for type-safe API calls.
+    - `/src/lib/auth-client.ts`: Better Auth client setup.
     - `/src/lib/server/`: Server-only logic, including:
         - `auth.ts`: Better Auth configuration.
-        - `db/`: Database schema (`schema.ts`, `auth-schema.ts`) and connection (`index.ts`) using Drizzle.
+        - `db/`: Database schema (`schema.ts`, `auth-schema.ts`, `artifacts-schema.ts`) and connection (`index.ts`) using Drizzle.
         - `api/`: Elysia API implementation using `@elysiajs/openapi` for type-safe RPC and auto-generated documentation.
+        - `cdn/`: BunnyCDN file management (`common.ts`, `delete.ts`, `get.ts`, `upload.ts`).
+        - `cache.ts`: Server-side caching.
+        - `email.ts`: Email sending.
+        - `messages.ts`: Server-side message/notification logic.
+        - `pro.ts`: Pro status management.
+        - `products.ts`: Product/subscription plan definitions.
+        - `env.ts`: Environment variable validation.
+        - `seeder/`: Database seeding for development.
     - `/src/lib/paraglide/`: Auto-generated localization runtime.
 
 ## Database Patterns
@@ -85,6 +102,7 @@ This website is a full-stack SvelteKit application used for product publicity, m
 - **Schema Separation**:
     - `auth-schema.ts`: Contains core tables for Better Auth (user, session, account, verification, apikey, twoFactor). Avoid adding application-specific fields here.
     - `schema.ts`: Contains application-specific tables and extends `user` via 1:1 or 1:N relations.
+    - `artifacts-schema.ts`: Contains build artifact/release tables for distributing ace-engine binaries and related assets.
 - **User Extensions (1:1)**:
     - **Pro Status**: Managed via the `proStatus` table in `schema.ts` to avoid bloating the core `user` table.
     - **Backups**: Managed via the `backups` table in `schema.ts`. Each user has exactly one latest backup (upserted).
