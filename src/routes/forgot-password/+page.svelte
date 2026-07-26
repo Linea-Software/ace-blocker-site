@@ -8,6 +8,7 @@
 	import { Loader2, AlertCircle, ArrowLeft, Sun, Moon, Mail, Key, Lock } from '@lucide/svelte';
 	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
 	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
+	import { page } from '$app/state';
 	import { toggleMode, mode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages.js';
 
@@ -67,7 +68,13 @@
 </script>
 
 <svelte:head>
-	<title>Forgot Password — Ace Blocker</title>
+	<title>{m.page_title_forgot_password()}</title>
+	<meta name="description" content={m.page_description_forgot_password()} />
+	<meta property="og:title" content={m.page_title_forgot_password()} />
+	<meta property="og:description" content={m.page_description_forgot_password()} />
+	<meta property="og:url" content={page.url.href} />
+	<meta name="twitter:title" content={m.page_title_forgot_password()} />
+	<meta name="twitter:description" content={m.page_description_forgot_password()} />
 </svelte:head>
 
 <div class="flex min-h-screen w-full bg-background text-foreground transition-colors duration-300">

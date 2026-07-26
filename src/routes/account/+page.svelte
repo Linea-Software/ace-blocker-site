@@ -349,7 +349,7 @@
 </script>
 
 <svelte:head>
-	<title>Account Settings — Ace Blocker</title>
+	<title>{m.page_title_account()}</title>
 </svelte:head>
 
 <div class="min-h-screen bg-background">

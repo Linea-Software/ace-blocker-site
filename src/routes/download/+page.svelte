@@ -125,7 +125,13 @@
 </script>
 
 <svelte:head>
-	<title>Download — Ace Blocker</title>
+	<title>{m.page_title_download()}</title>
+	<meta name="description" content={m.download_description()} />
+	<meta property="og:title" content={m.page_title_download()} />
+	<meta property="og:description" content={m.download_description()} />
+	<meta property="og:url" content={page.url.href} />
+	<meta name="twitter:title" content={m.page_title_download()} />
+	<meta name="twitter:description" content={m.download_description()} />
 </svelte:head>
 
 <Navbar isPro={data.isPro} />

@@ -6,6 +6,32 @@
 
 export type Locale = 'en' | 'de' | 'es' | 'it';
 
+export function email_otp_subject(locale?: Locale): string {
+	switch (locale) {
+		case 'de':
+			return 'Dein Bestätigungscode: {otp}';
+		case 'es':
+			return 'Tu código de verificación: {otp}';
+		case 'it':
+			return 'Il tuo codice di verifica: {otp}';
+		default:
+			return 'Your verification code: {otp}';
+	}
+}
+
+export function email_otp_body(locale?: Locale): string {
+	switch (locale) {
+		case 'de':
+			return 'Dein Bestätigungscode lautet: <strong>{otp}</strong>. Dieser Code läuft in 5 Minuten ab.';
+		case 'es':
+			return 'Tu código de verificación es: <strong>{otp}</strong>. Este código expira en 5 minutos.';
+		case 'it':
+			return 'Il tuo codice di verifica è: <strong>{otp}</strong>. Questo codice scade in 5 minuti.';
+		default:
+			return 'Your verification code is: <strong>{otp}</strong>. This code expires in 5 minutes.';
+	}
+}
+
 export function email_app_name(_locale?: Locale) {
 	return 'Ace Blocker';
 }

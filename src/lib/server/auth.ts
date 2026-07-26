@@ -6,13 +6,13 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from './db';
 import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
 import DodoPayments from 'dodopayments';
-import { getTwoFactorEmailHtml, getVerificationEmailHtml, resend } from './email';
+import { getTwoFactorEmailHtml, getVerificationEmailHtml, getEmailOtpHtml, resend } from './email';
 import { updateProExpiration, clearProExpiration } from './pro';
 import * as m from './messages';
+import type { Locale } from './messages';
 import { createLogger } from './logger';
 import { dodoProducts } from './products';
-
-const isProduction = process.env.NODE_ENV === 'production';
+import { isProduction } from '../env';
 
 export const dodoPayments = new DodoPayments({
 	bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
@@ -24,7 +24,7 @@ export const auth = betterAuth({
 		provider: 'pg'
 	}),
 	rateLimit: {
-		enabled: isProduction,
+		enabled: isProduction(),
 		window: 5 * 60,
 		max: 50
 	},
@@ -92,11 +92,22 @@ export const auth = betterAuth({
 			async sendVerificationOTP({ email, otp, type }) {
 				const log = createLogger('auth:email-otp');
 				try {
+					// emailOTP callback doesn't receive the user object, so we
+					// default to 'en' for now. When locale propagation is added
+					// at the caller level the string is ready.
+					const locale: Locale = 'en';
+
+					const subject = m
+						.email_otp_subject(locale)
+						.replace('{otp}', otp);
+
+					const html = getEmailOtpHtml(otp, locale);
+
 					const result = await resend.emails.send({
 						from: 'noreply@aceblocker.com',
 						to: email,
-						subject: `Your verification code: ${otp}`,
-						html: `<p>Your verification code is: <strong>${otp}</strong></p><p>This code expires in 5 minutes.</p>`
+						subject,
+						html
 					});
 					if (result.error) {
 						log.error({ err: result.error, type }, 'Failed to send OTP email');

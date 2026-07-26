@@ -1,3 +1,11 @@
-# allow crawling everything by default
+# Ace Blocker - robots.txt
+# Sensitive and user-specific pages are disallowed from indexing.
+
 User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /account/
+Disallow: /api/
+Disallow: /checkout/
+Disallow: /dev/
+
+Sitemap: https://aceblocker.com/sitemap.xml

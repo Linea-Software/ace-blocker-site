@@ -2,9 +2,12 @@
 	import { page } from '$app/state';
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
 	import { ModeWatcher } from 'mode-watcher';
+	import * as m from '$lib/paraglide/messages';
 	import './layout.css';
 
 	let { children } = $props();
+
+	const defaultOgImage = 'https://cdn.aceblocker.com/icon.png';
 </script>
 
 <svelte:head>
@@ -12,6 +15,17 @@
 	<link rel="icon" type="image/png" sizes="32x32" href="https://cdn.aceblocker.com/icon.png" />
 	<link rel="apple-touch-icon" sizes="180x180" href="https://cdn.aceblocker.com/icon.png" />
 	<link rel="shortcut icon" href="https://cdn.aceblocker.com/icon.png" />
+
+	<!-- Default Open Graph / Social tags -->
+	<meta property="og:site_name" content="Ace Blocker" />
+	<meta property="og:image" content={defaultOgImage} />
+	<meta property="og:image:width" content="256" />
+	<meta property="og:image:height" content="256" />
+	<meta property="og:type" content="website" />
+	<meta property="og:locale" content="en_US" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:image" content={defaultOgImage} />
+	<meta name="twitter:image:alt" content={m.site_og_image_alt()} />
 </svelte:head>
 
 <ModeWatcher defaultMode="light" track={true} />

@@ -86,6 +86,13 @@
 
 <svelte:head>
 	<title>{pageTitle} — Ace Blocker</title>
+	<meta name="description" content={m.page_description_checkout_completed()} />
+	<meta property="og:title" content="{pageTitle} — Ace Blocker" />
+	<meta property="og:description" content={m.page_description_checkout_completed()} />
+	<meta property="og:url" content={page.url.href} />
+	<meta name="robots" content="noindex, nofollow" />
+	<meta name="twitter:title" content="{pageTitle} — Ace Blocker" />
+	<meta name="twitter:description" content={m.page_description_checkout_completed()} />
 </svelte:head>
 
 <Navbar {isPro} />

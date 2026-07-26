@@ -1,8 +1,10 @@
 /**
  * Server-only environment utilities.
  *
- * Uses `process.env.NODE_ENV` because it is reliably set by Vite during
- * `vite build` ("production") and at runtime via the .env / system environment.
+ * @deprecated Import {@link isProduction} from `$lib/env` instead.
+ *   This file is kept for backward compatibility.
  */
-export const isProduction = process.env.NODE_ENV === 'production';
-export const isDev = !isProduction;
+import { isProduction as _isProduction, isDev as _isDev } from '$lib/env';
+
+export const isProduction = _isProduction();
+export const isDev = _isDev();

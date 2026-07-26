@@ -112,7 +112,13 @@
 </script>
 
 <svelte:head>
-	<title>Sign Up — Ace Blocker</title>
+	<title>{m.page_title_sign_up()}</title>
+	<meta name="description" content={m.auth_sign_up_description()} />
+	<meta property="og:title" content={m.page_title_sign_up()} />
+	<meta property="og:description" content={m.auth_sign_up_description()} />
+	<meta property="og:url" content={page.url.href} />
+	<meta name="twitter:title" content={m.page_title_sign_up()} />
+	<meta name="twitter:description" content={m.auth_sign_up_description()} />
 </svelte:head>
 
 <div class="flex min-h-screen w-full bg-background text-foreground transition-colors duration-300">

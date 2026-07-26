@@ -21,7 +21,12 @@
 </script>
 
 <svelte:head>
-	<title>Ace Blocker — Reclaim Your Focus</title>
+	<title>{m.page_title_home()}</title>
+	<meta property="og:title" content={m.page_title_home()} />
+	<meta property="og:description" content={m.hero_description()} />
+	<meta property="og:url" content={page.url.href} />
+	<meta name="twitter:title" content={m.page_title_home()} />
+	<meta name="twitter:description" content={m.hero_description()} />
 </svelte:head>
 
 <Navbar isPro={data.isPro} />

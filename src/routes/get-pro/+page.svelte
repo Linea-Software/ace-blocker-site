@@ -87,7 +87,13 @@
 </script>
 
 <svelte:head>
-	<title>Get Pro — Ace Blocker</title>
+	<title>{m.page_title_get_pro()}</title>
+	<meta name="description" content={m.page_description_get_pro()} />
+	<meta property="og:title" content={m.page_title_get_pro()} />
+	<meta property="og:description" content={m.page_description_get_pro()} />
+	<meta property="og:url" content={page.url.href} />
+	<meta name="twitter:title" content={m.page_title_get_pro()} />
+	<meta name="twitter:description" content={m.page_description_get_pro()} />
 </svelte:head>
 
 <Navbar {isPro} />

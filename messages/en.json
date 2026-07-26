@@ -210,5 +210,22 @@
 	"account_sync_cooldown": "Please wait {seconds}s before syncing again",
 	"account_sync_pro_activated": "Your Pro subscription has been activated.",
 	"account_sync_pro_expired": "Your Pro subscription has expired.",
-	"account_farewell_banner": "Your account has been deleted. We're sorry to see you go."
+	"account_farewell_banner": "Your account has been deleted. We're sorry to see you go.",
+	"page_title_home": "Ace Blocker — Reclaim Your Focus",
+	"page_title_account": "Account Settings — Ace Blocker",
+	"page_title_download": "Download — Ace Blocker",
+	"page_title_forgot_password": "Forgot Password — Ace Blocker",
+	"page_title_get_pro": "Get Pro — Ace Blocker",
+	"page_title_sign_in": "Sign In — Ace Blocker",
+	"page_title_sign_up": "Sign Up — Ace Blocker",
+	"page_title_privacy": "Privacy Policy — Ace Blocker",
+	"page_title_terms": "Terms of Service — Ace Blocker",
+
+	"page_description_privacy": "Ace Blocker's privacy policy — learn how we protect your data and what information we collect.",
+	"page_description_terms": "Ace Blocker's terms of service — understand the rules and guidelines for using the Software.",
+	"page_description_get_pro": "Upgrade to Ace Blocker Pro for unlimited devices, premium resistance scripts, cloud backup, and access to all curated site packs.",
+	"page_description_forgot_password": "Reset your Ace Blocker account password securely.",
+	"page_description_checkout_completed": "Your Ace Blocker Pro subscription is now active.",
+	"site_og_description": "Ace Blocker is the most powerful blocker designed to help you overcome internet addictions through intelligent site filtering and behavior-shaping scripts.",
+	"site_og_image_alt": "Ace Blocker — Reclaim Your Focus"
 }

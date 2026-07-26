@@ -1,15 +1,23 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
 	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
 	import { mode } from 'mode-watcher';
+	import * as m from '$lib/paraglide/messages.js';
 
 	let { data } = $props();
 	let isDark = $derived(mode.current === 'dark');
 </script>
 
 <svelte:head>
-	<title>Terms of Service — Ace Blocker</title>
+	<title>{m.page_title_terms()}</title>
+	<meta name="description" content={m.page_description_terms()} />
+	<meta property="og:title" content={m.page_title_terms()} />
+	<meta property="og:description" content={m.page_description_terms()} />
+	<meta property="og:url" content={page.url.href} />
+	<meta name="twitter:title" content={m.page_title_terms()} />
+	<meta name="twitter:description" content={m.page_description_terms()} />
 </svelte:head>
 
 <Navbar isPro={data.isPro} />
