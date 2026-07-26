@@ -31,17 +31,19 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 					: null,
 				resistance: resistance
 					? {
-							version: resistance.version,
-							size: resistance.size,
-							createdAt: resistance.createdAt
-						}
+						version: resistance.version,
+						size: resistance.size,
+						sha256: resistance.sha256,
+						createdAt: resistance.createdAt
+					  }
 					: null,
 				tracking: tracking
 					? {
-							version: tracking.version,
-							size: tracking.size,
-							createdAt: tracking.createdAt
-						}
+						version: tracking.version,
+						size: tracking.size,
+						sha256: tracking.sha256,
+						createdAt: tracking.createdAt
+					  }
 					: null,
 				sitePacks: Array.from(sitePacks.entries()).map(([id, pack]) => ({
 					id,
@@ -79,6 +81,7 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 					t.Object({
 						version: t.String(),
 						size: t.Number(),
+						sha256: t.String(),
 						createdAt: t.Date()
 					})
 				),
@@ -86,6 +89,7 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 					t.Object({
 						version: t.String(),
 						size: t.Number(),
+						sha256: t.String(),
 						createdAt: t.Date()
 					})
 				),

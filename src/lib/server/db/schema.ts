@@ -44,6 +44,17 @@ export const backupsRelations = relations(backups, ({ one }) => ({
 	})
 }));
 
+export const siteVisits = pgTable(
+	'site_visits',
+	{
+		id: text('id').primaryKey(),
+		path: text('path').notNull(),
+		referrer: text('referrer'),
+		timestamp: timestamp('timestamp').defaultNow().notNull()
+	},
+	(table) => [index('site_visits_timestamp_idx').on(table.timestamp)]
+);
+
 export const userRelations = relations(user, ({ many, one }) => ({
 	sessions: many(session),
 	accounts: many(account),

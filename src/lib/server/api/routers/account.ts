@@ -65,20 +65,6 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				return status(401, 'Unauthorized');
 			}
 
-			// Delete existing 'Desktop App' keys for this user to avoid clutter
-			const existingKeys = await auth.api.listApiKeys({
-				headers: request.headers
-			});
-
-			for (const key of existingKeys.apiKeys) {
-				if (key.name === 'Desktop App') {
-					await auth.api.deleteApiKey({
-						body: { keyId: key.id },
-						headers: request.headers
-					});
-				}
-			}
-
 			const isDev = process.env.NODE_ENV === 'development';
 
 			// Create a new one

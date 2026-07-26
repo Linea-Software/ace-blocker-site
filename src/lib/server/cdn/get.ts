@@ -45,7 +45,10 @@ export function getSitePackURL(
 	return ok(sitePackPath);
 }
 
-export function getResistanceModeScriptsURL(): Result<{ url: URL; version: string }, CDNErrorType> {
+export function getResistanceModeScriptsURL(): Result<
+	{ url: URL; version: string; sha256: string },
+	CDNErrorType
+> {
 	const latestRecord = getLatestResistanceScript();
 
 	if (!latestRecord) {
@@ -64,10 +67,17 @@ export function getResistanceModeScriptsURL(): Result<{ url: URL; version: strin
 	resistanceScriptsPath.searchParams.append('token', token);
 	resistanceScriptsPath.searchParams.append('expiration', expiration.toString());
 
-	return ok({ url: resistanceScriptsPath, version: latestRecord.version });
+	return ok({
+		url: resistanceScriptsPath,
+		version: latestRecord.version,
+		sha256: latestRecord.sha256
+	});
 }
 
-export function getTrackingScriptsURL(): Result<{ url: URL; version: string }, CDNErrorType> {
+export function getTrackingScriptsURL(): Result<
+	{ url: URL; version: string; sha256: string },
+	CDNErrorType
+> {
 	const latestRecord = getLatestTrackingScript();
 
 	if (!latestRecord) {
@@ -81,7 +91,11 @@ export function getTrackingScriptsURL(): Result<{ url: URL; version: string }, C
 
 	// No auth token needed for tracking scripts (publicly accessible)
 
-	return ok({ url: trackingScriptsPath, version: latestRecord.version });
+	return ok({
+		url: trackingScriptsPath,
+		version: latestRecord.version,
+		sha256: latestRecord.sha256
+	});
 }
 
 export function getInstallerURL(

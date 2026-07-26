@@ -6,7 +6,10 @@ import { seedDatabase, seedPrices } from '$lib/server/seeder';
 import { initializeCache } from '$lib/server/cache';
 import { logger } from '$lib/server/logger';
 import { app } from '$lib/server/api/app';
+import { db } from '$lib/server/db';
+import { siteVisits } from '$lib/server/db/schema';
 import crypto from 'crypto';
+import { v7 as uuidv7 } from 'uuid';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
@@ -50,7 +53,38 @@ const handleApi: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(handleApi, handleParaglide, handleLogger, handleAuth);
+// Track marketing page visits (excludes API, auth, admin, and dev routes)
+const handleTrackVisits: Handle = async ({ event, resolve }) => {
+	const { pathname } = event.url;
+
+	// Only track public marketing/content pages
+	const isPublicPage =
+		!pathname.startsWith('/api') &&
+		!pathname.startsWith('/admin') &&
+		!pathname.startsWith('/account') &&
+		!pathname.startsWith('/signin') &&
+		!pathname.startsWith('/signup') &&
+		!pathname.startsWith('/forgot-password') &&
+		!pathname.startsWith('/checkout') &&
+		!pathname.startsWith('/dev') &&
+		!pathname.startsWith('/download') &&
+		!pathname.includes('.'); // Skip static files (favicon, robots.txt, etc.)
+
+	if (isPublicPage) {
+		// Fire-and-forget the DB insert
+		db.insert(siteVisits)
+			.values({
+				id: uuidv7(),
+				path: pathname,
+				referrer: event.request.headers.get('referer') ?? undefined
+			})
+			.catch(() => {}); // Silently ignore insert errors
+	}
+
+	return resolve(event);
+};
+
+export const handle: Handle = sequence(handleApi, handleParaglide, handleTrackVisits, handleLogger, handleAuth);
 
 export async function init() {
 	logger.info('Initializing application...');

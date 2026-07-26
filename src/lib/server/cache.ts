@@ -5,7 +5,10 @@ import {
 	trackingScripts,
 	sitePack
 } from '$lib/server/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('cache');
 
 // In-memory cache for latest artifacts (no need for LRU since we only store one of each)
 let latestInstaller: typeof aceBlockerInstaller.$inferSelect | null = null;
@@ -122,4 +125,74 @@ export async function initializeCache(): Promise<void> {
 		loadLatestTrackingScript(),
 		loadLatestSitePacks()
 	]);
+}
+
+// ============ DOWNLOAD COUNT INCREMENT ============
+
+/** Increment the download count for the latest installer by 1. */
+export async function incrementInstallerDownloadCount(): Promise<void> {
+	const latest = getLatestInstaller();
+	if (!latest) return;
+
+	await db
+		.update(aceBlockerInstaller)
+		.set({ downloadCount: sql`${aceBlockerInstaller.downloadCount} + 1` })
+		.where(eq(aceBlockerInstaller.id, latest.id));
+
+	// Update the in-memory cache to reflect the new count
+	if (latestInstaller) {
+		latestInstaller = { ...latestInstaller, downloadCount: latestInstaller.downloadCount + 1 };
+	}
+
+	log.debug({ id: latest.id }, 'Incremented installer download count');
+}
+
+/** Increment the download count for the latest resistance mode scripts by 1. */
+export async function incrementResistanceScriptDownloadCount(): Promise<void> {
+	const latest = getLatestResistanceScript();
+	if (!latest) return;
+
+	await db
+		.update(resistanceModeScripts)
+		.set({ downloadCount: sql`${resistanceModeScripts.downloadCount} + 1` })
+		.where(eq(resistanceModeScripts.id, latest.id));
+
+	if (latestResistanceScript) {
+		latestResistanceScript = { ...latestResistanceScript, downloadCount: latestResistanceScript.downloadCount + 1 };
+	}
+
+	log.debug({ id: latest.id }, 'Incremented resistance scripts download count');
+}
+
+/** Increment the download count for the latest tracking scripts by 1. */
+export async function incrementTrackingScriptDownloadCount(): Promise<void> {
+	const latest = getLatestTrackingScript();
+	if (!latest) return;
+
+	await db
+		.update(trackingScripts)
+		.set({ downloadCount: sql`${trackingScripts.downloadCount} + 1` })
+		.where(eq(trackingScripts.id, latest.id));
+
+	if (latestTrackingScript) {
+		latestTrackingScript = { ...latestTrackingScript, downloadCount: latestTrackingScript.downloadCount + 1 };
+	}
+
+	log.debug({ id: latest.id }, 'Incremented tracking scripts download count');
+}
+
+/** Increment the download count for a specific site pack by 1. */
+export async function incrementSitePackDownloadCount(sitePackId: string): Promise<void> {
+	await db
+		.update(sitePack)
+		.set({ downloadCount: sql`${sitePack.downloadCount} + 1` })
+		.where(eq(sitePack.id, sitePackId));
+
+	// Update the in-memory cache
+	const cached = latestSitePacks.get(sitePackId);
+	if (cached) {
+		latestSitePacks.set(sitePackId, { ...cached, downloadCount: cached.downloadCount + 1 });
+	}
+
+	log.debug({ sitePackId }, 'Incremented site pack download count');
 }

@@ -70,10 +70,10 @@ export const backupsRouter = new Elysia({ prefix: '/backups' })
 				return status(403, 'Pro license required');
 			}
 
-			// Check payload size
+			// Check payload size — 2MB limit
 			const contentLength = request.headers.get('content-length');
-			if (contentLength && parseInt(contentLength) > 1024 * 1024) {
-				return status(413, 'Backup size exceeds 1MB');
+			if (contentLength && parseInt(contentLength) > 2 * 1024 * 1024) {
+				return status(413, 'Backup size exceeds 2MB');
 			}
 
 			const backupId = uuidv7();

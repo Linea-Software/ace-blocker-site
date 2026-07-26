@@ -4,6 +4,7 @@ import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { sitePack } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
+import { incrementSitePackDownloadCount } from '$lib/server/cache';
 
 import { CDNErrorType, getSitePackURL } from '$lib/server/cdn';
 
@@ -53,7 +54,12 @@ export const sitePacksRouter = new Elysia({ prefix: '/site-packs' })
 			}
 
 			// We're handling the error case properly, so unsafe unwrap can be used
-			return { url: result._unsafeUnwrap().toString() };
+			const url = result._unsafeUnwrap().toString();
+
+			// Fire-and-forget: increment download count
+			incrementSitePackDownloadCount(sitePackId);
+
+			return { url };
 		},
 		{
 			params: t.Object({
