@@ -64,6 +64,7 @@ export const auth = betterAuth({
 		openAPI(),
 		twoFactor({
 			issuer: m.email_app_name(),
+			skipVerificationOnEnable: true,
 			otpOptions: {
 				sendOTP: async ({ user, otp }) => {
 					const log = createLogger('auth:2fa-otp');
