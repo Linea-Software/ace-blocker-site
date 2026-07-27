@@ -7,7 +7,6 @@ import {
 	deleteResistanceModeScript,
 	CDNErrorType
 } from '$lib/server/cdn';
-import { invalidateResistanceCache } from '$lib/server/cache';
 import crypto from 'crypto';
 import { createLogger } from '$lib/server/logger';
 

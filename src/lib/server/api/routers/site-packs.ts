@@ -1,10 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { isUserPro } from '$lib/server/pro';
 import { auth } from '$lib/server/auth';
-import { db } from '$lib/server/db';
-import { sitePack } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
-import { incrementSitePackDownloadCount } from '$lib/server/cache';
+import { incrementSitePackDownloadCount, getLatestSitePacks } from '$lib/server/cache';
 
 import { CDNErrorType, getSitePackURL } from '$lib/server/cdn';
 
@@ -21,11 +18,8 @@ export const sitePacksRouter = new Elysia({ prefix: '/site-packs' })
 	.get(
 		'/:sitePackId/backup',
 		async ({ params: { sitePackId }, user, status }) => {
-			// Check if the site pack requires Pro subscription
-			const pack = await db.query.sitePack.findFirst({
-				where: eq(sitePack.id, sitePackId),
-				columns: { requiresProSubscription: true }
-			});
+			// Look up the site pack in the in-memory cache (fast, synchronous, no DB round-trip)
+			const pack = getLatestSitePacks().get(sitePackId);
 
 			if (!pack) {
 				return status(404, 'Site pack not found');

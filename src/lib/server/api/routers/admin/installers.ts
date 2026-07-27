@@ -3,7 +3,6 @@ import { db } from '$lib/server/db';
 import { aceBlockerInstaller } from '$lib/server/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { uploadInstaller, deleteInstaller, CDNErrorType } from '$lib/server/cdn';
-import { invalidateInstallerCache } from '$lib/server/cache';
 import crypto from 'crypto';
 import { createLogger } from '$lib/server/logger';
 
