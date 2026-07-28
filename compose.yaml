@@ -4,7 +4,11 @@ services:
         container_name: ace-blocker-db
         restart: always
         ports:
-            - 5432:5432
+            # Bind to loopback only. "5432:5432" binds 0.0.0.0, and Docker's
+            # iptables rules are evaluated before UFW's, so on the VPS that put
+            # Postgres on the public internet with UFW still reporting "active".
+            # The app connects via DATABASE_URL on localhost, so this is enough.
+            - 127.0.0.1:5432:5432
         environment:
             POSTGRES_USER: ${POSTGRES_USER}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

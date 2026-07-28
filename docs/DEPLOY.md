@@ -62,10 +62,16 @@ commands the deployment needs:
 # Set a password for the user (used for sudo and console login, NOT for SSH)
 passwd aceblocker
 
-# Create a scoped sudoers file
+# Create a scoped sudoers file.
+# Pin the ARGUMENTS, not just the binary: `NOPASSWD: /usr/bin/docker` permits
+# `sudo docker run -v /:/host …`, which is a one-line path to root, and
+# `NOPASSWD: /usr/bin/apt` permits `sudo apt -o APT::Update::Pre-Invoke::=<cmd>`.
+# Both are exactly the root-equivalence the password prompt is there to prevent.
+# These are the only command lines `bun run setup` actually invokes.
 cat > /etc/sudoers.d/aceblocker << 'EOF'
 aceblocker ALL=(ALL) ALL
-aceblocker ALL=(ALL) NOPASSWD: /usr/bin/apt, /usr/bin/apt-get, /usr/bin/docker, /usr/bin/systemctl
+aceblocker ALL=(ALL) NOPASSWD: /usr/bin/apt update, /usr/bin/apt install -y libnss3-tools
+aceblocker ALL=(ALL) NOPASSWD: /usr/bin/docker compose up -d, /usr/bin/docker compose down -v
 EOF
 chmod 440 /etc/sudoers.d/aceblocker
 
@@ -122,6 +128,19 @@ Secure your SSH connection by disabling root login and limiting login attempts.
     **Important**: Only set `PasswordAuthentication no` if you have confirmed that your SSH key login works for the new user!
 
     **Important**: Replace `aceblocker` in `AllowUsers` with your actual username.
+
+    > [!WARNING]
+    > sshd uses the **first** value it obtains for each keyword, and
+    > `/etc/ssh/sshd_config` includes `/etc/ssh/sshd_config.d/*.conf` near the
+    > **top** of the file. Cloud images ship
+    > `/etc/ssh/sshd_config.d/50-cloud-init.conf` containing
+    > `PasswordAuthentication yes`, which therefore beats anything you add at the
+    > bottom of `sshd_config` — the box looks hardened while password login is
+    > still enabled. Put the settings above in
+    > `/etc/ssh/sshd_config.d/00-hardening.conf` instead (`00-` sorts ahead of
+    > `50-cloud-init`), then confirm with `sudo sshd -T | grep -E
+    > 'passwordauthentication|permitrootlogin'` — that prints the *effective*
+    > config, which is the only thing worth trusting here.
 
 3. Validate the config, then reload (don't blindly restart — a bad config plus a restart can drop sshd and lock you out):
 
@@ -461,12 +480,24 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # SET, never append. $proxy_add_x_forwarded_for keeps the client's own
+        # X-Forwarded-For as the left-most entry — which is the entry
+        # better-auth reads to key its login rate limiter, so any client could
+        # rotate the header and never get limited.
+        proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
     }
 }
 ```
+
+> [!IMPORTANT]
+> If this origin sits behind the Cloudflare proxy, `$remote_addr` is a Cloudflare
+> edge IP, so every visitor shares one rate-limit bucket. Add a real-IP config in
+> the `http` context (`/etc/nginx/conf.d/cloudflare-realip.conf`) with
+> `set_real_ip_from` for each range in <https://www.cloudflare.com/ips-v4> and
+> `ips-v6`, plus `real_ip_header CF-Connecting-IP;` and `real_ip_recursive off;`.
+> `scripts/setup-vps.sh` generates this file for you.
 
 _Note: The `X-Forwarded-Proto` header is essential for SvelteKit and Better Auth to correctly detect HTTPS._
 
@@ -589,7 +620,8 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # SET, never append — see the note above on rate-limit bypass.
+        proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
@@ -732,15 +764,22 @@ fi
 BACKUP_DIR="/home/aceblocker/backups"
 BACKUP_PATH="${BACKUP_DIR}/db_$(date +%Y%m%d_%H%M%S).sql"
 
-# 1. Dump the database (uses scoped sudo since the user isn't in the docker group)
-sudo docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" ace-blocker-db \
-    pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > "$BACKUP_PATH"
+# 1. Dump the database. The password goes in over STDIN: `-e PGPASSWORD=secret`
+#    puts it in argv, where any local user can read it out of `ps` — and, run
+#    under sudo, sudo writes the whole command line to /var/log/auth.log on
+#    every single run.
+printf '%s\n' "$POSTGRES_PASSWORD" | sudo docker exec -i ace-blocker-db \
+    sh -c 'IFS= read -r PGPASSWORD; export PGPASSWORD; exec pg_dump -U "$0" -d "$1"' \
+    "$POSTGRES_USER" "$POSTGRES_DB" > "$BACKUP_PATH"
+[[ -s "$BACKUP_PATH" ]] || { echo "empty dump — discarding" >&2; rm -f "$BACKUP_PATH"; exit 1; }
 gzip "$BACKUP_PATH"
 
-# 2. Encrypt at rest if BACKUP_PASSPHRASE is set in .env (requires gpg)
+# 2. Encrypt at rest if BACKUP_PASSPHRASE is set in .env (requires gpg).
+#    --passphrase-fd 0 for the same argv reason as above.
 if [[ -n "$BACKUP_PASSPHRASE" ]] && command -v gpg >/dev/null 2>&1; then
-    gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_PASSPHRASE" \
-        -c "${BACKUP_PATH}.gz"
+    printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
+        --passphrase-fd 0 --cipher-algo AES256 \
+        -o "${BACKUP_PATH}.gz.gpg" -c "${BACKUP_PATH}.gz"
     rm -f "${BACKUP_PATH}.gz"
     EXT="sql.gz.gpg"; FINAL="${BACKUP_PATH}.gz.gpg"
 else
