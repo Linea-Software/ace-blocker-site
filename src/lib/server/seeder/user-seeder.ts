@@ -1,6 +1,6 @@
 import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
-import { user } from '$lib/server/db/schema';
+import { user, twoFactor } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { dev } from '$app/environment';
 import { updateProExpiration } from '$lib/server/pro';
@@ -29,15 +29,63 @@ export async function seedDatabase() {
 
 		const adminRecord = existingAdmin[0];
 		if (adminRecord) {
-			// Ensure admin role, verified status, and 2FA
+			// Ensure admin role and verified status (these are safe to set directly)
 			await db
 				.update(user)
 				.set({
 					role: 'admin',
-					emailVerified: true,
-					twoFactorEnabled: true
+					emailVerified: true
 				})
 				.where(eq(user.id, adminRecord.id));
+
+			// Enable 2FA properly via the Better Auth API.
+			// The API creates the required two_factor record (secret + backup codes)
+			// that verifyOtp checks for. Setting twoFactorEnabled directly in the
+			// DB without a two_factor record causes "Two factor isn't enabled" errors.
+			const existingTwoFactor = await db
+				.select()
+				.from(twoFactor)
+				.where(eq(twoFactor.userId, adminRecord.id))
+				.limit(1);
+
+			if (existingTwoFactor.length === 0) {
+				// If a previous (buggy) seeder run set twoFactorEnabled without
+				// creating the two_factor record, reset the flag temporarily so
+				// sign-in does not trigger a 2FA challenge before 2FA is set up.
+				if (adminRecord.twoFactorEnabled) {
+					await db
+						.update(user)
+						.set({ twoFactorEnabled: false })
+						.where(eq(user.id, adminRecord.id));
+				}
+
+				// Sign in to obtain session cookies required by enableTwoFactor
+				const signInResult = await auth.api.signInEmail({
+					body: {
+						email: adminEmail,
+						password: adminPassword
+					},
+					returnHeaders: true
+				});
+
+				// Enable 2FA with the session.
+				// skipVerificationOnEnable: true in the plugin config ensures
+				// twoFactorEnabled is set to true immediately.
+				await auth.api.enableTwoFactor({
+					body: {
+						password: adminPassword
+					},
+					headers: signInResult.headers
+				});
+
+				console.log('[SEEDER] 2FA properly enabled for admin');
+			} else if (!adminRecord.twoFactorEnabled) {
+				// two_factor record exists but user flag is out of sync
+				await db
+					.update(user)
+					.set({ twoFactorEnabled: true })
+					.where(eq(user.id, adminRecord.id));
+			}
 
 			// Automatically make admin a pro user
 			await updateProExpiration(adminEmail, new Date('2099-01-01'));
