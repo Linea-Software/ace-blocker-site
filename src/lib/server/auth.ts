@@ -23,6 +23,17 @@ export const auth = betterAuth({
 	database: drizzleAdapter(db, {
 		provider: 'pg'
 	}),
+	user: {
+		additionalFields: {
+			// Hand-added locale column, kept in sync with the generated auth schema.
+			locale: {
+				type: 'string',
+				required: false,
+				defaultValue: 'en',
+				input: false
+			}
+		}
+	},
 	rateLimit: {
 		enabled: isProduction(),
 		window: 5 * 60,
@@ -98,9 +109,7 @@ export const auth = betterAuth({
 					// at the caller level the string is ready.
 					const locale: Locale = 'en';
 
-					const subject = m
-						.email_otp_subject(locale)
-						.replace('{otp}', otp);
+					const subject = m.email_otp_subject(locale).replace('{otp}', otp);
 
 					const html = getEmailOtpHtml(otp, locale);
 

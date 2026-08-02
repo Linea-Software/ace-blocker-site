@@ -17,6 +17,13 @@ CREATE TABLE "pro_status" (
 	CONSTRAINT "pro_status_user_id_unique" UNIQUE("user_id")
 );
 --> statement-breakpoint
+CREATE TABLE "site_visits" (
+	"id" text PRIMARY KEY NOT NULL,
+	"path" text NOT NULL,
+	"referrer" text,
+	"timestamp" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "account" (
 	"id" text PRIMARY KEY NOT NULL,
 	"account_id" text NOT NULL,
@@ -76,7 +83,9 @@ CREATE TABLE "two_factor" (
 	"secret" text NOT NULL,
 	"backup_codes" text NOT NULL,
 	"user_id" text NOT NULL,
-	"verified" boolean DEFAULT true
+	"verified" boolean DEFAULT true,
+	"failed_verification_count" integer DEFAULT 0,
+	"locked_until" timestamp
 );
 --> statement-breakpoint
 CREATE TABLE "user" (
@@ -93,7 +102,7 @@ CREATE TABLE "user" (
 	"ban_expires" timestamp,
 	"two_factor_enabled" boolean DEFAULT false,
 	"dodo_customer_id" text,
-	"locale" text DEFAULT 'en' NOT NULL,
+	"locale" text DEFAULT 'en',
 	CONSTRAINT "user_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
@@ -164,6 +173,7 @@ ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "two_factor" ADD CONSTRAINT "two_factor_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "backups_userId_idx" ON "backups" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "site_visits_timestamp_idx" ON "site_visits" USING btree ("timestamp");--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "apikey_configId_idx" ON "apikey" USING btree ("config_id");--> statement-breakpoint
 CREATE INDEX "apikey_referenceId_idx" ON "apikey" USING btree ("reference_id");--> statement-breakpoint

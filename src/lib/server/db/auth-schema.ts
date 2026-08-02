@@ -18,7 +18,7 @@ export const user = pgTable('user', {
 	banExpires: timestamp('ban_expires'),
 	twoFactorEnabled: boolean('two_factor_enabled').default(false),
 	dodoCustomerId: text('dodo_customer_id'),
-	locale: text('locale').default('en').notNull()
+	locale: text('locale').default('en')
 });
 
 export const session = pgTable(
@@ -124,7 +124,7 @@ export const twoFactor = pgTable(
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
 		verified: boolean('verified').default(true),
-		failedVerificationCount: integer('failed_verification_count').default(0).notNull(),
+		failedVerificationCount: integer('failed_verification_count').default(0),
 		lockedUntil: timestamp('locked_until')
 	},
 	(table) => [
