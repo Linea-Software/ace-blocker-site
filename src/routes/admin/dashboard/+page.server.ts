@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { user, proStatus, siteVisits } from '$lib/server/db/schema';
-import { count, desc, gt, sql } from 'drizzle-orm';
+import { count, desc, gt } from 'drizzle-orm';
 
 export const load: PageServerLoad = async () => {
 	const [totalUsersCount] = await db.select({ value: count() }).from(user);
@@ -32,7 +32,7 @@ export const load: PageServerLoad = async () => {
 		.from(siteVisits)
 		.where(gt(siteVisits.timestamp, thirtyDaysAgo))
 		.groupBy(siteVisits.path)
-		.orderBy(desc(sql`visits`))
+		.orderBy(desc(count()))
 		.limit(5);
 
 	return {
