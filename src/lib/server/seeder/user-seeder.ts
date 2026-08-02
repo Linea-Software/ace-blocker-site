@@ -68,6 +68,16 @@ export async function seedDatabase() {
 					returnHeaders: true
 				});
 
+				// enableTwoFactor requires an authenticated session. signInEmail
+				// returns the session as `set-cookie` response headers, so convert
+				// them into a `cookie` request header for the next auth.api call.
+				const enableTwoFactorHeaders = new Headers();
+				signInResult.headers.forEach((value, key) => {
+					if (key.toLowerCase() === 'set-cookie') {
+						enableTwoFactorHeaders.append('cookie', value.split(';')[0]);
+					}
+				});
+
 				// Enable 2FA with the session.
 				// skipVerificationOnEnable: true in the plugin config ensures
 				// twoFactorEnabled is set to true immediately.
@@ -75,7 +85,7 @@ export async function seedDatabase() {
 					body: {
 						password: adminPassword
 					},
-					headers: signInResult.headers
+					headers: enableTwoFactorHeaders
 				});
 
 				console.log('[SEEDER] 2FA properly enabled for admin');
