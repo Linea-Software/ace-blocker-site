@@ -56,7 +56,7 @@
 </script>
 
 <header
-	class="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-slate-800 dark:bg-[#0B0B0F]/95 supports-[backdrop-filter]:dark:bg-[#0B0B0F]/60"
+	class="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-slate-800 dark:bg-background/95 supports-[backdrop-filter]:dark:bg-background/60"
 >
 	<div class="container mx-auto flex h-16 items-center justify-between px-4">
 		<div class="flex h-full items-center gap-4">

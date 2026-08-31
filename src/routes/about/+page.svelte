@@ -32,7 +32,7 @@
 <Navbar isPro={data.isPro} />
 
 <main
-	class="flex min-h-[calc(100vh-4rem)] flex-col bg-background text-foreground transition-colors duration-500 dark:bg-[#0B0B0F] dark:text-slate-50"
+	class="flex min-h-[calc(100vh-4rem)] flex-col bg-background text-foreground transition-colors duration-500 dark:bg-background dark:text-slate-50"
 >
 	<!-- Hero Section -->
 	<section class="relative overflow-hidden pt-16 pb-16 md:pt-24 md:pb-24">
@@ -265,7 +265,7 @@
 	</section>
 </main>
 
-<footer class="border-t border-border bg-muted py-16 dark:border-slate-900 dark:bg-[#0B0B0F]">
+<footer class="border-t border-border bg-muted py-16 dark:border-slate-900 dark:bg-background">
 	<div class="container mx-auto px-4">
 		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
 			<div class="flex items-center gap-3">
@@ -304,7 +304,7 @@
 	}
 
 	:global(html.dark) {
-		background-color: #0b0b0f;
+		background-color: var(--background);
 	}
 
 	:global(body) {
@@ -313,7 +313,7 @@
 	}
 
 	:global(.dark body) {
-		background-color: #0b0b0f;
+		background-color: var(--background);
 		color: #f8fafc;
 	}
 </style>

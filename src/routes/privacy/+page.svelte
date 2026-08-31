@@ -22,7 +22,7 @@
 
 <Navbar isPro={data.isPro} />
 
-<main class="flex min-h-[calc(100vh-4rem)] flex-col bg-background text-foreground transition-colors duration-500 dark:bg-[#0B0B0F] dark:text-slate-50">
+<main class="flex min-h-[calc(100vh-4rem)] flex-col bg-background text-foreground transition-colors duration-500 dark:bg-background dark:text-slate-50">
 	<article class="container mx-auto max-w-3xl px-4 py-16 md:py-24">
 		<h1 class="mb-2 text-4xl font-extrabold tracking-tight md:text-5xl">Privacy Policy</h1>
 		<p class="mb-12 text-muted-foreground">Last updated: June 2026</p>

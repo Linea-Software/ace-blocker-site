@@ -69,7 +69,7 @@
 	</div>
 
 	<div
-		class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-[#0B0B0F]"
+		class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-background"
 	>
 		<Table.Root>
 			<Table.Header>

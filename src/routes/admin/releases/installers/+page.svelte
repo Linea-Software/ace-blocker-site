@@ -147,7 +147,7 @@
 	<title>{m.admin_releases_category_installers()} — Ace Blocker Admin</title>
 </svelte:head>
 
-<div class="min-h-screen bg-slate-50 dark:bg-[#0B0F19] p-8 font-sans text-slate-800 dark:text-gray-200 selection:bg-brand/30">
+<div class="min-h-screen bg-slate-50 dark:bg-background p-8 font-sans text-slate-800 dark:text-gray-200 selection:bg-brand/30">
 	<!-- Page Header -->
 	<header
 		class="mb-10 flex flex-col justify-between gap-4 border-b border-slate-200 dark:border-white/5 pb-6 md:flex-row md:items-center"
@@ -320,7 +320,7 @@
 		transition:fade={{ duration: 150 }}
 	>
 		<div
-			class="w-full max-w-md animate-in overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111827] shadow-2xl duration-200 zoom-in-95"
+			class="w-full max-w-md animate-in overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-card shadow-2xl duration-200 zoom-in-95"
 			transition:scale={{ duration: 200, start: 0.95 }}
 			role="dialog"
 		>
@@ -487,7 +487,7 @@
 		transition:fade={{ duration: 150 }}
 	>
 		<div
-			class="w-full max-w-md animate-in overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111827] shadow-2xl duration-200 zoom-in-95 fade-in"
+			class="w-full max-w-md animate-in overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-card shadow-2xl duration-200 zoom-in-95 fade-in"
 			role="dialog"
 		>
 			<div class="p-6">
@@ -539,7 +539,7 @@
 	}
 
 	:global(html.dark body) {
-		background-color: #0b0f19;
+		background-color: var(--background);
 		color-scheme: dark;
 	}
 </style>

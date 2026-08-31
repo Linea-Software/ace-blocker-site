@@ -39,9 +39,9 @@
 	}
 </script>
 
-<div class="flex min-h-screen bg-slate-50 dark:bg-[#0B0B0F]">
+<div class="flex min-h-screen bg-slate-50 dark:bg-background">
 	<!-- Admin Sidebar -->
-	<aside class="w-64 border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-[#0B0B0F]">
+	<aside class="w-64 border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-background">
 		<div class="flex h-16 items-center px-6">
 			<a href="/" class="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
 				<Shield class="h-6 w-6 text-brand" />
@@ -121,7 +121,7 @@
 	<!-- Main Content -->
 	<main class="flex-1">
 		<header
-			class="flex h-16 items-center border-b border-slate-200 bg-white px-8 dark:border-slate-800 dark:bg-[#0B0B0F]"
+			class="flex h-16 items-center border-b border-slate-200 bg-white px-8 dark:border-slate-800 dark:bg-background"
 		>
 			<h1 class="text-xl font-bold text-slate-900 dark:text-white">Admin Panel</h1>
 		</header>

@@ -99,7 +99,7 @@
 <Navbar {isPro} />
 
 <main
-	class="min-h-[calc(100vh-4rem)] bg-background py-16 transition-colors duration-500 md:py-24 dark:bg-[#0B0B0F] dark:text-slate-50"
+	class="min-h-[calc(100vh-4rem)] bg-background py-16 transition-colors duration-500 md:py-24 dark:bg-background dark:text-slate-50"
 >
 	<div class="container mx-auto px-4">
 		<!-- Header -->
@@ -203,7 +203,7 @@
 						class={cn(
 							'flex items-center justify-center gap-2 rounded-full px-8 py-2.5 text-sm font-bold transition-all duration-200',
 							billingCycle === 'yearly'
-								? 'bg-brand text-[#0B0B0F] shadow-[0_0_20px_rgba(255,191,0,0.2)]'
+								? 'bg-brand text-background shadow-[0_0_20px_rgba(255,191,0,0.2)]'
 								: 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
 						)}
 						onclick={() => (billingCycle = 'yearly')}
@@ -311,7 +311,7 @@
 						<div class="absolute top-0 right-0 p-4">
 							<div class="flex flex-col items-end gap-1">
 								<Badge
-									class="border-none bg-brand px-4 py-1.5 text-[10px] font-black text-[#0B0B0F] shadow-lg"
+									class="border-none bg-brand px-4 py-1.5 text-[10px] font-black text-background shadow-lg"
 								>
 									{m.savings_badge({ percent: data.pricing.discountPercent })}
 								</Badge>
@@ -326,7 +326,7 @@
 									class="absolute inset-0 animate-pulse rounded-xl bg-brand/20 blur-lg"
 								></div>
 								<div
-									class="relative flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-[#0B0B0F]"
+									class="relative flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-background"
 								>
 									<Shield class="absolute h-7 w-7 opacity-20" />
 									<Timer class="h-7 w-7" />
@@ -553,7 +553,7 @@
 </main>
 
 <footer
-	class="border-t border-slate-200 bg-slate-50 py-16 transition-colors duration-500 dark:border-slate-900 dark:bg-[#0B0B0F]"
+	class="border-t border-slate-200 bg-slate-50 py-16 transition-colors duration-500 dark:border-slate-900 dark:bg-background"
 >
 	<div class="container mx-auto px-4">
 		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
@@ -593,7 +593,7 @@
 	}
 
 	:global(html.dark) {
-		background-color: #0b0b0f;
+		background-color: var(--background);
 	}
 
 	:global(body) {
@@ -602,7 +602,7 @@
 	}
 
 	:global(.dark body) {
-		background-color: #0b0b0f;
+		background-color: var(--background);
 		color: #f8fafc;
 	}
 </style>
