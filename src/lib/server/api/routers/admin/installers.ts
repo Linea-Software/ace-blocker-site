@@ -3,6 +3,7 @@ import { db } from '$lib/server/db';
 import { aceBlockerInstaller } from '$lib/server/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { uploadInstaller, deleteInstaller, CDNErrorType } from '$lib/server/cdn';
+import { invalidateInstallerCache } from '$lib/server/cache';
 import crypto from 'crypto';
 import { createLogger } from '$lib/server/logger';
 
@@ -72,7 +73,8 @@ export const installersRouter = new Elysia({ prefix: '/installers' })
 				file,
 				version,
 				os as 'windows' | 'linux' | 'macos',
-				architecture as 'x64' | 'arm64'
+				architecture as 'x64' | 'arm64',
+				false
 			);
 
 			if (result.isErr()) {
@@ -116,6 +118,70 @@ export const installersRouter = new Elysia({ prefix: '/installers' })
 					message: t.String()
 				}),
 				403: t.String(),
+				500: t.Object({
+					error: t.Boolean(),
+					message: t.String()
+				})
+			}
+		}
+	)
+	.post(
+		'/set-downloadable',
+		async ({ body, set }) => {
+			// Release lifecycle: `canBeDownloaded = false` withdraws a release
+			// from the "latest" selection (both /releases/latest metadata and
+			// the /download route stop serving it). Engines that already
+			// downloaded the release keep their local files — this is not a
+			// revocation of installed content.
+			const { id, canBeDownloaded } = body;
+
+			if (!id) {
+				set.status = 400;
+				return { error: true, message: 'Missing ID' };
+			}
+
+			const existing = await db.query.aceBlockerInstaller.findFirst({
+				where: eq(aceBlockerInstaller.id, id)
+			});
+			if (!existing) {
+				set.status = 404;
+				return { error: true, message: 'Release not found' };
+			}
+
+			await db
+				.update(aceBlockerInstaller)
+				.set({ canBeDownloaded })
+				.where(eq(aceBlockerInstaller.id, id));
+			await invalidateInstallerCache();
+
+			log.info({ id, canBeDownloaded }, 'Updated installer release downloadability');
+
+			return { success: true, message: 'Release downloadability updated' };
+		},
+		{
+			body: t.Object({
+				id: t.String(),
+				canBeDownloaded: t.Boolean()
+			}),
+			detail: {
+				operationId: 'setInstallerDownloadable',
+				summary: 'Withdraw or restore an installer release from the latest selection',
+				security: [{ APIKeyHeader: [] }]
+			},
+			response: {
+				200: t.Object({
+					success: t.Boolean(),
+					message: t.String()
+				}),
+				400: t.Object({
+					error: t.Boolean(),
+					message: t.String()
+				}),
+				403: t.String(),
+				404: t.Object({
+					error: t.Boolean(),
+					message: t.String()
+				}),
 				500: t.Object({
 					error: t.Boolean(),
 					message: t.String()

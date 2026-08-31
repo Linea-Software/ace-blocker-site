@@ -91,7 +91,7 @@ export const resistanceRouter = new Elysia({ prefix: '/resistance' })
 				return { error: true, message: 'The uploaded file is not a valid zip archive' };
 			}
 
-			const result = await uploadResistanceModeScript(file, version);
+			const result = await uploadResistanceModeScript(file, version, false);
 
 			if (result.isErr()) {
 				const errorType = result.error;
