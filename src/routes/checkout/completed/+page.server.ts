@@ -1,5 +1,8 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('routes:checkout-completed');
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.session || !locals.user) {
@@ -19,7 +22,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			isPro
 		};
 	} catch (error) {
-		console.error('Error checking pro status:', error);
+		log.error({ err: error }, 'Error checking pro status');
 		return {
 			success: false,
 			error: 'Failed to generate access keys. Please try refreshing the page.'

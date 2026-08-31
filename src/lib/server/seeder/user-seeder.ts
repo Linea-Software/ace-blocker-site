@@ -4,9 +4,12 @@ import { user, twoFactor } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { dev } from '$app/environment';
 import { updateProExpiration } from '$lib/server/pro';
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('seeder:user');
 
 export async function seedDatabase() {
-	console.log('[SEEDER] checking for admin user...');
+	log.info('checking for admin user...');
 
 	const adminEmail = process.env.DEFAULT_ADMIN_EMAIL;
 	const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD;
@@ -23,7 +26,7 @@ export async function seedDatabase() {
 					password: adminPassword
 				}
 			});
-			console.log('[SEEDER] Admin created with default .env credentials');
+			log.info('Admin created with default .env credentials');
 			existingAdmin = await db.select().from(user).where(eq(user.email, adminEmail)).limit(1);
 		}
 
@@ -88,7 +91,7 @@ export async function seedDatabase() {
 					headers: enableTwoFactorHeaders
 				});
 
-				console.log('[SEEDER] 2FA properly enabled for admin');
+				log.info('2FA properly enabled for admin');
 			} else if (!adminRecord.twoFactorEnabled) {
 				// two_factor record exists but user flag is out of sync
 				await db
@@ -99,16 +102,16 @@ export async function seedDatabase() {
 
 			// Automatically make admin a pro user
 			await updateProExpiration(adminEmail, new Date('2099-01-01'));
-			console.log('[SEEDER] Admin role, verified status and 2FA ensured.');
+			log.info('Admin role, verified status and 2FA ensured.');
 		}
 	} else {
-		console.warn('[SEEDER] Admin credentials not fully configured in .env');
+		log.warn('Admin credentials not fully configured in .env');
 	}
 
 	// Only seed extra users in dev mode
 	if (!dev) return;
 
-	console.log('[SEEDER] Seeding development users...');
+	log.info('Seeding development users...');
 
 	// Create a dedicated Pro user
 	const proEmail = 'pro@example.com';
@@ -123,7 +126,7 @@ export async function seedDatabase() {
 		});
 		await db.update(user).set({ emailVerified: true }).where(eq(user.email, proEmail));
 		await updateProExpiration(proEmail, new Date('2099-01-01'));
-		console.log('[SEEDER] Created pro user: pro@example.com');
+		log.info('Created pro user: pro@example.com');
 	}
 
 	// Create a bunch of free users
@@ -139,9 +142,9 @@ export async function seedDatabase() {
 				}
 			});
 			await db.update(user).set({ emailVerified: true }).where(eq(user.email, freeEmail));
-			console.log(`[SEEDER] Created free user: ${freeEmail}`);
+			log.info(`Created free user: ${freeEmail}`);
 		}
 	}
 
-	console.log('[SEEDER] Development seeding complete.');
+	log.info('Development seeding complete.');
 }

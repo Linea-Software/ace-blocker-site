@@ -13,17 +13,18 @@ import {
 } from '$lib/utils/locale-currency';
 import { registerProduct, productCount } from '$lib/server/products';
 import { MONTHLY_PRICE_MAP, YEARLY_PRICE_MAP } from '$lib/server/seeder/price-maps';
+import { createLogger } from '$lib/server/logger';
+
+const log = createLogger('seeder:prices');
 
 const BILLING_PERIODS = ['monthly', 'yearly'] as const;
 
 export async function seedPrices() {
-	const log = (msg: string) => console.log(`[PRICE-SEEDER] ${msg}`);
-
 	// Fetch all existing products from Dodo
 	const existing = await dodoPayments.products.list();
 	const existingNames = new Map(existing.items.map((p) => [p.name, p]));
 
-	log(`found ${existing.items.length} existing products`);
+	log.info(`found ${existing.items.length} existing products`);
 
 	for (const period of BILLING_PERIODS) {
 		for (const currency of SUPPORTED_CURRENCIES) {
@@ -32,17 +33,17 @@ export async function seedPrices() {
 			const priceAmount = priceMap[currency];
 
 			if (!priceAmount || priceAmount === 0) {
-				log(`skipping ${name} — no price configured`);
+				log.info(`skipping ${name} — no price configured`);
 				continue;
 			}
 
 			const existingProduct = existingNames.get(name);
 
 			if (existingProduct) {
-				log(`found existing: ${name} (${existingProduct.product_id})`);
+				log.info(`found existing: ${name} (${existingProduct.product_id})`);
 				registerProduct(period, currency, existingProduct.product_id);
 			} else {
-				log(`creating: ${name} at ${priceAmount} ${currency}...`);
+				log.info(`creating: ${name} at ${priceAmount} ${currency}...`);
 				try {
 					const result = await dodoPayments.products.create({
 						name,
@@ -64,14 +65,14 @@ export async function seedPrices() {
 						},
 						tax_category: 'digital_products'
 					});
-					log(`created: ${name} → ${result.product_id}`);
+					log.info(`created: ${name} → ${result.product_id}`);
 					registerProduct(period, currency, result.product_id);
 				} catch (err) {
-					console.error(`[PRICE-SEEDER] failed to create ${name}:`, err);
+					log.error({ err, name }, 'Failed to create product');
 				}
 			}
 		}
 	}
 
-	log(`done — ${productCount()} products registered`);
+	log.info(`done — ${productCount()} products registered`);
 }
