@@ -4,6 +4,7 @@
 	import Navbar from '$lib/components/Navbar.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { invalidateAll } from '$app/navigation';
+	import { apiClient } from '$lib/api-client';
 	import * as m from '$lib/paraglide/messages.js';
 
 	let { data } = $props();
@@ -25,9 +26,11 @@
 		}
 	});
 
-	// Auto-activation trigger
+	// Auto-activation trigger. The API key is requested on demand (kept in
+	// ephemeral JS state only) so it never rides along with page data, and no
+	// key is created for visitors who never activate the desktop app.
 	$effect(() => {
-		if (isSuccess && isPro && activationStatus === 'idle' && data.apiKey) {
+		if (isSuccess && isPro && activationStatus === 'idle' && data.success) {
 			const timer = setTimeout(activateInApp, 1000);
 			return () => clearTimeout(timer);
 		}
@@ -54,10 +57,17 @@
 	async function activateInApp() {
 		activationStatus = 'activating';
 		try {
+			// Request the desktop-app key on demand. It stays in ephemeral JS
+			// state only — never in the page payload or browser history.
+			const { data: keyData, error: keyError } =
+				await apiClient.v1.account['api-key'].create.get();
+			if (keyError) throw new Error((keyError.value as string) || 'Failed to create API key');
+			if (!keyData) throw new Error('Failed to create API key');
+			const apiKey = keyData.apiKey;
+
 			const callbackUrl = encodeURIComponent(
 				`${window.location.origin}${window.location.pathname}?activated=true`
 			);
-			const apiKey = data.apiKey;
 			const localUrl = `https://ace-engine.local/account/api-key?apiKey=${apiKey}&callback=${callbackUrl}`;
 			const protocolUrl = `aceblocker://account/api-key?apiKey=${apiKey}&callback=${callbackUrl}`;
 
