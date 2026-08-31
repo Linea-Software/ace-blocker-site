@@ -244,16 +244,16 @@ source ~/.bashrc
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/aintDatCap/ace-blocker-site.git
+git clone https://github.com/Linea-Software/ace-blocker-site.git
 cd ace-blocker-site
 ```
 
 > [!NOTE]
-> Confirm the correct repository URL — `setup-vps.sh` currently clones from
-> `https://github.com/Linea-Software/ace-blocker-site.git`. If the repo has moved,
-> update whichever of these is wrong so they match. For a **private** repo, prefer a
-> read-only deploy key over a personal access token; the automated script avoids
-> writing any token to disk (no plaintext `~/.git-credentials`).
+> Keep the clone URL above in sync with `REPO_URL` in `scripts/setup-vps.sh`
+> (currently `https://github.com/Linea-Software/ace-blocker-site.git`) — they
+> must match. For a **private** repo, prefer a read-only deploy key over a
+> personal access token; the automated script avoids writing any token to disk
+> (no plaintext `~/.git-credentials`).
 
 ### Initial Setup
 
@@ -676,7 +676,7 @@ Since the project uses Dodo Payments, you must configure the webhook URL in your
 
 1. Log in to Dodo Payments.
 2. Go to **Developer > Webhooks**.
-3. Add a new webhook with the URL: `https://aceblocker.com/api/auth/dodopayments/webhook`
+3. Add a new webhook with the URL: `https://aceblocker.com/api/auth/dodopayments/webhooks`
 4. Copy the **Webhook Secret** and paste it into `.env` as `DODO_PAYMENTS_WEBHOOK_SECRET`.
 
 ---
