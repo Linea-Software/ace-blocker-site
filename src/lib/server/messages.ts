@@ -52,3 +52,16 @@ export function email_otp_subject(locale?: Locale): string {
 		default: return 'Your verification code: {otp}';
 	}
 }
+
+/** Used by Better Auth emailAndPassword.sendResetPassword (subject line). */
+export function email_reset_password_subject(locale?: Locale): string {
+	switch (locale) {
+		case 'de': return 'Setze dein Passwort zurück';
+		case 'es': return 'Restablece tu contraseña';
+		case 'it': return 'Reimposta la tua password';
+		case 'pt': return 'Redefina a sua senha';
+		case 'fr': return 'Réinitialisez votre mot de passe';
+		case 'pt-BR': return 'Redefina sua senha';
+		default: return 'Reset your password';
+	}
+}

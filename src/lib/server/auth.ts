@@ -10,6 +10,7 @@ import {
 	getTwoFactorEmailHtml,
 	getVerificationEmailHtml,
 	getEmailOtpHtml,
+	getResetPasswordEmailHtml,
 	getLocaleForEmail,
 	sendWelcomeEmail,
 	sendPaymentReceiptEmail,
@@ -18,6 +19,7 @@ import {
 	sendPaymentFailedEmail,
 	resend
 } from './email';
+import { handleUserCreatedAfter } from './auth-hooks';
 import { updateProExpiration, clearProExpiration } from './pro';
 import { shouldProcessWebhook } from './webhook-events';
 import * as m from './messages';
@@ -53,24 +55,36 @@ export const auth = betterAuth({
 	},
 	emailAndPassword: {
 		enabled: true,
-		requireEmailVerification: true
+		requireEmailVerification: true,
+		sendResetPassword: async ({ user, url, token }, request) => {
+			const log = createLogger('auth:password-reset');
+			const locale = (user as any).locale ?? 'en';
+
+			try {
+				const result = await resend.emails.send({
+					from: 'noreply@aceblocker.com',
+					to: user.email,
+					subject: m.email_reset_password_subject(locale),
+					html: getResetPasswordEmailHtml(url, locale)
+				});
+
+				if (result.error) {
+					log.error({ err: result.error }, 'Failed to send password reset email');
+				} else {
+					log.info({ messageId: result.data?.id }, 'Password reset email sent');
+				}
+			} catch (err) {
+				log.error({ err }, 'Exception while sending password reset email');
+			}
+		}
 	},
 	databaseHooks: {
 		user: {
 			create: {
-				after: async (user, context) => {
-					// Welcome email for real signups only — the seeder and other
-					// server-side user creation call auth.api.createUser without a
-					// request, so their context is null.
-					if (!context) return;
-					const log = createLogger('auth:welcome-email');
-					const locale = ((user as { locale?: string }).locale ?? 'en') as Locale;
-					try {
-						await sendWelcomeEmail(user.email, locale);
-					} catch (err) {
-						log.error({ err }, 'Failed to send welcome email');
-					}
-				}
+				// Welcome email for real signups only — the seeder and other
+				// server-side user creation call auth.api.createUser without a
+				// request, so their context is null.
+				after: handleUserCreatedAfter
 			}
 		}
 	},
