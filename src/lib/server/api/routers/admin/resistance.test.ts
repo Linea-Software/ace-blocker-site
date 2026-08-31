@@ -205,9 +205,12 @@ describe('admin resistance endpoints', () => {
 		});
 		expect(res.status).toBe(200);
 		expect(uploadResistanceModeScript).toHaveBeenCalledOnce();
+		// Uploads are staged: canBeDownloaded=false until an admin marks the
+		// release downloadable (spec: artifacts gated by canBeDownloaded).
 		expect(uploadResistanceModeScript).toHaveBeenCalledWith(
 			expect.any(File),
-			'2026-09-01'
+			'2026-09-01',
+			false
 		);
 	});
 
