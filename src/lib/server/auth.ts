@@ -33,6 +33,29 @@ export const dodoPayments = new DodoPayments({
 	environment: 'test_mode' // we're still in early dev phase, so we won't risk charging any user
 });
 
+/**
+ * API key extraction for the Better Auth apiKey plugin (release plan Step 2.10).
+ *
+ * The engine authenticates to the site API with either:
+ *   - `x-api-key: <api-key>`   (content-updater / AceServerClient), or
+ *   - `Authorization: Bearer <api-key>` (generated ace_server_api client).
+ *
+ * Better Auth's plugin only reads `x-api-key` by default; this getter keeps
+ * that and additionally accepts the Bearer form so both engine clients can
+ * authorize with the same key. Used together with `enableSessionForAPIKeys`.
+ */
+export function apiKeyGetter(ctx: { headers?: Headers | null }): string | null {
+	const xApiKey = ctx.headers?.get('x-api-key');
+	if (xApiKey) return xApiKey;
+
+	const authorization = ctx.headers?.get('authorization');
+	if (authorization?.startsWith('Bearer ')) {
+		return authorization.slice('Bearer '.length);
+	}
+
+	return null;
+}
+
 export const auth = betterAuth({
 	database: drizzleAdapter(db, {
 		provider: 'pg'
@@ -115,7 +138,12 @@ export const auth = betterAuth({
 	plugins: [
 		admin(),
 		apiKey({
-			enableSessionForAPIKeys: true
+			enableSessionForAPIKeys: true,
+			// Engine compatibility: the content-updater client sends the API key
+			// as `x-api-key`, while the generated ace_server_api client sends
+			// `Authorization: Bearer <key>`. The default plugin getter only
+			// reads x-api-key, so accept both forms.
+			customAPIKeyGetter: apiKeyGetter
 		}),
 		openAPI(),
 		twoFactor({
