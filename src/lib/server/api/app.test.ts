@@ -1,25 +1,50 @@
 import { describe, it, expect, vi } from 'vitest';
 import { app } from './app';
 
-vi.mock('$lib/server/auth', () => {
-	return {
-		dodoPayments: {
-			licenses: {
-				validate: vi.fn().mockImplementation(async ({ license_key }) => {
-					if (license_key === 'valid-key') {
-						return { valid: true };
-					}
-					return { valid: false };
-				})
-			}
+// The real auth module instantiates Better Auth + DodoPayments and reads the
+// database; stub it so these unit tests exercise the current Elysia routing
+// without a live DB or a session cookie.
+vi.mock('$lib/server/auth', () => ({
+	dodoPayments: {
+		licenses: { validate: vi.fn() },
+		subscriptions: { list: vi.fn(), update: vi.fn() }
+	},
+	auth: {
+		handler: () => new Response('Not found', { status: 404 }),
+		api: {
+			getSession: vi.fn().mockResolvedValue(null),
+			listSessions: vi.fn().mockResolvedValue([]),
+			createApiKey: vi.fn().mockResolvedValue({ key: 'test-key' }),
+			listApiKeys: vi.fn().mockResolvedValue({ apiKeys: [] }),
+			deleteApiKey: vi.fn(),
+			revokeSession: vi.fn()
 		}
-	};
-});
+	}
+}));
 
-// Mock environment variables for scripts router
+// Routers import $lib/server/db (via pro.ts) at module load; stub it so the
+// tests don't require DATABASE_URL or a live Postgres.
+vi.mock('$lib/server/db', () => ({
+	db: {
+		query: {
+			user: { findFirst: vi.fn() },
+			session: { findFirst: vi.fn() },
+			backups: { findFirst: vi.fn() }
+		},
+		select: vi.fn(),
+		insert: vi.fn(),
+		update: vi.fn(),
+		delete: vi.fn()
+	}
+}));
+
+// cdn/common.ts throws at import unless every Bunny env var is present.
 vi.mock('$env/dynamic/private', () => ({
 	env: {
-		BUNNY_URL_TOKEN_AUTH_KEY: 'test-secret-key'
+		BUNNY_URL_TOKEN_AUTH_KEY: 'test-url-token-key',
+		BUNNY_STORAGE_ZONE: 'test-zone',
+		BUNNY_CDN_BASE_URL: 'cdn.aceblocker.test',
+		BUNNY_STORAGE_ACCESS_KEY: 'test-access-key'
 	}
 }));
 
@@ -27,34 +52,29 @@ describe('Elysia API', () => {
 	const handle = (path: string, method = 'GET') =>
 		app.handle(new Request(`http://localhost${path}`, { method }));
 
-	it('GET /api/v1/licenses/:key returns validation result', async () => {
-		const res = await handle('/api/v1/licenses/valid-key');
-		expect(res.status).toBe(200);
-		const data = await res.json();
-		expect(data).toEqual({ valid: true });
-
-		const resInvalid = await handle('/api/v1/licenses/invalid-key');
-		expect(resInvalid.status).toBe(200);
-		const dataInvalid = await resInvalid.json();
-		expect(dataInvalid).toEqual({ valid: false });
-	});
-
-	it('GET /api/v1/scripts/resistance-mode returns download url and version for valid license', async () => {
-		const res = await handle('/api/v1/scripts/resistance-mode?licenseKey=valid-key');
-		expect(res.status).toBe(200);
-		const data = await res.json();
-		expect(data.url).toContain('https://cdn.aceblocker.com/premium/resistance-scripts.zip');
-		expect(data.url).toContain('token=');
-		expect(data.version).toBe('0.1.0');
-	});
-
-	it('GET /api/v1/scripts/resistance-mode returns 403 for invalid license', async () => {
-		const res = await handle('/api/v1/scripts/resistance-mode?licenseKey=invalid-key');
-		expect(res.status).toBe(403);
-	});
-
-	it('GET /api/v1/scripts/resistance-mode requires licenseKey', async () => {
+	it('GET /api/v1/scripts/resistance-mode requires an authenticated session', async () => {
 		const res = await handle('/api/v1/scripts/resistance-mode');
-		expect(res.status).toBe(400);
+		expect(res.status).toBe(401);
+	});
+
+	it('GET /api/v1/scripts/tracking returns 500 when no release is published', async () => {
+		const res = await handle('/api/v1/scripts/tracking');
+		expect(res.status).toBe(500);
+	});
+
+	it('POST /api/v1/account/verify-pro requires an authenticated session', async () => {
+		const res = await handle('/api/v1/account/verify-pro', 'POST');
+		expect(res.status).toBe(401);
+	});
+
+	it('POST /api/v1/account/revoke-session requires an authenticated session', async () => {
+		const res = await app.handle(
+			new Request('http://localhost/api/v1/account/revoke-session', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ sessionId: 'test-session-id' })
+			})
+		);
+		expect(res.status).toBe(401);
 	});
 });
