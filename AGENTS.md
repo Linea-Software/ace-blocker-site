@@ -152,6 +152,9 @@ Use `bun run <script>` for these tasks:
 - `check`: Runs Svelte-check for type safety and linting.
 - `test`: Runs unit and E2E tests.
 - `format`: Formats code with Prettier.
+- `verify-screenshots`: Captures before/after full-page screenshots (light +
+  dark) of the key pages for pixel-level visual verification of UI changes
+  (requires the dev server + Docker DB; see the script header for usage).
 
 ## Logging (Pino)
 
