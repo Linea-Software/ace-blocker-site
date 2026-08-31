@@ -2,7 +2,11 @@ import { Elysia, t } from 'elysia';
 import { isUserPro } from '$lib/server/pro';
 import { auth } from '$lib/server/auth';
 import { env } from '$env/dynamic/private';
-import { getResistanceModeScriptsURL, getTrackingScriptsURL } from '$lib/server/cdn';
+import {
+	getResistanceModeScriptsURL,
+	getTrackingScriptsURL,
+	CDNErrorType
+} from '$lib/server/cdn';
 import {
 	incrementResistanceScriptDownloadCount,
 	incrementTrackingScriptDownloadCount
@@ -73,6 +77,11 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 			const result = getResistanceModeScriptsURL();
 
 			if (result.isErr()) {
+				// No release is currently marked downloadable (never published
+				// or revoked) — this is a "not found", not a server failure.
+				if (result.error === CDNErrorType.NoReleaseAvailable) {
+					return status(404, 'No resistance scripts release available');
+				}
 				return status(500, 'Internal server error');
 			}
 
