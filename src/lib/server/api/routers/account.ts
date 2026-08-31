@@ -467,6 +467,74 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 			}
 		}
 	)
+	// ── Verify Pro ──────────────────────────────────────────────────────────
+	// Fail-safe post-checkout verification: force a live DodoPayments check
+	// (bypassing both cache layers), sync pro status, and report the result.
+	// Used by /checkout/completed to pick up a subscription whose webhook has
+	// not arrived yet.
+	.post(
+		'/verify-pro',
+		async ({ user, status }) => {
+			if (!user) {
+				return status(401, 'Unauthorized');
+			}
+
+			try {
+				const userRow = await db.query.user.findFirst({
+					where: (u, { eq }) => eq(u.id, user.id),
+					columns: { email: true, dodoCustomerId: true }
+				});
+
+				if (!userRow?.dodoCustomerId) {
+					return { isActive: false };
+				}
+
+				const subscriptionsPage = await dodoPayments.subscriptions.list({
+					customer_id: userRow.dodoCustomerId,
+					status: 'active'
+				});
+
+				const activeSubscriptions = subscriptionsPage.items ?? [];
+
+				if (activeSubscriptions.length === 0) {
+					// No active subscription — clear any stale cached pro status
+					await clearProExpiration(userRow.email);
+					return { isActive: false };
+				}
+
+				const activeSubscription = activeSubscriptions[0];
+				if (activeSubscription.next_billing_date) {
+					await updateProExpiration(
+						userRow.email,
+						new Date(activeSubscription.next_billing_date)
+					);
+				} else {
+					// Active but expiry unknown — at least make the next read
+					// re-check instead of serving a stale cache entry.
+					invalidateProCache(user.id);
+				}
+
+				return { isActive: true };
+			} catch (err) {
+				log.error({ err, userId: user.id }, 'Failed to verify pro status');
+				return status(500, 'Failed to verify pro status');
+			}
+		},
+		{
+			detail: {
+				operationId: 'verifyProStatus',
+				summary: 'Force a live DodoPayments check of the current user pro status',
+				security: [{ APIKeyHeader: [] }]
+			},
+			response: {
+				200: t.Object({
+					isActive: t.Boolean()
+				}),
+				401: t.String(),
+				500: t.String()
+			}
+		}
+	)
 	// ── Revoke Session ───────────────────────────────────────────────────────
 	// The client identifies a session by its (non-secret) session id. The raw
 	// session token is resolved server-side and never leaves the server, so it

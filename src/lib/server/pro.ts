@@ -122,7 +122,9 @@ export async function updateProExpiration(email: string, nextBillingDate: Date):
 						expiration: proData.expiration
 					}
 				});
-			invalidateProCache(email);
+			// The L1 cache is keyed by user id (see getProStatus/isUserPro),
+			// not by email — busting it with the email never invalidated it.
+			invalidateProCache(userRow.id);
 			log.info(
 				{ email, nextBillingDate: nextBillingDate.toISOString() },
 				'Pro status activated via webhook'
@@ -145,7 +147,8 @@ export async function clearProExpiration(email: string): Promise<void> {
 				.update(proStatus)
 				.set({ cachedAt: new Date(), expiration: null })
 				.where(eq(proStatus.userId, userRow.id));
-			invalidateProCache(email);
+			// L1 cache is keyed by user id, not email (see getProStatus/isUserPro).
+			invalidateProCache(userRow.id);
 			log.info({ email }, 'Pro status revoked via webhook');
 		}
 	} catch (e) {

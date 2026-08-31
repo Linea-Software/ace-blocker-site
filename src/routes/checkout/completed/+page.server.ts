@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 		// Check current pro status
 		const { isUserPro } = await import('$lib/server/pro');
-		const isPro = await isUserPro(locals.user.email);
+		const isPro = await isUserPro(locals.user.id);
 
 		return {
 			success: true,
