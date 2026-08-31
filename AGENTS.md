@@ -100,7 +100,8 @@ This is the **Ace Blocker** marketing and subscription website — a full-stack 
 ## Database Patterns
 
 - **Schema Separation**:
-    - `auth-schema.ts`: Contains core tables for Better Auth (user, session, account, verification, apikey, twoFactor). Avoid adding application-specific fields here.
+    - `auth-schema.ts`: Contains core tables for Better Auth (user, session, account, verification, apikey, twoFactor). Avoid adding application-specific fields here. This file is regenerated with `bun run gen:auth-schema`; **do not hand-edit it** except to keep the hand-added `user.locale` column (declared in `src/lib/server/auth.ts` via `additionalFields`).
+    - **Better Auth 1.7+**: requires `account.issuer` (e.g. `local:credential` for local accounts). After a Better Auth upgrade, re-run `bun run gen:auth-schema`, then `bun run db:generate` and review the migration before `bun run db:migrate` (the generated migration for `issuer` needs a backfill for existing rows).
     - `schema.ts`: Contains application-specific tables and extends `user` via 1:1 or 1:N relations.
     - `artifacts-schema.ts`: Contains build artifact/release tables for distributing ace-engine binaries and related assets.
 - **User Extensions (1:1)**:

@@ -8,6 +8,13 @@
       "when": 1785673752651,
       "tag": "0000_kind_smiling_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788165092454,
+      "tag": "0001_sticky_shen",
+      "breakpoints": true
     }
   ]
 }
