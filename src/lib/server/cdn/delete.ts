@@ -25,7 +25,11 @@ import { createLogger } from '$lib/server/logger';
 
 const log = createLogger('cdn:delete');
 
-async function deleteFileFromBunnyCDN(endpointUrl: URL): Promise<Result<void, CDNErrorType>> {
+/** Deletes a single object from BunnyCDN storage. Exported so the upload
+ * path can clean up an orphaned object when its DB insert fails. */
+export async function deleteFileFromBunnyCDN(
+	endpointUrl: URL
+): Promise<Result<void, CDNErrorType>> {
 	try {
 		const response = await fetch(endpointUrl, {
 			method: 'DELETE',

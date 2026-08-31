@@ -26,11 +26,39 @@ import {
 	resistanceModeScriptBasePath,
 	resistanceModeScriptsFileName,
 	installersUploadBase,
-	getArrayBufferChecksum
+	getArrayBufferChecksum,
+	isValidArtifactFile,
+	isValidArtifactVersion
 } from './common';
+import { deleteFileFromBunnyCDN } from './delete';
 import { createLogger } from '$lib/server/logger';
 
 const log = createLogger('cdn:upload');
+
+/**
+ * Validates a (file, version) pair before any CDN or DB write. Returns a
+ * human-readable reason when invalid.
+ */
+async function validateArtifact(
+	file: File,
+	version: string,
+	label: string,
+	options: { zip: boolean }
+): Promise<string | null> {
+	if (!isValidArtifactVersion(version)) {
+		return `Invalid ${label} version '${version}': use 1-64 URL-safe characters ([A-Za-z0-9._-], no slashes or traversal)`;
+	}
+	if (file.size <= 0) {
+		return `The ${label} file is empty`;
+	}
+	if (file.size > 100 * 1024 * 1024) {
+		return `The ${label} file exceeds the 100 MB upload limit`;
+	}
+	if (!(await isValidArtifactFile(file, options))) {
+		return `The ${label} file is not a valid ${options.zip ? 'zip archive' : 'file type'}`;
+	}
+	return null;
+}
 
 async function uploadFileToBunnyCDN(
 	file: File,
@@ -74,6 +102,14 @@ export async function uploadTrackingScripts(
 	version: string,
 	canBeDownloaded: boolean = true
 ): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
+	const validationError = await validateArtifact(file, version, 'tracking scripts', {
+		zip: true
+	});
+	if (validationError) {
+		log.warn({ version }, `Rejected tracking scripts upload: ${validationError}`);
+		return err(CDNErrorType.InvalidArtifact);
+	}
+
 	const endpointUrl = new URL(`${version}/${trackingScriptsFileName}`, trackingScriptsUploadBase);
 
 	const uploadResult = await uploadFileToBunnyCDN(file, endpointUrl);
@@ -84,16 +120,22 @@ export async function uploadTrackingScripts(
 	const { hash } = uploadResult._unsafeUnwrap();
 	const downloadUrl = new URL(endpointUrl, trackingScriptsBasePath).toString();
 
-	await db.insert(trackingScripts).values({
-		id: crypto.randomUUID(),
-		fileName: file.name,
-		version,
-		downloadUrl,
-		sha256: hash,
-		size: file.size,
-		canBeDownloaded: canBeDownloaded,
-		downloadCount: 0
-	});
+	try {
+		await db.insert(trackingScripts).values({
+			id: crypto.randomUUID(),
+			fileName: file.name,
+			version,
+			downloadUrl,
+			sha256: hash,
+			size: file.size,
+			canBeDownloaded: canBeDownloaded,
+			downloadCount: 0
+		});
+	} catch (error) {
+		log.error({ err: error, version }, 'DB insert failed after CDN upload; cleaning up object');
+		await deleteFileFromBunnyCDN(endpointUrl);
+		return err(CDNErrorType.UploadFailed);
+	}
 
 	await invalidateTrackingCache();
 
@@ -107,6 +149,18 @@ export async function uploadSitePack(
 	requiresProSubscription: boolean,
 	canBeDownloaded: boolean = true
 ): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
+	// Site pack ids become CDN object names — same path-safety rules as
+	// versions (id is a generated uuid in practice; validate anyway).
+	if (!isValidArtifactVersion(id)) {
+		log.warn({ id }, `Rejected site pack upload: unsafe id`);
+		return err(CDNErrorType.InvalidArtifact);
+	}
+	const validationError = await validateArtifact(file, name, 'site pack', { zip: true });
+	if (validationError) {
+		log.warn({ id }, `Rejected site pack upload: ${validationError}`);
+		return err(CDNErrorType.InvalidArtifact);
+	}
+
 	const listFileName = `${id}.zip`;
 	const endpointUrl = new URL(`${listFileName}`, sitePacksUploadBase);
 
@@ -118,31 +172,37 @@ export async function uploadSitePack(
 	const { hash } = uploadResult._unsafeUnwrap();
 	const downloadUrl = new URL(endpointUrl, sitePacksBasePath).toString();
 
-	await db
-		.insert(sitePack)
-		.values({
-			id: id,
-			name: name,
-			fileName: listFileName,
-			downloadUrl: downloadUrl,
-			sha256: hash,
-			size: file.size,
-			requiresProSubscription: requiresProSubscription,
-			canBeDownloaded: canBeDownloaded,
-			downloadCount: 0
-		})
-		.onConflictDoUpdate({
-			target: sitePack.id,
-			set: {
+	try {
+		await db
+			.insert(sitePack)
+			.values({
+				id: id,
 				name: name,
 				fileName: listFileName,
 				downloadUrl: downloadUrl,
 				sha256: hash,
 				size: file.size,
 				requiresProSubscription: requiresProSubscription,
-				updatedAt: sql`CURRENT_TIMESTAMP`
-			}
-		});
+				canBeDownloaded: canBeDownloaded,
+				downloadCount: 0
+			})
+			.onConflictDoUpdate({
+				target: sitePack.id,
+				set: {
+					name: name,
+					fileName: listFileName,
+					downloadUrl: downloadUrl,
+					sha256: hash,
+					size: file.size,
+					requiresProSubscription: requiresProSubscription,
+					updatedAt: sql`CURRENT_TIMESTAMP`
+				}
+			});
+	} catch (error) {
+		log.error({ err: error, id }, 'DB write failed after CDN upload; cleaning up object');
+		await deleteFileFromBunnyCDN(endpointUrl);
+		return err(CDNErrorType.UploadFailed);
+	}
 
 	await invalidateSitePacksCache();
 
@@ -154,6 +214,14 @@ export async function uploadResistanceModeScript(
 	version: string,
 	canBeDownloaded: boolean = true
 ): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
+	const validationError = await validateArtifact(file, version, 'resistance scripts', {
+		zip: true
+	});
+	if (validationError) {
+		log.warn({ version }, `Rejected resistance scripts upload: ${validationError}`);
+		return err(CDNErrorType.InvalidArtifact);
+	}
+
 	const endpointUrl = new URL(
 		`${version}/${resistanceModeScriptsFileName}`,
 		resistanceModeScriptsUploadBase
@@ -167,16 +235,27 @@ export async function uploadResistanceModeScript(
 	const { hash } = uploadResult._unsafeUnwrap();
 	const downloadUrl = new URL(endpointUrl, resistanceModeScriptBasePath).toString();
 
-	await db.insert(resistanceModeScripts).values({
-		id: crypto.randomUUID(),
-		fileName: resistanceModeScriptsFileName,
-		version,
-		downloadUrl,
-		sha256: hash,
-		size: file.size,
-		canBeDownloaded: canBeDownloaded,
-		downloadCount: 0
-	});
+	try {
+		await db.insert(resistanceModeScripts).values({
+			id: crypto.randomUUID(),
+			fileName: resistanceModeScriptsFileName,
+			version,
+			downloadUrl,
+			sha256: hash,
+			size: file.size,
+			canBeDownloaded: canBeDownloaded,
+			downloadCount: 0
+		});
+	} catch (error) {
+		// The CDN object is already stored — remove it so a failed DB insert
+		// never leaves an inconsistent database/CDN state behind.
+		log.error(
+			{ err: error, version },
+			'DB insert failed after CDN upload; cleaning up object'
+		);
+		await deleteFileFromBunnyCDN(endpointUrl);
+		return err(CDNErrorType.UploadFailed);
+	}
 
 	await invalidateResistanceCache();
 
@@ -190,6 +269,12 @@ export async function uploadInstaller(
 	architecture: 'x64' | 'arm64',
 	canBeDownloaded: boolean = true
 ): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
+	const validationError = await validateArtifact(file, version, 'installer', { zip: false });
+	if (validationError) {
+		log.warn({ version }, `Rejected installer upload: ${validationError}`);
+		return err(CDNErrorType.InvalidArtifact);
+	}
+
 	const fileExt = file.name.split('.').pop();
 	const installerFileName = `Ace Blocker Installer.${fileExt}`;
 	const endpointUrl = new URL(
@@ -205,18 +290,24 @@ export async function uploadInstaller(
 	const { hash } = uploadResult._unsafeUnwrap();
 	const downloadUrl = new URL(endpointUrl, installersUploadBase).toString();
 
-	await db.insert(aceBlockerInstaller).values({
-		id: crypto.randomUUID(),
-		fileName: installerFileName,
-		version,
-		os: os,
-		architecture: architecture,
-		downloadUrl,
-		sha256: hash,
-		size: file.size,
-		canBeDownloaded: canBeDownloaded,
-		downloadCount: 0
-	});
+	try {
+		await db.insert(aceBlockerInstaller).values({
+			id: crypto.randomUUID(),
+			fileName: installerFileName,
+			version,
+			os: os,
+			architecture: architecture,
+			downloadUrl,
+			sha256: hash,
+			size: file.size,
+			canBeDownloaded: canBeDownloaded,
+			downloadCount: 0
+		});
+	} catch (error) {
+		log.error({ err: error, version }, 'DB insert failed after CDN upload; cleaning up object');
+		await deleteFileFromBunnyCDN(endpointUrl);
+		return err(CDNErrorType.UploadFailed);
+	}
 
 	await invalidateInstallerCache();
 

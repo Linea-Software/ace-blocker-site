@@ -5,8 +5,12 @@ import { desc, eq, sql } from 'drizzle-orm';
 import {
 	uploadResistanceModeScript,
 	deleteResistanceModeScript,
-	CDNErrorType
+	CDNErrorType,
+	isValidArtifactFile,
+	isValidArtifactVersion,
+	MAX_ARTIFACT_SIZE
 } from '$lib/server/cdn';
+import { invalidateResistanceCache } from '$lib/server/cache';
 import crypto from 'crypto';
 import { createLogger } from '$lib/server/logger';
 
@@ -51,12 +55,40 @@ export const resistanceRouter = new Elysia({ prefix: '/resistance' })
 		async ({ body, set }) => {
 			const { file, version } = body;
 
-			if (!file || !file.size || !version) {
+			// Application-level validation (nginx limits alone are not a
+			// contract): size cap, zip file type, and a safe version string.
+			// `version` becomes a CDN object path segment and a DB value —
+			// traversal/unsafe characters are rejected outright.
+			if (!file || !version) {
 				set.status = 400;
 				return {
 					error: true,
 					message: 'Missing required configuration for deploy (File or Version)'
 				};
+			}
+			if (!isValidArtifactVersion(version)) {
+				set.status = 400;
+				return {
+					error: true,
+					message:
+						`Invalid version '${version}': use 1-64 URL-safe characters ` +
+						'([A-Za-z0-9._-], no slashes or traversal)'
+				};
+			}
+			if (file.size <= 0) {
+				set.status = 400;
+				return { error: true, message: 'The uploaded file is empty' };
+			}
+			if (file.size > MAX_ARTIFACT_SIZE) {
+				set.status = 400;
+				return {
+					error: true,
+					message: `The uploaded file exceeds the ${MAX_ARTIFACT_SIZE / (1024 * 1024)} MB upload limit`
+				};
+			}
+			if (!(await isValidArtifactFile(file, { zip: true }))) {
+				set.status = 400;
+				return { error: true, message: 'The uploaded file is not a valid zip archive' };
 			}
 
 			const result = await uploadResistanceModeScript(file, version);
@@ -71,6 +103,9 @@ export const resistanceRouter = new Elysia({ prefix: '/resistance' })
 				} else if (errorType === CDNErrorType.NetworkFailure) {
 					message = 'Network failure during upload';
 					set.status = 500;
+				} else if (errorType === CDNErrorType.InvalidArtifact) {
+					message = 'Artifact rejected: invalid version or file';
+					set.status = 400;
 				} else {
 					set.status = 500;
 				}
@@ -100,6 +135,71 @@ export const resistanceRouter = new Elysia({ prefix: '/resistance' })
 					message: t.String()
 				}),
 				403: t.String(),
+				500: t.Object({
+					error: t.Boolean(),
+					message: t.String()
+				})
+			}
+		}
+	)
+	.post(
+		'/set-downloadable',
+		async ({ body, set }) => {
+			// Release lifecycle: `canBeDownloaded = false` withdraws a release
+			// from the "latest" selection (both /releases/latest metadata and
+			// the signed download URL stop serving it). Engines that already
+			// downloaded the release keep their local files — this is not a
+			// revocation of installed content. Old releases stay downloadable
+			// until an explicit retention policy decides otherwise.
+			const { id, canBeDownloaded } = body;
+
+			if (!id) {
+				set.status = 400;
+				return { error: true, message: 'Missing ID' };
+			}
+
+			const existing = await db.query.resistanceModeScripts.findFirst({
+				where: eq(resistanceModeScripts.id, id)
+			});
+			if (!existing) {
+				set.status = 404;
+				return { error: true, message: 'Release not found' };
+			}
+
+			await db
+				.update(resistanceModeScripts)
+				.set({ canBeDownloaded })
+				.where(eq(resistanceModeScripts.id, id));
+			await invalidateResistanceCache();
+
+			log.info({ id, canBeDownloaded }, 'Updated resistance release downloadability');
+
+			return { success: true, message: 'Release downloadability updated' };
+		},
+		{
+			body: t.Object({
+				id: t.String(),
+				canBeDownloaded: t.Boolean()
+			}),
+			detail: {
+				operationId: 'setResistanceScriptDownloadable',
+				summary: 'Withdraw or restore a resistance release from the latest selection',
+				security: [{ APIKeyHeader: [] }]
+			},
+			response: {
+				200: t.Object({
+					success: t.Boolean(),
+					message: t.String()
+				}),
+				400: t.Object({
+					error: t.Boolean(),
+					message: t.String()
+				}),
+				403: t.String(),
+				404: t.Object({
+					error: t.Boolean(),
+					message: t.String()
+				}),
 				500: t.Object({
 					error: t.Boolean(),
 					message: t.String()

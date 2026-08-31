@@ -18,7 +18,50 @@ export enum CDNErrorType {
 	NoReleaseAvailable,
 	UploadFailed,
 	NetworkFailure,
-	DeleteFailed
+	DeleteFailed,
+	InvalidArtifact
+}
+
+/** Maximum artifact upload size in bytes (100 MB). */
+export const MAX_ARTIFACT_SIZE = 100 * 1024 * 1024;
+
+/**
+ * Version identifiers become CDN object path segments and are stored in the
+ * DB. Only conservative, URL-safe identifiers are accepted: no slashes, no
+ * backslashes, no traversal, no spaces or control characters.
+ */
+export const VERSION_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+
+export function isValidArtifactVersion(version: string): boolean {
+	return VERSION_PATTERN.test(version);
+}
+
+/** ZIP magic bytes: PK\x03\x04 (also matches empty zips — size is checked separately). */
+const ZIP_MAGIC = [0x50, 0x4b, 0x03, 0x04];
+
+/**
+ * Validates an uploaded artifact file: non-empty, within the size cap, and
+ * (for zip uploads) carrying the ZIP magic bytes.
+ */
+export async function isValidArtifactFile(
+	file: File,
+	options: { zip: boolean }
+): Promise<boolean> {
+	if (!file || file.size <= 0) return false;
+	if (file.size > MAX_ARTIFACT_SIZE) return false;
+	if (!options.zip) return true;
+
+	// Read the first bytes without loading the whole file into memory.
+	try {
+		const head = await file.slice(0, 4).arrayBuffer();
+		const bytes = new Uint8Array(head);
+		return (
+			bytes.length === ZIP_MAGIC.length &&
+			ZIP_MAGIC.every((value, index) => bytes[index] === value)
+		);
+	} catch {
+		return false;
+	}
 }
 
 if (!env.BUNNY_URL_TOKEN_AUTH_KEY) {
