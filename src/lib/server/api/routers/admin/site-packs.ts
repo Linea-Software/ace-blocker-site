@@ -65,11 +65,16 @@ export const sitePacksRouter = new Elysia({ prefix: '/site-packs' })
 				let message = 'Internal server failure during binary deploy';
 
 				if (errorType === CDNErrorType.UploadFailed) {
-					message = 'BunnyCDN deployment failed.';
+					message = 'Storage deploy failed at CDN network border';
 					set.status = 500;
 				} else if (errorType === CDNErrorType.NetworkFailure) {
 					message = 'Network failure during upload';
 					set.status = 500;
+				} else if (errorType === CDNErrorType.InvalidArtifact) {
+					// Client error: bad id, name, or file — never a 500.
+					log.warn({ errorType, id, name }, 'Site pack upload rejected');
+					message = 'Artifact rejected: invalid site pack id, name, or file';
+					set.status = 400;
 				} else {
 					set.status = 500;
 				}

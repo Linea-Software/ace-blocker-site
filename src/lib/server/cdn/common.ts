@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
-import { isProduction } from '$lib/server/env';
+import { isProduction } from '$lib/env';
 import { createLogger } from '$lib/server/logger';
 
 const log = createLogger('cdn');
@@ -34,6 +34,20 @@ export const VERSION_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 
 export function isValidArtifactVersion(version: string): boolean {
 	return VERSION_PATTERN.test(version);
+}
+
+/**
+ * Loose validation for human-readable artifact display names. Names never
+ * become CDN path segments, so only a length cap and a control-character ban
+ * apply — spaces, unicode, and punctuation are all fine.
+ */
+export function isValidArtifactName(name: string): boolean {
+	return (
+		typeof name === 'string' &&
+		name.length > 0 &&
+		name.length <= 200 &&
+		!/[\u0000-\u001F\u007F]/.test(name)
+	);
 }
 
 /** ZIP magic bytes: PK\x03\x04 (also matches empty zips — size is checked separately). */
@@ -86,7 +100,9 @@ const securityKey = env.BUNNY_URL_TOKEN_AUTH_KEY;
 
 // In production, files are served from the root. In dev, use /dev/ prefix.
 // Trailing slash is required so that new URL(relative, base) appends rather than replaces the last segment.
-const storageZoneBase = new URL(`https://${env.BUNNY_CDN_BASE_URL}/${isProduction ? '' : 'dev/'}`);
+const storageZoneBase = new URL(
+	`https://${env.BUNNY_CDN_BASE_URL}/${isProduction() ? '' : 'dev/'}`
+);
 
 export const sitePacksBasePath = new URL(CDNObjectPath.SitePacks + '/', storageZoneBase);
 export const resistanceModeScriptBasePath = new URL(
@@ -101,7 +117,7 @@ export const installersBasePath = new URL(CDNObjectPath.Installer + '/', storage
 
 // === Upload base paths === //
 const bunnyUploadBase = new URL(
-	`https://storage.bunnycdn.com/${env.BUNNY_STORAGE_ZONE}/${isProduction ? '' : 'dev/'}`
+	`https://storage.bunnycdn.com/${env.BUNNY_STORAGE_ZONE}/${isProduction() ? '' : 'dev/'}`
 );
 
 log.info({ url: bunnyUploadBase.toString() }, 'Bunny upload base URL configured');

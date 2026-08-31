@@ -28,12 +28,35 @@ import {
 	installersUploadBase,
 	getArrayBufferChecksum,
 	isValidArtifactFile,
-	isValidArtifactVersion
+	isValidArtifactName,
+	isValidArtifactVersion,
+	MAX_ARTIFACT_SIZE
 } from './common';
 import { deleteFileFromBunnyCDN } from './delete';
 import { createLogger } from '$lib/server/logger';
 
 const log = createLogger('cdn:upload');
+
+/**
+ * Validates an uploaded artifact file (size cap + type check). Returns a
+ * human-readable reason when invalid.
+ */
+async function validateArtifactFile(
+	file: File,
+	label: string,
+	options: { zip: boolean }
+): Promise<string | null> {
+	if (file.size <= 0) {
+		return `The ${label} file is empty`;
+	}
+	if (file.size > MAX_ARTIFACT_SIZE) {
+		return `The ${label} file exceeds the 100 MB upload limit`;
+	}
+	if (!(await isValidArtifactFile(file, options))) {
+		return `The ${label} file is not a valid ${options.zip ? 'zip archive' : 'file type'}`;
+	}
+	return null;
+}
 
 /**
  * Validates a (file, version) pair before any CDN or DB write. Returns a
@@ -48,16 +71,7 @@ async function validateArtifact(
 	if (!isValidArtifactVersion(version)) {
 		return `Invalid ${label} version '${version}': use 1-64 URL-safe characters ([A-Za-z0-9._-], no slashes or traversal)`;
 	}
-	if (file.size <= 0) {
-		return `The ${label} file is empty`;
-	}
-	if (file.size > 100 * 1024 * 1024) {
-		return `The ${label} file exceeds the 100 MB upload limit`;
-	}
-	if (!(await isValidArtifactFile(file, options))) {
-		return `The ${label} file is not a valid ${options.zip ? 'zip archive' : 'file type'}`;
-	}
-	return null;
+	return validateArtifactFile(file, label, options);
 }
 
 async function uploadFileToBunnyCDN(
@@ -155,7 +169,14 @@ export async function uploadSitePack(
 		log.warn({ id }, `Rejected site pack upload: unsafe id`);
 		return err(CDNErrorType.InvalidArtifact);
 	}
-	const validationError = await validateArtifact(file, name, 'site pack', { zip: true });
+	// The name is a human-readable display value (spaces and punctuation are
+	// expected, e.g. "Adult Content Pack"); it never becomes a CDN path
+	// segment, so only a loose guard applies.
+	if (!isValidArtifactName(name)) {
+		log.warn({ id, name }, 'Rejected site pack upload: invalid name');
+		return err(CDNErrorType.InvalidArtifact);
+	}
+	const validationError = await validateArtifactFile(file, 'site pack', { zip: true });
 	if (validationError) {
 		log.warn({ id }, `Rejected site pack upload: ${validationError}`);
 		return err(CDNErrorType.InvalidArtifact);
