@@ -132,6 +132,7 @@ Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })
 
 ## Nomenclature & Design Patterns
 
+- **Design tokens & UI consistency**: the token system lives in `src/routes/layout.css` (Tailwind v4 `@theme`). Audit results, the de-facto palette, and the pending consolidation decisions are in [`docs/design-tokens.md`](docs/design-tokens.md). Do not change color values or migrate hardcoded `amber-*`/hex usages to tokens without founder approval + visual verification.
 - **Svelte Components**: All `.svelte` files MUST use `UpperCamelCase` naming convention (e.g., `Button.svelte`, `UserCard.svelte`).
 - **Page-specific components**: These MUST reside in a `./_components` folder within the route directory OR be prefixed with an underscore (e.g., `_Component.svelte`) to differentiate them from routes.
 - `/messages/`: Localization message files for Paraglide. During development, always prioritize English (`en`). Only translate when explicitly requested.
