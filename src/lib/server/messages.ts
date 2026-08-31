@@ -5,7 +5,6 @@
  * (`auth generate`) can resolve this module without SvelteKit's alias.
  *
  * For email body/footer/button content, use Paraglide via email.ts instead.
- * The old full system is preserved at `./messages.deprecated.ts`.
  */
 
 export type Locale = 'en' | 'de' | 'es' | 'it' | 'pt' | 'fr' | 'pt-BR';
