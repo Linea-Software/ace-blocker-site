@@ -273,20 +273,20 @@
 		}
 	}
 
-	async function handleRevokeSession(token: string) {
-		revokingSessionId = token;
+	async function handleRevokeSession(sessionId: string) {
+		revokingSessionId = sessionId;
 		sessionRevokeError = null;
 		try {
-			const res = await fetch('/api/auth/revoke-session', {
+			const res = await fetch('/api/v1/account/revoke-session', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ token }),
+				body: JSON.stringify({ sessionId }),
 				credentials: 'include'
 			});
 
 			if (!res.ok) throw new Error('Failed to revoke');
 
-			localSessions = localSessions.filter((s) => s.token !== token);
+			localSessions = localSessions.filter((s) => s.id !== sessionId);
 			toast.success(m.account_session_revoked());
 		} catch (err: any) {
 			sessionRevokeError = m.account_session_revoke_error();
@@ -602,10 +602,10 @@
 								<Button
 									variant="ghost"
 									size="sm"
-									disabled={s.isCurrent || revokingSessionId === s.token}
-									onclick={() => handleRevokeSession(s.token)}
+									disabled={s.isCurrent || revokingSessionId === s.id}
+									onclick={() => handleRevokeSession(s.id)}
 								>
-									{#if revokingSessionId === s.token}
+									{#if revokingSessionId === s.id}
 										<Loader2 class="h-4 w-4 animate-spin" />
 									{:else}
 										<X class="mr-1 h-4 w-4" />

@@ -17,11 +17,6 @@ export const load: PageServerLoad = async ({ request }) => {
 
 	const user = authSession.user;
 
-	// Load active sessions
-	const sessions = await auth.api.listSessions({
-		headers: request.headers
-	});
-
 	// Load pro status
 	const proStatus = await getProStatus(user.id);
 
@@ -63,7 +58,6 @@ export const load: PageServerLoad = async ({ request }) => {
 			createdAt: s.createdAt.toISOString(),
 			ipAddress: s.ipAddress ?? null,
 			userAgent: s.userAgent ?? null,
-			token: s.token,
 			isCurrent: s.token === authSession.session?.token
 		})),
 		isPro: proStatus.isPro,

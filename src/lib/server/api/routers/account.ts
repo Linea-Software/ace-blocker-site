@@ -466,4 +466,57 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				500: t.String()
 			}
 		}
+	)
+	// ── Revoke Session ───────────────────────────────────────────────────────
+	// The client identifies a session by its (non-secret) session id. The raw
+	// session token is resolved server-side and never leaves the server, so it
+	// cannot end up in page data, logs, or the browser devtools.
+	.post(
+		'/revoke-session',
+		async ({ user, request, body, status }) => {
+			if (!user) {
+				return status(401, 'Unauthorized');
+			}
+
+			try {
+				const targetSession = await db.query.session.findFirst({
+					where: (s, { eq }) => eq(s.id, body.sessionId),
+					columns: { userId: true, token: true }
+				});
+
+				if (!targetSession || targetSession.userId !== user.id) {
+					return status(404, 'Session not found');
+				}
+
+				await auth.api.revokeSession({
+					headers: request.headers,
+					body: { token: targetSession.token }
+				});
+
+				log.info({ userId: user.id, sessionId: body.sessionId }, 'Session revoked');
+
+				return { success: true };
+			} catch (err) {
+				log.error({ err, userId: user.id }, 'Failed to revoke session');
+				return status(500, 'Failed to revoke session');
+			}
+		},
+		{
+			body: t.Object({
+				sessionId: t.String()
+			}),
+			detail: {
+				operationId: 'revokeSession',
+				summary: 'Revoke one of the current user sessions',
+				security: [{ APIKeyHeader: [] }]
+			},
+			response: {
+				200: t.Object({
+					success: t.Boolean()
+				}),
+				401: t.String(),
+				404: t.String(),
+				500: t.String()
+			}
+		}
 	);
