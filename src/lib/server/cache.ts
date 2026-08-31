@@ -12,28 +12,53 @@ const log = createLogger('cache');
 
 // In-memory cache for latest artifacts (no need for LRU since we only store one of each)
 let latestInstaller: typeof aceBlockerInstaller.$inferSelect | null = null;
+// Latest downloadable installer per (os, architecture) target — the download
+// route picks the newest row for the requested platform instead of whatever
+// was uploaded last.
+let latestInstallersByTarget: Map<string, typeof aceBlockerInstaller.$inferSelect> = new Map();
 let latestResistanceScript: typeof resistanceModeScripts.$inferSelect | null = null;
 let latestTrackingScript: typeof trackingScripts.$inferSelect | null = null;
 let latestSitePacks: Map<string, typeof sitePack.$inferSelect> = new Map();
 
 // ============ INSTALLER ============
 
+function installerKey(os: string, architecture: string): string {
+	return `${os}:${architecture}`;
+}
+
 export async function loadLatestInstaller(): Promise<
 	typeof aceBlockerInstaller.$inferSelect | null
 > {
-	const result = await db
+	const results = await db
 		.select()
 		.from(aceBlockerInstaller)
 		.where(eq(aceBlockerInstaller.canBeDownloaded, true))
-		.orderBy(desc(aceBlockerInstaller.createdAt))
-		.limit(1);
+		.orderBy(desc(aceBlockerInstaller.createdAt));
 
-	latestInstaller = result[0] || null;
+	latestInstaller = results[0] || null;
+
+	// Rows come back newest-first, so the first row seen per (os, arch)
+	// combo is that combo's latest downloadable release.
+	const byTarget = new Map<string, typeof aceBlockerInstaller.$inferSelect>();
+	for (const row of results) {
+		const key = installerKey(row.os, row.architecture);
+		if (!byTarget.has(key)) byTarget.set(key, row);
+	}
+	latestInstallersByTarget = byTarget;
+
 	return latestInstaller;
 }
 
 export function getLatestInstaller(): typeof aceBlockerInstaller.$inferSelect | null {
 	return latestInstaller;
+}
+
+/** Latest downloadable installer for a specific (os, architecture) target. */
+export function getInstallerFor(
+	os: 'windows' | 'linux' | 'macos',
+	architecture: 'x64' | 'arm64'
+): typeof aceBlockerInstaller.$inferSelect | null {
+	return latestInstallersByTarget.get(installerKey(os, architecture)) ?? null;
 }
 
 // ============ RESISTANCE SCRIPTS ============
@@ -129,22 +154,37 @@ export async function initializeCache(): Promise<void> {
 
 // ============ DOWNLOAD COUNT INCREMENT ============
 
-/** Increment the download count for the latest installer by 1. */
-export async function incrementInstallerDownloadCount(): Promise<void> {
-	const latest = getLatestInstaller();
-	if (!latest) return;
+/**
+ * Increment the download count of the latest installer for a target by 1.
+ * When no target is given, the globally latest installer is used (legacy
+ * callers that do not care about the platform).
+ */
+export async function incrementInstallerDownloadCount(
+	os?: 'windows' | 'linux' | 'macos',
+	architecture?: 'x64' | 'arm64'
+): Promise<void> {
+	const target = os && architecture ? getInstallerFor(os, architecture) : latestInstaller;
+	if (!target) return;
 
 	await db
 		.update(aceBlockerInstaller)
 		.set({ downloadCount: sql`${aceBlockerInstaller.downloadCount} + 1` })
-		.where(eq(aceBlockerInstaller.id, latest.id));
+		.where(eq(aceBlockerInstaller.id, target.id));
 
-	// Update the in-memory cache to reflect the new count
-	if (latestInstaller) {
+	// Update the in-memory caches to reflect the new count
+	if (latestInstaller && latestInstaller.id === target.id) {
 		latestInstaller = { ...latestInstaller, downloadCount: latestInstaller.downloadCount + 1 };
 	}
+	const key = installerKey(target.os, target.architecture);
+	const cached = latestInstallersByTarget.get(key);
+	if (cached && cached.id === target.id) {
+		latestInstallersByTarget.set(key, { ...cached, downloadCount: cached.downloadCount + 1 });
+	}
 
-	log.debug({ id: latest.id }, 'Incremented installer download count');
+	log.debug(
+		{ id: target.id, os: target.os, architecture: target.architecture },
+		'Incremented installer download count'
+	);
 }
 
 /** Increment the download count for the latest resistance mode scripts by 1. */

@@ -3,7 +3,7 @@ import {
 	getLatestSitePacks,
 	getLatestResistanceScript,
 	getLatestTrackingScript,
-	getLatestInstaller
+	getInstallerFor
 } from '$lib/server/cache';
 import {
 	CDNErrorType,
@@ -101,8 +101,8 @@ export function getTrackingScriptsURL(): Result<
 export function getInstallerURL(
 	os: 'windows' | 'linux' | 'macos',
 	architecture: 'x64' | 'arm64'
-): Result<{ url: URL; version: string }, CDNErrorType> {
-	const latestRecord = getLatestInstaller();
+): Result<{ url: URL; version: string; sha256: string; size: number }, CDNErrorType> {
+	const latestRecord = getInstallerFor(os, architecture);
 
 	if (!latestRecord) {
 		return err(CDNErrorType.NoReleaseAvailable);
@@ -115,5 +115,10 @@ export function getInstallerURL(
 
 	// No auth token needed for installers (publicly accessible)
 
-	return ok({ url: installerPath, version: latestRecord.version });
+	return ok({
+		url: installerPath,
+		version: latestRecord.version,
+		sha256: latestRecord.sha256,
+		size: latestRecord.size
+	});
 }

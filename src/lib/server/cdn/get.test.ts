@@ -13,14 +13,16 @@ vi.mock('$env/dynamic/private', () => ({
 }));
 
 const latestResistance = vi.hoisted(() => vi.fn());
+const installerFor = vi.hoisted(() => vi.fn());
 vi.mock('$lib/server/cache', () => ({
 	getLatestResistanceScript: latestResistance,
+	getInstallerFor: installerFor,
 	getLatestInstaller: vi.fn(),
 	getLatestTrackingScript: vi.fn(),
 	getLatestSitePacks: vi.fn()
 }));
 
-import { getResistanceModeScriptsURL } from './get';
+import { getResistanceModeScriptsURL, getInstallerURL } from './get';
 import { CDNErrorType } from './common';
 
 describe('getResistanceModeScriptsURL', () => {
@@ -53,6 +55,49 @@ describe('getResistanceModeScriptsURL', () => {
 	it('returns NoReleaseAvailable when no release is published', () => {
 		latestResistance.mockReturnValue(null as never);
 		const result = getResistanceModeScriptsURL();
+		if (result.isErr()) {
+			expect(result.error).toBe(CDNErrorType.NoReleaseAvailable);
+		} else {
+			expect.unreachable('expected NoReleaseAvailable');
+		}
+	});
+});
+
+describe('getInstallerURL', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it('looks up the requested os/arch target, not the globally latest installer', () => {
+		installerFor.mockReturnValue({
+			id: 'w1',
+			version: '1.0.0',
+			fileName: 'Ace Blocker Installer.exe',
+			os: 'windows',
+			architecture: 'x64',
+			sha256: 'abc123',
+			size: 123456,
+			canBeDownloaded: true
+		});
+
+		const result = getInstallerURL('windows', 'x64');
+		expect(installerFor).toHaveBeenCalledWith('windows', 'x64');
+		expect(result.isOk()).toBe(true);
+
+		const { url, version, sha256, size } = result._unsafeUnwrap();
+		expect(version).toBe('1.0.0');
+		expect(sha256).toBe('abc123');
+		expect(size).toBe(123456);
+		expect(url.pathname).toBe(
+			'/dev/ace-blocker-installer/1.0.0/windows/x64/Ace%20Blocker%20Installer.exe'
+		);
+		// Installers are public — no token query params.
+		expect(url.search).toBe('');
+	});
+
+	it('does not fall through to another platform row when the target is missing', () => {
+		installerFor.mockReturnValue(null as never);
+		const result = getInstallerURL('linux', 'x64');
 		if (result.isErr()) {
 			expect(result.error).toBe(CDNErrorType.NoReleaseAvailable);
 		} else {
