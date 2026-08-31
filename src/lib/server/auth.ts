@@ -8,6 +8,7 @@ import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/be
 import DodoPayments from 'dodopayments';
 import { getTwoFactorEmailHtml, getVerificationEmailHtml, getEmailOtpHtml, resend } from './email';
 import { updateProExpiration, clearProExpiration } from './pro';
+import { shouldProcessWebhook } from './webhook-events';
 import * as m from './messages';
 import type { Locale } from './messages';
 import { createLogger } from './logger';
@@ -146,10 +147,15 @@ export const auth = betterAuth({
 						log.info({ type: payload.type }, 'DodoPayments webhook received');
 					},
 
+					// Every handler below is gated by shouldProcessWebhook(): Dodo
+					// retries deliveries until 2xx, and the same event must never
+					// be applied twice (see src/lib/server/webhook-events.ts).
+
 					// ── Pro activation events ─────────────────────────────────────────────
 					// Set proExpiration to next_billing_date and bust the cache.
 
 					onSubscriptionActive: async (payload) => {
+						if (!(await shouldProcessWebhook(payload))) return;
 						if (payload.data.next_billing_date) {
 							await updateProExpiration(
 								payload.data.customer.email,
@@ -158,6 +164,7 @@ export const auth = betterAuth({
 						}
 					},
 					onSubscriptionRenewed: async (payload) => {
+						if (!(await shouldProcessWebhook(payload))) return;
 						if (payload.data.next_billing_date) {
 							await updateProExpiration(
 								payload.data.customer.email,
@@ -166,6 +173,7 @@ export const auth = betterAuth({
 						}
 					},
 					onSubscriptionPlanChanged: async (payload) => {
+						if (!(await shouldProcessWebhook(payload))) return;
 						if (payload.data.next_billing_date) {
 							await updateProExpiration(
 								payload.data.customer.email,
@@ -174,6 +182,7 @@ export const auth = betterAuth({
 						}
 					},
 					onSubscriptionUpdated: async (payload) => {
+						if (!(await shouldProcessWebhook(payload))) return;
 						// Only activate if still active after the update
 						if (payload.data.status === 'active' && payload.data.next_billing_date) {
 							await updateProExpiration(
@@ -187,17 +196,37 @@ export const auth = betterAuth({
 
 					// ── Pro deactivation events ───────────────────────────────────────────
 					// Clear proExpiration so the next API call re-checks DodoPayments.
+					// Note: a scheduled cancellation (cancel_at_next_billing_date) keeps
+					// access until the period ends, matching the account page behavior.
 
 					onSubscriptionCancelled: async (payload) => {
-						await clearProExpiration(payload.data.customer.email);
+						if (!(await shouldProcessWebhook(payload))) return;
+						if (
+							payload.data.cancel_at_next_billing_date &&
+							payload.data.next_billing_date
+						) {
+							await updateProExpiration(
+								payload.data.customer.email,
+								payload.data.next_billing_date
+							);
+						} else {
+							await clearProExpiration(payload.data.customer.email);
+						}
 					},
 					onSubscriptionFailed: async (payload) => {
+						if (!(await shouldProcessWebhook(payload))) return;
 						await clearProExpiration(payload.data.customer.email);
 					},
 					onSubscriptionExpired: async (payload) => {
+						if (!(await shouldProcessWebhook(payload))) return;
 						await clearProExpiration(payload.data.customer.email);
 					},
 					onSubscriptionOnHold: async (payload) => {
+						if (!(await shouldProcessWebhook(payload))) return;
+						await clearProExpiration(payload.data.customer.email);
+					},
+					onSubscriptionPaused: async (payload) => {
+						if (!(await shouldProcessWebhook(payload))) return;
 						await clearProExpiration(payload.data.customer.email);
 					}
 				})

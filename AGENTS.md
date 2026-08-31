@@ -120,6 +120,16 @@ The project uses **Elysia** to handle all API requests under the `/api` prefix.
     - The raw OpenAPI specification is available at `/api/v1/openapi.json`.
 - **Router Pattern**: Always use modular routers in `src/lib/server/api/routers/`.
 
+## Payments (DodoPayments)
+
+Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })` in `src/lib/server/auth.ts`.
+
+- **Checkout**: `/get-pro` calls `authClient.dodopayments.checkoutSession({ slug })` → plugin endpoint `POST /api/auth/dodopayments/checkout-session` (Better Auth mounts plugin routes under its base path `/api/auth`). Returns `{ url, redirect: true }` — in test mode the host is `test.checkout.dodopayments.com`.
+- **Webhooks**: Dodo deliveries arrive at `POST /api/auth/dodopayments/webhooks` — the Dodo dashboard endpoint must be `https://<host>/api/auth/dodopayments/webhooks`. Signature verification (Svix-style `webhook-id`/`webhook-timestamp`/`webhook-signature`) happens in the plugin via `@dodopayments/core/webhook`.
+- **Idempotency**: webhook events are recorded in `dodo_webhook_events` (keyed by a payload digest, see `src/lib/server/webhook-events.ts`). Every `onSubscription*` handler in `auth.ts` is gated by `shouldProcessWebhook()`, so retried deliveries are no-ops and stale events (older timestamp for the same subscription) are rejected.
+- **scheduled cancellation**: `subscription.cancelled` with `cancel_at_next_billing_date: true` keeps access until `next_billing_date` (matching the account page); only a final `subscription.expired`/`failed`/`on_hold`/`paused` clears it.
+- **Testing**: `bun scripts/test-dodo-webhooks.ts` signs real webhook payloads against the dev server and asserts pro status changes (needs a running dev server + dev DB).
+
 ## Nomenclature & Design Patterns
 
 - **Svelte Components**: All `.svelte` files MUST use `UpperCamelCase` naming convention (e.g., `Button.svelte`, `UserCard.svelte`).

@@ -55,6 +55,30 @@ export const siteVisits = pgTable(
 	(table) => [index('site_visits_timestamp_idx').on(table.timestamp)]
 );
 
+/**
+ * Registry of processed DodoPayments webhook events. The webhook payloads
+ * carry no event id (only the webhook-id header, which the plugin does not
+ * expose to handlers), so deduplication uses a digest of the normalized
+ * payload. The uniqueness of `eventKey` makes repeated deliveries of the
+ * same event no-ops, and `subscriptionId` + `eventTimestamp` allow rejecting
+ * stale events that arrive after a newer one for the same subscription.
+ */
+export const dodoWebhookEvents = pgTable(
+	'dodo_webhook_events',
+	{
+		id: text('id').primaryKey(),
+		eventKey: text('event_key').notNull().unique(),
+		type: text('type').notNull(),
+		subscriptionId: text('subscription_id'),
+		eventTimestamp: timestamp('event_timestamp').notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull()
+	},
+	(table) => [
+		index('dodo_webhook_events_subscription_idx').on(table.subscriptionId),
+		index('dodo_webhook_events_event_timestamp_idx').on(table.eventTimestamp)
+	]
+);
+
 export const userRelations = relations(user, ({ many, one }) => ({
 	sessions: many(session),
 	accounts: many(account),

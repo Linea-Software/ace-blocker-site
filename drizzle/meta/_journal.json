@@ -15,6 +15,13 @@
       "when": 1788165092454,
       "tag": "0001_sticky_shen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788165604307,
+      "tag": "0002_aspiring_shriek",
+      "breakpoints": true
     }
   ]
 }
