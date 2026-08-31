@@ -78,16 +78,25 @@ export const trackingScriptsFileName = 'tracking-scripts.zip';
 export const resistanceModeScriptsFileName = 'resistance-mode-scripts.zip';
 
 // === Token generator === //
+/**
+ * Generate a BunnyCDN token-authentication token (Basic Token Authentication,
+ * https://bunny.net/docs/cdn/security/token-authentication/basic):
+ *
+ *   token = base64url( HMAC-SHA256( securityKey, path + expiration ) )
+ *
+ * and append it to the URL as `?token=...&expires=<unix seconds>`.
+ * The signed path must be the exact request path (no query string).
+ */
 export function generateBunnyCDNToken(path: string, expiration: number): string {
-	const hashableBase = securityKey + path + expiration;
+	const hashableBase = path + expiration;
 
 	const token = crypto
-		.createHash('sha256')
+		.createHmac('sha256', securityKey)
 		.update(hashableBase)
 		.digest('base64')
 		.replace(/\+/g, '-')
 		.replace(/\//g, '_')
-		.replace(/=/g, '');
+		.replace(/=+$/g, '');
 
 	return token;
 }

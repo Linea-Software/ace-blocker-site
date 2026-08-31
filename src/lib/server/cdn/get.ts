@@ -34,12 +34,12 @@ export function getSitePackURL(
 		}
 
 		// We're generating a token to ensure that only pro members can access it (hopefully)
-		const expiration = Math.round(Date.now() / 1000) + 600; // 5 minutes
+		const expiration = Math.round(Date.now() / 1000) + 600; // 10 minutes
 		const token = generateBunnyCDNToken(sitePackPath.pathname, expiration);
 
-		// `?token=${token}&expires=${expiration}`
+		// BunnyCDN reads the expiry from `expires`, not `expiration`.
 		sitePackPath.searchParams.append('token', token);
-		sitePackPath.searchParams.append('expiration', expiration.toString());
+		sitePackPath.searchParams.append('expires', expiration.toString());
 	}
 
 	return ok(sitePackPath);
@@ -60,12 +60,12 @@ export function getResistanceModeScriptsURL(): Result<
 		resistanceModeScriptBasePath
 	);
 
-	const expiration = Math.round(Date.now() / 1000) + 600;
+	const expiration = Math.round(Date.now() / 1000) + 600; // 10 minutes
 	const token = generateBunnyCDNToken(resistanceScriptsPath.pathname, expiration);
 
-	//`?token=${token}&expires=${expiration}`;
+	// BunnyCDN reads the expiry from `expires`.
 	resistanceScriptsPath.searchParams.append('token', token);
-	resistanceScriptsPath.searchParams.append('expiration', expiration.toString());
+	resistanceScriptsPath.searchParams.append('expires', expiration.toString());
 
 	return ok({
 		url: resistanceScriptsPath,
