@@ -77,15 +77,18 @@ repeated inline `rounded-xl border … p-6` card recipe.
   `.svelte` files. `amber-500`→`brand` is value-identical (verified in the built
   CSS: `.bg-brand{background-color:#f59e0b}`); `#FFBF00`→`brand` is the approved
   brightness consolidation (slightly less bright hero accent).
+- Unified dark surfaces onto tokens: `dark:bg-[#0B0B0F]`/`dark:bg-[#0B0F19]` →
+  `dark:bg-background`, `dark:bg-[#111827]` → `dark:bg-card`, and the two inline
+  `background-color:#0b0b0f`/`#0b0f19` rules → `var(--background)`. Pixel-diff
+  verified (before/after): subtle ~8.4 delta on a 64px header strip, cards
+  effectively unchanged — no regression.
 
 **Pending (require visual verification, light + dark):**
 - `amber-400`/`amber-600`/`amber-700` remain as explicit **shade steps** for
   gradients and hover states — flattening them to `brand` would remove hover
   affordance; decide whether to keep them or derive dark/light brand shades.
-- Dark-surface hexes (`#0B0B0F`, `#0B0F19`, `#111827`, `#1F2937`, `#0F172A`)
-  still need mapping onto `--background`/`--card`/`--muted` — the current dark
-  tokens are blue-tinted while the hexes are neutral, so the target value must
-  be confirmed visually.
+- `#0F172A` occurrences are **light-mode inline text colors** (not dark surfaces)
+  — normalize them to a text token/class or leave as-is (cosmetic).
 - Radius normalization (`rounded-2xl/3xl/[22px]` outliers → the `--radius` scale).
 - Extract the repeated `rounded-xl border … p-6` card recipe and an `EmptyState`
   primitive into shared components.
