@@ -89,7 +89,7 @@ function formatEnv(env: EnvMap, extraLines: { key: string; comment?: string }[] 
 		['# ── Database ──', 'POSTGRES_USER', 'POSTGRES_PASSWORD', 'POSTGRES_DB', 'DATABASE_URL'],
 		['# ── Core ──', 'BETTER_AUTH_URL', 'ORIGIN', 'NODE_ENV'],
 		['# ── Auth ──', 'BETTER_AUTH_SECRET'],
-		['# ── Dodo Payments ──', 'DODO_PAYMENTS_API_KEY', 'DODO_PAYMENTS_WEBHOOK_SECRET', 'DODO_PAYMENTS_PRODUCTS'],
+		['# ── Dodo Payments ──', 'DODO_PAYMENTS_API_KEY', 'DODO_PAYMENTS_WEBHOOK_SECRET'],
 		['# ── Email (Resend) ──', 'RESEND_API_KEY'],
 		['# ── BunnyCDN ──', 'BUNNY_URL_TOKEN_AUTH_KEY', 'BUNNY_STORAGE_ZONE', 'BUNNY_CDN_BASE_URL', 'BUNNY_STORAGE_ACCESS_KEY'],
 		['# ── Default Admin ──', 'DEFAULT_ADMIN_EMAIL', 'DEFAULT_ADMIN_USERNAME', 'DEFAULT_ADMIN_PASSWORD'],
@@ -183,10 +183,6 @@ const REQUIRED_KEYS = [
 const DEFAULTS_BY_KEY: Record<string, string> = {
 	POSTGRES_USER: 'postgres',
 	POSTGRES_DB: 'aceblocker',
-	DODO_PAYMENTS_PRODUCTS: JSON.stringify([
-		{ productId: 'pdt_0NXOnI40qSEVOqAnCUwmm', slug: 'ace_blocker_monthly' },
-		{ productId: 'pdt_0NYXyjMDNixJ55IDOC42c', slug: 'ace_blocker_yearly' },
-	]),
 	BUNNY_STORAGE_ZONE: 'aceblocker-storage',
 	BUNNY_CDN_BASE_URL: 'cdn.aceblocker.com',
 	DEFAULT_ADMIN_EMAIL: 'admin@__DOMAIN__',
@@ -270,8 +266,6 @@ async function main() {
 	console.log(`\n${C.bold}── Dodo Payments ──${C.reset}`);
 	env.set('DODO_PAYMENTS_API_KEY', await promptValue(rl, 'API key:', env.get('DODO_PAYMENTS_API_KEY') || '', true));
 	env.set('DODO_PAYMENTS_WEBHOOK_SECRET', await promptValue(rl, 'Webhook secret:', env.get('DODO_PAYMENTS_WEBHOOK_SECRET') || '', true));
-	const productsDefault = env.get('DODO_PAYMENTS_PRODUCTS') || DEFAULTS_BY_KEY.DODO_PAYMENTS_PRODUCTS;
-	env.set('DODO_PAYMENTS_PRODUCTS', await promptValue(rl, 'Products JSON:', productsDefault, false));
 
 	// ── Email (Resend) ──
 	console.log(`\n${C.bold}── Email (Resend) ──${C.reset}`);
