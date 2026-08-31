@@ -44,7 +44,6 @@
 					<div>
 						<h3 class="font-semibold">Usage Data (Pro Users Only)</h3>
 						<ul class="mt-1 list-disc space-y-1 pl-6 text-muted-foreground">
-							<li>Blocked domain statistics (aggregated, anonymized counts)</li>
 							<li>Resistance mode interaction metrics</li>
 							<li>Backup data (stored encrypted)</li>
 						</ul>
@@ -65,6 +64,7 @@
 					<li>Log your browsing history</li>
 					<li>Track individual website visits</li>
 					<li>Collect personal browsing patterns</li>
+					<li>Blocking statistics — they are computed locally on your device and never sent to us</li>
 					<li>Sell your data to third parties</li>
 					<li>Use your data for advertising purposes</li>
 				</ul>
@@ -77,7 +77,7 @@
 					<li>Provide and maintain the Software</li>
 					<li>Process your subscription payments (via Dodo Payments)</li>
 					<li>Sync your settings across devices (cloud backup)</li>
-					<li>Improve the Software through aggregated, anonymized analytics</li>
+					<li>Improve the Software through opt-in error and crash reports</li>
 					<li>Communicate important service updates</li>
 				</ul>
 			</section>
