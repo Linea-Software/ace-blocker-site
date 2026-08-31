@@ -5,6 +5,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { invalidateAll } from '$app/navigation';
 	import { apiClient } from '$lib/api-client';
+	import { postApiKeyToEngine, buildEngineLinkUrl } from '$lib/utils';
 	import * as m from '$lib/paraglide/messages.js';
 
 	let { data } = $props();
@@ -68,12 +69,13 @@
 			const callbackUrl = encodeURIComponent(
 				`${window.location.origin}${window.location.pathname}?activated=true`
 			);
-			const localUrl = `https://ace-engine.local/account/api-key?apiKey=${apiKey}&callback=${callbackUrl}`;
-			const protocolUrl = `aceblocker://account/api-key?apiKey=${apiKey}&callback=${callbackUrl}`;
+			const localUrl = 'https://ace-engine.local/account/api-key';
+			const protocolUrl = buildEngineLinkUrl(apiKey, callbackUrl);
 
 			try {
-				const localRes = await fetch(localUrl, { method: 'GET' });
-				if (localRes.ok) {
+				// Key travels in the JSON body, never in the URL.
+				const delivered = await postApiKeyToEngine(localUrl, apiKey);
+				if (delivered) {
 					activationStatus = 'success';
 				} else {
 					window.location.href = protocolUrl;

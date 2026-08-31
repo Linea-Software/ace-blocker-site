@@ -15,6 +15,36 @@ export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?:
 export type LinkEngineResult = { success: true } | { success: false; error: string };
 
 /**
+ * POST the desktop-app API key to the local engine. Delivering it as a JSON
+ * body keeps the key out of URLs (query strings land in access logs, browser
+ * history and process args).
+ */
+export async function postApiKeyToEngine(engineUrl: string, apiKey: string): Promise<boolean> {
+	try {
+		const res = await fetch(engineUrl, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ apiKey })
+		});
+		return res.ok;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Build the `aceblocker://` deep link. Parameters are placed in the URL
+ * fragment (#...) instead of the query string: fragments are never sent over
+ * HTTP and stay out of engine access logs (the engine's protocol handler
+ * parses the fragment and forwards the key as a JSON body).
+ */
+export function buildEngineLinkUrl(apiKey: string, callback?: string): string {
+	const params = new URLSearchParams({ apiKey });
+	if (callback) params.set('callback', callback);
+	return `aceblocker://account/api-key#${params.toString()}`;
+}
+
+/**
  * Links the engine by sending the API key to it.
  * Tries the engine web server directly via HTTPS first, falls back to the custom protocol.
  *
@@ -28,24 +58,18 @@ export async function linkEngine(
 ): Promise<LinkEngineResult> {
 	try {
 		const apiKey = await createApiKey();
-		const engineUrl = `https://127.0.0.1:${enginePort}/account/api-key?apiKey=${apiKey}`;
-		const protocolUrl = `aceblocker://account/api-key?apiKey=${apiKey}`;
+		const engineUrl = `https://127.0.0.1:${enginePort}/account/api-key`;
+		const protocolUrl = buildEngineLinkUrl(apiKey);
 
-		try {
-			console.log(`Calling engine at ${engineUrl}`);
-			// Try the engine directly via HTTPS
-			const res = await fetch(engineUrl, { method: 'POST' });
-			if (res.ok) {
-				return { success: true };
-			}
-			// Engine returned non-ok status, fall through to protocol fallback
-			console.warn('Engine returned non-ok status, falling back to custom protocol');
-		} catch (err) {
-			// Network error (CORS, connection refused, etc.), fall back to custom protocol
-			console.warn('Direct engine link failed, falling back to custom protocol:', err);
+		console.log(`Calling engine at ${engineUrl}`);
+		// Try the engine directly via HTTPS (key in JSON body, not the URL)
+		const delivered = await postApiKeyToEngine(engineUrl, apiKey);
+		if (delivered) {
+			return { success: true };
 		}
 
-		// Fallback: use the custom protocol handler
+		// Fall back to the custom protocol handler (key in URL fragment)
+		console.warn('Direct engine link failed, falling back to custom protocol');
 		window.location.href = protocolUrl;
 		return { success: true };
 	} catch (err) {

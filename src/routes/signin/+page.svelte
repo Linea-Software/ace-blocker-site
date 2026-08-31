@@ -14,6 +14,7 @@
 	import * as m from '$lib/paraglide/messages.js';
 
 	import { apiClient } from '$lib/api-client';
+	import { postApiKeyToEngine, buildEngineLinkUrl } from '$lib/utils';
 
 	let email = $state<string>('');
 	let password = $state<string>('');
@@ -38,13 +39,13 @@
 
 			const apiKey = data.apiKey;
 
-			const localUrl = `https://ace-engine.local/account/api-key?apiKey=${apiKey}`;
-			const protocolUrl = `aceblocker://account/api-key?apiKey=${apiKey}`;
+			const localUrl = 'https://ace-engine.local/account/api-key';
+			const protocolUrl = buildEngineLinkUrl(apiKey);
 
 			try {
-				// Try the local engine first via HTTPS
-				const localRes = await fetch(localUrl, { method: 'POST' });
-				if (localRes.ok) {
+				// Try the local engine first via HTTPS (key in JSON body, not the URL)
+				const delivered = await postApiKeyToEngine(localUrl, apiKey);
+				if (delivered) {
 					goto('/');
 				} else {
 					window.location.href = protocolUrl;
