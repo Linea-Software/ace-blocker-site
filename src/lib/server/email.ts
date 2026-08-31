@@ -3,8 +3,16 @@ import { Resend } from 'resend';
 import type { Locale } from './messages';
 import { RESEND_API_KEY } from '$env/static/private';
 import { m as pm } from '$lib/paraglide/messages';
+import { db } from '$lib/server/db';
+import { user } from '$lib/server/db/schema';
+import { createLogger } from '$lib/server/logger';
 
 export const resend = new Resend(RESEND_API_KEY);
+
+const log = createLogger('email');
+
+/** Base site URL for email links (download, renewal, payment update). */
+const siteUrl = (process.env.PUBLIC_BETTER_AUTH_URL ?? 'http://localhost:5173').replace(/\/+$/, '');
 
 // Logo images served from the CDN.
 const DARK_LOGO_URL = 'https://cdn.aceblocker.com/dark-full-logo.png';
@@ -354,4 +362,100 @@ ${emailHead}
     </div>
 </body>
 </html>`;
+}
+
+// ── Sending helpers (wired into signup + Dodo webhook handlers) ────────────
+
+async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+	try {
+		const result = await resend.emails.send({
+			from: 'noreply@aceblocker.com',
+			to,
+			subject,
+			html
+		});
+		if (result.error) {
+			log.error({ err: result.error, to }, 'Failed to send email');
+		} else {
+			log.info({ messageId: result.data?.id, to, subject }, 'Email sent');
+		}
+	} catch (err) {
+		log.error({ err, to }, 'Exception while sending email');
+	}
+}
+
+/** Look up a user's locale by email, defaulting to 'en'. */
+export async function getLocaleForEmail(email: string): Promise<Locale> {
+	try {
+		const row = await db.query.user.findFirst({
+			where: (u, { eq }) => eq(u.email, email),
+			columns: { locale: true }
+		});
+		return (row?.locale as Locale) ?? 'en';
+	} catch {
+		return 'en';
+	}
+}
+
+/** Welcome email — sent once after a real signup. */
+export async function sendWelcomeEmail(email: string, locale: Locale = 'en'): Promise<void> {
+	await sendEmail(
+		email,
+		pm.email_welcome_subject({}, { locale: locale as any }),
+		getWelcomeEmailHtml(`${siteUrl}/download`, locale)
+	);
+}
+
+/** Payment receipt — sent when a subscription becomes active / renews. */
+export async function sendPaymentReceiptEmail(
+	email: string,
+	locale: Locale = 'en'
+): Promise<void> {
+	await sendEmail(
+		email,
+		pm.email_payment_receipt_subject({}, { locale: locale as any }),
+		getPaymentReceiptEmailHtml(locale)
+	);
+}
+
+/** Expiring soon — sent on a scheduled cancellation (access until expiry). */
+export async function sendSubscriptionExpiringEmail(
+	email: string,
+	expiryDate: Date,
+	locale: Locale = 'en'
+): Promise<void> {
+	await sendEmail(
+		email,
+		pm.email_subscription_expiring_subject({}, { locale: locale as any }),
+		getSubscriptionExpiringEmailHtml(
+			expiryDate.toLocaleDateString(locale),
+			`${siteUrl}/get-pro`,
+			locale
+		)
+	);
+}
+
+/** Cancelled — sent when a subscription ends without a renewal. */
+export async function sendSubscriptionCancelledEmail(
+	email: string,
+	expiryDate: Date,
+	locale: Locale = 'en'
+): Promise<void> {
+	await sendEmail(
+		email,
+		pm.email_subscription_cancelled_subject({}, { locale: locale as any }),
+		getSubscriptionCancelledEmailHtml(expiryDate.toLocaleDateString(locale), locale)
+	);
+}
+
+/** Payment failed — sent when a renewal payment could not be processed. */
+export async function sendPaymentFailedEmail(
+	email: string,
+	locale: Locale = 'en'
+): Promise<void> {
+	await sendEmail(
+		email,
+		pm.email_subscription_failed_subject({}, { locale: locale as any }),
+		getPaymentFailedEmailHtml(`${siteUrl}/account`, locale)
+	);
 }

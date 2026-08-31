@@ -6,7 +6,18 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from './db';
 import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
 import DodoPayments from 'dodopayments';
-import { getTwoFactorEmailHtml, getVerificationEmailHtml, getEmailOtpHtml, resend } from './email';
+import {
+	getTwoFactorEmailHtml,
+	getVerificationEmailHtml,
+	getEmailOtpHtml,
+	getLocaleForEmail,
+	sendWelcomeEmail,
+	sendPaymentReceiptEmail,
+	sendSubscriptionExpiringEmail,
+	sendSubscriptionCancelledEmail,
+	sendPaymentFailedEmail,
+	resend
+} from './email';
 import { updateProExpiration, clearProExpiration } from './pro';
 import { shouldProcessWebhook } from './webhook-events';
 import * as m from './messages';
@@ -43,6 +54,25 @@ export const auth = betterAuth({
 	emailAndPassword: {
 		enabled: true,
 		requireEmailVerification: true
+	},
+	databaseHooks: {
+		user: {
+			create: {
+				after: async (user, context) => {
+					// Welcome email for real signups only — the seeder and other
+					// server-side user creation call auth.api.createUser without a
+					// request, so their context is null.
+					if (!context) return;
+					const log = createLogger('auth:welcome-email');
+					const locale = ((user as { locale?: string }).locale ?? 'en') as Locale;
+					try {
+						await sendWelcomeEmail(user.email, locale);
+					} catch (err) {
+						log.error({ err }, 'Failed to send welcome email');
+					}
+				}
+			}
+		}
 	},
 	emailVerification: {
 		sendVerificationEmail: async ({ user, url, token }, request) => {
@@ -156,21 +186,19 @@ export const auth = betterAuth({
 
 					onSubscriptionActive: async (payload) => {
 						if (!(await shouldProcessWebhook(payload))) return;
+						const email = payload.data.customer.email;
 						if (payload.data.next_billing_date) {
-							await updateProExpiration(
-								payload.data.customer.email,
-								payload.data.next_billing_date
-							);
+							await updateProExpiration(email, payload.data.next_billing_date);
 						}
+						await sendPaymentReceiptEmail(email, await getLocaleForEmail(email));
 					},
 					onSubscriptionRenewed: async (payload) => {
 						if (!(await shouldProcessWebhook(payload))) return;
+						const email = payload.data.customer.email;
 						if (payload.data.next_billing_date) {
-							await updateProExpiration(
-								payload.data.customer.email,
-								payload.data.next_billing_date
-							);
+							await updateProExpiration(email, payload.data.next_billing_date);
 						}
+						await sendPaymentReceiptEmail(email, await getLocaleForEmail(email));
 					},
 					onSubscriptionPlanChanged: async (payload) => {
 						if (!(await shouldProcessWebhook(payload))) return;
@@ -201,21 +229,33 @@ export const auth = betterAuth({
 
 					onSubscriptionCancelled: async (payload) => {
 						if (!(await shouldProcessWebhook(payload))) return;
+						const email = payload.data.customer.email;
 						if (
 							payload.data.cancel_at_next_billing_date &&
 							payload.data.next_billing_date
 						) {
-							await updateProExpiration(
-								payload.data.customer.email,
-								payload.data.next_billing_date
+							// Scheduled cancellation: access continues until the
+							// period ends — tell the user it is expiring.
+							await updateProExpiration(email, payload.data.next_billing_date);
+							await sendSubscriptionExpiringEmail(
+								email,
+								payload.data.next_billing_date,
+								await getLocaleForEmail(email)
 							);
 						} else {
-							await clearProExpiration(payload.data.customer.email);
+							await clearProExpiration(email);
+							await sendSubscriptionCancelledEmail(
+								email,
+								payload.data.next_billing_date ?? new Date(),
+								await getLocaleForEmail(email)
+							);
 						}
 					},
 					onSubscriptionFailed: async (payload) => {
 						if (!(await shouldProcessWebhook(payload))) return;
-						await clearProExpiration(payload.data.customer.email);
+						const email = payload.data.customer.email;
+						await clearProExpiration(email);
+						await sendPaymentFailedEmail(email, await getLocaleForEmail(email));
 					},
 					onSubscriptionExpired: async (payload) => {
 						if (!(await shouldProcessWebhook(payload))) return;
