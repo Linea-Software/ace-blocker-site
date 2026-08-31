@@ -84,12 +84,33 @@ repeated inline `rounded-xl border … p-6` card recipe.
   effectively unchanged — no regression.
 
 **Pending (require visual verification, light + dark):**
-- `amber-400`/`amber-600`/`amber-700` remain as explicit **shade steps** for
+- ~~`amber-400`/`amber-600`/`amber-700` remain as explicit **shade steps** for
   gradients and hover states — flattening them to `brand` would remove hover
-  affordance; decide whether to keep them or derive dark/light brand shades.
-- `#0F172A` occurrences are **light-mode inline text colors** (not dark surfaces)
-  — normalize them to a text token/class or leave as-is (cosmetic).
-- Radius normalization (`rounded-2xl/3xl/[22px]` outliers → the `--radius` scale).
-- Extract the repeated `rounded-xl border … p-6` card recipe and an `EmptyState`
-  primitive into shared components.
+  affordance; decide whether to keep them or derive dark/light brand shades.~~
+  **Decision (round 6): keep them.** They are the Tailwind default ambers and
+  every use is a hover state or gradient endpoint; flattening would remove the
+  hover affordance and deriving new shades would be a palette change. The
+  comment in `layout.css` `@theme` records this.
+- ~~`#0F172A` occurrences are **light-mode inline text colors** (not dark surfaces)
+  — normalize them to a text token/class or leave as-is (cosmetic).~~
+  **Done (round 6):** the two page-level `:global(body) { color: #0f172a }`
+  rules (get-pro, about) now use `var(--foreground)`; the email-template
+  occurrences in `src/lib/server/email.ts` are intentionally left as-is
+  (email HTML is not tokenized).
+- ~~Radius normalization (`rounded-2xl/3xl/[22px]` outliers → the `--radius` scale).~~
+  **Done (round 6), scoped:** small icon boxes on get-pro/download/about normalized
+  `rounded-2xl` → `rounded-xl` (matching the icon-box radius used elsewhere on
+  the same pages). Large marketing cards (about feature cards, download
+  platform cards) keep their larger radii as deliberate accents — each page is
+  internally consistent, and flattening them would change the marketing look
+  without founder sign-off.
+- ~~Extract the repeated `rounded-xl border … p-6` card recipe and an `EmptyState`
+  primitive into shared components.~~
+  **Done (round 6):** `src/lib/components/Panel.svelte` (the
+  `rounded-xl border … p-6` recipe, `variant="surface"` for the admin
+  light-surface recipe) and `src/lib/components/EmptyState.svelte` were added;
+  the admin release pages (stats cards + table empty states) now use them.
+  The account page's `Tabs.TabsContent` cards still pass the recipe as a
+  `class` prop (a wrapper would alter the tabpanel DOM) — they can follow once
+  the recipe is shared as a constant.
 

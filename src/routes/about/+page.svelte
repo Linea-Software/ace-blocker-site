@@ -135,7 +135,7 @@
 					></div>
 
 					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
+						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
 					>
 						<Layers class="h-7 w-7 text-brand" />
 					</div>
@@ -156,7 +156,7 @@
 					></div>
 
 					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
+						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
 					>
 						<Cpu class="h-7 w-7 text-brand" />
 					</div>
@@ -177,7 +177,7 @@
 					></div>
 
 					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
+						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
 					>
 						<Lock class="h-7 w-7 text-brand" />
 					</div>
@@ -200,7 +200,7 @@
 					></div>
 
 					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
+						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
 					>
 						<Sparkles class="h-7 w-7 text-brand" />
 					</div>
@@ -309,7 +309,7 @@
 
 	:global(body) {
 		background-color: white;
-		color: #0f172a;
+		color: var(--foreground);
 	}
 
 	:global(.dark body) {
