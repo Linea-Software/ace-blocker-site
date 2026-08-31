@@ -99,7 +99,7 @@
 						{#if isPro}
 							<a
 								href="/get-pro"
-								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-amber-500 transition-colors hover:bg-amber-500/10"
+								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-brand transition-colors hover:bg-brand/10"
 								onclick={() => (isMobileMenuOpen = false)}
 							>
 								<Crown class="h-5 w-5" />
@@ -111,7 +111,7 @@
 								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-primary transition-colors hover:text-primary/80"
 								onclick={() => (isMobileMenuOpen = false)}
 							>
-								<Crown class="h-5 w-5 text-amber-500" />
+								<Crown class="h-5 w-5 text-brand" />
 								Get Pro
 							</a>
 						{/if}
@@ -198,7 +198,7 @@
 						class={cn(
 							'inline-flex h-9 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent focus:bg-accent focus:outline-none disabled:pointer-events-none disabled:opacity-50',
 							isActive(link.href)
-								? 'bg-accent text-primary dark:text-amber-500'
+								? 'bg-accent text-primary dark:text-brand'
 								: 'text-slate-600 dark:text-slate-400 dark:hover:text-white'
 						)}
 					>
@@ -230,7 +230,7 @@
 				{#if isPro}
 					<a
 						href="/get-pro"
-						class="hidden items-center gap-2 px-3 text-sm font-medium text-amber-500 transition-colors hover:text-amber-400 sm:flex"
+						class="hidden items-center gap-2 px-3 text-sm font-medium text-brand transition-colors hover:text-amber-400 sm:flex"
 					>
 						<Crown class="h-4 w-4" />
 						{m.nav_pro_features()}
@@ -238,7 +238,7 @@
 				{:else}
 					<Button
 						href="/get-pro"
-						class="hidden items-center bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
+						class="hidden items-center bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex dark:bg-brand dark:text-slate-950 dark:hover:bg-amber-400"
 					>
 						<Crown class="mr-2 h-4 w-4" />
 						Get Pro
@@ -257,7 +257,7 @@
 
 				<DropdownMenu.DropdownMenu>
 					<DropdownMenu.Trigger
-						class="hidden h-9 w-9 items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/15 text-sm font-medium text-amber-600 sm:inline-flex dark:text-amber-400"
+						class="hidden h-9 w-9 items-center justify-center rounded-full border border-brand/20 bg-brand/15 text-sm font-medium text-amber-600 sm:inline-flex dark:text-amber-400"
 					>
 						{userInitial}
 					</DropdownMenu.Trigger>
@@ -292,7 +292,7 @@
 				</Button>
 				<Button
 					href="/signup"
-					class="inline-flex items-center bg-slate-900 text-white hover:bg-slate-800 sm:px-6 dark:bg-amber-500 dark:text-slate-950 dark:hover:bg-amber-400"
+					class="inline-flex items-center bg-slate-900 text-white hover:bg-slate-800 sm:px-6 dark:bg-brand dark:text-slate-950 dark:hover:bg-amber-400"
 				>
 					<span class="hidden sm:inline">Sign Up</span>
 					<span class="px-2 text-xs sm:hidden">Join</span>

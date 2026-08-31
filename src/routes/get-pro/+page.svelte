@@ -106,7 +106,7 @@
 		<div class="mx-auto mb-16 max-w-3xl space-y-6 text-center">
 			{#if engineConfig.linkState === 'error'}
 				<div
-					class="mb-6 flex items-center justify-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-amber-500"
+					class="mb-6 flex items-center justify-center gap-2 rounded-lg border border-brand/20 bg-brand/5 p-4 text-brand"
 				>
 					<AlertCircle class="h-5 w-5" />
 					<span class="font-medium">{m.linking_error()}</span>
@@ -115,7 +115,7 @@
 
 			{#if engineConfig.linkState === 'loading'}
 				<div
-					class="mb-6 flex items-center justify-center gap-2 rounded-lg border border-[#FFBF00]/20 bg-[#FFBF00]/5 p-4 text-[#FFBF00]"
+					class="mb-6 flex items-center justify-center gap-2 rounded-lg border border-brand/20 bg-brand/5 p-4 text-brand"
 				>
 					<Loader2 class="h-5 w-5 animate-spin" />
 					<span class="font-medium">{m.linking_loading()}</span>
@@ -144,10 +144,10 @@
 				<div class="flex flex-col items-center justify-center space-y-6 py-12">
 					<div class="relative">
 						<div
-							class="absolute inset-0 animate-pulse rounded-full bg-amber-500/20 blur-2xl"
+							class="absolute inset-0 animate-pulse rounded-full bg-brand/20 blur-2xl"
 						></div>
 						<div
-							class="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-[#FFBF00] to-amber-600 shadow-2xl"
+							class="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-brand to-amber-600 shadow-2xl"
 						>
 							<Crown class="h-12 w-12 text-slate-950" />
 						</div>
@@ -172,7 +172,7 @@
 						<Button
 							variant="outline"
 							onclick={handleLinkEngine}
-							class="border-amber-500/50 bg-transparent px-8 py-6 text-lg font-bold text-amber-500 hover:bg-amber-500/10 dark:border-amber-500/30"
+							class="border-brand/50 bg-transparent px-8 py-6 text-lg font-bold text-brand hover:bg-brand/10 dark:border-brand/30"
 						>
 							Open Ace Blocker
 						</Button>
@@ -203,7 +203,7 @@
 						class={cn(
 							'flex items-center justify-center gap-2 rounded-full px-8 py-2.5 text-sm font-bold transition-all duration-200',
 							billingCycle === 'yearly'
-								? 'bg-[#FFBF00] text-[#0B0B0F] shadow-[0_0_20px_rgba(255,191,0,0.2)]'
+								? 'bg-brand text-[#0B0B0F] shadow-[0_0_20px_rgba(255,191,0,0.2)]'
 								: 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
 						)}
 						onclick={() => (billingCycle = 'yearly')}
@@ -214,7 +214,7 @@
 								'rounded px-1.5 py-0.5 text-[10px] font-black uppercase',
 								billingCycle === 'yearly'
 									? 'bg-black/10'
-									: 'bg-amber-500/20 text-amber-600 dark:text-amber-500'
+									: 'bg-brand/20 text-amber-600 dark:text-brand'
 							)}
 						>
 							-{data.pricing.discountPercent}%
@@ -304,14 +304,14 @@
 
 				<!-- Pro Plan -->
 				<Card.Root
-					class="relative flex flex-col overflow-hidden border-2 border-[#FFBF00] bg-white shadow-xl transition-all duration-300 md:-mt-4 md:-mb-4 dark:bg-slate-900/60 dark:shadow-[0_0_50px_rgba(255,191,0,0.15)] dark:backdrop-blur-sm"
+					class="relative flex flex-col overflow-hidden border-2 border-brand bg-white shadow-xl transition-all duration-300 md:-mt-4 md:-mb-4 dark:bg-slate-900/60 dark:shadow-[0_0_50px_rgba(255,191,0,0.15)] dark:backdrop-blur-sm"
 				>
 					<!-- Savings Badge -->
 					{#if billingCycle === 'yearly'}
 						<div class="absolute top-0 right-0 p-4">
 							<div class="flex flex-col items-end gap-1">
 								<Badge
-									class="border-none bg-[#FFBF00] px-4 py-1.5 text-[10px] font-black text-[#0B0B0F] shadow-lg"
+									class="border-none bg-brand px-4 py-1.5 text-[10px] font-black text-[#0B0B0F] shadow-lg"
 								>
 									{m.savings_badge({ percent: data.pricing.discountPercent })}
 								</Badge>
@@ -323,16 +323,16 @@
 						<div class="flex items-center gap-3">
 							<div class="relative flex h-12 w-12 items-center justify-center">
 								<div
-									class="absolute inset-0 animate-pulse rounded-xl bg-[#FFBF00]/20 blur-lg"
+									class="absolute inset-0 animate-pulse rounded-xl bg-brand/20 blur-lg"
 								></div>
 								<div
-									class="relative flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFBF00] text-[#0B0B0F]"
+									class="relative flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-[#0B0B0F]"
 								>
 									<Shield class="absolute h-7 w-7 opacity-20" />
 									<Timer class="h-7 w-7" />
 								</div>
 							</div>
-							<Card.Title class="text-3xl font-black text-[#FFBF00]"
+							<Card.Title class="text-3xl font-black text-brand"
 								>{m.plan_pro_name()}</Card.Title
 							>
 						</div>
@@ -342,7 +342,7 @@
 								{#if billingCycle === 'yearly'}
 									<div class="flex flex-col">
 										<span
-											class="text-sm font-bold text-slate-400 line-through decoration-[#FFBF00]/50 dark:text-slate-500"
+											class="text-sm font-bold text-slate-400 line-through decoration-brand/50 dark:text-slate-500"
 											>{data.pricing.symbol}{data.pricing
 												.yearlyStrikethrough}</span
 										>
@@ -366,7 +366,7 @@
 								{/if}
 							</div>
 							<!-- Trial Subtitle -->
-							<p class="mt-2 text-sm font-bold text-amber-600 dark:text-amber-500/90">
+							<p class="mt-2 text-sm font-bold text-amber-600 dark:text-brand/90">
 								{m.trial_subtitle()}
 							</p>
 							<p
@@ -380,23 +380,23 @@
 					<Card.Content class="flex-1 space-y-5">
 						<div class="mb-2 flex items-center gap-2">
 							<div
-								class="h-[1px] flex-1 bg-gradient-to-r from-[#FFBF00]/0 via-[#FFBF00]/30 to-[#FFBF00]/0"
+								class="h-[1px] flex-1 bg-gradient-to-r from-brand/0 via-brand/30 to-brand/0"
 							></div>
 							<p
-								class="text-[10px] font-black tracking-widest text-[#FFBF00] uppercase"
+								class="text-[10px] font-black tracking-widest text-brand uppercase"
 							>
 								{m.feature_pro_plus_basic()}
 							</p>
 							<div
-								class="h-[1px] flex-1 bg-gradient-to-r from-[#FFBF00]/0 via-[#FFBF00]/30 to-[#FFBF00]/0"
+								class="h-[1px] flex-1 bg-gradient-to-r from-brand/0 via-brand/30 to-brand/0"
 							></div>
 						</div>
 
 						<div class="flex items-center gap-4">
 							<div
-								class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10"
+								class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10"
 							>
-								<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
+								<Check class="h-3.5 w-3.5 text-brand" />
 							</div>
 							<span class="text-sm font-bold text-slate-900 dark:text-white"
 								>{m.feature_lists_all()}</span
@@ -404,9 +404,9 @@
 						</div>
 						<div class="flex items-center gap-4">
 							<div
-								class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10"
+								class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10"
 							>
-								<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
+								<Check class="h-3.5 w-3.5 text-brand" />
 							</div>
 							<span class="text-sm font-bold text-slate-900 dark:text-white"
 								>{m.feature_lists_custom()}</span
@@ -414,9 +414,9 @@
 						</div>
 						<div class="flex items-center gap-4">
 							<div
-								class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10"
+								class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10"
 							>
-								<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
+								<Check class="h-3.5 w-3.5 text-brand" />
 							</div>
 							<span class="text-sm font-bold text-slate-900 dark:text-white"
 								>{m.feature_cloud_backup()}</span
@@ -424,9 +424,9 @@
 						</div>
 						<div class="flex items-center gap-4">
 							<div
-								class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10"
+								class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10"
 							>
-								<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
+								<Check class="h-3.5 w-3.5 text-brand" />
 							</div>
 							<span class="text-sm font-bold text-slate-900 dark:text-white"
 								>{m.feature_scripts_premium()}</span
@@ -434,9 +434,9 @@
 						</div>
 						<div class="flex items-center gap-4">
 							<div
-								class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FFBF00]/10"
+								class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10"
 							>
-								<Check class="h-3.5 w-3.5 text-[#FFBF00]" />
+								<Check class="h-3.5 w-3.5 text-brand" />
 							</div>
 							<span class="text-sm font-bold text-slate-900 dark:text-white"
 								>{m.feature_unlimited_devices()}</span
@@ -451,7 +451,7 @@
 
 					<Card.Footer class="flex flex-col gap-3 pt-8 pb-10">
 						<Button
-							class="group relative h-16 w-full overflow-hidden bg-[#FFBF00] text-xl font-black text-white shadow-[0_10px_30px_rgba(255,191,0,0.3)] transition-all hover:scale-[1.02] hover:bg-amber-400 active:scale-95"
+							class="group relative h-16 w-full overflow-hidden bg-brand text-xl font-black text-white shadow-[0_10px_30px_rgba(255,191,0,0.3)] transition-all hover:scale-[1.02] hover:bg-amber-400 active:scale-95"
 							onclick={handleUpgrade}
 						>
 							<span class="relative z-10">{m.cta_upgrade_now()}</span>
@@ -489,7 +489,7 @@
 							<div
 								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
 							>
-								<Sparkles class="h-6 w-6 text-amber-500" />
+								<Sparkles class="h-6 w-6 text-brand" />
 							</div>
 							<div class="space-y-1">
 								<h3 class="text-lg font-bold text-slate-900 dark:text-slate-200">
@@ -506,7 +506,7 @@
 							<div
 								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
 							>
-								<Layers class="h-6 w-6 text-amber-500" />
+								<Layers class="h-6 w-6 text-brand" />
 							</div>
 							<div class="space-y-1">
 								<h3 class="text-lg font-bold text-slate-900 dark:text-slate-200">
@@ -523,7 +523,7 @@
 							<div
 								class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
 							>
-								<Cloud class="h-6 w-6 text-amber-500" />
+								<Cloud class="h-6 w-6 text-brand" />
 							</div>
 							<div class="space-y-1">
 								<h3 class="text-lg font-bold text-slate-900 dark:text-slate-200">
@@ -573,12 +573,12 @@
 			>
 				<a
 					href="/terms"
-					class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
+					class="transition-colors hover:text-amber-600 dark:hover:text-brand"
 					>{m.footer_terms()}</a
 				>
 				<a
 					href="/privacy"
-					class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
+					class="transition-colors hover:text-amber-600 dark:hover:text-brand"
 					>{m.footer_privacy()}</a
 				>
 			</div>

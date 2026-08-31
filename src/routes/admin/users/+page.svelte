@@ -117,7 +117,7 @@
 						<Table.Cell>
 							{#if isPro(user)}
 								<Badge
-									class="gap-1 border-amber-500/20 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20"
+									class="gap-1 border-brand/20 bg-brand/10 text-brand hover:bg-brand/20"
 								>
 									<Crown class="h-3 w-3" /> Pro
 								</Badge>
@@ -153,7 +153,7 @@
 											isProModalOpen = true;
 										}}
 									>
-										<Crown class="h-4 w-4 text-amber-500" />
+										<Crown class="h-4 w-4 text-brand" />
 										Grant Free Pro
 									</DropdownMenu.Item>
 
@@ -177,7 +177,7 @@
 													<ShieldCheck class="h-4 w-4 text-emerald-500" />
 													Restore User
 												{:else}
-													<UserX class="h-4 w-4 text-amber-500" />
+													<UserX class="h-4 w-4 text-brand" />
 													Ban User
 												{/if}
 											</button>

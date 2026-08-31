@@ -471,7 +471,7 @@
 					{:else}
 						<Button
 							href="/get-pro"
-							class="group h-11 shrink-0 rounded-xl bg-amber-500 px-8 font-bold text-amber-950 shadow-sm transition-all duration-300 hover:bg-amber-600 hover:text-amber-50"
+							class="group h-11 shrink-0 rounded-xl bg-brand px-8 font-bold text-amber-950 shadow-sm transition-all duration-300 hover:bg-amber-600 hover:text-amber-50"
 						>
 							<Crown
 								class="mr-2 h-4 w-4 transition-transform group-hover:scale-110 group-hover:rotate-12"

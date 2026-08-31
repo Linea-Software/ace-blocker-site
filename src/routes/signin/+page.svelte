@@ -141,7 +141,7 @@
 		class="relative hidden w-1/2 flex-col justify-between bg-gradient-to-br from-[#0c111d] to-[#030712] p-12 lg:flex"
 	>
 		<div
-			class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--color-amber-500)_0%,_transparent_70%)] opacity-10"
+			class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--color-brand)_0%,_transparent_70%)] opacity-10"
 		></div>
 
 		<a href="/" class="relative z-10 flex items-center transition-opacity hover:opacity-80">
@@ -151,7 +151,7 @@
 		<div class="relative z-10 space-y-6">
 			<h1 class="text-6xl leading-tight font-extrabold tracking-tight text-white">
 				{m.auth_reclaim_focus_title()}<br />
-				<span class="text-amber-500">{m.auth_reclaim_focus_subtitle()}</span>
+				<span class="text-brand">{m.auth_reclaim_focus_subtitle()}</span>
 			</h1>
 			<p class="max-w-md text-xl text-slate-400">
 				{m.hero_description()}
@@ -179,7 +179,7 @@
 			<Button
 				variant="ghost"
 				href="/signup"
-				class="text-amber-500 hover:bg-amber-500/10 hover:text-amber-400"
+				class="text-brand hover:bg-brand/10 hover:text-amber-400"
 			>
 				{m.auth_sign_up_button()}
 			</Button>
@@ -257,7 +257,7 @@
 							placeholder="you@example.com"
 							bind:value={email}
 							required
-							class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+							class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-brand/50 focus:ring-brand/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
 						/>
 					</div>
 					<div class="space-y-2">
@@ -267,7 +267,7 @@
 							>
 							<a
 								href="/forgot-password"
-								class="text-xs text-amber-500 hover:underline">Forgot password?</a
+								class="text-xs text-brand hover:underline">Forgot password?</a
 							>
 						</div>
 						<Input
@@ -276,13 +276,13 @@
 							placeholder="••••••••"
 							bind:value={password}
 							required
-							class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+							class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-brand/50 focus:ring-brand/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
 						/>
 					</div>
 
 					<Button
 						type="submit"
-						class="h-12 w-full bg-amber-500 font-bold text-black transition-all hover:bg-amber-400 active:scale-[0.98]"
+						class="h-12 w-full bg-brand font-bold text-black transition-all hover:bg-amber-400 active:scale-[0.98]"
 						disabled={loading}
 					>
 						{#if loading}
@@ -298,7 +298,7 @@
 					{m.auth_don_t_have_account()}
 					<a
 						href="/signup"
-						class="px-1 font-semibold text-amber-500 hover:text-amber-400 hover:underline"
+						class="px-1 font-semibold text-brand hover:text-amber-400 hover:underline"
 					>
 						{m.auth_sign_up_button()}
 					</a>
@@ -334,7 +334,7 @@
 								maxlength={6}
 								bind:value={otpCode}
 								required
-								class="h-14 border-input bg-card text-center text-2xl font-bold tracking-[0.5em] text-foreground placeholder:text-muted-foreground/30 focus:border-amber-500/50 focus:ring-amber-500/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+								class="h-14 border-input bg-card text-center text-2xl font-bold tracking-[0.5em] text-foreground placeholder:text-muted-foreground/30 focus:border-brand/50 focus:ring-brand/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
 							/>
 							<Key
 								class="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted-foreground"
@@ -344,7 +344,7 @@
 
 					<Button
 						type="submit"
-						class="h-12 w-full bg-amber-500 font-bold text-black transition-all hover:bg-amber-400 active:scale-[0.98]"
+						class="h-12 w-full bg-brand font-bold text-black transition-all hover:bg-amber-400 active:scale-[0.98]"
 						disabled={loading || otpCode.length !== 6}
 					>
 						{#if loading}

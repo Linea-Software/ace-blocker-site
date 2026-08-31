@@ -219,7 +219,7 @@
 	<title>{m.admin_releases_category_sitepacks()} — Ace Blocker Admin</title>
 </svelte:head>
 
-<div class="min-h-screen bg-slate-50 dark:bg-[#0B0F19] p-8 font-sans text-slate-800 dark:text-gray-200 selection:bg-amber-500/30">
+<div class="min-h-screen bg-slate-50 dark:bg-[#0B0F19] p-8 font-sans text-slate-800 dark:text-gray-200 selection:bg-brand/30">
 	<!-- Page Header -->
 	<header
 		class="mb-10 flex flex-col justify-between gap-4 border-b border-slate-200 dark:border-white/5 pb-6 md:flex-row md:items-center"
@@ -227,7 +227,7 @@
 		<div>
 			<div class="mb-1 flex items-center gap-3">
 				<div
-					class="rounded-lg border border-amber-500/20 bg-amber-500/10 p-2 text-amber-600 dark:text-amber-500"
+					class="rounded-lg border border-brand/20 bg-brand/10 p-2 text-amber-600 dark:text-brand"
 				>
 					<List class="h-5 w-5" />
 				</div>
@@ -249,7 +249,7 @@
 			</div>
 			<button
 				onclick={openUploadModal}
-				class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-amber-500/10 transition-all hover:scale-[1.02] hover:bg-amber-400 active:scale-95"
+				class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-brand/10 transition-all hover:scale-[1.02] hover:bg-amber-400 active:scale-95"
 			>
 				<Upload class="h-4 w-4" />
 				{m.admin_releases_deploy_new()}
@@ -263,7 +263,7 @@
 			<p class="mb-1 text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase">
 				Total Downloads
 			</p>
-			<p class="font-mono text-2xl font-bold text-amber-600 dark:text-amber-500">
+			<p class="font-mono text-2xl font-bold text-amber-600 dark:text-brand">
 				{data.totalDownloads.toLocaleString()}
 			</p>
 		</div>
@@ -318,7 +318,7 @@
 						<td class="px-6 py-4">
 							<div class="flex flex-col">
 								<span
-									class="text-sm font-semibold text-slate-900 dark:text-white transition-colors group-hover:text-amber-600 dark:group-hover:text-amber-500"
+									class="text-sm font-semibold text-slate-900 dark:text-white transition-colors group-hover:text-amber-600 dark:group-hover:text-brand"
 									>{pack.name}</span
 								>
 								<span
@@ -337,7 +337,7 @@
 						<td class="px-6 py-4 text-xs">
 							{#if pack.requiresProSubscription}
 								<span
-									class="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 font-medium text-amber-600 dark:text-amber-500"
+									class="inline-flex items-center gap-1 rounded-full border border-brand/20 bg-brand/10 px-2 py-0.5 font-medium text-amber-600 dark:text-brand"
 								>
 									<Lock class="h-3 w-3" />
 									Pro Only
@@ -399,7 +399,7 @@
 								</p>
 								<button
 									onclick={openUploadModal}
-									class="bg-amber-500/10 text-amber-600 dark:text-amber-500 hover:bg-amber-500/20 border border-amber-500/20 px-4 py-2 rounded-lg text-xs font-bold transition-all"
+									class="bg-brand/10 text-amber-600 dark:text-brand hover:bg-brand/20 border border-brand/20 px-4 py-2 rounded-lg text-xs font-bold transition-all"
 								>
 									Deploy First Build
 								</button>
@@ -433,7 +433,7 @@
 				<div class="flex items-center justify-between border-b border-slate-200 dark:border-white/5 px-6 py-5">
 					<div>
 						<h3 class="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
-							<UploadCloud class="h-5 w-5 text-amber-600 dark:text-amber-500" />
+							<UploadCloud class="h-5 w-5 text-amber-600 dark:text-brand" />
 							Deploy New Pack
 						</h3>
 						<p
@@ -473,7 +473,7 @@
 							type="text"
 							placeholder="e.g., adult-content-pack"
 							required
-							class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white transition-all outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+							class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white transition-all outline-none focus:border-brand focus:ring-1 focus:ring-brand"
 						/>
 					</div>
 
@@ -490,7 +490,7 @@
 							type="text"
 							placeholder="e.g., Adult Content Pack"
 							required
-							class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white transition-all outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+							class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white transition-all outline-none focus:border-brand focus:ring-1 focus:ring-brand"
 						/>
 					</div>
 
@@ -515,7 +515,7 @@
 							/>
 							<div
 								class="flex h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all group-hover:bg-slate-100 dark:group-hover:bg-white/5 {isDragging
-									? 'border-amber-500 bg-amber-500/5'
+									? 'border-brand bg-brand/5'
 									: 'border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/20 group-hover:border-slate-400 dark:group-hover:border-white/20'}"
 							>
 								<div
@@ -523,12 +523,12 @@
 								>
 									<Upload
 										class="mb-2 h-6 w-6 {isDragging
-											? 'text-amber-600 dark:text-amber-500'
+											? 'text-amber-600 dark:text-brand'
 											: 'text-slate-500 dark:text-gray-500'}"
 									/>
 									{#if uploadFormState.file}
 										<p
-											class="max-w-[280px] truncate font-mono text-xs text-amber-600 dark:text-amber-500"
+											class="max-w-[280px] truncate font-mono text-xs text-amber-600 dark:text-brand"
 										>
 											{uploadFormState.file.name}
 										</p>
@@ -548,7 +548,7 @@
 						class="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-4"
 					>
 						<div class="flex items-center gap-3">
-							<div class="rounded-lg bg-amber-500/10 p-2 text-amber-600 dark:text-amber-500">
+							<div class="rounded-lg bg-brand/10 p-2 text-amber-600 dark:text-brand">
 								<Lock class="h-4 w-4" />
 							</div>
 							<div>
@@ -566,7 +566,7 @@
 								(uploadFormState.requiresProSubscription =
 									!uploadFormState.requiresProSubscription)}
 							class="relative h-5 w-10 rounded-full transition-colors {uploadFormState.requiresProSubscription
-								? 'bg-amber-500'
+								? 'bg-brand'
 								: 'bg-white/10'}"
 							aria-label="Toggle Pro Requirement"
 						>
@@ -581,7 +581,7 @@
 					<button
 						type="submit"
 						disabled={isDeploying}
-						class="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-bold text-black shadow-lg shadow-amber-500/10 transition-all hover:bg-amber-400 disabled:opacity-50"
+						class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-sm font-bold text-black shadow-lg shadow-brand/10 transition-all hover:bg-amber-400 disabled:opacity-50"
 					>
 						{#if isDeploying}
 							<div
@@ -617,7 +617,7 @@
 				>
 					<div>
 						<h3 class="flex items-center gap-2 text-lg font-bold">
-							<Settings class="h-5 w-5 text-amber-600 dark:text-amber-500" />
+							<Settings class="h-5 w-5 text-amber-600 dark:text-brand" />
 							Pack Details
 						</h3>
 						<p
@@ -656,7 +656,7 @@
 								name="name"
 								bind:value={selectedRelease.name}
 								type="text"
-								class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-3 py-2 text-sm text-slate-900 dark:text-white transition-all outline-none focus:border-amber-500"
+								class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-3 py-2 text-sm text-slate-900 dark:text-white transition-all outline-none focus:border-brand"
 							/>
 						</div>
 
@@ -664,7 +664,7 @@
 							class="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-4"
 						>
 							<div class="flex items-center gap-3">
-								<div class="rounded-lg bg-amber-500/10 p-2 text-amber-600 dark:text-amber-500">
+								<div class="rounded-lg bg-brand/10 p-2 text-amber-600 dark:text-brand">
 									<Lock class="h-4 w-4" />
 								</div>
 								<div>
@@ -682,7 +682,7 @@
 									(selectedRelease.requiresProSubscription =
 										!selectedRelease.requiresProSubscription)}
 								class="relative h-5 w-10 rounded-full transition-colors {selectedRelease.requiresProSubscription
-									? 'bg-amber-500'
+									? 'bg-brand'
 									: 'bg-white/10'}"
 								aria-label="Toggle Pro Requirement"
 							>
@@ -780,7 +780,7 @@
 						<button
 							type="submit"
 							disabled={isUpdating}
-							class="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-bold text-black transition-all hover:bg-amber-400 disabled:opacity-50"
+							class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-sm font-bold text-black transition-all hover:bg-amber-400 disabled:opacity-50"
 						>
 							{#if isUpdating}
 								<div

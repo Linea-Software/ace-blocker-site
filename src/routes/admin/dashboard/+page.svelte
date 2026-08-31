@@ -19,7 +19,7 @@
 			value: data.proUsers ?? 0,
 			description: 'Active Pro licenses',
 			icon: Crown,
-			color: 'text-amber-500'
+			color: 'text-brand'
 		},
 		{
 			title: 'Site Visits',

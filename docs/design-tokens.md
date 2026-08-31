@@ -64,22 +64,29 @@ border-border bg-card p-6` blocks repeated inline) rather than missing
 primitives. An `EmptyState` and a `Card`/`Panel` wrapper would remove the most
 repeated inline `rounded-xl border … p-6` card recipe.
 
-## 4. Decisions needed (founder)
+## 4. Decisions (founder, round 5)
 
-1. **Canonical brand amber** — pick one (recommend `amber-500` as the accent;
-   `#FFBF00` only for the hero if intentional), then define
-   `--color-brand` + `--color-brand-foreground` and migrate all amber usages.
-2. **Dark surface unification** — collapse `#0B0B0F` / `#0B0F19` / `#111827` /
-   `#1F2937` / `#0F172A` into `--background`/`--card`/`--muted` (or a new
-   `--surface` token), keeping the current dark background value.
-3. **Radius scale** — confirm `rounded-xl` as the canonical card radius so the
-   `rounded-2xl/3xl/[22px]` outliers can be normalized.
+1. **Canonical brand amber = `amber-500` (`#f59e0b`)** → exposed as `--color-brand`.
+2. **Dark surfaces unify onto `--background`/`--card`/`--muted`** (pending the value mapping, see §5).
 
-## 5. Migration plan (after decisions, with visual verification)
+## 5. Migration status
 
-1. Add missing semantic tokens to `layout.css` (`--color-brand*`, `--surface*`)
-   — new variables only, zero visual change.
-2. Replace raw `amber-*`/hex usages with the new tokens page-by-page,
-   screenshotting before/after each page.
-3. Extract the repeated card/empty-state recipes into shared primitives.
-4. Re-run `bun run check` + `bun run build` and a visual pass (light + dark).
+**Done (committed):**
+- Added `--color-brand: #f59e0b` to `layout.css` `@theme`.
+- Replaced `amber-500` → `brand` (247×) and `[#FFBF00]` → `brand` (46×) across 17
+  `.svelte` files. `amber-500`→`brand` is value-identical (verified in the built
+  CSS: `.bg-brand{background-color:#f59e0b}`); `#FFBF00`→`brand` is the approved
+  brightness consolidation (slightly less bright hero accent).
+
+**Pending (require visual verification, light + dark):**
+- `amber-400`/`amber-600`/`amber-700` remain as explicit **shade steps** for
+  gradients and hover states — flattening them to `brand` would remove hover
+  affordance; decide whether to keep them or derive dark/light brand shades.
+- Dark-surface hexes (`#0B0B0F`, `#0B0F19`, `#111827`, `#1F2937`, `#0F172A`)
+  still need mapping onto `--background`/`--card`/`--muted` — the current dark
+  tokens are blue-tinted while the hexes are neutral, so the target value must
+  be confirmed visually.
+- Radius normalization (`rounded-2xl/3xl/[22px]` outliers → the `--radius` scale).
+- Extract the repeated `rounded-xl border … p-6` card recipe and an `EmptyState`
+  primitive into shared components.
+

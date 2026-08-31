@@ -78,6 +78,10 @@
 	--radius-md: calc(var(--radius) - 2px);
 	--radius-lg: var(--radius);
 	--radius-xl: calc(var(--radius) + 4px);
+	/* Canonical brand accent (consolidated from the hardcoded amber-500 /
+	   #FFBF00 values). Amber-400/600/700 remain as explicit shade steps for
+	   gradients and hover states. */
+	--color-brand: #f59e0b;
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
 	--color-card: var(--card);

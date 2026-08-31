@@ -43,7 +43,7 @@
 				>
 					{m.about_hero_title()}
 					<span
-						class="block bg-gradient-to-r from-amber-400 to-[#FFBF00] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(255,191,0,0.4)]"
+						class="block bg-gradient-to-r from-amber-400 to-brand bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(255,191,0,0.4)]"
 					>
 						{m.about_hero_app()}
 					</span>
@@ -61,7 +61,7 @@
 			class="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-40"
 		>
 			<div
-				class="absolute h-[600px] w-[600px] rounded-full bg-amber-500/10 blur-[150px]"
+				class="absolute h-[600px] w-[600px] rounded-full bg-brand/10 blur-[150px]"
 			></div>
 			<div
 				class="absolute h-[400px] w-[400px] translate-x-32 translate-y-32 rounded-full bg-blue-600/10 blur-[120px]"
@@ -75,7 +75,7 @@
 	>
 		<!-- Subtle radial backdrop -->
 		<div
-			class="absolute inset-0 z-0 bg-[radial-gradient(circle_at_left,_var(--tw-gradient-stops))] from-amber-500/5 via-transparent to-transparent"
+			class="absolute inset-0 z-0 bg-[radial-gradient(circle_at_left,_var(--tw-gradient-stops))] from-brand/5 via-transparent to-transparent"
 		></div>
 
 		<div class="relative z-10 container mx-auto px-4">
@@ -92,7 +92,7 @@
 				</div>
 				<div class="group relative flex justify-center">
 					<div
-						class="relative flex h-64 w-64 items-center justify-center rounded-[3rem] border border-border bg-card p-6 shadow-md backdrop-blur-md transition-all duration-500 group-hover:border-amber-500/50 group-hover:shadow-[0_0_40px_rgba(255,191,0,0.1)] dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-2xl"
+						class="relative flex h-64 w-64 items-center justify-center rounded-[3rem] border border-border bg-card p-6 shadow-md backdrop-blur-md transition-all duration-500 group-hover:border-brand/50 group-hover:shadow-[0_0_40px_rgba(255,191,0,0.1)] dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-2xl"
 					>
 						<div class="relative flex items-center justify-center">
 							<img
@@ -128,16 +128,16 @@
 			<div class="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">
 				<!-- System-Wide -->
 				<div
-					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
+					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-brand/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
 					<div
-						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"
+						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-brand/5 blur-3xl transition-all duration-500 group-hover:bg-brand/20"
 					></div>
 
 					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 transition-transform duration-300 group-hover:scale-110"
+						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
 					>
-						<Layers class="h-7 w-7 text-[#FFBF00]" />
+						<Layers class="h-7 w-7 text-brand" />
 					</div>
 					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
 						{m.about_feature_system_title()}
@@ -149,16 +149,16 @@
 
 				<!-- Intelligent DB -->
 				<div
-					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
+					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-brand/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
 					<div
-						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"
+						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-brand/5 blur-3xl transition-all duration-500 group-hover:bg-brand/20"
 					></div>
 
 					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 transition-transform duration-300 group-hover:scale-110"
+						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
 					>
-						<Cpu class="h-7 w-7 text-[#FFBF00]" />
+						<Cpu class="h-7 w-7 text-brand" />
 					</div>
 					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
 						{m.about_feature_intel_title()}
@@ -170,16 +170,16 @@
 
 				<!-- Hardened Locks -->
 				<div
-					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
+					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-brand/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
 					<div
-						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"
+						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-brand/5 blur-3xl transition-all duration-500 group-hover:bg-brand/20"
 					></div>
 
 					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 transition-transform duration-300 group-hover:scale-110"
+						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
 					>
-						<Lock class="h-7 w-7 text-[#FFBF00]" />
+						<Lock class="h-7 w-7 text-brand" />
 					</div>
 					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
 						{m.about_feature_locks_title()}
@@ -193,16 +193,16 @@
 			<!-- Break the Habit Loop (full-width) -->
 			<div class="mx-auto mt-6 max-w-5xl">
 				<div
-					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-[#FFBF00]/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
+					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-brand/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
 					<div
-						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-500/5 blur-3xl transition-all duration-500 group-hover:bg-amber-500/20"
+						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-brand/5 blur-3xl transition-all duration-500 group-hover:bg-brand/20"
 					></div>
 
 					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 transition-transform duration-300 group-hover:scale-110"
+						class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
 					>
-						<Sparkles class="h-7 w-7 text-[#FFBF00]" />
+						<Sparkles class="h-7 w-7 text-brand" />
 					</div>
 					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
 						{m.about_feature_scripts_title()}
@@ -224,7 +224,7 @@
 				<!-- Decorative pattern & Glows -->
 				<div class="absolute inset-0 z-0">
 					<div
-						class="absolute top-0 left-1/2 h-[300px] w-[500px] -translate-x-1/2 rounded-full bg-amber-500/10 opacity-50 blur-[100px] dark:opacity-100"
+						class="absolute top-0 left-1/2 h-[300px] w-[500px] -translate-x-1/2 rounded-full bg-brand/10 opacity-50 blur-[100px] dark:opacity-100"
 					></div>
 					<div
 						class="absolute inset-0 opacity-[0.03] dark:opacity-[0.03]"
@@ -247,14 +247,14 @@
 					class="relative z-10 mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
 				>
 					<Button
-						class="h-14 w-full bg-gradient-to-r from-[#FFBF00] to-orange-500 px-10 text-lg font-black text-white shadow-[0_10px_30px_rgba(255,191,0,0.3)] transition-all hover:scale-[1.02] active:scale-95 sm:w-auto"
+						class="h-14 w-full bg-gradient-to-r from-brand to-orange-500 px-10 text-lg font-black text-white shadow-[0_10px_30px_rgba(255,191,0,0.3)] transition-all hover:scale-[1.02] active:scale-95 sm:w-auto"
 						href={downloadUrl}
 					>
 						{m.hero_download_button()}
 					</Button>
 					<Button
 						variant="outline"
-						class="h-14 w-full border-slate-300 bg-transparent px-10 text-lg font-bold text-slate-900 transition-colors hover:bg-amber-500/10 hover:text-amber-600 sm:w-auto dark:border-[#FFBF00]/50 dark:text-[#FFBF00] dark:hover:text-[#FFBF00]"
+						class="h-14 w-full border-slate-300 bg-transparent px-10 text-lg font-bold text-slate-900 transition-colors hover:bg-brand/10 hover:text-amber-600 sm:w-auto dark:border-brand/50 dark:text-brand dark:hover:text-brand"
 						href="/get-pro"
 					>
 						{m.hero_pro_button()}
@@ -284,12 +284,12 @@
 			>
 				<a
 					href="/terms"
-					class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
+					class="transition-colors hover:text-amber-600 dark:hover:text-brand"
 					>{m.footer_terms()}</a
 				>
 				<a
 					href="/privacy"
-					class="transition-colors hover:text-amber-600 dark:hover:text-[#FFBF00]"
+					class="transition-colors hover:text-amber-600 dark:hover:text-brand"
 					>{m.footer_privacy()}</a
 				>
 			</div>

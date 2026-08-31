@@ -44,7 +44,7 @@
 	<aside class="w-64 border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-[#0B0B0F]">
 		<div class="flex h-16 items-center px-6">
 			<a href="/" class="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
-				<Shield class="h-6 w-6 text-amber-500" />
+				<Shield class="h-6 w-6 text-brand" />
 				<span>Ace Admin</span>
 			</a>
 		</div>
@@ -56,7 +56,7 @@
 					class={cn(
 						'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
 						isActive(link.href)
-							? 'bg-amber-500/10 text-amber-600 dark:text-amber-500'
+							? 'bg-brand/10 text-amber-600 dark:text-brand'
 							: 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900'
 					)}
 				>
@@ -72,7 +72,7 @@
 					class={cn(
 						'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors',
 						isReleasesExpanded || page.url.pathname.includes('/admin/releases')
-							? 'bg-amber-500/10 text-amber-600 dark:text-amber-500'
+							? 'bg-brand/10 text-amber-600 dark:text-brand'
 							: 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900'
 					)}
 				>
@@ -95,7 +95,7 @@
 								class={cn(
 									'ml-4 block rounded-r-lg border-l border-border py-1.5 pl-4 text-sm font-medium transition-colors',
 									isActive(sublink.href)
-										? 'border-amber-500 bg-amber-500/5 text-amber-500'
+										? 'border-brand bg-brand/5 text-brand'
 										: 'text-muted-foreground hover:border-slate-400 hover:text-foreground'
 								)}
 							>

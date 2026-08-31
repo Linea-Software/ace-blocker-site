@@ -144,7 +144,7 @@
 		class="pointer-events-none absolute inset-0 -z-10 bg-background transition-colors duration-500 dark:bg-[#0B0B0F]"
 	>
 		<div
-			class="absolute inset-0 bg-radial-[at_50%_50%] from-background via-background to-amber-500/5 dark:from-[#0B0B0F] dark:via-[#0B0B0F] dark:to-amber-500/10"
+			class="absolute inset-0 bg-radial-[at_50%_50%] from-background via-background to-brand/5 dark:from-[#0B0B0F] dark:via-[#0B0B0F] dark:to-brand/10"
 		></div>
 		<div
 			class="absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-200/50 blur-[120px] dark:bg-primary/10"
@@ -152,7 +152,7 @@
 
 		<!-- Subtle Moving Orbs -->
 		<div
-			class="absolute -top-24 -left-24 h-96 w-96 animate-pulse rounded-full bg-amber-500/5 blur-[100px]"
+			class="absolute -top-24 -left-24 h-96 w-96 animate-pulse rounded-full bg-brand/5 blur-[100px]"
 		></div>
 		<div
 			class="absolute -right-24 -bottom-24 h-96 w-96 animate-pulse rounded-full bg-blue-500/5 blur-[100px]"
@@ -183,7 +183,7 @@
 
 				{#if downloadStarting}
 					<p
-						class="flex items-center justify-center gap-2 text-sm font-medium text-amber-600 dark:text-amber-500"
+						class="flex items-center justify-center gap-2 text-sm font-medium text-amber-600 dark:text-brand"
 					>
 						<Loader2 class="h-4 w-4 animate-spin" />
 						Your download is starting…
@@ -202,7 +202,7 @@
 					size="lg"
 					onclick={handleManualDownload}
 					disabled={isManualLoading || !data.installer}
-					class="relative h-14 overflow-hidden rounded-lg bg-amber-500 px-10 text-lg font-bold text-black shadow-xl shadow-amber-500/20 transition-all hover:scale-105 hover:bg-amber-400 active:scale-95 dark:shadow-amber-500/10"
+					class="relative h-14 overflow-hidden rounded-lg bg-brand px-10 text-lg font-bold text-black shadow-xl shadow-brand/20 transition-all hover:scale-105 hover:bg-amber-400 active:scale-95 dark:shadow-brand/10"
 				>
 					{#if isManualLoading}
 						<Loader2 class="mr-2 h-5 w-5 animate-spin" />
@@ -216,7 +216,7 @@
 					<a
 						href="https://github.com/aintDatCap/ace-blocker/releases"
 						target="_blank"
-						class="group flex items-center gap-1.5 text-sm font-bold text-slate-500 transition-all hover:text-amber-500 dark:text-slate-400"
+						class="group flex items-center gap-1.5 text-sm font-bold text-slate-500 transition-all hover:text-brand dark:text-slate-400"
 					>
 						<IconFileText
 							size={16}
@@ -257,13 +257,13 @@
 							class="relative flex flex-col items-start gap-5 rounded-2xl p-8 text-left transition-all duration-500
 								{option.isAvailable ? 'hover:scale-[1.02] active:scale-[0.98]' : 'cursor-default'}
 								{isRecommended
-								? 'border-2 border-amber-500/50 bg-amber-50 shadow-2xl shadow-amber-500/10 dark:bg-amber-500/5'
-								: 'border border-slate-200 bg-white shadow-sm hover:border-amber-500/30 hover:bg-amber-50 dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-amber-500/30 dark:hover:bg-amber-500/5 dark:hover:shadow-xl'}"
+								? 'border-2 border-brand/50 bg-amber-50 shadow-2xl shadow-brand/10 dark:bg-brand/5'
+								: 'border border-slate-200 bg-white shadow-sm hover:border-brand/30 hover:bg-amber-50 dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-brand/30 dark:hover:bg-brand/5 dark:hover:shadow-xl'}"
 							aria-disabled={!option.isAvailable}
 						>
 							{#if isRecommended}
 								<div
-									class="absolute top-6 right-8 rounded-md bg-amber-500 px-3 py-1 text-[10px] font-black tracking-wider text-black uppercase shadow-lg"
+									class="absolute top-6 right-8 rounded-md bg-brand px-3 py-1 text-[10px] font-black tracking-wider text-black uppercase shadow-lg"
 								>
 									Recommended
 								</div>
@@ -279,7 +279,7 @@
 
 							<div
 								class="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 transition-all duration-300 dark:border-slate-800 dark:bg-slate-900/50 {option.isAvailable
-									? 'group-hover:border-amber-500 group-hover:bg-amber-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-amber-500/30 dark:group-hover:border-amber-500/50 dark:group-hover:bg-amber-500/15 dark:group-hover:text-amber-500'
+									? 'group-hover:border-brand group-hover:bg-brand group-hover:text-white group-hover:shadow-lg group-hover:shadow-brand/30 dark:group-hover:border-brand/50 dark:group-hover:bg-brand/15 dark:group-hover:text-brand'
 									: ''}"
 							>
 								<PlatformIcon size={32} stroke={1.5} />

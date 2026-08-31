@@ -138,7 +138,7 @@
 					<div class="pt-4">
 						<a
 							href="/get-pro"
-							class="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-8 py-3.5 text-base font-bold text-white shadow-[0_0_20px_rgba(245,158,11,0.15)] transition-all hover:bg-amber-400"
+							class="inline-flex items-center gap-2 rounded-xl bg-brand px-8 py-3.5 text-base font-bold text-white shadow-[0_0_20px_rgba(245,158,11,0.15)] transition-all hover:bg-amber-400"
 						>
 							<ArrowRight class="h-4 w-4" />
 							{m.checkout_retry_button()}
@@ -203,7 +203,7 @@
 				class="pointer-events-none absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/10 blur-[120px]"
 			></div>
 			<div
-				class="pointer-events-none absolute top-[20%] right-0 h-[400px] w-[400px] rounded-full bg-amber-500/5 blur-[100px]"
+				class="pointer-events-none absolute top-[20%] right-0 h-[400px] w-[400px] rounded-full bg-brand/5 blur-[100px]"
 			></div>
 
 			<div class="relative z-10 container mx-auto px-4">
@@ -298,7 +298,7 @@
 						</div>
 						<a
 							href="/download"
-							class="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 py-2.5 text-sm font-bold text-white shadow-[0_0_15px_rgba(245,158,11,0.15)] transition-all hover:bg-amber-400 sm:w-auto"
+							class="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-6 py-2.5 text-sm font-bold text-white shadow-[0_0_15px_rgba(245,158,11,0.15)] transition-all hover:bg-amber-400 sm:w-auto"
 						>
 							<Download class="h-4 w-4" />
 							{m.checkout_download_button()}

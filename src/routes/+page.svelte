@@ -33,7 +33,7 @@
 
 {#if showFarewell}
 	<div
-		class="flex items-center gap-3 border-b border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300"
+		class="flex items-center gap-3 border-b border-brand/20 bg-brand/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300"
 	>
 		<Info class="h-4 w-4 shrink-0" />
 		<p>{m.account_farewell_banner()}</p>
@@ -51,7 +51,7 @@
 					href={downloadUrl}
 					class="mb-4 inline-flex items-center rounded-full border bg-muted/50 px-3 py-1 text-sm font-medium backdrop-blur-sm transition-all hover:bg-muted dark:border-slate-800 dark:bg-slate-900/50"
 				>
-					<span class="mr-2 text-primary dark:text-amber-500">{m.hero_new_badge()}</span>
+					<span class="mr-2 text-primary dark:text-brand">{m.hero_new_badge()}</span>
 					<span
 						class="text-muted-foreground transition-colors hover:text-foreground dark:text-slate-400 dark:hover:text-slate-200"
 					>
@@ -63,7 +63,7 @@
 					class="bg-gradient-to-b from-slate-900 to-slate-600 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent md:text-7xl dark:from-white dark:to-white/80"
 				>
 					{m.hero_title_focus()}
-					<span class="text-amber-500 dark:text-amber-400">{m.hero_title_app()}</span>
+					<span class="text-brand dark:text-amber-400">{m.hero_title_app()}</span>
 				</h1>
 				<p
 					class="mx-auto max-w-2xl text-xl leading-relaxed text-muted-foreground md:text-2xl dark:text-slate-400"
@@ -73,7 +73,7 @@
 				<div class="flex flex-col items-center justify-center gap-4 pt-4 sm:flex-row">
 					<Button
 						size="lg"
-						class="h-12 w-full bg-foreground px-8 text-lg font-semibold text-background shadow-lg shadow-foreground/10 hover:bg-foreground/85 sm:w-auto dark:bg-slate-50 dark:text-slate-950 dark:shadow-amber-500/10 dark:hover:bg-white"
+						class="h-12 w-full bg-foreground px-8 text-lg font-semibold text-background shadow-lg shadow-foreground/10 hover:bg-foreground/85 sm:w-auto dark:bg-slate-50 dark:text-slate-950 dark:shadow-brand/10 dark:hover:bg-white"
 						href={downloadUrl}
 					>
 						<Download class="mr-2 h-5 w-5" />
@@ -82,7 +82,7 @@
 					<Button
 						variant="outline"
 						size="lg"
-						class="h-12 w-full border-2 border-foreground/60 px-8 text-lg font-semibold text-foreground hover:bg-foreground/5 sm:w-auto dark:border-amber-500 dark:text-amber-500 dark:hover:bg-amber-500/10"
+						class="h-12 w-full border-2 border-foreground/60 px-8 text-lg font-semibold text-foreground hover:bg-foreground/5 sm:w-auto dark:border-brand dark:text-brand dark:hover:bg-brand/10"
 						href="/get-pro"
 					>
 						{m.hero_pro_button()}
@@ -95,7 +95,7 @@
 			class="pointer-events-none absolute top-0 left-1/2 -z-10 h-full w-full -translate-x-1/2 opacity-10 dark:opacity-30"
 		>
 			<div
-				class="absolute top-[-10%] left-[-10%] h-[40%] w-[40%] rounded-full bg-primary blur-[120px] dark:bg-amber-500/20"
+				class="absolute top-[-10%] left-[-10%] h-[40%] w-[40%] rounded-full bg-primary blur-[120px] dark:bg-brand/20"
 			></div>
 			<div
 				class="absolute right-[-10%] bottom-[-10%] h-[40%] w-[40%] rounded-full bg-blue-500 blur-[120px] dark:bg-blue-900/20"
@@ -124,9 +124,9 @@
 					class="group rounded-2xl border border-border bg-card p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
 				>
 					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20 dark:bg-amber-500/10 dark:group-hover:bg-amber-500/20"
+						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20 dark:bg-brand/10 dark:group-hover:bg-brand/20"
 					>
-						<Lock class="h-7 w-7 text-primary dark:text-amber-500" />
+						<Lock class="h-7 w-7 text-primary dark:text-brand" />
 					</div>
 					<h3 class="mb-4 text-2xl font-bold text-card-foreground dark:text-white">
 						{m.feature_blocks_title()}

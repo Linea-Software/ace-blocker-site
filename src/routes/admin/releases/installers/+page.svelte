@@ -147,7 +147,7 @@
 	<title>{m.admin_releases_category_installers()} — Ace Blocker Admin</title>
 </svelte:head>
 
-<div class="min-h-screen bg-slate-50 dark:bg-[#0B0F19] p-8 font-sans text-slate-800 dark:text-gray-200 selection:bg-amber-500/30">
+<div class="min-h-screen bg-slate-50 dark:bg-[#0B0F19] p-8 font-sans text-slate-800 dark:text-gray-200 selection:bg-brand/30">
 	<!-- Page Header -->
 	<header
 		class="mb-10 flex flex-col justify-between gap-4 border-b border-slate-200 dark:border-white/5 pb-6 md:flex-row md:items-center"
@@ -155,7 +155,7 @@
 		<div>
 			<div class="mb-1 flex items-center gap-3">
 				<div
-					class="rounded-lg border border-amber-500/20 bg-amber-500/10 p-2 text-amber-600 dark:text-amber-500"
+					class="rounded-lg border border-brand/20 bg-brand/10 p-2 text-amber-600 dark:text-brand"
 				>
 					<HardDrive class="h-5 w-5" />
 				</div>
@@ -177,7 +177,7 @@
 			</div>
 			<button
 				onclick={openModal}
-				class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-amber-500/10 transition-all hover:scale-[1.02] hover:bg-amber-400 active:scale-95"
+				class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-brand/10 transition-all hover:scale-[1.02] hover:bg-amber-400 active:scale-95"
 			>
 				<Upload class="h-4 w-4" />
 				{m.admin_releases_deploy_new()}
@@ -191,7 +191,7 @@
 			<p class="mb-1 text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase">
 				Total Downloads
 			</p>
-			<p class="font-mono text-2xl font-bold text-amber-600 dark:text-amber-500">
+			<p class="font-mono text-2xl font-bold text-amber-600 dark:text-brand">
 				{data.totalDownloads.toLocaleString()}
 			</p>
 		</div>
@@ -236,12 +236,12 @@
 						<td class="px-6 py-4">
 							<div class="flex items-center gap-2">
 								<span
-									class="text-sm font-semibold text-slate-900 dark:text-white transition-colors group-hover:text-amber-600 dark:group-hover:text-amber-500"
+									class="text-sm font-semibold text-slate-900 dark:text-white transition-colors group-hover:text-amber-600 dark:group-hover:text-brand"
 									>{release.version}</span
 								>
 								{#if index === 0}
 									<span
-										class="rounded border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-amber-600 dark:text-amber-500 uppercase"
+										class="rounded border border-brand/20 bg-brand/10 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-amber-600 dark:text-brand uppercase"
 										>Latest</span
 									>
 								{/if}
@@ -300,7 +300,7 @@
 								</p>
 								<button
 									onclick={openModal}
-									class="bg-amber-500/10 text-amber-600 dark:text-amber-500 hover:bg-amber-500/20 border border-amber-500/20 px-4 py-2 rounded-lg text-xs font-bold transition-all"
+									class="bg-brand/10 text-amber-600 dark:text-brand hover:bg-brand/20 border border-brand/20 px-4 py-2 rounded-lg text-xs font-bold transition-all"
 								>
 									Deploy First Build
 								</button>
@@ -330,13 +330,13 @@
 				>
 					<div>
 						<h3 class="flex items-center gap-2 text-lg font-bold">
-							<Upload class="h-5 w-5 text-amber-600 dark:text-amber-500" />
+							<Upload class="h-5 w-5 text-amber-600 dark:text-brand" />
 							{m.admin_releases_upload_title()}
 						</h3>
 						<p
 							class="mt-1 text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase"
 						>
-							Targeting: <span class="text-amber-600 dark:text-amber-500">Installers</span>
+							Targeting: <span class="text-amber-600 dark:text-brand">Installers</span>
 						</p>
 					</div>
 					<button
@@ -370,7 +370,7 @@
 							type="text"
 							placeholder="e.g. v1.5.0"
 							required
-							class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white transition-all outline-none focus:border-amber-500"
+							class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white transition-all outline-none focus:border-brand"
 						/>
 					</div>
 
@@ -395,7 +395,7 @@
 							/>
 							<div
 								class="flex h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all group-hover:bg-slate-100 dark:group-hover:bg-white/5 {isDragging
-									? 'border-amber-500 bg-amber-500/5'
+									? 'border-brand bg-brand/5'
 									: 'border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/20 group-hover:border-slate-400 dark:group-hover:border-white/20'}"
 							>
 								<div
@@ -403,12 +403,12 @@
 								>
 									<UploadCloud
 										class="h-6 w-6 {isDragging
-											? 'text-amber-600 dark:text-amber-500'
+											? 'text-amber-600 dark:text-brand'
 											: 'text-slate-500 dark:text-gray-500'} mb-2"
 									/>
 									{#if uploadFormState.file}
 										<p
-											class="max-w-[280px] truncate font-mono text-xs text-amber-600 dark:text-amber-500"
+											class="max-w-[280px] truncate font-mono text-xs text-amber-600 dark:text-brand"
 										>
 											{uploadFormState.file.name}
 										</p>
@@ -435,7 +435,7 @@
 								id="rel-os"
 								name="os"
 								bind:value={uploadFormState.os}
-								class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-amber-500"
+								class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
 							>
 								<option value="windows">Windows</option>
 								<option value="linux">Linux</option>
@@ -452,7 +452,7 @@
 								id="rel-arch"
 								name="architecture"
 								bind:value={uploadFormState.architecture}
-								class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-amber-500"
+								class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
 							>
 								<option value="x64">x64</option>
 								<option value="arm64">arm64</option>
@@ -463,7 +463,7 @@
 					<button
 						type="submit"
 						disabled={isDeploying}
-						class="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-bold text-black transition-all hover:bg-amber-400 disabled:opacity-50"
+						class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-sm font-bold text-black transition-all hover:bg-amber-400 disabled:opacity-50"
 					>
 						{#if isDeploying}
 							<div
