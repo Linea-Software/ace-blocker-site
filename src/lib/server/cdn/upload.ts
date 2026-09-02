@@ -114,13 +114,14 @@ export async function uploadSitePack(
 	canBeDownloaded: boolean = true
 ): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
 	// Site pack ids become CDN object names — same path-safety rules as
-	// versions (id is a generated uuid in practice; validate anyway).
+	// versions (the canonical catalog ids are URL-safe slugs such as
+	// `pack-adult-free`; validate anyway).
 	if (!isValidArtifactVersion(id)) {
 		log.warn({ id }, `Rejected site pack upload: unsafe id`);
 		return err(CDNErrorType.InvalidArtifact);
 	}
 	// The name is a human-readable display value (spaces and punctuation are
-	// expected, e.g. "Adult Content Pack"); it never becomes a CDN path
+	// expected, e.g. "Adult Websites — Free"); it never becomes a CDN path
 	// segment, so only a loose guard applies.
 	if (!isValidArtifactName(name)) {
 		log.warn({ id, name }, 'Rejected site pack upload: invalid name');

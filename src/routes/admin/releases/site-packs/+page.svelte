@@ -247,7 +247,7 @@
 			name="id"
 			bind:value={uploadId}
 			type="text"
-			placeholder="e.g., adult-content-pack"
+			placeholder="e.g., pack-adult-free"
 			required
 			class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white transition-all outline-none focus:border-brand focus:ring-1 focus:ring-brand"
 		/>
@@ -264,7 +264,7 @@
 			name="name"
 			bind:value={uploadName}
 			type="text"
-			placeholder="e.g., Adult Content Pack"
+			placeholder="e.g., Adult Websites — Free"
 			required
 			class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white transition-all outline-none focus:border-brand focus:ring-1 focus:ring-brand"
 		/>
