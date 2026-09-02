@@ -1,6 +1,17 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages.js';
-	import { HardDrive, Trash2, Upload, UploadCloud, Calendar, Layers, Cpu } from '@lucide/svelte';
+	import { invalidateAll } from '$app/navigation';
+	import {
+		HardDrive,
+		Trash2,
+		Upload,
+		UploadCloud,
+		Calendar,
+		Layers,
+		Cpu,
+		Eye,
+		EyeOff
+	} from '@lucide/svelte';
 	import { apiClient } from '$lib/api-client';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ReleaseManager from '../_components/ReleaseManager.svelte';
@@ -72,6 +83,22 @@
 		if (response.error) return errorMessage(response, 'Delete failed');
 		return null;
 	}
+
+	// Release lifecycle: uploads are staged (canBeDownloaded=false). This
+	// control publishes or withdraws a release so the public /download page
+	// starts/stops serving it — without weakening the staging gate itself.
+	async function toggleDownloadable(item: any) {
+		const next = !item.canBeDownloaded;
+		const response = await apiClient.v1.admin.installers['set-downloadable'].post({
+			id: item.id,
+			canBeDownloaded: next
+		});
+		if (response.error) {
+			alert(errorMessage(response, 'Failed to update release availability'));
+			return;
+		}
+		await invalidateAll();
+	}
 </script>
 
 <svelte:head>
@@ -80,23 +107,27 @@
 
 {#snippet columns()}
 	<th
-		class="px-6 py-4 text-[10px] font-bold tracking-widest text-slate-600 dark:text-gray-400 uppercase"
+		class="px-6 py-4 text-[10px] font-bold tracking-widest text-slate-600 uppercase dark:text-gray-400"
 		>Version</th
 	>
 	<th
-		class="px-6 py-4 text-[10px] font-bold tracking-widest text-slate-600 dark:text-gray-400 uppercase"
+		class="px-6 py-4 text-[10px] font-bold tracking-widest text-slate-600 uppercase dark:text-gray-400"
 		>File / Manifest</th
 	>
 	<th
-		class="px-6 py-4 text-center text-[10px] font-bold tracking-widest text-slate-600 dark:text-gray-400 uppercase"
+		class="px-6 py-4 text-center text-[10px] font-bold tracking-widest text-slate-600 uppercase dark:text-gray-400"
+		>Status</th
+	>
+	<th
+		class="px-6 py-4 text-center text-[10px] font-bold tracking-widest text-slate-600 uppercase dark:text-gray-400"
 		>Downloads</th
 	>
 	<th
-		class="px-6 py-4 text-[10px] font-bold tracking-widest text-slate-600 dark:text-gray-400 uppercase"
+		class="px-6 py-4 text-[10px] font-bold tracking-widest text-slate-600 uppercase dark:text-gray-400"
 		>Release Date</th
 	>
 	<th
-		class="px-6 py-4 text-right text-[10px] font-bold tracking-widest text-slate-600 dark:text-gray-400 uppercase"
+		class="px-6 py-4 text-right text-[10px] font-bold tracking-widest text-slate-600 uppercase dark:text-gray-400"
 		>Actions</th
 	>
 {/snippet}
@@ -105,12 +136,12 @@
 	<td class="px-6 py-4">
 		<div class="flex items-center gap-2">
 			<span
-				class="text-sm font-semibold text-slate-900 dark:text-white transition-colors group-hover:text-amber-600 dark:group-hover:text-brand"
+				class="text-sm font-semibold text-slate-900 transition-colors group-hover:text-amber-600 dark:text-white dark:group-hover:text-brand"
 				>{release.version}</span
 			>
-			{#if index === 0}
+			{#if index === 0 && release.canBeDownloaded}
 				<span
-					class="rounded border border-brand/20 bg-brand/10 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-amber-600 dark:text-brand uppercase"
+					class="rounded border border-brand/20 bg-brand/10 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-amber-600 uppercase dark:text-brand"
 					>Latest</span
 				>
 			{/if}
@@ -124,19 +155,36 @@
 			>
 			<div class="flex items-center gap-2">
 				<span
-					class="flex items-center gap-1 text-[9px] font-bold text-slate-500 dark:text-gray-500 uppercase"
+					class="flex items-center gap-1 text-[9px] font-bold text-slate-500 uppercase dark:text-gray-500"
 				>
 					<Layers class="h-3 w-3" />
 					{release.os}
 				</span>
 				<span
-					class="flex items-center gap-1 text-[9px] font-bold text-slate-500 dark:text-gray-500 uppercase"
+					class="flex items-center gap-1 text-[9px] font-bold text-slate-500 uppercase dark:text-gray-500"
 				>
 					<Cpu class="h-3 w-3" />
 					{release.architecture}
 				</span>
 			</div>
 		</div>
+	</td>
+	<td class="px-6 py-4 text-center">
+		{#if release.canBeDownloaded}
+			<span
+				class="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 uppercase dark:text-emerald-400"
+			>
+				<Eye class="h-3 w-3" />
+				{m.admin_releases_status_live()}
+			</span>
+		{:else}
+			<span
+				class="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600 uppercase dark:text-brand"
+			>
+				<EyeOff class="h-3 w-3" />
+				{m.admin_releases_status_staged()}
+			</span>
+		{/if}
 	</td>
 	<td class="px-6 py-4 text-center">
 		<span class="font-mono text-xs text-slate-700 dark:text-gray-300"
@@ -150,30 +198,44 @@
 		</span>
 	</td>
 	<td class="px-6 py-4 text-right">
-		<button
-			onclick={() => actions.confirmDelete(release)}
-			class="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-2 text-slate-600 dark:text-gray-400 transition-all hover:border-red-500/30 hover:text-red-500 active:scale-90"
-			title="Delete Record"
-		>
-			<Trash2 class="h-4 w-4" />
-		</button>
+		<div class="flex items-center justify-end gap-2">
+			{#if release.canBeDownloaded}
+				<button
+					onclick={() => toggleDownloadable(release)}
+					class="rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 transition-all hover:border-red-500/30 hover:text-red-500 active:scale-90 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
+					title="Stop serving this release on the public download page"
+				>
+					{m.admin_releases_withdraw()}
+				</button>
+			{:else}
+				<button
+					onclick={() => toggleDownloadable(release)}
+					class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-600 transition-all hover:bg-emerald-500/20 active:scale-90 dark:text-emerald-400"
+					title="Publish this release to the public download page"
+				>
+					{m.admin_releases_make_available()}
+				</button>
+			{/if}
+			<button
+				onclick={() => actions.confirmDelete(release)}
+				class="rounded-lg border border-slate-200 bg-slate-100 p-2 text-slate-600 transition-all hover:border-red-500/30 hover:text-red-500 active:scale-90 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
+				title="Delete Record"
+			>
+				<Trash2 class="h-4 w-4" />
+			</button>
+		</div>
 	</td>
 {/snippet}
 
 {#snippet empty(open: () => void)}
-	<EmptyState
-		colspan={5}
-		Icon={UploadCloud}
-		title="No releases uploaded yet."
-		onaction={open}
-	/>
+	<EmptyState colspan={6} Icon={UploadCloud} title="No releases uploaded yet." onaction={open} />
 {/snippet}
 
 {#snippet uploadFields()}
 	<div class="space-y-1.5">
 		<label
 			for="rel-v"
-			class="block text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase"
+			class="block text-[10px] font-bold tracking-widest text-slate-500 uppercase dark:text-gray-500"
 			>{m.admin_releases_modal_version()}</label
 		>
 		<input
@@ -183,7 +245,7 @@
 			type="text"
 			placeholder="e.g. v1.5.0"
 			required
-			class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white transition-all outline-none focus:border-brand"
+			class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition-all outline-none focus:border-brand dark:border-white/10 dark:bg-black/40 dark:text-white"
 		/>
 	</div>
 
@@ -191,14 +253,14 @@
 		<div class="space-y-1.5">
 			<label
 				for="rel-os"
-				class="block text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase"
+				class="block text-[10px] font-bold tracking-widest text-slate-500 uppercase dark:text-gray-500"
 				>{m.admin_releases_modal_os()}</label
 			>
 			<select
 				id="rel-os"
 				name="os"
 				bind:value={uploadOs}
-				class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
+				class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-brand dark:border-white/10 dark:bg-black/40 dark:text-white"
 			>
 				<option value="windows">Windows</option>
 				<option value="linux">Linux</option>
@@ -208,14 +270,14 @@
 		<div class="space-y-1.5">
 			<label
 				for="rel-arch"
-				class="block text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase"
+				class="block text-[10px] font-bold tracking-widest text-slate-500 uppercase dark:text-gray-500"
 				>{m.admin_releases_modal_arch()}</label
 			>
 			<select
 				id="rel-arch"
 				name="architecture"
 				bind:value={uploadArchitecture}
-				class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:border-brand"
+				class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-brand dark:border-white/10 dark:bg-black/40 dark:text-white"
 			>
 				<option value="x64">x64</option>
 				<option value="arm64">arm64</option>
@@ -229,8 +291,7 @@
 		Are you sure you want to permanently delete the installer <span
 			class="font-semibold text-slate-900 dark:text-white">{item.version}</span
 		>
-		({item.fileName})? This action cannot be undone and will stop this build
-		from being served.
+		({item.fileName})? This action cannot be undone and will stop this build from being served.
 	</p>
 {/snippet}
 
@@ -246,13 +307,13 @@
 	uploadTitle={m.admin_releases_upload_title()}
 	uploadSubtitle="Targeting: "
 	uploadSubtitleHighlight="Installers"
-	uploadFields={uploadFields}
-	validateUpload={validateUpload}
-	submitUpload={submitUpload}
+	{uploadFields}
+	{validateUpload}
+	{submitUpload}
 	onUploadSuccess={resetUploadForm}
-	columns={columns}
-	row={row}
-	empty={empty}
-	submitDelete={submitDelete}
-	deleteBody={deleteBody}
+	{columns}
+	{row}
+	{empty}
+	{submitDelete}
+	{deleteBody}
 />
