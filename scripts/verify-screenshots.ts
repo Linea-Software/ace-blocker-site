@@ -96,7 +96,6 @@ const PUBLIC_PAGES: Array<[string, string]> = [
 const ADMIN_PAGES: Array<[string, string]> = [
 	['admin-releases-site-packs', '/admin/releases/site-packs'],
 	['admin-releases-installers', '/admin/releases/installers'],
-	['admin-releases-tracking', '/admin/releases/tracking'],
 	['admin-releases-resistance', '/admin/releases/resistance']
 ];
 

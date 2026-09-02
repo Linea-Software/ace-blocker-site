@@ -2,7 +2,6 @@ import { Elysia, t } from 'elysia';
 import {
 	getLatestInstaller,
 	getLatestResistanceScript,
-	getLatestTrackingScript,
 	getLatestSitePacks
 } from '../../cache';
 import { createLogger } from '$lib/server/logger';
@@ -15,7 +14,6 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 		try {
 			const installer = getLatestInstaller();
 			const resistance = getLatestResistanceScript();
-			const tracking = getLatestTrackingScript();
 			const sitePacks = getLatestSitePacks();
 
 			// Strip file paths, keeping only version and basic metadata
@@ -35,14 +33,6 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 						size: resistance.size,
 						sha256: resistance.sha256,
 						createdAt: resistance.createdAt
-					  }
-					: null,
-				tracking: tracking
-					? {
-						version: tracking.version,
-						size: tracking.size,
-						sha256: tracking.sha256,
-						createdAt: tracking.createdAt
 					  }
 					: null,
 				sitePacks: Array.from(sitePacks.entries()).map(([id, pack]) => ({
@@ -78,14 +68,6 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 					})
 				),
 				resistance: t.Nullable(
-					t.Object({
-						version: t.String(),
-						size: t.Number(),
-						sha256: t.String(),
-						createdAt: t.Date()
-					})
-				),
-				tracking: t.Nullable(
 					t.Object({
 						version: t.String(),
 						size: t.Number(),

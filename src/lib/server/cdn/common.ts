@@ -8,8 +8,7 @@ const log = createLogger('cdn');
 export enum CDNObjectPath {
 	Installer = 'ace-blocker-installer',
 	ResistanceModeScripts = 'resistance-mode-scripts',
-	SitePacks = 'site-packs',
-	TrackingScripts = 'tracking-scripts'
+	SitePacks = 'site-packs'
 }
 
 export enum CDNErrorType {
@@ -109,10 +108,6 @@ export const resistanceModeScriptBasePath = new URL(
 	CDNObjectPath.ResistanceModeScripts + '/',
 	storageZoneBase
 );
-export const trackingScriptsBasePath = new URL(
-	CDNObjectPath.TrackingScripts + '/',
-	storageZoneBase
-);
 export const installersBasePath = new URL(CDNObjectPath.Installer + '/', storageZoneBase);
 
 // === Upload base paths === //
@@ -122,10 +117,6 @@ const bunnyUploadBase = new URL(
 
 log.info({ url: bunnyUploadBase.toString() }, 'Bunny upload base URL configured');
 
-export const trackingScriptsUploadBase = new URL(
-	CDNObjectPath.TrackingScripts + '/',
-	bunnyUploadBase
-);
 export const sitePacksUploadBase = new URL(CDNObjectPath.SitePacks + '/', bunnyUploadBase);
 export const resistanceModeScriptsUploadBase = new URL(
 	CDNObjectPath.ResistanceModeScripts + '/',
@@ -133,7 +124,6 @@ export const resistanceModeScriptsUploadBase = new URL(
 );
 export const installersUploadBase = new URL(CDNObjectPath.Installer + '/', bunnyUploadBase);
 
-export const trackingScriptsFileName = 'tracking-scripts.zip';
 export const resistanceModeScriptsFileName = 'resistance-mode-scripts.zip';
 
 // === Token generator === //

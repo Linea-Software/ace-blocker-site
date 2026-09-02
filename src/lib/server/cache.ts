@@ -2,7 +2,6 @@ import { db } from '$lib/server/db';
 import {
 	aceBlockerInstaller,
 	resistanceModeScripts,
-	trackingScripts,
 	sitePack
 } from '$lib/server/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
@@ -17,7 +16,6 @@ let latestInstaller: typeof aceBlockerInstaller.$inferSelect | null = null;
 // was uploaded last.
 let latestInstallersByTarget: Map<string, typeof aceBlockerInstaller.$inferSelect> = new Map();
 let latestResistanceScript: typeof resistanceModeScripts.$inferSelect | null = null;
-let latestTrackingScript: typeof trackingScripts.$inferSelect | null = null;
 let latestSitePacks: Map<string, typeof sitePack.$inferSelect> = new Map();
 
 // ============ INSTALLER ============
@@ -81,26 +79,6 @@ export function getLatestResistanceScript(): typeof resistanceModeScripts.$infer
 	return latestResistanceScript;
 }
 
-// ============ TRACKING SCRIPTS ============
-
-export async function loadLatestTrackingScript(): Promise<
-	typeof trackingScripts.$inferSelect | null
-> {
-	const result = await db
-		.select()
-		.from(trackingScripts)
-		.where(eq(trackingScripts.canBeDownloaded, true))
-		.orderBy(desc(trackingScripts.createdAt))
-		.limit(1);
-
-	latestTrackingScript = result[0] || null;
-	return latestTrackingScript;
-}
-
-export function getLatestTrackingScript(): typeof trackingScripts.$inferSelect | null {
-	return latestTrackingScript;
-}
-
 // ============ SITE PACKS ============
 
 export async function loadLatestSitePacks(): Promise<Map<string, typeof sitePack.$inferSelect>> {
@@ -129,12 +107,6 @@ export async function invalidateResistanceCache(): Promise<
 	return await loadLatestResistanceScript();
 }
 
-export async function invalidateTrackingCache(): Promise<
-	typeof trackingScripts.$inferSelect | null
-> {
-	return await loadLatestTrackingScript();
-}
-
 export async function invalidateSitePacksCache(): Promise<
 	Map<string, typeof sitePack.$inferSelect>
 > {
@@ -147,7 +119,6 @@ export async function initializeCache(): Promise<void> {
 	await Promise.all([
 		loadLatestInstaller(),
 		loadLatestResistanceScript(),
-		loadLatestTrackingScript(),
 		loadLatestSitePacks()
 	]);
 }
@@ -202,23 +173,6 @@ export async function incrementResistanceScriptDownloadCount(): Promise<void> {
 	}
 
 	log.debug({ id: latest.id }, 'Incremented resistance scripts download count');
-}
-
-/** Increment the download count for the latest tracking scripts by 1. */
-export async function incrementTrackingScriptDownloadCount(): Promise<void> {
-	const latest = getLatestTrackingScript();
-	if (!latest) return;
-
-	await db
-		.update(trackingScripts)
-		.set({ downloadCount: sql`${trackingScripts.downloadCount} + 1` })
-		.where(eq(trackingScripts.id, latest.id));
-
-	if (latestTrackingScript) {
-		latestTrackingScript = { ...latestTrackingScript, downloadCount: latestTrackingScript.downloadCount + 1 };
-	}
-
-	log.debug({ id: latest.id }, 'Incremented tracking scripts download count');
 }
 
 /** Increment the download count for a specific site pack by 1. */

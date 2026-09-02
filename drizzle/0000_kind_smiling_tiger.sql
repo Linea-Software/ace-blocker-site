@@ -155,18 +155,6 @@ CREATE TABLE "site_pack" (
 	"download_count" integer DEFAULT 0 NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "tracking_scripts" (
-	"id" text PRIMARY KEY NOT NULL,
-	"file_name" text NOT NULL,
-	"version" text NOT NULL,
-	"download_url" text NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"sha256" text NOT NULL,
-	"size" integer NOT NULL,
-	"can_be_downloaded" boolean DEFAULT true NOT NULL,
-	"download_count" integer DEFAULT 0 NOT NULL
-);
---> statement-breakpoint
 ALTER TABLE "backups" ADD CONSTRAINT "backups_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pro_status" ADD CONSTRAINT "pro_status_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

@@ -2,14 +2,12 @@ import { err, ok, Result } from 'neverthrow';
 import {
 	getLatestSitePacks,
 	getLatestResistanceScript,
-	getLatestTrackingScript,
 	getInstallerFor
 } from '$lib/server/cache';
 import {
 	CDNErrorType,
 	sitePacksBasePath,
 	resistanceModeScriptBasePath,
-	trackingScriptsBasePath,
 	installersBasePath,
 	generateBunnyCDNToken
 } from './common';
@@ -69,30 +67,6 @@ export function getResistanceModeScriptsURL(): Result<
 
 	return ok({
 		url: resistanceScriptsPath,
-		version: latestRecord.version,
-		sha256: latestRecord.sha256
-	});
-}
-
-export function getTrackingScriptsURL(): Result<
-	{ url: URL; version: string; sha256: string },
-	CDNErrorType
-> {
-	const latestRecord = getLatestTrackingScript();
-
-	if (!latestRecord) {
-		return err(CDNErrorType.NoReleaseAvailable);
-	}
-
-	let trackingScriptsPath = new URL(
-		`${latestRecord.version}/${latestRecord.fileName}`,
-		trackingScriptsBasePath
-	);
-
-	// No auth token needed for tracking scripts (publicly accessible)
-
-	return ok({
-		url: trackingScriptsPath,
 		version: latestRecord.version,
 		sha256: latestRecord.sha256
 	});

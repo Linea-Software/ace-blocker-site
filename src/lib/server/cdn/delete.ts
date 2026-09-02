@@ -3,20 +3,17 @@ import { env } from '$env/dynamic/private';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import {
-	trackingScripts,
 	sitePack,
 	resistanceModeScripts,
 	aceBlockerInstaller
 } from '$lib/server/db/schema';
 import {
-	invalidateTrackingCache,
 	invalidateSitePacksCache,
 	invalidateResistanceCache,
 	invalidateInstallerCache
 } from '$lib/server/cache';
 import {
 	CDNErrorType,
-	trackingScriptsUploadBase,
 	sitePacksUploadBase,
 	resistanceModeScriptsUploadBase,
 	installersUploadBase
@@ -54,31 +51,6 @@ export async function deleteFileFromBunnyCDN(
 		);
 		return err(CDNErrorType.NetworkFailure);
 	}
-}
-
-export async function deleteTrackingScripts(id: string): Promise<Result<void, CDNErrorType>> {
-	const release = await db.query.trackingScripts.findFirst({
-		where: eq(trackingScripts.id, id)
-	});
-
-	if (!release) {
-		return err(CDNErrorType.DeleteFailed);
-	}
-
-	const endpointUrl = new URL(
-		`${release.version}/${release.fileName}`,
-		trackingScriptsUploadBase
-	);
-
-	const deleteResult = await deleteFileFromBunnyCDN(endpointUrl);
-	if (deleteResult.isErr()) {
-		return err(deleteResult.error);
-	}
-
-	await db.delete(trackingScripts).where(eq(trackingScripts.id, id));
-	await invalidateTrackingCache();
-
-	return ok(undefined);
 }
 
 export async function deleteSitePack(id: string): Promise<Result<void, CDNErrorType>> {

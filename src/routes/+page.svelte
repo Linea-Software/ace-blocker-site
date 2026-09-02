@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Zap, Lock, BarChart3, ArrowRight, Download, Info } from '@lucide/svelte';
+	import { Zap, Lock, ShieldCheck, ArrowRight, Download, Info } from '@lucide/svelte';
 	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
 	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
 	import { mode } from 'mode-watcher';
@@ -158,13 +158,13 @@
 					<div
 						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-green-500/10 transition-colors group-hover:bg-green-500/20 dark:bg-green-500/10 dark:group-hover:bg-green-500/20"
 					>
-						<BarChart3 class="h-7 w-7 text-green-500" />
+						<ShieldCheck class="h-7 w-7 text-green-500" />
 					</div>
 					<h3 class="mb-4 text-2xl font-bold text-card-foreground dark:text-white">
-						{m.feature_analytics_title()}
+						{m.feature_privacy_title()}
 					</h3>
 					<p class="leading-relaxed text-muted-foreground dark:text-slate-400">
-						{m.feature_analytics_description()}
+						{m.feature_privacy_description()}
 					</p>
 				</div>
 			</div>

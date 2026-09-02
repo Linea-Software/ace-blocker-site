@@ -57,11 +57,6 @@ describe('Elysia API', () => {
 		expect(res.status).toBe(401);
 	});
 
-	it('GET /api/v1/scripts/tracking returns 500 when no release is published', async () => {
-		const res = await handle('/api/v1/scripts/tracking');
-		expect(res.status).toBe(500);
-	});
-
 	it('POST /api/v1/account/verify-pro requires an authenticated session', async () => {
 		const res = await handle('/api/v1/account/verify-pro', 'POST');
 		expect(res.status).toBe(401);

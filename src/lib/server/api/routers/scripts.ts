@@ -4,12 +4,10 @@ import { auth } from '$lib/server/auth';
 import { env } from '$env/dynamic/private';
 import {
 	getResistanceModeScriptsURL,
-	getTrackingScriptsURL,
 	CDNErrorType
 } from '$lib/server/cdn';
 import {
-	incrementResistanceScriptDownloadCount,
-	incrementTrackingScriptDownloadCount
+	incrementResistanceScriptDownloadCount
 } from '$lib/server/cache';
 
 if (!env.BUNNY_URL_TOKEN_AUTH_KEY) {
@@ -26,42 +24,6 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 			session: session?.session ?? null
 		};
 	})
-	.get(
-		'/tracking',
-		async ({ status }) => {
-			const result = getTrackingScriptsURL();
-
-			if (result.isErr()) {
-				return status(500, 'Internal server error');
-			}
-
-			const info = result._unsafeUnwrap();
-
-				// Fire-and-forget: increment download count
-				incrementTrackingScriptDownloadCount();
-
-				return {
-					url: info.url.toString(),
-					version: info.version,
-					sha256: info.sha256
-				};
-			},
-			{
-				detail: {
-					operationId: 'getTrackingScripts',
-					summary: 'Get download URL for tracking scripts'
-				},
-				response: {
-					200: t.Object({
-						url: t.String(),
-						version: t.String(),
-						sha256: t.String()
-					}),
-				404: t.String(),
-				500: t.String()
-			}
-		}
-	)
 	.get(
 		'/resistance-mode',
 		async ({ user, status }) => {

@@ -21,7 +21,6 @@
 	const releaseLinks = [
 		{ href: '/admin/releases/installers', label: 'Installers' },
 		{ href: '/admin/releases/resistance', label: 'Resistance Mode' },
-		{ href: '/admin/releases/tracking', label: 'Tracking' },
 		{ href: '/admin/releases/site-packs', label: 'Site Packs' }
 	];
 

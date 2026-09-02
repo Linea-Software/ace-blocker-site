@@ -4,22 +4,17 @@ import crypto from 'crypto';
 import { db } from '$lib/server/db';
 import { sql } from 'drizzle-orm';
 import {
-	trackingScripts,
 	sitePack,
 	resistanceModeScripts,
 	aceBlockerInstaller
 } from '$lib/server/db/schema';
 import {
-	invalidateTrackingCache,
 	invalidateSitePacksCache,
 	invalidateResistanceCache,
 	invalidateInstallerCache
 } from '$lib/server/cache';
 import {
 	CDNErrorType,
-	trackingScriptsUploadBase,
-	trackingScriptsBasePath,
-	trackingScriptsFileName,
 	sitePacksUploadBase,
 	sitePacksBasePath,
 	resistanceModeScriptsUploadBase,
@@ -109,51 +104,6 @@ async function uploadFileToBunnyCDN(
 		);
 		return err(CDNErrorType.NetworkFailure);
 	}
-}
-
-export async function uploadTrackingScripts(
-	file: File,
-	version: string,
-	canBeDownloaded: boolean = true
-): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
-	const validationError = await validateArtifact(file, version, 'tracking scripts', {
-		zip: true
-	});
-	if (validationError) {
-		log.warn({ version }, `Rejected tracking scripts upload: ${validationError}`);
-		return err(CDNErrorType.InvalidArtifact);
-	}
-
-	const endpointUrl = new URL(`${version}/${trackingScriptsFileName}`, trackingScriptsUploadBase);
-
-	const uploadResult = await uploadFileToBunnyCDN(file, endpointUrl);
-	if (uploadResult.isErr()) {
-		return err(uploadResult.error);
-	}
-
-	const { hash } = uploadResult._unsafeUnwrap();
-	const downloadUrl = new URL(endpointUrl, trackingScriptsBasePath).toString();
-
-	try {
-		await db.insert(trackingScripts).values({
-			id: crypto.randomUUID(),
-			fileName: file.name,
-			version,
-			downloadUrl,
-			sha256: hash,
-			size: file.size,
-			canBeDownloaded: canBeDownloaded,
-			downloadCount: 0
-		});
-	} catch (error) {
-		log.error({ err: error, version }, 'DB insert failed after CDN upload; cleaning up object');
-		await deleteFileFromBunnyCDN(endpointUrl);
-		return err(CDNErrorType.UploadFailed);
-	}
-
-	await invalidateTrackingCache();
-
-	return ok({ downloadUrl, hash });
 }
 
 export async function uploadSitePack(

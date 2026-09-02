@@ -18,7 +18,6 @@ vi.mock('$lib/server/cache', () => ({
 	getLatestResistanceScript: latestResistance,
 	getInstallerFor: installerFor,
 	getLatestInstaller: vi.fn(),
-	getLatestTrackingScript: vi.fn(),
 	getLatestSitePacks: vi.fn()
 }));
 

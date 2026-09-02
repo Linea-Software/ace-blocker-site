@@ -4,7 +4,6 @@ import { usersRouter } from './users';
 import { sitePacksRouter } from './site-packs';
 import { installersRouter } from './installers';
 import { resistanceRouter } from './resistance';
-import { trackingRouter } from './tracking';
 
 export const adminRouter = new Elysia({ prefix: '/admin' })
 	.derive(async ({ request }) => {
@@ -33,5 +32,4 @@ export const adminRouter = new Elysia({ prefix: '/admin' })
 	.use(usersRouter)
 	.use(sitePacksRouter)
 	.use(installersRouter)
-	.use(resistanceRouter)
-	.use(trackingRouter);
+	.use(resistanceRouter);
