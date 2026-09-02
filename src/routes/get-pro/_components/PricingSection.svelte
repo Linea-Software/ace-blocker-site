@@ -2,7 +2,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Badge } from '$lib/components/ui/badge';
-	import { Check, Shield, Timer } from '@lucide/svelte';
+	import { Check, Crown, Shield } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { cn } from '$lib/utils';
 
@@ -76,8 +76,7 @@
 				>
 					<Shield class="h-6 w-6" />
 				</div>
-				<Card.Title
-					class="text-2xl font-black text-slate-900 dark:text-slate-200"
+				<Card.Title class="text-2xl font-black text-slate-900 dark:text-slate-200"
 					>{m.plan_free_name()}</Card.Title
 				>
 			</div>
@@ -166,15 +165,12 @@
 						class="absolute inset-0 animate-pulse rounded-xl bg-brand/20 blur-lg"
 					></div>
 					<div
-						class="relative flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-background"
+						class="relative flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-slate-950"
 					>
-						<Shield class="absolute h-7 w-7 opacity-20" />
-						<Timer class="h-7 w-7" />
+						<Crown class="h-7 w-7" />
 					</div>
 				</div>
-				<Card.Title class="text-3xl font-black text-brand"
-					>{m.plan_pro_name()}</Card.Title
-				>
+				<Card.Title class="text-3xl font-black text-brand">{m.plan_pro_name()}</Card.Title>
 			</div>
 
 			<div class="flex flex-col">
@@ -190,9 +186,7 @@
 									class="font-mono text-6xl font-black tracking-tighter text-slate-900 dark:text-white"
 									>{pricing.symbol}{pricing.yearlyPrice}</span
 								>
-								<span class="text-slate-500 dark:text-slate-400"
-									>/year</span
-								>
+								<span class="text-slate-500 dark:text-slate-400">/year</span>
 							</div>
 						</div>
 					{:else}
@@ -207,9 +201,7 @@
 				<p class="mt-2 text-sm font-bold text-amber-600 dark:text-brand/90">
 					{m.trial_subtitle()}
 				</p>
-				<p
-					class="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400"
-				>
+				<p class="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
 					{m.plan_pro_description()}
 				</p>
 			</div>
@@ -220,9 +212,7 @@
 				<div
 					class="h-[1px] flex-1 bg-gradient-to-r from-brand/0 via-brand/30 to-brand/0"
 				></div>
-				<p
-					class="text-[10px] font-black tracking-widest text-brand uppercase"
-				>
+				<p class="text-[10px] font-black tracking-widest text-brand uppercase">
 					{m.feature_pro_plus_basic()}
 				</p>
 				<div
@@ -231,9 +221,7 @@
 			</div>
 
 			<div class="flex items-center gap-4">
-				<div
-					class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10"
-				>
+				<div class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10">
 					<Check class="h-3.5 w-3.5 text-brand" />
 				</div>
 				<span class="text-sm font-bold text-slate-900 dark:text-white"
@@ -241,9 +229,7 @@
 				>
 			</div>
 			<div class="flex items-center gap-4">
-				<div
-					class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10"
-				>
+				<div class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10">
 					<Check class="h-3.5 w-3.5 text-brand" />
 				</div>
 				<span class="text-sm font-bold text-slate-900 dark:text-white"
@@ -251,9 +237,7 @@
 				>
 			</div>
 			<div class="flex items-center gap-4">
-				<div
-					class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10"
-				>
+				<div class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10">
 					<Check class="h-3.5 w-3.5 text-brand" />
 				</div>
 				<span class="text-sm font-bold text-slate-900 dark:text-white"
@@ -261,9 +245,7 @@
 				>
 			</div>
 			<div class="flex items-center gap-4">
-				<div
-					class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10"
-				>
+				<div class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10">
 					<Check class="h-3.5 w-3.5 text-brand" />
 				</div>
 				<span class="text-sm font-bold text-slate-900 dark:text-white"
@@ -271,9 +253,7 @@
 				>
 			</div>
 			<div class="flex items-center gap-4">
-				<div
-					class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10"
-				>
+				<div class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10">
 					<Check class="h-3.5 w-3.5 text-brand" />
 				</div>
 				<span class="text-sm font-bold text-slate-900 dark:text-white"
@@ -281,9 +261,8 @@
 				>
 			</div>
 
-			<p class="pt-2 text-[10px] leading-relaxed text-slate-500 italic">
-				*Taxes included. Price at checkout will be converted to your local
-				currency.
+			<p class="pt-3 text-sm leading-relaxed text-slate-600 not-italic dark:text-slate-400">
+				{m.pricing_tax_disclaimer()}
 			</p>
 		</Card.Content>
 

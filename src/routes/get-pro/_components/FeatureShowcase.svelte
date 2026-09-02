@@ -22,7 +22,7 @@
 			</div>
 
 			<div class="grid grid-cols-1 gap-8">
-				<!-- Resistance Mode Protocols -->
+				<!-- Resistance Mode Scripts -->
 				<div class="flex gap-5">
 					<div
 						class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
