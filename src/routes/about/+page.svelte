@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Cpu, Layers, Lock, Sparkles } from '@lucide/svelte';
+	import { Cpu, Download, Layers, Lock, RefreshCwOff } from '@lucide/svelte';
 	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
 	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
 	import icon from '$lib/assets/logo/SVG/icon.svg';
@@ -39,12 +39,10 @@
 		<div class="relative z-10 container mx-auto px-4">
 			<div class="mx-auto max-w-4xl space-y-8 text-center">
 				<h1
-					class="text-4xl font-black tracking-tight text-foreground sm:text-5xl md:text-6xl dark:text-slate-50"
+					class="bg-gradient-to-b from-slate-900 to-slate-600 bg-clip-text text-4xl font-black tracking-tight text-transparent sm:text-5xl md:text-6xl dark:from-white dark:to-white/80"
 				>
 					{m.about_hero_title()}
-					<span
-						class="block bg-gradient-to-r from-amber-400 to-brand bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(255,191,0,0.4)]"
-					>
+					<span class="block text-brand dark:text-amber-400">
 						{m.about_hero_app()}
 					</span>
 				</h1>
@@ -60,9 +58,7 @@
 		<div
 			class="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-40"
 		>
-			<div
-				class="absolute h-[600px] w-[600px] rounded-full bg-brand/10 blur-[150px]"
-			></div>
+			<div class="absolute h-[600px] w-[600px] rounded-full bg-brand/10 blur-[150px]"></div>
 			<div
 				class="absolute h-[400px] w-[400px] translate-x-32 translate-y-32 rounded-full bg-blue-600/10 blur-[120px]"
 			></div>
@@ -188,10 +184,8 @@
 						{m.about_feature_locks_description()}
 					</p>
 				</div>
-			</div>
 
-			<!-- Break the Habit Loop (full-width) -->
-			<div class="mx-auto mt-6 max-w-5xl">
+				<!-- Break the Habit Loop -->
 				<div
 					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-brand/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
 				>
@@ -202,7 +196,7 @@
 					<div
 						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
 					>
-						<Sparkles class="h-7 w-7 text-brand" />
+						<RefreshCwOff class="h-7 w-7 text-brand" />
 					</div>
 					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
 						{m.about_feature_scripts_title()}
@@ -247,14 +241,17 @@
 					class="relative z-10 mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
 				>
 					<Button
-						class="h-14 w-full bg-gradient-to-r from-brand to-orange-500 px-10 text-lg font-black text-white shadow-[0_10px_30px_rgba(255,191,0,0.3)] transition-all hover:scale-[1.02] active:scale-95 sm:w-auto"
+						size="lg"
+						class="h-12 w-full bg-foreground px-8 text-lg font-semibold text-background shadow-lg shadow-foreground/10 hover:bg-foreground/85 sm:w-auto dark:bg-slate-50 dark:text-slate-950 dark:shadow-brand/10 dark:hover:bg-white"
 						href={downloadUrl}
 					>
+						<Download class="mr-2 h-5 w-5" />
 						{m.hero_download_button()}
 					</Button>
 					<Button
 						variant="outline"
-						class="h-14 w-full border-slate-300 bg-transparent px-10 text-lg font-bold text-slate-900 transition-colors hover:bg-brand/10 hover:text-amber-600 sm:w-auto dark:border-brand/50 dark:text-brand dark:hover:text-brand"
+						size="lg"
+						class="h-12 w-full border-2 border-foreground/60 px-8 text-lg font-semibold text-foreground hover:bg-foreground/5 sm:w-auto dark:border-brand dark:text-brand dark:hover:bg-brand/10"
 						href="/get-pro"
 					>
 						{m.hero_pro_button()}
