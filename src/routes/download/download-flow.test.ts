@@ -137,48 +137,73 @@ describe('download [arch] route', () => {
 describe('download page load', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		getInstallerFor.mockReturnValue(WINDOWS_ROW as never);
 	});
 
-	// The PageServerLoad type may resolve to void; narrow it for assertions.
-	async function loadData(url: string): Promise<{
-		installer: {
-			version: string;
-			size: number;
-			os: string;
-			architecture: string;
-			hash: string;
-		} | null;
-	}> {
-		return (await load({ url: new URL(url) } as never)) as {
-			installer: {
-				version: string;
-				size: number;
-				os: string;
-				architecture: string;
-				hash: string;
-			} | null;
+	type PublicInstaller = {
+		version: string;
+		size: number;
+		os: string;
+		architecture: string;
+		hash: string;
+	};
+	type PageData = {
+		platforms: {
+			windows: PublicInstaller | null;
+			macos: PublicInstaller | null;
+			linux: PublicInstaller | null;
+		};
+		requestedArch: string;
+	};
+
+	async function loadData(url: string): Promise<PageData> {
+		return (await load({ url: new URL(url) } as never)) as PageData;
+	}
+
+	function macRow(os: 'windows' | 'macos' | 'linux', architecture = 'x64') {
+		return {
+			id: `${os}-${architecture}`,
+			fileName: `Ace Blocker Installer.${os === 'windows' ? 'exe' : 'dmg'}`,
+			version: '1.0.0',
+			os,
+			architecture,
+			downloadUrl: 'https://cdn.aceblocker.test/dev/ace-blocker-installer/1.0.0',
+			createdAt: new Date('2026-09-01T00:00:00Z'),
+			sha256: `${os[0]}${architecture}`.repeat(32),
+			size: 123456,
+			canBeDownloaded: true,
+			downloadCount: 0
 		};
 	}
 
-	it('exposes the requested arch metadata (version, size, sha256) for display', async () => {
+	it('exposes per-platform metadata from the exact (os, arch) targets the [arch] route serves', async () => {
+		getInstallerFor.mockImplementation((os: string, architecture: string) => {
+			if (os === 'windows' && architecture === 'x64') return macRow('windows');
+			if (os === 'macos' && architecture === 'arm64') return macRow('macos', 'arm64');
+			return null;
+		});
+
 		const data = await loadData('http://localhost/download?arch=windows_x64');
 
-		expect(getInstallerFor).toHaveBeenCalledWith('windows', 'x64');
-		expect(data.installer).toMatchObject({
-			version: '1.0.0',
-			size: 123456,
-			os: 'windows',
-			architecture: 'x64',
-			hash: 'a'.repeat(64)
-		});
+		// Windows resolved from (windows, x64); macOS via its arm64 fallback
+		// (macos_universal serves x64 then arm64); Linux has no release.
+		expect(data.platforms.windows).toMatchObject({ os: 'windows', architecture: 'x64' });
+		expect(data.platforms.macos).toMatchObject({ os: 'macos', architecture: 'arm64' });
+		expect(data.platforms.linux).toBeNull();
+		expect(data.requestedArch).toBe('windows_x64');
 	});
 
-	it('falls back to the latest installer for an unknown arch query', async () => {
+	it('labels every platform without a release as unavailable instead of guessing', async () => {
 		getInstallerFor.mockReturnValue(null as never);
-		getLatestInstaller.mockReturnValue(WINDOWS_ROW as never);
 
-		const data = await loadData('http://localhost/download?arch=bogus');
-		expect(data.installer).toMatchObject({ version: '1.0.0', hash: 'a'.repeat(64) });
+		const data = await loadData('http://localhost/download');
+		expect(data.platforms).toEqual({ windows: null, macos: null, linux: null });
+	});
+
+	it('keeps requested arch echo for the page to pick the download target', async () => {
+		getInstallerFor.mockReturnValue(WINDOWS_ROW as never);
+
+		const data = await loadData('http://localhost/download?arch=macos_universal');
+		expect(data.platforms.windows).toMatchObject({ version: '1.0.0', hash: 'a'.repeat(64) });
+		expect(data.requestedArch).toBe('macos_universal');
 	});
 });

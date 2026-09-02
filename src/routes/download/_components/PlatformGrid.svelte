@@ -9,14 +9,17 @@
 		size: string;
 		ext: string;
 		details: string;
+		version?: string | null;
 		isAvailable: boolean;
 	}
 
-	let { platforms, detectedArch, version } = $props<{
+	let {
+		platforms,
+		detectedArch
+	}: {
 		platforms: PlatformOption[];
-		detectedArch: string;
-		version: string | null;
-	}>();
+		detectedArch: string | null;
+	} = $props();
 </script>
 
 <div class="space-y-10">
@@ -51,15 +54,13 @@
 						<div
 							class="absolute top-6 right-8 rounded-md bg-brand px-3 py-1 text-[10px] font-black tracking-wider text-black uppercase shadow-lg"
 						>
-							Recommended
+							{m.download_recommended()}
 						</div>
-					{/if}
-
-					{#if !option.isAvailable}
+					{:else if !option.isAvailable}
 						<div
 							class="absolute top-6 right-8 rounded-md bg-muted px-3 py-1 text-xs font-medium text-muted-foreground"
 						>
-							Coming soon
+							{m.download_not_available()}
 						</div>
 					{/if}
 
@@ -80,9 +81,9 @@
 						<p class="text-sm font-bold text-slate-500 dark:text-slate-400">
 							{option.details}
 						</p>
-						{#if option.id === 'windows' && version}
+						{#if option.isAvailable && option.version}
 							<p class="text-xs text-muted-foreground">
-								v{version}
+								v{option.version}
 							</p>
 						{/if}
 					</div>
@@ -92,7 +93,7 @@
 					>
 						<span
 							class="text-[10px] font-black tracking-widest text-slate-400 uppercase dark:text-slate-500"
-							>{option.size}</span
+							>{option.isAvailable ? option.size : '—'}</span
 						>
 						<span
 							class="rounded-md border border-slate-200 bg-slate-100 px-2 py-1 text-[10px] font-black tracking-wider text-slate-500 uppercase dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"

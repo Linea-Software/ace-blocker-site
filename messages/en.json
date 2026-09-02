@@ -61,6 +61,8 @@
 	"download_title": "Your download is starting...",
 	"download_description": "If your download doesn't start automatically, click the button below.",
 	"download_manual_button": "Download Manually",
+	"download_recommended": "Recommended",
+	"download_not_available": "Not currently available",
 	"download_other_arch_title": "Looking for another version?",
 	"download_arch_windows": "Windows (x64)",
 	"download_arch_linux": "Linux (x64)",

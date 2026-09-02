@@ -19,83 +19,147 @@
 
 	let { data } = $props();
 
+	interface PlatformMeta {
+		version: string;
+		size: number;
+		os: 'windows' | 'macos' | 'linux';
+		architecture: string;
+		hash: string;
+	}
+
+	type PlatformId = 'windows' | 'macos' | 'linux';
+
 	// Map display arch IDs (used in UI) to the route-compatible arch strings
-	const ARCH_IDS: Record<string, string> = {
+	const ARCH_IDS: Record<PlatformId, string> = {
 		windows: 'windows_x64',
 		macos: 'macos_universal',
 		linux: 'linux_x64'
 	};
 
-	const DISPLAY_ARCH = page.url.searchParams.get('arch') || 'windows_x64';
-	let arch = $state(DISPLAY_ARCH);
+	// The platform the visitor explicitly requested (?arch=...), when given.
+	const REQUESTED_PLATFORM: PlatformId | null = (() => {
+		const arch = page.url.searchParams.get('arch');
+		if (arch === 'windows_x64' || arch === 'windows_arm64') return 'windows';
+		if (arch === 'macos_universal') return 'macos';
+		if (arch === 'linux_x64' || arch === 'linux_arm64') return 'linux';
+		return null;
+	})();
+
+	const platformRows = $derived<Record<PlatformId, PlatformMeta | null>>({
+		windows: data.platforms?.windows ?? null,
+		macos: data.platforms?.macos ?? null,
+		linux: data.platforms?.linux ?? null
+	});
+
+	const availablePlatforms = $derived<PlatformId[]>(
+		(['windows', 'macos', 'linux'] as PlatformId[]).filter(
+			(platform) => platformRows[platform] !== null
+		)
+	);
+
+	let detectedPlatform = $state<PlatformId | null>(null);
 	let downloadStarting = $state(false);
 	let isManualLoading = $state(false);
-	let detectedArch = $state('windows_x64');
+
+	// The platform that matches this visitor (explicit request first, then
+	// OS detection) when it actually has a release. Auto-download only ever
+	// targets one of these — never a different-OS installer.
+	const preferredPlatform = $derived.by<PlatformId | null>(() => {
+		if (REQUESTED_PLATFORM && platformRows[REQUESTED_PLATFORM]) return REQUESTED_PLATFORM;
+		if (detectedPlatform && platformRows[detectedPlatform]) return detectedPlatform;
+		return null;
+	});
+
+	// Manual-download target: the preferred platform, else any platform that
+	// has a release (or null when nothing can be downloaded at all).
+	const effectivePlatform = $derived.by<PlatformId | null>(() => {
+		return preferredPlatform ?? availablePlatforms[0] ?? null;
+	});
+
+	function detectPlatform(): PlatformId | null {
+		if (typeof window === 'undefined') return null;
+		const platform = window.navigator.platform.toLowerCase();
+		const ua = window.navigator.userAgent.toLowerCase();
+
+		if (platform.includes('win') || ua.includes('windows')) return 'windows';
+		if (platform.includes('mac') || ua.includes('macintosh')) return 'macos';
+		if (platform.includes('linux') || ua.includes('linux')) return 'linux';
+		return null;
+	}
+
+	function rowFor(platform: PlatformId) {
+		return platformRows[platform];
+	}
 
 	onMount(() => {
-		// Detect platform for recommendation
-		if (typeof window !== 'undefined') {
-			const platform = window.navigator.platform.toLowerCase();
-			const ua = window.navigator.userAgent.toLowerCase();
+		detectedPlatform = detectPlatform();
 
-			if (platform.includes('win') || ua.includes('windows')) {
-				detectedArch = 'windows_x64';
-			} else if (platform.includes('mac') || ua.includes('macintosh')) {
-				detectedArch = 'macos_universal';
-			} else if (platform.includes('linux') || ua.includes('linux')) {
-				detectedArch = 'linux_x64';
-			}
-
-			// Automatically trigger download on first arrival (only if installer available)
-			if (!downloadStarting && data.installer) {
-				downloadStarting = true;
-				setTimeout(() => {
-					window.location.href = `/download/${arch}`;
-				}, 2000);
-			}
+		// Automatically trigger download on first arrival — only when an
+		// installer exists for the visitor's own platform (requested or
+		// detected). Never auto-download a different-OS installer.
+		const requested =
+			REQUESTED_PLATFORM && rowFor(REQUESTED_PLATFORM) ? REQUESTED_PLATFORM : null;
+		const detected = detectedPlatform && rowFor(detectedPlatform) ? detectedPlatform : null;
+		const autoTarget = requested ?? detected;
+		if (!downloadStarting && autoTarget) {
+			downloadStarting = true;
+			const target = ARCH_IDS[autoTarget];
+			setTimeout(() => {
+				window.location.href = `/download/${target}`;
+			}, 2000);
 		}
 	});
 
-	let formattedSize = $derived(
-		data.installer ? Math.round(data.installer.size / 1024 / 1024) + 'MB' : null
+	// Hero metadata (version, checksum) always belongs to the platform the
+	// visitor is about to receive.
+	let selectedMeta = $derived<PlatformMeta | null>(
+		effectivePlatform ? (platformRows[effectivePlatform] ?? null) : null
 	);
+
+	function formatSize(meta: PlatformMeta | null): string {
+		return meta ? Math.round(meta.size / 1024 / 1024) + 'MB' : '—';
+	}
 
 	let platformOptions = $derived([
 		{
 			id: 'windows',
-			routeArch: 'windows_x64',
+			routeArch: ARCH_IDS.windows,
 			name: 'Windows',
 			icon: IconBrandWindows,
-			size: formattedSize ?? '—',
+			size: formatSize(platformRows.windows),
+			version: platformRows.windows?.version ?? null,
 			ext: '.exe',
 			details: 'x64 Installer',
-			isAvailable: data.installer?.os === 'windows' || !data.installer
+			isAvailable: platformRows.windows !== null
 		},
 		{
 			id: 'macos',
-			routeArch: 'macos_universal',
+			routeArch: ARCH_IDS.macos,
 			name: 'macOS',
 			icon: IconBrandApple,
-			size: '—',
+			size: formatSize(platformRows.macos),
+			version: platformRows.macos?.version ?? null,
 			ext: '.dmg',
 			details: 'Universal Binary',
-			isAvailable: data.installer?.os === 'macos'
+			isAvailable: platformRows.macos !== null
 		},
 		{
 			id: 'linux',
-			routeArch: 'linux_x64',
+			routeArch: ARCH_IDS.linux,
 			name: 'Linux',
 			icon: IconBrandUbuntu,
-			size: '—',
+			size: formatSize(platformRows.linux),
+			version: platformRows.linux?.version ?? null,
 			ext: '.deb',
 			details: 'Debian / Ubuntu',
-			isAvailable: data.installer?.os === 'linux'
+			isAvailable: platformRows.linux !== null
 		}
 	]);
 
 	function handleManualDownload() {
+		if (!effectivePlatform) return;
 		isManualLoading = true;
-		window.location.href = `/download/${arch}`;
+		window.location.href = `/download/${ARCH_IDS[effectivePlatform]}`;
 		setTimeout(() => {
 			isManualLoading = false;
 		}, 2000);
@@ -179,7 +243,7 @@
 				<Button
 					size="lg"
 					onclick={handleManualDownload}
-					disabled={isManualLoading || !data.installer}
+					disabled={isManualLoading || !effectivePlatform}
 					class="relative h-14 overflow-hidden rounded-lg bg-brand px-10 text-lg font-bold text-black shadow-xl shadow-brand/20 transition-all hover:scale-105 hover:bg-amber-400 active:scale-95 dark:shadow-brand/10"
 				>
 					{#if isManualLoading}
@@ -190,7 +254,7 @@
 					{m.download_manual_button()}
 				</Button>
 
-				{#if data.installer}
+				{#if selectedMeta}
 					<a
 						href="https://github.com/aintDatCap/ace-blocker/releases"
 						target="_blank"
@@ -200,7 +264,7 @@
 							size={16}
 							class="transition-transform group-hover:rotate-12"
 						/>
-						Version {data.installer.version} - Build Notes
+						Version {selectedMeta.version} - Build Notes
 						<IconExternalLink
 							size={12}
 							class="opacity-0 transition-opacity group-hover:opacity-100"
@@ -211,11 +275,14 @@
 		</div>
 
 		<!-- Platform Bento Grid -->
-		<PlatformGrid platforms={platformOptions} {detectedArch} version={data.installer?.version ?? null} />
+		<PlatformGrid
+			platforms={platformOptions}
+			detectedArch={effectivePlatform ? ARCH_IDS[effectivePlatform] : null}
+		/>
 
 		<!-- SHA-256 Verification -->
-		{#if data.installer?.hash}
-			<ChecksumCard hash={data.installer.hash} />
+		{#if selectedMeta?.hash}
+			<ChecksumCard hash={selectedMeta.hash} />
 		{/if}
 
 		<!-- Home Navigation -->
