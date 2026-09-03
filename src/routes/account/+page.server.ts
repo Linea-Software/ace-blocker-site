@@ -49,6 +49,7 @@ export const load: PageServerLoad = async ({ request }) => {
 		user: {
 			name: user.name,
 			email: user.email,
+			role: user.role ?? 'user',
 			createdAt: user.createdAt,
 			locale: (user as any).locale ?? 'en',
 			twoFactorEnabled: (user as any).twoFactorEnabled as boolean | undefined

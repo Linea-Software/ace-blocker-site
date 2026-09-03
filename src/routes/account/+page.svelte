@@ -56,6 +56,7 @@
 	const isPro = $derived(data.isPro);
 	const proExpiration = $derived(data.proExpiration);
 	const isCancelled = $derived(data.isCancelled);
+	const isAdmin = $derived(user.role === 'admin');
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
 	function parseUserAgent(ua: string | null): string {
@@ -419,27 +420,39 @@
 								/>{m.account_export_button()}</Button
 							>
 						</div>
-						<div
-							class="flex flex-col gap-3 rounded-lg border border-destructive/30 p-4 sm:flex-row sm:items-center sm:justify-between"
-						>
-							<div>
-								<p class="font-medium text-destructive">
-									{m.account_delete_account()}
-								</p>
-								<p class="text-sm text-muted-foreground">
-									{m.account_delete_short_description()}
-								</p>
+						{#if isAdmin}
+							<div class="flex items-start gap-3 rounded-lg border p-4">
+								<Shield class="mt-0.5 text-muted-foreground" aria-hidden="true" />
+								<div>
+									<p class="font-medium">{m.account_admin_protected_title()}</p>
+									<p class="text-sm text-muted-foreground">
+										{m.account_admin_protected_description()}
+									</p>
+								</div>
 							</div>
-							<Button
-								variant="destructive"
-								size="sm"
-								onclick={() => (showDeleteDialog = true)}
-								><Trash2
-									data-icon="inline-start"
-									aria-hidden="true"
-								/>{m.account_delete_account()}</Button
+						{:else}
+							<div
+								class="flex flex-col gap-3 rounded-lg border border-destructive/30 p-4 sm:flex-row sm:items-center sm:justify-between"
 							>
-						</div>
+								<div>
+									<p class="font-medium text-destructive">
+										{m.account_delete_account()}
+									</p>
+									<p class="text-sm text-muted-foreground">
+										{m.account_delete_short_description()}
+									</p>
+								</div>
+								<Button
+									variant="destructive"
+									size="sm"
+									onclick={() => (showDeleteDialog = true)}
+									><Trash2
+										data-icon="inline-start"
+										aria-hidden="true"
+									/>{m.account_delete_account()}</Button
+								>
+							</div>
+						{/if}
 					</Card.Content>
 				</Card.Root>
 			</div>
@@ -521,7 +534,9 @@
 		<ChangePasswordDialog bind:open={showPasswordDialog} />
 		<CancelSubscriptionDialog bind:open={showCancelDialog} />
 		<Disable2FADialog bind:open={show2faDisableDialog} />
-		<DeleteAccountDialog bind:open={showDeleteDialog} email={user.email} />
+		{#if !isAdmin}
+			<DeleteAccountDialog bind:open={showDeleteDialog} email={user.email} />
+		{/if}
 	</div>
 </main>
 

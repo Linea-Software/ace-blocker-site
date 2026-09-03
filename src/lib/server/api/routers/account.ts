@@ -370,6 +370,9 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 			if (!user) {
 				return status(401, 'Unauthorized');
 			}
+			if (user.role === 'admin') {
+				return status(403, 'Administrator accounts cannot be deleted');
+			}
 
 			if (body.email !== user.email) {
 				return status(400, 'Email does not match');
@@ -412,6 +415,7 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				}),
 				400: t.String(),
 				401: t.String(),
+				403: t.String(),
 				500: t.String()
 			}
 		}

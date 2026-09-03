@@ -117,7 +117,9 @@ const ENGINE_BACKUP = {
 			id: '4e2f4a6f-8f3a-4c1e-9d5b-2b7a0f1c3d5e',
 			name: 'My Custom List',
 			description: null,
-			sources: [{ source: 'https://example.com/list.txt', sourceType: 'url', format: 'hosts' }]
+			sources: [
+				{ source: 'https://example.com/list.txt', sourceType: 'url', format: 'hosts' }
+			]
 		}
 	],
 	networkBlocks: [
@@ -190,7 +192,9 @@ describe('backups endpoints', () => {
 		vi.mocked(isUserPro).mockResolvedValue(true);
 
 		const big = { ...ENGINE_BACKUP, version: 'x'.repeat(3 * 1024 * 1024) };
-		const res = await jsonPost('/', big, { 'content-length': String(JSON.stringify(big).length) });
+		const res = await jsonPost('/', big, {
+			'content-length': String(JSON.stringify(big).length)
+		});
 		expect(res.status).toBe(413);
 		expect(dbInsert).not.toHaveBeenCalled();
 	});
@@ -356,6 +360,25 @@ describe('backup deletion via account deletion', () => {
 		const deletedTables = dbDelete.mock.calls.map((call) => call[0]);
 		expect(deletedTables).toContain(backupsTable);
 		expect(dbDelete).toHaveBeenCalledTimes(4);
+	});
+
+	it('does not allow an administrator to delete their account', async () => {
+		const { auth } = await import('$lib/server/auth');
+		vi.mocked(auth.api.getSession).mockResolvedValue({
+			session: {} as never,
+			user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' } as never
+		});
+
+		const res = await accountRouter.handle(
+			new Request('http://localhost/account/delete', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email: 'admin@example.com' })
+			})
+		);
+
+		expect(res.status).toBe(403);
+		expect(dbDelete).not.toHaveBeenCalled();
 	});
 });
 

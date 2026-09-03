@@ -11,6 +11,21 @@ export const usersRouter = new Elysia({ prefix: '/users' })
 	.post(
 		'/delete',
 		async ({ body, request, set }) => {
+			const targetUser = await db.query.user.findFirst({
+				where: (users, { eq }) => eq(users.id, body.userId),
+				columns: { role: true }
+			});
+
+			if (!targetUser) {
+				set.status = 404;
+				return { message: 'User not found' };
+			}
+
+			if (targetUser.role === 'admin') {
+				set.status = 403;
+				return { message: 'Administrator accounts cannot be deleted' };
+			}
+
 			await auth.api.removeUser({
 				body: { userId: body.userId },
 				headers: request.headers

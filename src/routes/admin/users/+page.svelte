@@ -19,6 +19,7 @@
 		Mail
 	} from '@lucide/svelte';
 	import { cn } from '$lib/utils';
+	import * as m from '$lib/paraglide/messages';
 
 	let { data } = $props();
 
@@ -83,7 +84,7 @@
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
-				{#each data.users as user}
+				{#each data.users as user (user.id)}
 					<Table.Row>
 						<Table.Cell>
 							<div class="flex flex-col">
@@ -186,24 +187,31 @@
 
 									<DropdownMenu.Separator />
 
-									<form
-										method="POST"
-										action="/api/v1/admin/users/delete"
-										use:enhance
-									>
-										<input type="hidden" name="userId" value={user.id} />
-										<DropdownMenu.Item
-											class="focus:text-destructive-foreground text-destructive focus:bg-destructive"
-										>
-											<button
-												type="submit"
-												class="flex w-full items-center gap-2"
-											>
-												<Trash2 class="h-4 w-4" />
-												Delete User
-											</button>
+									{#if user.role === 'admin'}
+										<DropdownMenu.Item disabled>
+											<ShieldCheck aria-hidden="true" />
+											{m.account_admin_protected_title()}
 										</DropdownMenu.Item>
-									</form>
+									{:else}
+										<form
+											method="POST"
+											action="/api/v1/admin/users/delete"
+											use:enhance
+										>
+											<input type="hidden" name="userId" value={user.id} />
+											<DropdownMenu.Item
+												class="focus:text-destructive-foreground text-destructive focus:bg-destructive"
+											>
+												<button
+													type="submit"
+													class="flex w-full items-center gap-2"
+												>
+													<Trash2 class="h-4 w-4" />
+													Delete User
+												</button>
+											</DropdownMenu.Item>
+										</form>
+									{/if}
 								</DropdownMenu.Content>
 							</DropdownMenu.Root>
 						</Table.Cell>

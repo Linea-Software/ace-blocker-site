@@ -3,7 +3,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import { Loader2 } from '@lucide/svelte';
+	import { Eye, EyeOff, Loader2 } from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 	import * as m from '$lib/paraglide/messages';
 
@@ -14,6 +14,11 @@
 	let confirmPassword = $state('');
 	let loading = $state(false);
 	let error = $state<string | null>(null);
+	let showPasswords = $state(false);
+
+	const visibilityLabel = $derived(
+		showPasswords ? m.account_hide_passwords() : m.account_show_passwords()
+	);
 
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
@@ -61,10 +66,11 @@
 			currentPassword = '';
 			newPassword = '';
 			confirmPassword = '';
+			showPasswords = false;
 		}
 	}}
 >
-	<Dialog.Content class="sm:max-w-md">
+	<Dialog.Content class="sm:max-w-lg">
 		<Dialog.Header>
 			<Dialog.Title>{m.account_change_password_title()}</Dialog.Title>
 			<Dialog.Description>
@@ -72,48 +78,61 @@
 			</Dialog.Description>
 		</Dialog.Header>
 		<form onsubmit={handleSubmit}>
-			<div class="space-y-4 py-4">
-				<div>
+			<div class="flex flex-col gap-4 py-4">
+				<div class="flex justify-end">
+					<Button
+						variant="ghost"
+						size="sm"
+						type="button"
+						aria-pressed={showPasswords}
+						onclick={() => (showPasswords = !showPasswords)}
+					>
+						{#if showPasswords}
+							<EyeOff data-icon="inline-start" aria-hidden="true" />
+						{:else}
+							<Eye data-icon="inline-start" aria-hidden="true" />
+						{/if}
+						{visibilityLabel}
+					</Button>
+				</div>
+				<div class="flex flex-col gap-1.5">
 					<Label for="modal-current-password" class="text-xs text-muted-foreground">
 						{m.account_current_password_label()}
 					</Label>
 					<Input
 						id="modal-current-password"
-						type="password"
+						type={showPasswords ? 'text' : 'password'}
 						bind:value={currentPassword}
 						required
 						aria-invalid={error ? 'true' : undefined}
 						aria-describedby={error ? 'password-form-error' : undefined}
-						class="mt-1"
 					/>
 				</div>
-				<div class="grid gap-4 sm:grid-cols-2">
-					<div>
+				<div class="flex flex-col gap-4">
+					<div class="flex flex-col gap-1.5">
 						<Label for="modal-new-password" class="text-xs text-muted-foreground">
 							{m.account_new_password_label()}
 						</Label>
 						<Input
 							id="modal-new-password"
-							type="password"
+							type={showPasswords ? 'text' : 'password'}
 							bind:value={newPassword}
 							required
 							aria-invalid={error ? 'true' : undefined}
 							aria-describedby={error ? 'password-form-error' : undefined}
-							class="mt-1"
 						/>
 					</div>
-					<div>
+					<div class="flex flex-col gap-1.5">
 						<Label for="modal-confirm-password" class="text-xs text-muted-foreground">
 							{m.account_confirm_new_password_label()}
 						</Label>
 						<Input
 							id="modal-confirm-password"
-							type="password"
+							type={showPasswords ? 'text' : 'password'}
 							bind:value={confirmPassword}
 							required
 							aria-invalid={error ? 'true' : undefined}
 							aria-describedby={error ? 'password-form-error' : undefined}
-							class="mt-1"
 						/>
 					</div>
 				</div>
