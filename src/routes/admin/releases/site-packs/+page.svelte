@@ -1,40 +1,48 @@
 <script lang="ts">
-	import * as m from '$lib/paraglide/messages.js';
-	import {
-		List,
-		Settings,
-		Trash2,
-		Upload,
-		UploadCloud,
-		Lock,
-		Unlock,
-		HardDrive,
-		Hash,
-		ExternalLink,
-		Calendar
-	} from '@lucide/svelte';
 	import { apiClient } from '$lib/api-client';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as m from '$lib/paraglide/messages';
+	import {
+		Calendar,
+		ExternalLink,
+		HardDrive,
+		Hash,
+		List,
+		Lock,
+		Settings,
+		Trash2,
+		Unlock,
+		Upload,
+		UploadCloud
+	} from '@lucide/svelte';
 	import ReleaseManager from '../_components/ReleaseManager.svelte';
 
 	let { data } = $props<{ data: any }>();
-
-	// Upload form fields owned by this page (file + modal state live in ReleaseManager)
 	let uploadId = $state('');
 	let uploadName = $state('');
 	let uploadRequiresPro = $state(true);
 
+	const proPacks = $derived(
+		data.sitePacks.filter(
+			(pack: { requiresProSubscription: boolean }) => pack.requiresProSubscription
+		).length
+	);
+
 	function formatBytes(bytes: number, decimals = 2) {
 		if (bytes === 0) return '0 Bytes';
-		const k = 1024;
-		const dm = decimals < 0 ? 0 : decimals;
+		const base = 1024;
+		const precision = decimals < 0 ? 0 : decimals;
 		const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-		const i = Math.floor(Math.log(bytes) / Math.log(k));
-		return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+		const index = Math.floor(Math.log(bytes) / Math.log(base));
+		return `${Number.parseFloat((bytes / Math.pow(base, index)).toFixed(precision))} ${sizes[index]}`;
 	}
 
 	function formatDate(date: string | Date) {
-		return new Date(date).toLocaleDateString('en-US', {
+		return new Date(date).toLocaleDateString(undefined, {
 			month: 'short',
 			day: 'numeric',
 			year: 'numeric'
@@ -48,172 +56,126 @@
 	}
 
 	function errorMessage(response: any, fallback: string): string {
-		let message = fallback;
 		if (
 			typeof response.error === 'object' &&
 			response.error !== null &&
 			'message' in response.error
 		) {
-			message = (response.error as { message: string }).message;
+			return String(response.error.message);
 		}
-		return message;
+		return fallback;
 	}
 
 	function validateUpload(formData: FormData): string | null {
 		const file = formData.get('file') as File;
 		const name = formData.get('name') as string;
 		const id = formData.get('id') as string;
-
-		if (!file || !file.size || !name || !id) {
-			return 'Missing required configuration for deploy (File, Name, or ID)';
-		}
-		return null;
+		return !file?.size || !name || !id ? m.admin_releases_missing_pack_fields() : null;
 	}
 
 	async function submitUpload(formData: FormData): Promise<string | null> {
-		const file = formData.get('file') as File;
-		const name = formData.get('name') as string;
-		const id = formData.get('id') as string;
-		const requiresProSubscription = formData.get('requiresProSubscription') === 'true';
-
-		console.log('Uploading:', { file: file.name, name, id, requiresProSubscription });
-
 		const response = await apiClient.v1.admin['site-packs'].upload.post({
-			file,
-			name,
-			id,
-			requiresProSubscription
+			file: formData.get('file') as File,
+			name: formData.get('name') as string,
+			id: formData.get('id') as string,
+			requiresProSubscription: formData.get('requiresProSubscription') === 'true'
 		});
 
-		console.log('Upload response:', response);
-
-		if (response.error) {
-			console.error('Upload error:', response.error);
-			return errorMessage(response, 'Internal server failure during binary deploy');
-		}
-		return null;
+		return response.error ? errorMessage(response, m.admin_releases_upload_fallback()) : null;
 	}
 
 	async function submitUpdate(formData: FormData): Promise<string | null> {
 		const id = formData.get('id') as string;
 		const name = formData.get('name') as string;
-		const requiresProSubscription = formData.get('requiresProSubscription') === 'on';
-
-		if (!id || !name) return 'Missing required fields';
+		if (!id || !name) return m.admin_releases_missing_required_fields();
 
 		const response = await apiClient.v1.admin['site-packs'].update.post({
 			id,
 			name,
-			requiresProSubscription
+			requiresProSubscription: formData.get('requiresProSubscription') === 'on'
 		});
-
-		if (response.error) return errorMessage(response, 'Failed to update site pack');
-		return null;
+		return response.error ? errorMessage(response, m.admin_releases_update_fallback()) : null;
 	}
 
 	async function submitDelete(item: any): Promise<string | null> {
 		const response = await apiClient.v1.admin['site-packs'].delete.post({ id: item.id });
-		if (response.error) return errorMessage(response, 'Failed to delete site pack');
-		return null;
+		return response.error
+			? errorMessage(response, m.admin_releases_delete_pack_fallback())
+			: null;
 	}
 </script>
 
 <svelte:head>
-	<title>{m.admin_releases_category_sitepacks()} — Ace Blocker Admin</title>
+	<title>{m.admin_releases_site_packs_page_title()}</title>
 </svelte:head>
 
 {#snippet columns()}
-	<th
-		class="px-6 py-4 text-[10px] font-bold tracking-widest text-slate-600 dark:text-gray-400 uppercase"
-		>Name</th
+	<th class="h-11 px-5 text-xs font-medium text-muted-foreground"
+		>{m.admin_releases_column_name()}</th
 	>
-	<th
-		class="px-6 py-4 text-[10px] font-bold tracking-widest text-slate-600 dark:text-gray-400 uppercase"
-		>ID</th
+	<th class="h-11 px-5 text-xs font-medium text-muted-foreground"
+		>{m.admin_releases_column_id()}</th
 	>
-	<th
-		class="px-6 py-4 text-[10px] font-bold tracking-widest text-slate-600 dark:text-gray-400 uppercase"
-		>Access</th
+	<th class="h-11 px-5 text-xs font-medium text-muted-foreground"
+		>{m.admin_releases_column_access()}</th
 	>
-	<th
-		class="px-6 py-4 text-center text-[10px] font-bold tracking-widest text-slate-600 dark:text-gray-400 uppercase"
-		>Downloads</th
+	<th class="h-11 px-5 text-center text-xs font-medium text-muted-foreground"
+		>{m.admin_releases_column_downloads()}</th
 	>
-	<th
-		class="px-6 py-4 text-[10px] font-bold tracking-widest text-slate-600 dark:text-gray-400 uppercase"
-		>Updated</th
+	<th class="h-11 px-5 text-xs font-medium text-muted-foreground"
+		>{m.admin_releases_column_updated()}</th
 	>
-	<th
-		class="px-6 py-4 text-right text-[10px] font-bold tracking-widest text-slate-600 dark:text-gray-400 uppercase"
-		>Actions</th
+	<th class="h-11 px-5 text-right text-xs font-medium text-muted-foreground"
+		>{m.admin_releases_column_actions()}</th
 	>
 {/snippet}
 
 {#snippet row(pack: any, _index: number, actions: any)}
-	<td class="px-6 py-4">
-		<div class="flex flex-col">
-			<span
-				class="text-sm font-semibold text-slate-900 dark:text-white transition-colors group-hover:text-amber-600 dark:group-hover:text-brand"
-				>{pack.name}</span
-			>
-			<span
-				class="mt-0.5 text-[10px] font-bold tracking-tighter text-slate-500 dark:text-gray-500 uppercase"
-				>Static Payload</span
-			>
+	<td class="px-5 py-4">
+		<div class="flex min-w-48 flex-col">
+			<span class="font-medium">{pack.name}</span>
+			<span class="text-xs text-muted-foreground">{m.admin_releases_static_payload()}</span>
 		</div>
 	</td>
-	<td class="px-6 py-4">
-		<code
-			class="rounded border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-2 py-1 font-mono text-[10px] text-slate-600 dark:text-gray-400"
-		>
-			{pack.id.substring(0, 8)}...
+	<td class="px-5 py-4">
+		<code class="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground" title={pack.id}>
+			{pack.id.substring(0, 8)}…
 		</code>
 	</td>
-	<td class="px-6 py-4 text-xs">
+	<td class="px-5 py-4">
 		{#if pack.requiresProSubscription}
-			<span
-				class="inline-flex items-center gap-1 rounded-full border border-brand/20 bg-brand/10 px-2 py-0.5 font-medium text-amber-600 dark:text-brand"
-			>
-				<Lock class="h-3 w-3" />
-				Pro Only
-			</span>
+			<Badge><Lock aria-hidden="true" />{m.admin_releases_pro_only()}</Badge>
 		{:else}
-			<span
-				class="inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-white/20 bg-gray-100/10 px-2 py-0.5 font-medium text-slate-600 dark:text-gray-400"
-			>
-				<Unlock class="h-3 w-3" />
-				Free
-			</span>
+			<Badge variant="outline"><Unlock aria-hidden="true" />{m.admin_users_free()}</Badge>
 		{/if}
 	</td>
-	<td class="px-6 py-4 text-center">
-		<span class="font-mono text-xs text-slate-700 dark:text-gray-300"
-			>{pack.downloadCount.toLocaleString()}</span
-		>
-	</td>
-	<td class="px-6 py-4">
-		<span class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-gray-400">
-			<Calendar class="h-3.5 w-3.5 opacity-40" />
+	<td class="px-5 py-4 text-center font-mono text-sm">{pack.downloadCount.toLocaleString()}</td>
+	<td class="px-5 py-4">
+		<span class="flex items-center gap-1.5 text-sm text-muted-foreground">
+			<Calendar class="size-4" aria-hidden="true" />
 			{formatDate(pack.updatedAt)}
 		</span>
 	</td>
-	<td class="px-6 py-4 text-right">
-		<div class="flex items-center justify-end gap-2">
-			<button
+	<td class="px-5 py-4">
+		<div class="flex items-center justify-end gap-1">
+			<Button
+				variant="ghost"
+				size="icon-sm"
 				onclick={() => actions.openDetails(pack)}
-				class="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-2 text-slate-600 dark:text-gray-400 transition-all hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-900 dark:hover:text-white active:scale-90"
-				title="View/Edit Details"
+				title={m.admin_releases_edit_pack()}
 			>
-				<Settings class="h-4 w-4" />
-			</button>
-			<button
-				type="button"
+				<Settings aria-hidden="true" />
+				<span class="sr-only">{m.admin_releases_edit_pack()}</span>
+			</Button>
+			<Button
+				variant="ghost"
+				size="icon-sm"
 				onclick={() => actions.confirmDelete(pack)}
-				class="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-2 text-slate-600 dark:text-gray-400 transition-all hover:border-red-500/30 hover:text-red-500 active:scale-90"
-				title="Delete Pack"
+				title={m.admin_releases_delete_pack()}
 			>
-				<Trash2 class="h-4 w-4" />
-			</button>
+				<Trash2 aria-hidden="true" />
+				<span class="sr-only">{m.admin_releases_delete_pack()}</span>
+			</Button>
 		</div>
 	</td>
 {/snippet}
@@ -222,259 +184,176 @@
 	<EmptyState
 		colspan={6}
 		Icon={UploadCloud}
-		title="No release uploaded yet."
-		description="Start by deploying the first site pack package to BunnyCDN."
+		title={m.admin_releases_empty_packs_title()}
+		description={m.admin_releases_empty_packs_description()}
+		actionLabel={m.admin_releases_deploy_first()}
 		onaction={open}
-		circle
 	/>
 {/snippet}
 
 {#snippet uploadFields()}
-	<input
-		type="hidden"
-		name="requiresProSubscription"
-		value={uploadRequiresPro.toString()}
-	/>
-
-	<div class="space-y-1.5">
-		<label
-			for="upload-id"
-			class="block text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase"
-			>Pack ID</label
-		>
-		<input
+	<input type="hidden" name="requiresProSubscription" value={uploadRequiresPro.toString()} />
+	<div class="flex flex-col gap-2">
+		<Label for="upload-id">{m.admin_releases_pack_id()}</Label>
+		<Input
 			id="upload-id"
 			name="id"
 			bind:value={uploadId}
-			type="text"
-			placeholder="e.g., pack-adult-free"
+			placeholder={m.admin_releases_pack_id_placeholder()}
 			required
-			class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white transition-all outline-none focus:border-brand focus:ring-1 focus:ring-brand"
 		/>
 	</div>
-
-	<div class="space-y-1.5">
-		<label
-			for="upload-name"
-			class="block text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase"
-			>Name</label
-		>
-		<input
+	<div class="flex flex-col gap-2">
+		<Label for="upload-name">{m.admin_releases_modal_name()}</Label>
+		<Input
 			id="upload-name"
 			name="name"
 			bind:value={uploadName}
-			type="text"
-			placeholder="e.g., Adult Websites — Free"
+			placeholder={m.admin_releases_pack_name_placeholder()}
 			required
-			class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 text-sm text-slate-900 dark:text-white transition-all outline-none focus:border-brand focus:ring-1 focus:ring-brand"
 		/>
 	</div>
-
-	<div
-		class="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-4"
+	<label
+		class="flex cursor-pointer items-center justify-between gap-4 rounded-xl border bg-muted/30 p-4"
 	>
-		<div class="flex items-center gap-3">
-			<div class="rounded-lg bg-brand/10 p-2 text-amber-600 dark:text-brand">
-				<Lock class="h-4 w-4" />
-			</div>
-			<div>
-				<p class="text-xs font-bold text-slate-900 dark:text-white">Pro Only</p>
-				<p
-					class="mt-0.5 text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase"
+		<span class="flex items-center gap-3">
+			<span
+				class="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary"
+			>
+				<Lock class="size-4" aria-hidden="true" />
+			</span>
+			<span class="flex flex-col">
+				<span class="text-sm font-medium">{m.admin_releases_pro_only()}</span>
+				<span class="text-xs text-muted-foreground"
+					>{m.admin_releases_subscription_required()}</span
 				>
-					Subscription Required
-				</p>
-			</div>
-		</div>
-		<button
-			type="button"
-			onclick={() => (uploadRequiresPro = !uploadRequiresPro)}
-			class="relative h-5 w-10 rounded-full transition-colors {uploadRequiresPro
-				? 'bg-brand'
-				: 'bg-white/10'}"
-			aria-label="Toggle Pro Requirement"
-		>
-			<div
-				class="absolute top-1 left-1 h-3 w-3 rounded-full bg-white transition-all {uploadRequiresPro
-					? 'translate-x-5'
-					: ''}"
-			></div>
-		</button>
-	</div>
+			</span>
+		</span>
+		<input class="size-4 accent-primary" type="checkbox" bind:checked={uploadRequiresPro} />
+	</label>
 {/snippet}
 
 {#snippet details(release: any)}
-	<div class="space-y-1.5">
-		<label
-			for="edit-name"
-			class="block text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase"
-			>Internal Name</label
-		>
-		<input
+	<div class="flex flex-col gap-2">
+		<Label for="edit-name">{m.admin_releases_internal_name()}</Label>
+		<Input
 			id="edit-name"
 			name="name"
 			value={release.name}
-			oninput={(e) => (release.name = (e.currentTarget as HTMLInputElement).value)}
-			type="text"
-			class="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-3 py-2 text-sm text-slate-900 dark:text-white transition-all outline-none focus:border-brand"
+			oninput={(event) => (release.name = event.currentTarget.value)}
 		/>
 	</div>
 
-	<div
-		class="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-4"
+	<label
+		class="flex cursor-pointer items-center justify-between gap-4 rounded-xl border bg-muted/30 p-4"
 	>
-		<div class="flex items-center gap-3">
-			<div class="rounded-lg bg-brand/10 p-2 text-amber-600 dark:text-brand">
-				<Lock class="h-4 w-4" />
-			</div>
-			<div>
-				<p class="text-xs font-bold text-slate-900 dark:text-white">Pro Only</p>
-				<p
-					class="mt-0.5 text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase"
-				>
-					Access Control
-				</p>
-			</div>
-		</div>
-		<button
-			type="button"
-			onclick={() =>
-				(release.requiresProSubscription = !release.requiresProSubscription)}
-			class="relative h-5 w-10 rounded-full transition-colors {release.requiresProSubscription
-				? 'bg-brand'
-				: 'bg-white/10'}"
-			aria-label="Toggle Pro Requirement"
-		>
-			<input
-				type="checkbox"
-				name="requiresProSubscription"
-				class="hidden"
-				checked={release.requiresProSubscription}
-			/>
-			<div
-				class="absolute top-1 left-1 h-3 w-3 rounded-full bg-white transition-all {release.requiresProSubscription
-					? 'translate-x-5'
-					: ''}"
-			></div>
-		</button>
-	</div>
-
-	<!-- Read Only Technical Data -->
-	<div class="space-y-3 border-t border-slate-200 dark:border-white/5 pt-4">
-		<p class="text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase">
-			Technical Assets
-		</p>
-
-		<div class="grid grid-cols-2 gap-3">
-			<div class="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 p-3">
-				<div class="mb-1 flex items-center gap-2">
-					<HardDrive class="h-3 w-3 text-slate-500 dark:text-gray-500" />
-					<span class="text-[10px] font-bold text-slate-500 dark:text-gray-500 uppercase"
-						>File Size</span
-					>
-				</div>
-				<p class="font-mono text-xs text-slate-900 dark:text-white">
-					{formatBytes(release.size)}
-				</p>
-			</div>
-			<div class="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 p-3">
-				<div class="mb-1 flex items-center gap-2">
-					<Hash class="h-3 w-3 text-slate-500 dark:text-gray-500" />
-					<span class="text-[10px] font-bold text-slate-500 dark:text-gray-500 uppercase"
-						>SHA256</span
-					>
-				</div>
-				<p
-					class="truncate font-mono text-xs text-slate-900 dark:text-white"
-					title={release.sha256}
-				>
-					{release.sha256.substring(0, 12)}...
-				</p>
-			</div>
-		</div>
-
-		<div class="space-y-1.5">
-			<label
-				for="edit-uuid"
-				class="block text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase"
-				>Full UUID</label
+		<span class="flex items-center gap-3">
+			<span
+				class="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary"
 			>
-			<div class="flex gap-2">
-				<input
-					id="edit-uuid"
-					value={release.id}
-					readonly
-					class="flex-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 font-mono text-xs text-slate-600 dark:text-gray-400 outline-none"
-				/>
+				<Lock class="size-4" aria-hidden="true" />
+			</span>
+			<span class="flex flex-col">
+				<span class="text-sm font-medium">{m.admin_releases_pro_only()}</span>
+				<span class="text-xs text-muted-foreground"
+					>{m.admin_releases_access_control()}</span
+				>
+			</span>
+		</span>
+		<input
+			class="size-4 accent-primary"
+			type="checkbox"
+			name="requiresProSubscription"
+			bind:checked={release.requiresProSubscription}
+		/>
+	</label>
+
+	<div class="flex flex-col gap-3 border-t pt-5">
+		<p class="text-sm font-medium">{m.admin_releases_technical_assets()}</p>
+		<div class="grid gap-3 sm:grid-cols-2">
+			<div class="rounded-lg border bg-muted/30 p-3">
+				<p class="flex items-center gap-2 text-xs text-muted-foreground">
+					<HardDrive class="size-3" aria-hidden="true" />
+					{m.admin_releases_file_size()}
+				</p>
+				<p class="mt-1 font-mono text-sm">{formatBytes(release.size)}</p>
+			</div>
+			<div class="rounded-lg border bg-muted/30 p-3">
+				<p class="flex items-center gap-2 text-xs text-muted-foreground">
+					<Hash class="size-3" aria-hidden="true" />
+					{m.admin_releases_sha256()}
+				</p>
+				<p class="mt-1 truncate font-mono text-sm" title={release.sha256}>
+					{release.sha256.substring(0, 12)}…
+				</p>
 			</div>
 		</div>
-
-		<div class="space-y-1.5">
-			<label
-				for="edit-cdn"
-				class="block text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase"
-				>CDN Link</label
-			>
+		<div class="flex flex-col gap-2">
+			<Label for="edit-uuid">{m.admin_releases_full_uuid()}</Label>
+			<Input id="edit-uuid" value={release.id} readonly class="font-mono text-xs" />
+		</div>
+		<div class="flex flex-col gap-2">
+			<Label for="edit-cdn">{m.admin_releases_cdn_link()}</Label>
 			<div class="flex gap-2">
-				<input
+				<Input
 					id="edit-cdn"
 					value={release.downloadUrl}
 					readonly
-					class="flex-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-black/40 px-3 py-2 font-mono text-xs text-slate-600 dark:text-gray-400 outline-none"
+					class="font-mono text-xs"
 				/>
-				<a
+				<Button
+					variant="outline"
+					size="icon"
 					href={release.downloadUrl}
 					target="_blank"
-					class="rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-2 text-slate-600 dark:text-gray-400 hover:bg-white/10"
-					aria-label="Open CDN link in new tab"
+					rel="noreferrer"
+					title={m.admin_releases_open_cdn()}
 				>
-					<ExternalLink class="h-4 w-4" />
-				</a>
+					<ExternalLink aria-hidden="true" />
+					<span class="sr-only">{m.admin_releases_open_cdn()}</span>
+				</Button>
 			</div>
 		</div>
 	</div>
 {/snippet}
 
 {#snippet deleteBody(item: any)}
-	<p class="mb-6 text-sm leading-relaxed text-slate-600 dark:text-gray-400">
-		Are you sure you want to permanently delete the site pack <span
-			class="font-semibold text-slate-900 dark:text-white">{item.name}</span
-		>? This action cannot be undone and will prevent the desktop client from
-		downloading this package.
+	<p class="text-sm text-muted-foreground">
+		{m.admin_releases_delete_site_pack({ name: item.name })}
 	</p>
 {/snippet}
 
 <ReleaseManager
 	Icon={List}
 	title={m.admin_releases_category_sitepacks()}
-	description="Manage and deploy blocked site packs packages for the Ace Blocker engine."
+	description={m.admin_releases_site_packs_description()}
 	items={data.sitePacks}
 	stats={[
-		{ label: 'Total Downloads', value: data.totalDownloads.toLocaleString(), accent: true },
-		{ label: 'Active Packs', value: String(data.sitePacks.length) },
-		{ label: 'Global Storage', value: 'BunnyCDN' }
+		{
+			label: m.admin_releases_total_downloads(),
+			value: data.totalDownloads.toLocaleString(),
+			accent: true
+		},
+		{ label: m.admin_releases_active_packs(), value: String(data.sitePacks.length) },
+		{ label: m.admin_releases_pro_packs(), value: String(proPacks) }
 	]}
-	statsClass="mb-8 grid grid-cols-1 gap-6 text-center sm:text-left md:grid-cols-3"
-	uploadTitle="Deploy New Pack"
-	uploadSubtitle="Package Deployment"
+	uploadTitle={m.admin_releases_upload_pack_title()}
+	uploadSubtitle={m.admin_releases_upload_pack_description()}
 	UploadIcon={UploadCloud}
 	DropzoneIcon={Upload}
-	deployingLabel="Deploying to CDN..."
-	fileFieldLabel="Payload File (.zip)"
-	fileInputId="upload-file"
-	uploadFields={uploadFields}
-	validateUpload={validateUpload}
-	submitUpload={submitUpload}
+	deployingLabel={m.admin_releases_deploying_to_cdn()}
+	fileFieldLabel={m.admin_releases_pack_file_label()}
+	fileInputId="site-pack-file"
+	{uploadFields}
+	{validateUpload}
+	{submitUpload}
 	onUploadSuccess={resetUploadForm}
-	columns={columns}
-	row={row}
-	empty={empty}
-	details={details}
-	submitUpdate={submitUpdate}
-	submitDelete={submitDelete}
-	confirmDeleteLabel="Delete Permanently"
-	deleteOverlayClass="bg-black/60"
-	deletePanelClass="rounded-xl"
-	deleteConfirmClass="hover:border-red-500/30 hover:bg-red-500/20"
-	deleteBody={deleteBody}
+	{columns}
+	{row}
+	{empty}
+	{details}
+	{submitUpdate}
+	{submitDelete}
+	confirmDeleteLabel={m.admin_releases_delete_permanently()}
+	{deleteBody}
 />

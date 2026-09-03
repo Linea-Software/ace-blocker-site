@@ -1,30 +1,38 @@
 <script lang="ts">
-	import * as m from '$lib/paraglide/messages.js';
 	import { invalidateAll } from '$app/navigation';
-	import {
-		HardDrive,
-		Trash2,
-		Upload,
-		UploadCloud,
-		Calendar,
-		Layers,
-		Cpu,
-		Eye,
-		EyeOff
-	} from '@lucide/svelte';
 	import { apiClient } from '$lib/api-client';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Select from '$lib/components/ui/select';
+	import * as m from '$lib/paraglide/messages';
+	import {
+		Calendar,
+		Cpu,
+		Eye,
+		EyeOff,
+		HardDrive,
+		Layers,
+		Trash2,
+		UploadCloud
+	} from '@lucide/svelte';
 	import ReleaseManager from '../_components/ReleaseManager.svelte';
 
 	let { data } = $props<{ data: any }>();
-
-	// Upload form fields owned by this page (file + modal state live in ReleaseManager)
 	let uploadVersion = $state('');
 	let uploadOs = $state('windows');
 	let uploadArchitecture = $state('x64');
 
+	const liveBuilds = $derived(
+		data.installers.filter(
+			(installer: { canBeDownloaded: boolean }) => installer.canBeDownloaded
+		).length
+	);
+
 	function formatDate(date: string | Date) {
-		return new Date(date).toLocaleDateString('en-US', {
+		return new Date(date).toLocaleDateString(undefined, {
 			month: 'short',
 			day: 'numeric',
 			year: 'numeric'
@@ -38,63 +46,45 @@
 	}
 
 	function errorMessage(response: any, fallback: string): string {
-		let message = fallback;
 		if (
 			typeof response.error === 'object' &&
 			response.error !== null &&
 			'message' in response.error
 		) {
-			message = (response.error as { message: string }).message;
+			return String(response.error.message);
 		}
-		return message;
+		return fallback;
 	}
 
 	function validateUpload(formData: FormData): string | null {
 		const file = formData.get('file') as File;
 		const version = formData.get('version') as string;
-
-		if (!file || !file.size || !version) {
-			return 'Missing required configuration for deploy (File or Version)';
-		}
-		return null;
+		return !file?.size || !version ? m.admin_releases_missing_file_version() : null;
 	}
 
 	async function submitUpload(formData: FormData): Promise<string | null> {
-		const file = formData.get('file') as File;
-		const version = formData.get('version') as string;
-		const os = formData.get('os') as string;
-		const architecture = formData.get('architecture') as string;
-
 		const response = await apiClient.v1.admin.installers.upload.post({
-			file,
-			version,
-			os,
-			architecture
+			file: formData.get('file') as File,
+			version: formData.get('version') as string,
+			os: formData.get('os') as string,
+			architecture: formData.get('architecture') as string
 		});
 
-		if (response.error) {
-			return errorMessage(response, 'Internal server failure during binary deploy');
-		}
-		return null;
+		return response.error ? errorMessage(response, m.admin_releases_upload_fallback()) : null;
 	}
 
 	async function submitDelete(item: any): Promise<string | null> {
 		const response = await apiClient.v1.admin.installers.delete.post({ id: item.id });
-		if (response.error) return errorMessage(response, 'Delete failed');
-		return null;
+		return response.error ? errorMessage(response, m.admin_releases_delete_fallback()) : null;
 	}
 
-	// Release lifecycle: uploads are staged (canBeDownloaded=false). This
-	// control publishes or withdraws a release so the public /download page
-	// starts/stops serving it — without weakening the staging gate itself.
 	async function toggleDownloadable(item: any) {
-		const next = !item.canBeDownloaded;
 		const response = await apiClient.v1.admin.installers['set-downloadable'].post({
 			id: item.id,
-			canBeDownloaded: next
+			canBeDownloaded: !item.canBeDownloaded
 		});
 		if (response.error) {
-			alert(errorMessage(response, 'Failed to update release availability'));
+			alert(errorMessage(response, m.admin_releases_availability_fallback()));
 			return;
 		}
 		await invalidateAll();
@@ -102,211 +92,180 @@
 </script>
 
 <svelte:head>
-	<title>{m.admin_releases_category_installers()} — Ace Blocker Admin</title>
+	<title>{m.admin_releases_installers_page_title()}</title>
 </svelte:head>
 
 {#snippet columns()}
-	<th
-		class="px-6 py-4 text-[10px] font-bold tracking-widest text-slate-600 uppercase dark:text-gray-400"
-		>Version</th
+	<th class="h-11 px-5 text-xs font-medium text-muted-foreground"
+		>{m.admin_releases_column_version()}</th
 	>
-	<th
-		class="px-6 py-4 text-[10px] font-bold tracking-widest text-slate-600 uppercase dark:text-gray-400"
-		>File / Manifest</th
+	<th class="h-11 px-5 text-xs font-medium text-muted-foreground"
+		>{m.admin_releases_column_file()}</th
 	>
-	<th
-		class="px-6 py-4 text-center text-[10px] font-bold tracking-widest text-slate-600 uppercase dark:text-gray-400"
-		>Status</th
+	<th class="h-11 px-5 text-center text-xs font-medium text-muted-foreground"
+		>{m.admin_releases_column_status()}</th
 	>
-	<th
-		class="px-6 py-4 text-center text-[10px] font-bold tracking-widest text-slate-600 uppercase dark:text-gray-400"
-		>Downloads</th
+	<th class="h-11 px-5 text-center text-xs font-medium text-muted-foreground"
+		>{m.admin_releases_column_downloads()}</th
 	>
-	<th
-		class="px-6 py-4 text-[10px] font-bold tracking-widest text-slate-600 uppercase dark:text-gray-400"
-		>Release Date</th
+	<th class="h-11 px-5 text-xs font-medium text-muted-foreground"
+		>{m.admin_releases_column_release_date()}</th
 	>
-	<th
-		class="px-6 py-4 text-right text-[10px] font-bold tracking-widest text-slate-600 uppercase dark:text-gray-400"
-		>Actions</th
+	<th class="h-11 px-5 text-right text-xs font-medium text-muted-foreground"
+		>{m.admin_releases_column_actions()}</th
 	>
 {/snippet}
 
 {#snippet row(release: any, index: number, actions: any)}
-	<td class="px-6 py-4">
+	<td class="px-5 py-4">
 		<div class="flex items-center gap-2">
-			<span
-				class="text-sm font-semibold text-slate-900 transition-colors group-hover:text-amber-600 dark:text-white dark:group-hover:text-brand"
-				>{release.version}</span
-			>
+			<span class="font-medium">{release.version}</span>
 			{#if index === 0 && release.canBeDownloaded}
-				<span
-					class="rounded border border-brand/20 bg-brand/10 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-amber-600 uppercase dark:text-brand"
-					>Latest</span
-				>
+				<Badge variant="outline">{m.admin_releases_latest()}</Badge>
 			{/if}
 		</div>
 	</td>
-	<td class="px-6 py-4">
-		<div class="flex flex-col gap-1">
-			<code
-				class="max-w-[200px] truncate font-mono text-[10px] text-slate-600 dark:text-gray-400"
-				>{release.fileName}</code
-			>
-			<div class="flex items-center gap-2">
-				<span
-					class="flex items-center gap-1 text-[9px] font-bold text-slate-500 uppercase dark:text-gray-500"
+	<td class="px-5 py-4">
+		<div class="flex min-w-48 flex-col gap-1">
+			<code class="max-w-56 truncate text-xs text-muted-foreground">{release.fileName}</code>
+			<div class="flex items-center gap-3 text-xs text-muted-foreground">
+				<span class="flex items-center gap-1"
+					><Layers class="size-3" aria-hidden="true" />{release.os}</span
 				>
-					<Layers class="h-3 w-3" />
-					{release.os}
-				</span>
-				<span
-					class="flex items-center gap-1 text-[9px] font-bold text-slate-500 uppercase dark:text-gray-500"
+				<span class="flex items-center gap-1"
+					><Cpu class="size-3" aria-hidden="true" />{release.architecture}</span
 				>
-					<Cpu class="h-3 w-3" />
-					{release.architecture}
-				</span>
 			</div>
 		</div>
 	</td>
-	<td class="px-6 py-4 text-center">
+	<td class="px-5 py-4 text-center">
 		{#if release.canBeDownloaded}
-			<span
-				class="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 uppercase dark:text-emerald-400"
+			<Badge variant="secondary"
+				><Eye aria-hidden="true" />{m.admin_releases_status_live()}</Badge
 			>
-				<Eye class="h-3 w-3" />
-				{m.admin_releases_status_live()}
-			</span>
 		{:else}
-			<span
-				class="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600 uppercase dark:text-brand"
+			<Badge variant="outline"
+				><EyeOff aria-hidden="true" />{m.admin_releases_status_staged()}</Badge
 			>
-				<EyeOff class="h-3 w-3" />
-				{m.admin_releases_status_staged()}
-			</span>
 		{/if}
 	</td>
-	<td class="px-6 py-4 text-center">
-		<span class="font-mono text-xs text-slate-700 dark:text-gray-300"
-			>{release.downloadCount.toLocaleString()}</span
-		>
-	</td>
-	<td class="px-6 py-4">
-		<span class="flex items-center gap-1.5 text-xs text-slate-600 dark:text-gray-400">
-			<Calendar class="h-3.5 w-3.5 opacity-40" />
+	<td class="px-5 py-4 text-center font-mono text-sm">{release.downloadCount.toLocaleString()}</td
+	>
+	<td class="px-5 py-4">
+		<span class="flex items-center gap-1.5 text-sm text-muted-foreground">
+			<Calendar class="size-4" aria-hidden="true" />
 			{formatDate(release.createdAt)}
 		</span>
 	</td>
-	<td class="px-6 py-4 text-right">
+	<td class="px-5 py-4">
 		<div class="flex items-center justify-end gap-2">
-			{#if release.canBeDownloaded}
-				<button
-					onclick={() => toggleDownloadable(release)}
-					class="rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600 transition-all hover:border-red-500/30 hover:text-red-500 active:scale-90 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
-					title="Stop serving this release on the public download page"
-				>
-					{m.admin_releases_withdraw()}
-				</button>
-			{:else}
-				<button
-					onclick={() => toggleDownloadable(release)}
-					class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-600 transition-all hover:bg-emerald-500/20 active:scale-90 dark:text-emerald-400"
-					title="Publish this release to the public download page"
-				>
-					{m.admin_releases_make_available()}
-				</button>
-			{/if}
-			<button
-				onclick={() => actions.confirmDelete(release)}
-				class="rounded-lg border border-slate-200 bg-slate-100 p-2 text-slate-600 transition-all hover:border-red-500/30 hover:text-red-500 active:scale-90 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
-				title="Delete Record"
+			<Button
+				variant={release.canBeDownloaded ? 'outline' : 'default'}
+				size="sm"
+				onclick={() => toggleDownloadable(release)}
+				title={release.canBeDownloaded
+					? m.admin_releases_withdraw_installer_tooltip()
+					: m.admin_releases_publish_installer_tooltip()}
 			>
-				<Trash2 class="h-4 w-4" />
-			</button>
+				{release.canBeDownloaded
+					? m.admin_releases_withdraw()
+					: m.admin_releases_make_available()}
+			</Button>
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				onclick={() => actions.confirmDelete(release)}
+				title={m.admin_releases_delete_record()}
+			>
+				<Trash2 aria-hidden="true" />
+				<span class="sr-only">{m.admin_releases_delete_record()}</span>
+			</Button>
 		</div>
 	</td>
 {/snippet}
 
 {#snippet empty(open: () => void)}
-	<EmptyState colspan={6} Icon={UploadCloud} title="No releases uploaded yet." onaction={open} />
+	<EmptyState
+		colspan={6}
+		Icon={UploadCloud}
+		title={m.admin_releases_empty_installers_title()}
+		description={m.admin_releases_empty_installers_description()}
+		actionLabel={m.admin_releases_deploy_first()}
+		onaction={open}
+	/>
 {/snippet}
 
 {#snippet uploadFields()}
-	<div class="space-y-1.5">
-		<label
-			for="rel-v"
-			class="block text-[10px] font-bold tracking-widest text-slate-500 uppercase dark:text-gray-500"
-			>{m.admin_releases_modal_version()}</label
-		>
-		<input
-			id="rel-v"
+	<div class="flex flex-col gap-2">
+		<Label for="installer-version">{m.admin_releases_modal_version()}</Label>
+		<Input
+			id="installer-version"
 			name="version"
 			bind:value={uploadVersion}
-			type="text"
-			placeholder="e.g. v1.5.0"
+			placeholder={m.admin_releases_version_placeholder()}
 			required
-			class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 transition-all outline-none focus:border-brand dark:border-white/10 dark:bg-black/40 dark:text-white"
 		/>
 	</div>
 
-	<div class="grid grid-cols-2 gap-4">
-		<div class="space-y-1.5">
-			<label
-				for="rel-os"
-				class="block text-[10px] font-bold tracking-widest text-slate-500 uppercase dark:text-gray-500"
-				>{m.admin_releases_modal_os()}</label
-			>
-			<select
-				id="rel-os"
-				name="os"
-				bind:value={uploadOs}
-				class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-brand dark:border-white/10 dark:bg-black/40 dark:text-white"
-			>
-				<option value="windows">Windows</option>
-				<option value="linux">Linux</option>
-				<option value="macos">macOS</option>
-			</select>
+	<div class="grid gap-4 sm:grid-cols-2">
+		<div class="flex flex-col gap-2">
+			<Label for="installer-os">{m.admin_releases_modal_os()}</Label>
+			<Select.Root type="single" name="os" bind:value={uploadOs}>
+				<Select.Trigger id="installer-os"
+					>{uploadOs === 'macos'
+						? 'macOS'
+						: uploadOs === 'linux'
+							? 'Linux'
+							: 'Windows'}</Select.Trigger
+				>
+				<Select.Content>
+					<Select.Group>
+						<Select.Item value="windows" label="Windows">Windows</Select.Item>
+						<Select.Item value="linux" label="Linux">Linux</Select.Item>
+						<Select.Item value="macos" label="macOS">macOS</Select.Item>
+					</Select.Group>
+				</Select.Content>
+			</Select.Root>
 		</div>
-		<div class="space-y-1.5">
-			<label
-				for="rel-arch"
-				class="block text-[10px] font-bold tracking-widest text-slate-500 uppercase dark:text-gray-500"
-				>{m.admin_releases_modal_arch()}</label
-			>
-			<select
-				id="rel-arch"
-				name="architecture"
-				bind:value={uploadArchitecture}
-				class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none focus:border-brand dark:border-white/10 dark:bg-black/40 dark:text-white"
-			>
-				<option value="x64">x64</option>
-				<option value="arm64">arm64</option>
-			</select>
+		<div class="flex flex-col gap-2">
+			<Label for="installer-architecture">{m.admin_releases_modal_arch()}</Label>
+			<Select.Root type="single" name="architecture" bind:value={uploadArchitecture}>
+				<Select.Trigger id="installer-architecture">{uploadArchitecture}</Select.Trigger>
+				<Select.Content>
+					<Select.Group>
+						<Select.Item value="x64" label="x64">x64</Select.Item>
+						<Select.Item value="arm64" label="arm64">arm64</Select.Item>
+					</Select.Group>
+				</Select.Content>
+			</Select.Root>
 		</div>
 	</div>
 {/snippet}
 
 {#snippet deleteBody(item: any)}
-	<p class="mb-6 text-sm leading-relaxed text-slate-600 dark:text-gray-400">
-		Are you sure you want to permanently delete the installer <span
-			class="font-semibold text-slate-900 dark:text-white">{item.version}</span
-		>
-		({item.fileName})? This action cannot be undone and will stop this build from being served.
+	<p class="text-sm text-muted-foreground">
+		{m.admin_releases_delete_installer({ version: item.version, fileName: item.fileName })}
 	</p>
 {/snippet}
 
 <ReleaseManager
 	Icon={HardDrive}
 	title={m.admin_releases_category_installers()}
-	description="Manage and deploy Ace Blocker installer binaries."
+	description={m.admin_releases_installers_description()}
 	items={data.installers}
 	stats={[
-		{ label: 'Total Downloads', value: data.totalDownloads.toLocaleString(), accent: true },
-		{ label: 'Active Builds', value: String(data.installers.length) }
+		{
+			label: m.admin_releases_total_downloads(),
+			value: data.totalDownloads.toLocaleString(),
+			accent: true
+		},
+		{ label: m.admin_releases_active_builds(), value: String(data.installers.length) },
+		{ label: m.admin_releases_published_builds(), value: String(liveBuilds) }
 	]}
-	uploadTitle={m.admin_releases_upload_title()}
-	uploadSubtitle="Targeting: "
-	uploadSubtitleHighlight="Installers"
+	uploadTitle={m.admin_releases_upload_installer_title()}
+	uploadSubtitle={m.admin_releases_upload_installer_description()}
+	fileFieldLabel={m.admin_releases_installer_file_label()}
+	fileInputId="installer-file"
 	{uploadFields}
 	{validateUpload}
 	{submitUpload}

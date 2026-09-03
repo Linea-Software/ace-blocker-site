@@ -1,17 +1,20 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import * as m from '$lib/paraglide/messages.js';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import * as m from '$lib/paraglide/messages';
 	import {
 		AlertTriangle,
-		Database,
+		FileUp,
+		LoaderCircle,
 		Settings,
 		Upload,
-		UploadCloud,
-		X
+		UploadCloud
 	} from '@lucide/svelte';
-	import { fade, scale } from 'svelte/transition';
 	import type { Component, Snippet } from 'svelte';
-	import Panel from '$lib/components/Panel.svelte';
 
 	interface ReleaseStat {
 		label: string;
@@ -30,14 +33,13 @@
 		description,
 		items,
 		stats,
-		statsClass = 'mb-8 grid grid-cols-1 gap-6 md:grid-cols-2',
 		uploadTitle,
 		uploadSubtitle,
 		uploadSubtitleHighlight,
 		UploadIcon = Upload,
-		deployingLabel = 'Deploying...',
+		deployingLabel = m.admin_releases_deploying(),
 		fileFieldLabel = m.admin_releases_modal_file(),
-		fileInputId = 'rel-f',
+		fileInputId = 'release-file',
 		DropzoneIcon = UploadCloud,
 		uploadFields,
 		validateUpload,
@@ -49,10 +51,7 @@
 		details,
 		submitUpdate,
 		submitDelete,
-		confirmDeleteLabel = 'Confirm Delete',
-		deleteOverlayClass = 'bg-black/80',
-		deletePanelClass = 'rounded-2xl',
-		deleteConfirmClass = 'hover:bg-red-500/20',
+		confirmDeleteLabel = m.admin_releases_confirm_delete_action(),
 		deleteBody
 	}: {
 		Icon: Component;
@@ -60,7 +59,6 @@
 		description: string;
 		items: any[];
 		stats: ReleaseStat[];
-		statsClass?: string;
 		uploadTitle: string;
 		uploadSubtitle: string;
 		uploadSubtitleHighlight?: string;
@@ -80,15 +78,12 @@
 		submitUpdate?: (formData: FormData) => Promise<string | null>;
 		submitDelete: (item: any) => Promise<string | null>;
 		confirmDeleteLabel?: string;
-		deleteOverlayClass?: string;
-		deletePanelClass?: string;
-		deleteConfirmClass?: string;
 		deleteBody: Snippet<[any]>;
 	} = $props();
 
-	// ── Modal state ──────────────────────────────────────────────────────────
 	let isUploadModalOpen = $state(false);
 	let isDetailsModalOpen = $state(false);
+	let isDeleteModalOpen = $state(false);
 	let isDeploying = $state(false);
 	let isUpdating = $state(false);
 	let isDeleting = $state(false);
@@ -97,33 +92,34 @@
 	let isDragging = $state(false);
 	let uploadError = $state<string | null>(null);
 	let updateError = $state<string | null>(null);
+	let deleteError = $state<string | null>(null);
 	let uploadFile = $state<File | null>(null);
 
 	function openUploadModal() {
-		isUploadModalOpen = true;
 		uploadError = null;
+		isUploadModalOpen = true;
 	}
 
 	function openDetails(release: any) {
 		selectedRelease = { ...release };
-		isDetailsModalOpen = true;
 		updateError = null;
+		isDetailsModalOpen = true;
 	}
 
 	function confirmDelete(item: any) {
 		itemToDelete = item;
+		deleteError = null;
+		isDeleteModalOpen = true;
 	}
 
 	const rowActions: RowActions = { openDetails, confirmDelete };
 
-	// ── Upload ───────────────────────────────────────────────────────────────
-	async function handleDeploy(e: Event) {
-		e.preventDefault();
+	async function handleDeploy(event: SubmitEvent) {
+		event.preventDefault();
 		isDeploying = true;
 		uploadError = null;
 
-		const formData = new FormData(e.target as HTMLFormElement);
-
+		const formData = new FormData(event.currentTarget as HTMLFormElement);
 		const validationError = validateUpload(formData);
 		if (validationError) {
 			uploadError = validationError;
@@ -133,7 +129,6 @@
 
 		const error = await submitUpload(formData);
 		isDeploying = false;
-
 		if (error) {
 			uploadError = error;
 			return;
@@ -145,36 +140,33 @@
 		await invalidateAll();
 	}
 
-	function handleDragOver(e: DragEvent) {
-		e.preventDefault();
+	function handleDragOver(event: DragEvent) {
+		event.preventDefault();
 		isDragging = true;
 	}
 
-	function handleDragLeave(e: DragEvent) {
-		e.preventDefault();
+	function handleDragLeave(event: DragEvent) {
+		event.preventDefault();
 		isDragging = false;
 	}
 
-	function handleDrop(e: DragEvent & { currentTarget: EventTarget & HTMLInputElement }) {
-		e.preventDefault();
+	function handleDrop(event: DragEvent & { currentTarget: EventTarget & HTMLInputElement }) {
+		event.preventDefault();
 		isDragging = false;
-		if (e.dataTransfer?.files?.length) {
-			uploadFile = e.dataTransfer.files[0];
-			e.currentTarget.files = e.dataTransfer.files;
+		if (event.dataTransfer?.files.length) {
+			uploadFile = event.dataTransfer.files[0];
+			event.currentTarget.files = event.dataTransfer.files;
 		}
 	}
 
-	// ── Update (details modal) ───────────────────────────────────────────────
-	async function handleUpdate(e: Event) {
+	async function handleUpdate(event: SubmitEvent) {
 		if (!submitUpdate) return;
-		e.preventDefault();
+		event.preventDefault();
 		isUpdating = true;
 		updateError = null;
 
-		const formData = new FormData(e.target as HTMLFormElement);
-		const error = await submitUpdate(formData);
+		const error = await submitUpdate(new FormData(event.currentTarget as HTMLFormElement));
 		isUpdating = false;
-
 		if (error) {
 			updateError = error;
 			return;
@@ -184,350 +176,273 @@
 		await invalidateAll();
 	}
 
-	// ── Delete ───────────────────────────────────────────────────────────────
 	async function handleDelete() {
 		if (!itemToDelete) return;
-
 		isDeleting = true;
+		deleteError = null;
 
 		const error = await submitDelete(itemToDelete);
-
 		isDeleting = false;
-
 		if (error) {
-			alert(error);
+			deleteError = error;
 			return;
 		}
 
+		isDeleteModalOpen = false;
 		itemToDelete = null;
 		await invalidateAll();
 	}
 </script>
 
-<div class="min-h-screen bg-slate-50 dark:bg-background p-8 font-sans text-slate-800 dark:text-gray-200 selection:bg-brand/30">
-	<!-- Page Header -->
-	<header
-		class="mb-10 flex flex-col justify-between gap-4 border-b border-slate-200 dark:border-white/5 pb-6 md:flex-row md:items-center"
-	>
-		<div>
-			<div class="mb-1 flex items-center gap-3">
-				<div
-					class="rounded-lg border border-brand/20 bg-brand/10 p-2 text-amber-600 dark:text-brand"
-				>
-					<Icon class="h-5 w-5" />
-				</div>
-				<h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white lg:text-3xl">
-					{title}
-				</h1>
+<div class="flex flex-col gap-8">
+	<header class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+		<div class="flex flex-col gap-2">
+			<div class="flex items-center gap-2 text-sm font-semibold text-brand">
+				<Icon aria-hidden="true" />
+				{m.admin_releases_eyebrow()}
 			</div>
-			<p class="max-w-lg text-sm leading-relaxed text-slate-600 dark:text-gray-400">
-				{description}
-			</p>
+			<div>
+				<h1 class="text-3xl font-bold tracking-tight">{title}</h1>
+				<p class="mt-1 max-w-2xl text-muted-foreground">{description}</p>
+			</div>
 		</div>
 
 		<div class="flex items-center gap-3">
-			<div
-				class="hidden items-center gap-2 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-3 py-1.5 font-mono text-[10px] tracking-wider text-slate-500 dark:text-gray-500 uppercase lg:flex"
-			>
-				<Database class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-500" />
-				<span>DB Status: <span class="text-emerald-600 dark:text-emerald-400">Connected</span></span>
-			</div>
-			<button
-				onclick={openUploadModal}
-				class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-black shadow-lg shadow-brand/10 transition-all hover:scale-[1.02] hover:bg-amber-400 active:scale-95"
-			>
-				<Upload class="h-4 w-4" />
+			<Badge variant="outline">{m.admin_releases_records({ count: items.length })}</Badge>
+			<Button onclick={openUploadModal}>
+				<Upload data-icon="inline-start" aria-hidden="true" />
 				{m.admin_releases_deploy_new()}
-			</button>
+			</Button>
 		</div>
 	</header>
 
-	<!-- Stats -->
-	<div class={statsClass}>
-		{#each stats as stat}
-			<Panel variant="surface">
-				<p class="mb-1 text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase">
-					{stat.label}
-				</p>
-				<p
-					class="font-mono text-2xl font-bold {stat.accent
-						? 'text-amber-600 dark:text-brand'
-						: 'text-slate-900 dark:text-white'}"
-				>
-					{stat.value}
-				</p>
-			</Panel>
+	<section
+		class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+		aria-label={m.admin_releases_summary()}
+	>
+		{#each stats as stat (stat.label)}
+			<Card.Root class="gap-3 py-5">
+				<Card.Header class="px-5">
+					<Card.Title class="text-sm font-medium text-muted-foreground"
+						>{stat.label}</Card.Title
+					>
+				</Card.Header>
+				<Card.Content class="px-5">
+					<p
+						class={stat.accent
+							? 'text-3xl font-bold tracking-tight text-brand'
+							: 'text-3xl font-bold tracking-tight'}
+					>
+						{stat.value}
+					</p>
+				</Card.Content>
+			</Card.Root>
 		{/each}
-	</div>
+	</section>
 
-	<!-- Data Table -->
-	<div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100/60 dark:bg-white/[0.02] backdrop-blur-sm">
-		<table class="w-full border-collapse text-left">
-			<thead>
-				<tr class="border-b border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5">
-					{@render columns()}
-				</tr>
-			</thead>
-			<tbody class="divide-y divide-slate-200 dark:divide-white/5">
-				{#each items as item, index (item.id)}
-					<tr class="group transition-colors hover:bg-slate-100 dark:hover:bg-white/5">
-						{@render row(item, index, rowActions)}
-					</tr>
-				{:else}
-					{@render empty(openUploadModal)}
-				{/each}
-			</tbody>
-		</table>
-	</div>
+	<Card.Root class="overflow-hidden">
+		<Card.Header class="border-b">
+			<Card.Title>{m.admin_releases_inventory_title()}</Card.Title>
+			<Card.Description
+				>{m.admin_releases_inventory_description({ category: title })}</Card.Description
+			>
+		</Card.Header>
+		<Card.Content class="p-0">
+			<div class="overflow-x-auto">
+				<table class="w-full border-collapse text-left">
+					<thead class="bg-muted/50">
+						<tr class="border-b">{@render columns()}</tr>
+					</thead>
+					<tbody class="divide-y">
+						{#each items as item, index (item.id)}
+							<tr class="group transition-colors hover:bg-muted/40">
+								{@render row(item, index, rowActions)}
+							</tr>
+						{:else}
+							{@render empty(openUploadModal)}
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		</Card.Content>
+	</Card.Root>
 </div>
 
-<!-- Upload Modal -->
-{#if isUploadModalOpen}
-	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
-		transition:fade={{ duration: 150 }}
-	>
-		<div
-			class="w-full max-w-md animate-in overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-card shadow-2xl duration-200 zoom-in-95"
-			transition:scale={{ duration: 200, start: 0.95 }}
-			role="dialog"
-		>
-			<form onsubmit={handleDeploy}>
-				<div
-					class="flex items-center justify-between border-b border-slate-200 dark:border-white/5 px-6 py-5"
-				>
-					<div>
-						<h3 class="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
-							<UploadIcon class="h-5 w-5 text-amber-600 dark:text-brand" />
-							{uploadTitle}
-						</h3>
-						<p
-							class="mt-1 text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase"
-						>
-							{uploadSubtitle}
-							{#if uploadSubtitleHighlight}
-								<span class="text-amber-600 dark:text-brand">{uploadSubtitleHighlight}</span>
-							{/if}
-						</p>
-					</div>
-					<button
-						type="button"
-						onclick={() => (isUploadModalOpen = false)}
-						class="text-slate-500 dark:text-gray-500 transition-colors hover:text-slate-900 dark:hover:text-white"
+<Dialog.Root bind:open={isUploadModalOpen}>
+	<Dialog.Content class="sm:max-w-lg">
+		<Dialog.Header>
+			<Dialog.Title class="flex items-center gap-2">
+				<UploadIcon aria-hidden="true" />
+				{uploadTitle}
+			</Dialog.Title>
+			<Dialog.Description>
+				{uploadSubtitle}{#if uploadSubtitleHighlight}<strong
+						class="font-medium text-foreground">{uploadSubtitleHighlight}</strong
+					>{/if}
+			</Dialog.Description>
+		</Dialog.Header>
+
+		<form class="flex flex-col gap-5" onsubmit={handleDeploy}>
+			{#if uploadError}
+				<Alert.Root variant="destructive">
+					<AlertTriangle aria-hidden="true" />
+					<Alert.Title>{m.admin_releases_upload_failed()}</Alert.Title>
+					<Alert.Description>{uploadError}</Alert.Description>
+				</Alert.Root>
+			{/if}
+
+			{@render uploadFields()}
+
+			<div class="flex flex-col gap-2">
+				<label for={fileInputId} class="text-sm font-medium">{fileFieldLabel}</label>
+				<div class="group relative">
+					<input
+						id={fileInputId}
+						type="file"
+						name="file"
+						class="absolute inset-0 size-full cursor-pointer opacity-0"
+						onchange={(event) => (uploadFile = event.currentTarget.files?.[0] ?? null)}
+						ondragover={handleDragOver}
+						ondragleave={handleDragLeave}
+						ondrop={handleDrop}
+						required
+					/>
+					<div
+						class={isDragging
+							? 'flex h-36 flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary bg-primary/5 p-5 text-center'
+							: 'flex h-36 flex-col items-center justify-center rounded-xl border-2 border-dashed bg-muted/30 p-5 text-center transition-colors group-hover:bg-muted/60'}
 					>
-						<X class="h-5 w-5" />
-					</button>
-				</div>
-
-				<div class="space-y-6 p-6">
-					{#if uploadError}
-						<div
-							class="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs font-medium text-red-500"
-						>
-							{uploadError}
-						</div>
-					{/if}
-
-					{@render uploadFields()}
-
-					<div class="space-y-2">
-						<label
-							for={fileInputId}
-							class="block text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase"
-							>{fileFieldLabel}</label
-						>
-						<div class="group relative">
-							<input
-								id={fileInputId}
-								type="file"
-								name="file"
-								class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
-								onchange={(e) =>
-									(uploadFile = e.currentTarget.files?.[0] || null)}
-								ondragover={handleDragOver}
-								ondragleave={handleDragLeave}
-								ondrop={handleDrop}
-								required
-							/>
-							<div
-								class="flex h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all group-hover:bg-slate-100 dark:group-hover:bg-white/5 {isDragging
-									? 'border-brand bg-brand/5'
-									: 'border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black/20 group-hover:border-slate-400 dark:group-hover:border-white/20'}"
-							>
-								<div
-									class="flex flex-col items-center justify-center p-5 text-center"
-								>
-									<DropzoneIcon
-										class="mb-2 h-6 w-6 {isDragging
-											? 'text-amber-600 dark:text-brand'
-											: 'text-slate-500 dark:text-gray-500'}"
-									/>
-									{#if uploadFile}
-										<p
-											class="max-w-[280px] truncate font-mono text-xs text-amber-600 dark:text-brand"
-										>
-											{uploadFile.name}
-										</p>
-									{:else}
-										<p class="text-[10px] font-bold text-slate-500 dark:text-gray-500 uppercase">
-											{isDragging
-												? 'Drop file to upload'
-												: 'Click or drag & drop binary'}
-										</p>
-									{/if}
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<button
-						type="submit"
-						disabled={isDeploying}
-						class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-sm font-bold text-black shadow-lg shadow-brand/10 transition-all hover:bg-amber-400 disabled:opacity-50"
-					>
-						{#if isDeploying}
-							<div
-								class="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black"
-							></div>
-							{deployingLabel}
+						<DropzoneIcon
+							class="mb-2 size-7 text-muted-foreground"
+							aria-hidden="true"
+						/>
+						{#if uploadFile}
+							<p class="max-w-full truncate text-sm font-medium">{uploadFile.name}</p>
+							<p class="mt-1 text-xs text-muted-foreground">
+								{m.admin_releases_file_ready()}
+							</p>
 						{:else}
-							Start Deployment
+							<p class="text-sm font-medium">
+								{isDragging
+									? m.admin_releases_drop_file()
+									: m.admin_releases_choose_file()}
+							</p>
+							<p class="mt-1 text-xs text-muted-foreground">
+								{m.admin_releases_drag_hint()}
+							</p>
 						{/if}
-					</button>
-				</div>
-			</form>
-		</div>
-	</div>
-{/if}
-
-<!-- Details / Edit Modal -->
-{#if details && isDetailsModalOpen && selectedRelease}
-	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
-		transition:fade={{ duration: 150 }}
-	>
-		<div
-			class="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-card shadow-2xl"
-			transition:scale={{ duration: 200, start: 0.95 }}
-			role="dialog"
-		>
-			<form onsubmit={handleUpdate}>
-				<input type="hidden" name="id" value={selectedRelease.id} />
-
-				<div
-					class="flex items-center justify-between border-b border-slate-200 dark:border-white/5 px-6 py-5"
-				>
-					<div>
-						<h3 class="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
-							<Settings class="h-5 w-5 text-amber-600 dark:text-brand" />
-							Pack Details
-						</h3>
-						<p
-							class="mt-1 text-[10px] font-bold tracking-widest text-slate-500 dark:text-gray-500 uppercase"
-						>
-							Config Update
-						</p>
 					</div>
-					<button
-						type="button"
-						onclick={() => (isDetailsModalOpen = false)}
-						class="text-slate-500 dark:text-gray-500 transition-colors hover:text-slate-900 dark:hover:text-white"
-					>
-						<X class="h-5 w-5" />
-					</button>
-				</div>
-
-				<div class="space-y-6 p-6">
-					<div class="space-y-4">
-						{#if updateError}
-							<div
-								class="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs font-medium text-red-500"
-							>
-								{updateError}
-							</div>
-						{/if}
-						{@render details(selectedRelease)}
-					</div>
-
-					<div class="pt-2">
-						<button
-							type="submit"
-							disabled={isUpdating}
-							class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-sm font-bold text-black transition-all hover:bg-amber-400 disabled:opacity-50"
-						>
-							{#if isUpdating}
-								<div
-									class="h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black"
-								></div>
-								Saving...
-							{:else}
-								Save Configuration
-							{/if}
-						</button>
-					</div>
-				</div>
-			</form>
-		</div>
-	</div>
-{/if}
-
-<!-- Delete Confirmation Modal -->
-{#if itemToDelete}
-	<div
-		class="fixed inset-0 z-50 flex items-center justify-center {deleteOverlayClass} p-4 backdrop-blur-sm"
-		transition:fade={{ duration: 150 }}
-	>
-		<div
-			class="w-full max-w-md animate-in overflow-hidden {deletePanelClass} border border-slate-200 dark:border-white/10 bg-white dark:bg-card shadow-2xl duration-200 zoom-in-95 fade-in"
-			role="dialog"
-		>
-			<div class="p-6">
-				<div class="mb-4 flex items-center gap-3">
-					<div class="rounded-lg bg-red-500/10 p-2 text-red-500">
-						<AlertTriangle class="h-6 w-6" />
-					</div>
-					<h3 class="text-lg font-bold text-slate-900 dark:text-white">Confirm Deletion</h3>
-				</div>
-
-				{@render deleteBody(itemToDelete)}
-
-				<div class="flex justify-end gap-3 border-t border-slate-200 dark:border-white/5 pt-6">
-					<button
-						type="button"
-						onclick={() => (itemToDelete = null)}
-						class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 dark:text-gray-400 transition-colors hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
-					>
-						Cancel
-					</button>
-					<button
-						type="button"
-						onclick={handleDelete}
-						disabled={isDeleting}
-						class="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-500 transition-colors {deleteConfirmClass} disabled:opacity-50"
-					>
-						{#if isDeleting}
-							<div
-								class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-red-500/30 border-t-red-500"
-							></div>
-							Deleting...
-						{:else}
-							{confirmDeleteLabel}
-						{/if}
-					</button>
 				</div>
 			</div>
-		</div>
-	</div>
+
+			<Dialog.Footer>
+				<Button type="button" variant="outline" onclick={() => (isUploadModalOpen = false)}>
+					{m.account_cancel_action()}
+				</Button>
+				<Button type="submit" disabled={isDeploying}>
+					{#if isDeploying}
+						<LoaderCircle
+							class="animate-spin"
+							data-icon="inline-start"
+							aria-hidden="true"
+						/>
+						{deployingLabel}
+					{:else}
+						<FileUp data-icon="inline-start" aria-hidden="true" />
+						{m.admin_releases_start_deployment()}
+					{/if}
+				</Button>
+			</Dialog.Footer>
+		</form>
+	</Dialog.Content>
+</Dialog.Root>
+
+{#if details && selectedRelease}
+	<Dialog.Root bind:open={isDetailsModalOpen}>
+		<Dialog.Content class="sm:max-w-lg">
+			<Dialog.Header>
+				<Dialog.Title class="flex items-center gap-2">
+					<Settings aria-hidden="true" />
+					{m.admin_releases_details_title()}
+				</Dialog.Title>
+				<Dialog.Description>{m.admin_releases_details_description()}</Dialog.Description>
+			</Dialog.Header>
+			<form class="flex flex-col gap-5" onsubmit={handleUpdate}>
+				<input type="hidden" name="id" value={selectedRelease.id} />
+				{#if updateError}
+					<Alert.Root variant="destructive">
+						<AlertTriangle aria-hidden="true" />
+						<Alert.Title>{m.admin_releases_update_failed()}</Alert.Title>
+						<Alert.Description>{updateError}</Alert.Description>
+					</Alert.Root>
+				{/if}
+				{@render details(selectedRelease)}
+				<Dialog.Footer>
+					<Button
+						type="button"
+						variant="outline"
+						onclick={() => (isDetailsModalOpen = false)}
+					>
+						{m.account_cancel_action()}
+					</Button>
+					<Button type="submit" disabled={isUpdating}>
+						{#if isUpdating}
+							<LoaderCircle
+								class="animate-spin"
+								data-icon="inline-start"
+								aria-hidden="true"
+							/>
+							{m.admin_releases_saving()}
+						{:else}
+							{m.admin_releases_save_configuration()}
+						{/if}
+					</Button>
+				</Dialog.Footer>
+			</form>
+		</Dialog.Content>
+	</Dialog.Root>
 {/if}
 
-<style>
-	:global(body) {
-		background-color: #f8fafc;
-		color-scheme: light;
-	}
-
-	:global(html.dark body) {
-		background-color: var(--background);
-		color-scheme: dark;
-	}
-</style>
+<Dialog.Root bind:open={isDeleteModalOpen}>
+	<Dialog.Content class="sm:max-w-md">
+		<Dialog.Header>
+			<Dialog.Title class="flex items-center gap-2">
+				<AlertTriangle class="text-destructive" aria-hidden="true" />
+				{m.admin_releases_confirm_delete_title()}
+			</Dialog.Title>
+			<Dialog.Description>{m.admin_releases_confirm_delete_description()}</Dialog.Description>
+		</Dialog.Header>
+		{#if itemToDelete}
+			{@render deleteBody(itemToDelete)}
+		{/if}
+		{#if deleteError}
+			<Alert.Root variant="destructive">
+				<AlertTriangle aria-hidden="true" />
+				<Alert.Title>{m.admin_releases_delete_failed()}</Alert.Title>
+				<Alert.Description>{deleteError}</Alert.Description>
+			</Alert.Root>
+		{/if}
+		<Dialog.Footer>
+			<Button type="button" variant="outline" onclick={() => (isDeleteModalOpen = false)}>
+				{m.account_cancel_action()}
+			</Button>
+			<Button
+				type="button"
+				variant="destructive"
+				onclick={handleDelete}
+				disabled={isDeleting}
+			>
+				{#if isDeleting}
+					<LoaderCircle
+						class="animate-spin"
+						data-icon="inline-start"
+						aria-hidden="true"
+					/>
+					{m.admin_releases_deleting()}
+				{:else}
+					{confirmDeleteLabel}
+				{/if}
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Button } from '$lib/components/ui/button';
 	import type { Component } from 'svelte';
 
 	/**
@@ -11,7 +12,7 @@
 		Icon,
 		title,
 		description,
-		actionLabel = 'Deploy First Build',
+		actionLabel,
 		onaction,
 		circle = false
 	} = $props<{
@@ -19,49 +20,30 @@
 		Icon: Component;
 		title: string;
 		description?: string;
-		actionLabel?: string;
+		actionLabel: string;
 		onaction?: () => void;
 		circle?: boolean;
 	}>();
 </script>
 
 <tr>
-	<td
-		colspan={colspan}
-		class={circle ? 'px-6 py-20' : 'px-6 py-20 text-center'}
-	>
-		<div
-			class={circle
-				? 'flex flex-col items-center justify-center text-center'
-				: 'flex flex-col items-center justify-center'}
-		>
-			{#if circle}
-				<div
-					class="w-12 h-12 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mb-4 border border-slate-200 dark:border-white/10"
-				>
-					<Icon class="w-6 h-6 text-slate-400 dark:text-gray-600" />
-				</div>
-				<h3 class="text-sm font-semibold text-slate-700 dark:text-gray-300">
-					{title}
-				</h3>
-				{#if description}
-					<p class="text-xs text-slate-500 dark:text-gray-500 mt-1 mb-6">
-						{description}
-					</p>
-				{/if}
-			{:else}
-				<Icon class="w-10 h-10 text-slate-400 dark:text-gray-600 mb-3" />
-				<p class="text-sm font-medium text-slate-600 dark:text-gray-400 mb-4">
-					{title}
-				</p>
+	<td {colspan} class="px-6 py-16 text-center">
+		<div class="flex flex-col items-center justify-center">
+			<div
+				class={circle
+					? 'mb-4 flex size-12 items-center justify-center rounded-full border bg-muted'
+					: 'mb-4 flex size-11 items-center justify-center rounded-xl bg-muted'}
+			>
+				<Icon class="size-5 text-muted-foreground" aria-hidden="true" />
+			</div>
+			<h3 class="text-sm font-semibold">{title}</h3>
+			{#if description}
+				<p class="mt-1 max-w-md text-sm text-muted-foreground">{description}</p>
 			{/if}
 			{#if onaction}
-				<button
-					onclick={onaction}
-					class="bg-brand/10 text-amber-600 dark:text-brand hover:bg-brand/20 border border-brand/20 px-4 py-2 rounded-lg text-xs font-bold transition-all"
-				>
+				<Button class="mt-5" size="sm" onclick={onaction}>
 					{actionLabel}
-				</button>
+				</Button>
 			{/if}
 		</div>
 	</td>
