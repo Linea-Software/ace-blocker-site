@@ -12,8 +12,22 @@ const BackupSitesListSourceSchema = t.Object({
 	format: t.String()
 });
 
+// Site-pack ids are NOT server-side UUIDs: built-in/default packs use the
+// canonical catalog id (`pack-adult-free`, `pack-social-free`, ...), engine
+// rows created from the server list use the server's catalog string, and only
+// user-created packs carry a UUID. The site stores the backup blob verbatim
+// and never treats these ids as its own foreign keys, so any non-empty string
+// is valid (see engine issue: "UUID failure during cloud backup").
+const PackIdString = t.String({ minLength: 1, maxLength: 128 });
+
 const BackupSitesListSchema = t.Object({
-	id: t.String({ format: 'uuid' }),
+	id: PackIdString,
+	// Remote linkage/tier are preserved so a restore re-creates a
+	// server-managed pack as a remote row (matched by the content updater),
+	// not as a local pack. Optional for legacy backups.
+	remoteId: t.Optional(t.Nullable(t.String())),
+	requiresPro: t.Optional(t.Boolean()),
+	version: t.Optional(t.Nullable(t.String())),
 	name: t.String(),
 	description: t.Optional(t.Nullable(t.String())),
 	sources: t.Array(BackupSitesListSourceSchema)
@@ -38,7 +52,9 @@ const BackupNetworkBlockSchema = t.Object({
 	icon: t.Optional(t.Nullable(t.String())),
 	schedules: t.Array(BackupScheduleEntrySchema),
 	userRules: t.Array(t.String()),
-	connectedSitesLists: t.Array(t.String({ format: 'uuid' }))
+	// A block may reference built-in packs by their canonical catalog id
+	// (not a UUID), so connected list ids are opaque strings too.
+	connectedSitesLists: t.Array(PackIdString)
 });
 
 const EngineBackupSchema = t.Object({

@@ -214,6 +214,80 @@ describe('backups endpoints', () => {
 		expect(insertCall).toBeDefined();
 	});
 
+	it('accepts backups whose site packs use canonical catalog ids (non-UUID)', async () => {
+		// Regression: engine exports include built-in/default packs identified
+		// by catalog ids such as `pack-adult-free` (never UUIDs), and network
+		// blocks reference them the same way. The upload must not be rejected
+		// by a UUID-format constraint — the site stores the blob verbatim.
+		await asUser();
+		const { isUserPro } = await import('$lib/server/pro');
+		vi.mocked(isUserPro).mockResolvedValue(true);
+
+		const defaultPacksBackup = {
+			version: '1.0.0',
+			customSitesLists: [
+				{
+					id: 'pack-adult-free',
+					name: 'Adult Websites — Free',
+					description: null,
+					sources: [
+						{
+							source: 'https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts',
+							sourceType: 'url',
+							format: 'hosts'
+						}
+					]
+				},
+				{
+					id: '4e2f4a6f-8f3a-4c1e-9d5b-2b7a0f1c3d5e',
+					name: 'My Custom List',
+					description: null,
+					sources: []
+				}
+			],
+			networkBlocks: [
+				{
+					id: 'b1f2c3d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+					name: 'Default-backed block',
+					safe_search: false,
+					icon: null,
+					schedules: [],
+					userRules: [],
+					connectedSitesLists: ['pack-adult-free', '4e2f4a6f-8f3a-4c1e-9d5b-2b7a0f1c3d5e']
+				}
+			],
+			deactivatedResistanceModeScripts: []
+		};
+
+		const res = await jsonPost('/', defaultPacksBackup);
+		expect(res.status).toBe(200);
+		expect(dbInsert).toHaveBeenCalled();
+	});
+
+	it('rejects empty site-pack ids as invalid identifiers', async () => {
+		await asUser();
+		const { isUserPro } = await import('$lib/server/pro');
+		vi.mocked(isUserPro).mockResolvedValue(true);
+
+		const bad = {
+			version: '1.0.0',
+			customSitesLists: [
+				{
+					id: '',
+					name: 'No id',
+					description: null,
+					sources: []
+				}
+			],
+			networkBlocks: [],
+			deactivatedResistanceModeScripts: []
+		};
+
+		const res = await jsonPost('/', bad);
+		expect(res.status).not.toBe(200);
+		expect(dbInsert).not.toHaveBeenCalled();
+	});
+
 	it('fetch round-trips the payload: what was stored comes back unchanged', async () => {
 		await asUser();
 		const { isUserPro } = await import('$lib/server/pro');
