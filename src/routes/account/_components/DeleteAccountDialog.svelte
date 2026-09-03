@@ -4,7 +4,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Loader2 } from '@lucide/svelte';
-	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import * as m from '$lib/paraglide/messages';
 
 	let { open = $bindable(false), email }: { open?: boolean; email: string } = $props();
@@ -31,9 +31,9 @@
 				throw new Error(typeof body === 'string' ? body : 'Failed to delete account');
 			}
 
-			goto('/?deleted=true');
-		} catch (err: any) {
-			error = err.message || m.account_delete_error();
+			window.location.assign(`${resolve('/')}?deleted=true`);
+		} catch {
+			error = m.account_delete_error();
 		} finally {
 			loading = false;
 		}
@@ -48,7 +48,9 @@
 		</Dialog.Header>
 		<div class="space-y-4 py-4">
 			{#if error}
-				<p class="text-sm text-destructive">{error}</p>
+				<p id="delete-account-error" class="text-sm text-destructive" role="alert">
+					{error}
+				</p>
 			{/if}
 			<div>
 				<Label for="delete-email-confirm" class="text-xs text-muted-foreground">
@@ -59,6 +61,8 @@
 					type="email"
 					bind:value={emailConfirm}
 					placeholder={email}
+					aria-invalid={error ? 'true' : undefined}
+					aria-describedby={error ? 'delete-account-error' : undefined}
 					class="mt-1"
 				/>
 			</div>
@@ -70,7 +74,7 @@
 					open = false;
 					emailConfirm = '';
 					error = null;
-				}}>Cancel</Button
+				}}>{m.account_cancel_action()}</Button
 			>
 			<Button
 				variant="destructive"

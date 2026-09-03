@@ -15,10 +15,10 @@
 		try {
 			// @ts-expect-error - twoFactor client type might not match runtime
 			await authClient.twoFactor.disable();
-			toast.success('Two-factor authentication disabled.');
+			toast.success(m.account_2fa_disabled());
 			open = false;
-		} catch (err: any) {
-			toast.error(err.message || 'Failed to disable 2FA');
+		} catch {
+			toast.error(m.account_2fa_disable_error());
 		} finally {
 			loading = false;
 		}
@@ -32,7 +32,9 @@
 			<Dialog.Description>{m.account_disable_2fa_confirm()}</Dialog.Description>
 		</Dialog.Header>
 		<Dialog.Footer class="flex justify-end gap-2">
-			<Button variant="outline" onclick={() => (open = false)}>Cancel</Button>
+			<Button variant="outline" onclick={() => (open = false)}
+				>{m.account_cancel_action()}</Button
+			>
 			<Button variant="destructive" disabled={loading} onclick={handleDisable}>
 				{#if loading}
 					<Loader2 class="h-4 w-4 animate-spin" />

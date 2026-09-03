@@ -1,10 +1,8 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { Label } from '$lib/components/ui/label';
 	import * as Card from '$lib/components/ui/card';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Badge } from '$lib/components/ui/badge';
-	import * as Tabs from '$lib/components/ui/tabs';
 	import {
 		ArrowLeft,
 		User,
@@ -17,16 +15,19 @@
 		Smartphone,
 		X,
 		Check,
-		RefreshCw
+		RefreshCw,
+		CalendarDays
 	} from '@lucide/svelte';
 	import { authClient } from '$lib/auth-client';
 	import { invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { toast, Toaster } from 'svelte-sonner';
 	import * as m from '$lib/paraglide/messages';
 	import ChangePasswordDialog from './_components/ChangePasswordDialog.svelte';
 	import CancelSubscriptionDialog from './_components/CancelSubscriptionDialog.svelte';
 	import Disable2FADialog from './_components/Disable2FADialog.svelte';
 	import DeleteAccountDialog from './_components/DeleteAccountDialog.svelte';
+	import { onDestroy } from 'svelte';
 
 	let { data } = $props();
 
@@ -47,12 +48,8 @@
 
 	// ── Session revoke state ─────────────────────────────────────────────────
 	let revokingSessionId = $state<string | null>(null);
-	let localSessions = $state<typeof data.sessions>([]);
+	let localSessions = $derived([...data.sessions]);
 	let sessionRevokeError = $state<string | null>(null);
-
-	$effect(() => {
-		localSessions = [...data.sessions];
-	});
 
 	// ── Derived ──────────────────────────────────────────────────────────────
 	const user = $derived(data.user);
@@ -62,7 +59,7 @@
 
 	// ── Helpers ──────────────────────────────────────────────────────────────
 	function parseUserAgent(ua: string | null): string {
-		if (!ua) return 'Unknown';
+		if (!ua) return m.account_unknown_device();
 		try {
 			if (ua.includes('Chrome')) {
 				const os = ua.includes('Windows')
@@ -72,23 +69,25 @@
 						: ua.includes('Linux')
 							? 'Linux'
 							: '';
-				return os ? `Chrome on ${os}` : 'Chrome';
+				return os
+					? m.account_browser_on_os({ browser: m.account_browser_chrome(), os })
+					: m.account_browser_chrome();
 			}
 			if (ua.includes('Firefox')) {
-				return 'Firefox';
+				return m.account_browser_firefox();
 			}
 			if (ua.includes('Safari') && !ua.includes('Chrome')) {
-				return 'Safari';
+				return m.account_browser_safari();
 			}
 			return ua.split(' ')[0] ?? 'Unknown';
 		} catch {
-			return 'Unknown';
+			return m.account_unknown_device();
 		}
 	}
 
-	function formatDate(iso: string | null): string {
+	function formatDate(iso: string | Date | null): string {
 		if (!iso) return '';
-		return new Date(iso).toLocaleDateString('en-US', {
+		return new Date(iso).toLocaleDateString(undefined, {
 			year: 'numeric',
 			month: 'long',
 			day: 'numeric'
@@ -155,14 +154,18 @@
 		}, 1000);
 	}
 
+	onDestroy(() => {
+		if (syncTimer) clearInterval(syncTimer);
+	});
+
 	async function handleEnable2FA() {
 		twoFactorLoading = true;
 		try {
 			// @ts-expect-error - twoFactor client type might not match runtime
 			await authClient.twoFactor.enable();
-			toast.info('Check your email for the verification code to complete 2FA setup.');
+			toast.info(m.account_2fa_check_email());
 		} catch (err: any) {
-			toast.error(err.message || 'Failed to enable 2FA');
+			toast.error(err.message || m.account_2fa_enable_error());
 		} finally {
 			twoFactorLoading = false;
 		}
@@ -212,7 +215,7 @@
 				description: m.account_export_description()
 			});
 		} catch (err: any) {
-			toast.error(err.message || 'Export failed');
+			toast.error(m.account_export_error());
 		}
 	}
 </script>
@@ -221,310 +224,305 @@
 	<title>{m.page_title_account()}</title>
 </svelte:head>
 
-<div class="min-h-screen bg-background">
-	<div class="container mx-auto max-w-3xl px-4 py-12">
-		<!-- Back to home -->
+<main class="min-h-screen bg-background">
+	<div class="container mx-auto max-w-5xl px-4 py-8 sm:py-12">
 		<Button
 			variant="ghost"
-			href="/"
-			class="mb-6 text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-white"
+			href={resolve('/')}
+			class="mb-6 text-muted-foreground hover:text-foreground"
 		>
-			<ArrowLeft class="mr-2 h-4 w-4" />
-			Back to home
+			<ArrowLeft data-icon="inline-start" aria-hidden="true" />
+			{m.account_back_home()}
 		</Button>
 
-		<!-- Header -->
-		<div class="mb-10">
+		<header class="mb-8 max-w-2xl">
 			<h1 class="text-3xl font-bold tracking-tight">{m.account_title()}</h1>
 			<p class="mt-2 text-muted-foreground">{m.account_description()}</p>
-		</div>
+		</header>
 
-		<!-- Tabs -->
-		<Tabs.Tabs value="profile" class="flex flex-col">
-			<Tabs.TabsList class="rounded-lg bg-muted p-1">
-				<Tabs.TabsTrigger value="profile" class="rounded-md text-sm font-medium">
-					{m.account_profile_title()}
-				</Tabs.TabsTrigger>
-				<Tabs.TabsTrigger value="subscription" class="rounded-md text-sm font-medium">
-					{m.account_subscription_title()}
-				</Tabs.TabsTrigger>
-				<Tabs.TabsTrigger value="security" class="rounded-md text-sm font-medium">
-					{m.account_security_title()}
-				</Tabs.TabsTrigger>
-				<Tabs.TabsTrigger
-					value="danger-zone"
-					class="rounded-md text-sm font-medium data-[state=active]:bg-destructive/10 data-[state=active]:text-destructive"
-				>
-					{m.account_danger_zone_title()}
-				</Tabs.TabsTrigger>
-			</Tabs.TabsList>
-
-			<!-- Tab: Profile -->
-			<Tabs.TabsContent
-				value="profile"
-				class="mt-4 rounded-xl border border-border bg-card p-6"
-			>
-				<div class="grid gap-4 pb-6 sm:grid-cols-2">
-					<div>
-						<Label class="text-xs text-muted-foreground">{m.account_name_label()}</Label
+		<div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
+			<div class="flex min-w-0 flex-col gap-6">
+				<Card.Root>
+					<Card.Header>
+						<Card.Title class="flex items-center gap-2"
+							><User aria-hidden="true" />{m.account_identity_title()}</Card.Title
 						>
-						<p class="text-sm font-medium">{user.name}</p>
-					</div>
-					<div>
-						<Label class="text-xs text-muted-foreground"
-							>{m.account_email_label()}</Label
+						<Card.Description>{m.account_identity_description()}</Card.Description>
+					</Card.Header>
+					<Card.Content>
+						<dl class="grid gap-5 sm:grid-cols-2">
+							<div>
+								<dt class="text-xs font-medium text-muted-foreground">
+									{m.account_name_label()}
+								</dt>
+								<dd class="mt-1 text-sm font-medium break-words">{user.name}</dd>
+							</div>
+							<div>
+								<dt class="text-xs font-medium text-muted-foreground">
+									{m.account_email_label()}
+								</dt>
+								<dd class="mt-1 text-sm font-medium break-all">{user.email}</dd>
+							</div>
+							<div>
+								<dt class="text-xs font-medium text-muted-foreground">
+									{m.account_member_since()}
+								</dt>
+								<dd class="mt-1 text-sm font-medium">
+									{formatDate(user.createdAt)}
+								</dd>
+							</div>
+						</dl>
+					</Card.Content>
+				</Card.Root>
+
+				<Card.Root>
+					<Card.Header>
+						<Card.Title class="flex items-center gap-2"
+							><Shield aria-hidden="true" />{m.account_security_title()}</Card.Title
 						>
-						<p class="text-sm font-medium">{user.email}</p>
-					</div>
-				</div>
-
-				<Separator class="my-6" />
-
-				<div>
-					<h3 class="mb-4 text-sm font-semibold">
-						{m.account_change_password_title()}
-					</h3>
-					<Button variant="outline" onclick={() => (showPasswordDialog = true)}>
-						<KeyRound class="mr-2 h-4 w-4" />
-						{m.account_change_password_button()}
-					</Button>
-				</div>
-			</Tabs.TabsContent>
-
-			<!-- Tab: Subscription -->
-			<Tabs.TabsContent
-				value="subscription"
-				class="mt-4 rounded-xl border border-border bg-card p-6"
-			>
-				<div class="flex items-center justify-between">
-					<div>
-						<div class="flex items-center gap-2">
-							<p class="font-medium">
-								{isPro ? m.account_plan_pro() : m.account_plan_free()}
-							</p>
-							{#if isPro && isCancelled && proExpiration}
-								<Badge variant="secondary" class="text-xs">
-									{m.account_pro_cancels({ date: formatDate(proExpiration) })}
-								</Badge>
-							{/if}
-						</div>
-						{#if isPro && proExpiration && !isCancelled}
-							<p class="text-sm text-muted-foreground">
-								{m.account_pro_expires({ date: formatDate(proExpiration) })}
-							</p>
-						{/if}
-					</div>
-					{#if isPro}
-						{#if isCancelled}
-							<p class="text-sm text-muted-foreground">
-								{m.account_subscription_cancelled()}
-							</p>
-						{:else}
-							<Button
-								variant="outline"
-								class="border-destructive text-destructive hover:bg-destructive/10"
-								onclick={() => (showCancelDialog = true)}
+						<Card.Description>{m.account_security_description()}</Card.Description>
+					</Card.Header>
+					<Card.Content class="flex flex-col gap-5">
+						<div
+							class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+						>
+							<div>
+								<p class="font-medium">{m.account_change_password_title()}</p>
+								<p class="text-sm text-muted-foreground">
+									{m.account_password_description()}
+								</p>
+							</div>
+							<Button variant="outline" onclick={() => (showPasswordDialog = true)}
+								><KeyRound
+									data-icon="inline-start"
+									aria-hidden="true"
+								/>{m.account_change_password_button()}</Button
 							>
-								{m.account_cancel_subscription()}
-							</Button>
-						{/if}
-					{:else}
-						<Button
-							href="/get-pro"
-							class="group h-11 shrink-0 rounded-xl bg-brand px-8 font-bold text-amber-950 shadow-sm transition-all duration-300 hover:bg-amber-600 hover:text-amber-50"
-						>
-							<Crown
-								class="mr-2 h-4 w-4 transition-transform group-hover:scale-110 group-hover:rotate-12"
-							/>
-							{m.account_get_pro()}
-						</Button>
-					{/if}
-				</div>
-
-				<!-- Sync subscription status -->
-				<div class="mt-4 flex items-center justify-between border-t border-border pt-4">
-					<div>
-						<p
-							class="text-sm"
-							class:text-destructive={syncResult === 'failure'}
-							class:text-muted-foreground={syncResult !== 'failure'}
-						>
-							{#if syncResult === 'success'}
-								{#if syncCooldown > 0}
-									{m.account_sync_cooldown({ seconds: syncCooldown })}
-								{:else}
-									{m.account_sync_success()}
-								{/if}
-							{:else if syncResult === 'failure'}
-								{m.account_sync_failure()}
-							{/if}
-						</p>
-					</div>
-					<Button
-						variant="outline"
-						size="sm"
-						disabled={syncLoading || syncCooldown > 0}
-						onclick={handleSyncSubscription}
-					>
-						{#if syncLoading}
-							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
-							{m.account_sync_syncing()}
-						{:else if syncCooldown > 0}
-							<RefreshCw class="mr-2 h-4 w-4" />
-							{syncCooldown}s
-						{:else}
-							<RefreshCw class="mr-2 h-4 w-4" />
-							{m.account_sync_subscription()}
-						{/if}
-					</Button>
-				</div>
-			</Tabs.TabsContent>
-
-			<!-- Tab: Security -->
-			<Tabs.TabsContent
-				value="security"
-				class="mt-4 rounded-xl border border-border bg-card p-6"
-			>
-				<!-- 2FA -->
-				<div>
-					<div class="flex items-center justify-between">
-						<div>
-							<p class="font-medium">
-								{m.account_enable_2fa()}
-							</p>
-							<p class="text-sm text-muted-foreground">
-								{m.account_2fa_description()}
-							</p>
 						</div>
-						{#if user.twoFactorEnabled}
+						<Separator />
+						<div
+							class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+						>
+							<div>
+								<p class="font-medium">{m.account_two_factor_title()}</p>
+								<p class="text-sm text-muted-foreground">
+									{m.account_2fa_description()}
+								</p>
+							</div>
 							<div class="flex items-center gap-2">
-								<Badge variant="outline" class="border-green-500/30 text-green-600">
-									<Check class="mr-1 h-3 w-3" />
-									Enabled
-								</Badge>
+								{#if user.twoFactorEnabled}<Badge variant="outline"
+										><Check aria-hidden="true" />{m.account_enabled()}</Badge
+									>{/if}
 								<Button
 									variant="outline"
 									size="sm"
 									disabled={twoFactorLoading}
-									onclick={() => (show2faDisableDialog = true)}
+									onclick={() =>
+										user.twoFactorEnabled
+											? (show2faDisableDialog = true)
+											: handleEnable2FA()}
 								>
-									{#if twoFactorLoading}
-										<Loader2 class="h-4 w-4 animate-spin" />
-									{:else}
-										{m.account_disable_2fa()}
-									{/if}
+									{#if twoFactorLoading}<Loader2
+											class="animate-spin"
+											aria-hidden="true"
+										/>{/if}
+									{user.twoFactorEnabled
+										? m.account_disable_2fa()
+										: m.account_enable_2fa()}
 								</Button>
 							</div>
-						{:else}
-							<Button
-								variant="outline"
-								size="sm"
-								disabled={twoFactorLoading}
-								onclick={handleEnable2FA}
+						</div>
+					</Card.Content>
+				</Card.Root>
+
+				<Card.Root>
+					<Card.Header
+						><Card.Title class="flex items-center gap-2"
+							><Smartphone
+								aria-hidden="true"
+							/>{m.account_sessions_title()}</Card.Title
+						><Card.Description>{m.account_sessions_description()}</Card.Description
+						></Card.Header
+					>
+					<Card.Content class="flex flex-col gap-3">
+						{#if sessionRevokeError}<p class="text-sm text-destructive" role="alert">
+								{sessionRevokeError}
+							</p>{/if}
+						{#each localSessions as session (session.id)}
+							<div
+								class="flex min-w-0 flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
 							>
-								{#if twoFactorLoading}
-									<Loader2 class="mr-2 h-4 w-4 animate-spin" />
-								{/if}
-								{m.account_enable_2fa()}
-							</Button>
-						{/if}
-					</div>
-				</div>
-
-				<Separator class="my-6" />
-
-				<!-- Sessions -->
-				<div>
-					<h3 class="mb-4 font-semibold">{m.account_sessions_title()}</h3>
-					{#if sessionRevokeError}
-						<p class="mb-2 text-sm text-destructive">{sessionRevokeError}</p>
-					{/if}
-					<div class="space-y-3">
-						{#each localSessions as s}
-							<div class="flex items-center justify-between rounded-lg border p-3">
-								<div class="flex items-center gap-3">
-									<Smartphone class="h-4 w-4 text-muted-foreground" />
-									<div>
-										<p class="text-sm font-medium">
-											{parseUserAgent(s.userAgent)}
-											{#if s.isCurrent}
-												<Badge variant="secondary" class="ml-2 text-[10px]">
-													{m.account_current_session()}
-												</Badge>
-											{/if}
-										</p>
-										<p class="text-xs text-muted-foreground">
-											{s.ipAddress ?? 'Unknown IP'} &middot;
-											{formatDate(s.createdAt)}
-										</p>
-									</div>
+								<div class="min-w-0">
+									<p
+										class="flex flex-wrap items-center gap-2 text-sm font-medium"
+									>
+										{parseUserAgent(
+											session.userAgent
+										)}{#if session.isCurrent}<Badge variant="secondary"
+												>{m.account_current_session()}</Badge
+											>{/if}
+									</p>
+									<p class="mt-1 text-xs break-words text-muted-foreground">
+										{session.ipAddress ?? m.account_unknown_ip()} · {formatDate(
+											session.createdAt
+										)}
+									</p>
 								</div>
 								<Button
 									variant="ghost"
 									size="sm"
-									disabled={s.isCurrent || revokingSessionId === s.id}
-									onclick={() => handleRevokeSession(s.id)}
+									disabled={session.isCurrent || revokingSessionId === session.id}
+									aria-describedby={session.isCurrent
+										? `current-session-${session.id}`
+										: undefined}
+									onclick={() => handleRevokeSession(session.id)}
 								>
-									{#if revokingSessionId === s.id}
-										<Loader2 class="h-4 w-4 animate-spin" />
-									{:else}
-										<X class="mr-1 h-4 w-4" />
-										{m.account_revoke_session()}
-									{/if}
+									{#if revokingSessionId === session.id}<Loader2
+											class="animate-spin"
+											aria-hidden="true"
+										/>{:else}<X
+											data-icon="inline-start"
+											aria-hidden="true"
+										/>{m.account_revoke_session()}{/if}
 								</Button>
+								{#if session.isCurrent}<span
+										id={`current-session-${session.id}`}
+										class="sr-only"
+										>{m.account_current_session_cannot_revoke()}</span
+									>{/if}
 							</div>
 						{/each}
-					</div>
-				</div>
-			</Tabs.TabsContent>
+					</Card.Content>
+				</Card.Root>
 
-			<!-- Tab: Danger Zone -->
-			<Tabs.TabsContent
-				value="danger-zone"
-				class="mt-4 rounded-xl border border-border bg-card p-6"
-			>
-				<div class="flex flex-col gap-4">
-					<div class="flex items-center justify-between rounded-lg border p-4">
-						<div class="min-w-0 flex-1 pr-4">
-							<p class="font-medium">{m.account_export_data()}</p>
-							<p class="text-sm text-muted-foreground">
-								{m.account_export_data_description()}
-							</p>
-						</div>
-						<Button variant="outline" size="sm" onclick={handleExportData}>
-							<Download class="mr-2 h-4 w-4" />
-							{m.account_export_data()}
-						</Button>
-					</div>
-
-					<div class="flex items-center justify-between rounded-lg border p-4">
-						<div class="min-w-0 flex-1 pr-4">
-							<p class="font-medium text-destructive">
-								{m.account_delete_account()}
-							</p>
-							<p class="text-sm text-muted-foreground">
-								{m.account_delete_warning()}
-							</p>
-						</div>
-						<Button
-							variant="destructive"
-							size="sm"
-							onclick={() => (showDeleteDialog = true)}
+				<Card.Root class="border-destructive/40">
+					<Card.Header
+						><Card.Title class="text-destructive"
+							>{m.account_danger_zone_title()}</Card.Title
+						><Card.Description>{m.account_danger_zone_description()}</Card.Description
+						></Card.Header
+					>
+					<Card.Content class="flex flex-col gap-4">
+						<div
+							class="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
 						>
-							<Trash2 class="mr-2 h-4 w-4" />
-							{m.account_delete_account()}
-						</Button>
-					</div>
-				</div>
-			</Tabs.TabsContent>
-		</Tabs.Tabs>
+							<div>
+								<p class="font-medium">{m.account_export_data()}</p>
+								<p class="text-sm text-muted-foreground">
+									{m.account_export_data_description()}
+								</p>
+							</div>
+							<Button variant="outline" size="sm" onclick={handleExportData}
+								><Download
+									data-icon="inline-start"
+									aria-hidden="true"
+								/>{m.account_export_button()}</Button
+							>
+						</div>
+						<div
+							class="flex flex-col gap-3 rounded-lg border border-destructive/30 p-4 sm:flex-row sm:items-center sm:justify-between"
+						>
+							<div>
+								<p class="font-medium text-destructive">
+									{m.account_delete_account()}
+								</p>
+								<p class="text-sm text-muted-foreground">
+									{m.account_delete_short_description()}
+								</p>
+							</div>
+							<Button
+								variant="destructive"
+								size="sm"
+								onclick={() => (showDeleteDialog = true)}
+								><Trash2
+									data-icon="inline-start"
+									aria-hidden="true"
+								/>{m.account_delete_account()}</Button
+							>
+						</div>
+					</Card.Content>
+				</Card.Root>
+			</div>
 
-		<!-- Dialogs (outside tabs) -->
+			<aside class="lg:sticky lg:top-24">
+				<Card.Root class="border-brand/30">
+					<Card.Header
+						><div class="flex items-center justify-between gap-3">
+							<Crown class="text-brand" aria-hidden="true" /><Badge
+								variant={isPro ? 'default' : 'secondary'}
+								>{isPro ? m.account_plan_pro() : m.account_plan_free()}</Badge
+							>
+						</div>
+						<Card.Title>{m.account_subscription_title()}</Card.Title><Card.Description
+							>{isPro
+								? m.account_pro_plan_description()
+								: m.account_free_plan_description()}</Card.Description
+						></Card.Header
+					>
+					<Card.Content class="flex flex-col gap-4">
+						{#if isPro && proExpiration}<div class="flex items-start gap-2 text-sm">
+								<CalendarDays
+									class="mt-0.5 text-muted-foreground"
+									aria-hidden="true"
+								/><span
+									>{isCancelled
+										? m.account_pro_cancels({ date: formatDate(proExpiration) })
+										: m.account_pro_expires({
+												date: formatDate(proExpiration)
+											})}</span
+								>
+							</div>{/if}
+						{#if isPro && !isCancelled}<Button
+								variant="outline"
+								class="w-full text-destructive"
+								onclick={() => (showCancelDialog = true)}
+								>{m.account_cancel_subscription()}</Button
+							>{:else if !isPro}<Button
+								href={resolve('/get-pro')}
+								class="w-full bg-brand text-amber-950 hover:bg-amber-600"
+								><Crown
+									data-icon="inline-start"
+									aria-hidden="true"
+								/>{m.account_get_pro()}</Button
+							>{/if}
+						<Separator />
+						<div class="flex flex-col gap-2">
+							<p
+								class="text-sm text-muted-foreground"
+								class:text-destructive={syncResult === 'failure'}
+								role={syncResult === 'failure' ? 'alert' : 'status'}
+								aria-live="polite"
+							>
+								{#if syncResult === 'success'}{syncCooldown > 0
+										? m.account_sync_cooldown({ seconds: syncCooldown })
+										: m.account_sync_success()}{:else if syncResult === 'failure'}{m.account_sync_failure()}{:else}{m.account_sync_description()}{/if}
+							</p>
+							<Button
+								variant="outline"
+								size="sm"
+								disabled={syncLoading || syncCooldown > 0}
+								onclick={handleSyncSubscription}
+								>{#if syncLoading}<Loader2
+										class="animate-spin"
+										aria-hidden="true"
+									/>{m.account_sync_syncing()}{:else}<RefreshCw
+										data-icon="inline-start"
+										aria-hidden="true"
+									/>{syncCooldown > 0
+										? `${syncCooldown}s`
+										: m.account_sync_subscription()}{/if}</Button
+							>
+						</div>
+					</Card.Content>
+				</Card.Root>
+			</aside>
+		</div>
+
 		<ChangePasswordDialog bind:open={showPasswordDialog} />
 		<CancelSubscriptionDialog bind:open={showCancelDialog} />
 		<Disable2FADialog bind:open={show2faDisableDialog} />
 		<DeleteAccountDialog bind:open={showDeleteDialog} email={user.email} />
 	</div>
-</div>
+</main>
 
 <Toaster position="bottom-right" />

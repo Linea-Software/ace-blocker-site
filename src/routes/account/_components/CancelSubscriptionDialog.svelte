@@ -68,7 +68,7 @@
 				onclick={() => {
 					open = false;
 					stopCountdown();
-				}}>Cancel</Button
+				}}>{m.account_cancel_action()}</Button
 			>
 			<Button
 				variant="destructive"

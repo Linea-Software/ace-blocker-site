@@ -21,6 +21,7 @@
 	import { authClient } from '$lib/auth-client';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { cn } from '$lib/utils';
 	import { toggleMode, mode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages';
@@ -29,8 +30,8 @@
 	const session = authClient.useSession();
 
 	const navLinks = [
-		{ href: '/download', label: 'Download', icon: Download },
-		{ href: '/about', label: 'About', icon: Info }
+		{ href: '/download' as const, label: m.nav_download(), icon: Download },
+		{ href: '/about' as const, label: m.nav_about(), icon: Info }
 	];
 
 	let isMobileMenuOpen = $state(false);
@@ -66,7 +67,7 @@
 					class="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground md:hidden"
 				>
 					<Menu class="h-5 w-5" />
-					<span class="sr-only">Toggle menu</span>
+					<span class="sr-only">{m.nav_toggle_menu()}</span>
 				</Sheet.Trigger>
 				<Sheet.Content side="left" class="flex w-[300px] flex-col sm:w-[400px]">
 					<Sheet.Header class="text-left">
@@ -77,12 +78,12 @@
 								<img src={lightFullLogo} alt="Ace Blocker" class="h-6 w-auto" />
 							{/if}
 						</Sheet.Title>
-						<Sheet.Description>Manage your digital well-being.</Sheet.Description>
+						<Sheet.Description>{m.nav_menu_description()}</Sheet.Description>
 					</Sheet.Header>
 					<div class="flex flex-1 flex-col gap-4 py-8">
-						{#each navLinks as link}
+						{#each navLinks as link (link.href)}
 							<a
-								href={link.href}
+								href={resolve(link.href)}
 								class={cn(
 									'flex items-center gap-3 rounded-md px-3 py-2 text-lg font-medium transition-colors hover:text-primary',
 									isActive(link.href)
@@ -98,7 +99,7 @@
 
 						{#if isPro}
 							<a
-								href="/get-pro"
+								href={resolve('/get-pro')}
 								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-brand transition-colors hover:bg-brand/10"
 								onclick={() => (isMobileMenuOpen = false)}
 							>
@@ -107,19 +108,19 @@
 							</a>
 						{:else}
 							<a
-								href="/get-pro"
+								href={resolve('/get-pro')}
 								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-primary transition-colors hover:text-primary/80"
 								onclick={() => (isMobileMenuOpen = false)}
 							>
 								<Crown class="h-5 w-5 text-brand" />
-								Get Pro
+								{m.account_get_pro()}
 							</a>
 						{/if}
 
 						<Separator />
 						{#if $session.data}
 							<a
-								href="/account"
+								href={resolve('/account')}
 								class="flex items-center gap-3 rounded-md px-3 py-2 text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
 								onclick={() => (isMobileMenuOpen = false)}
 							>
@@ -128,12 +129,12 @@
 							</a>
 							{#if $session.data?.user.role === 'admin'}
 								<a
-									href="/admin/dashboard"
+									href={resolve('/admin/dashboard')}
 									class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
 									onclick={() => (isMobileMenuOpen = false)}
 								>
 									<LayoutDashboard class="h-5 w-5" />
-									Admin Dashboard
+									{m.nav_admin_dashboard()}
 								</a>
 							{/if}
 							<button
@@ -148,20 +149,20 @@
 							</button>
 						{:else}
 							<a
-								href="/signin"
+								href={resolve('/signin')}
 								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
 								onclick={() => (isMobileMenuOpen = false)}
 							>
 								<LogIn class="h-5 w-5" />
-								Log In
+								{m.nav_log_in()}
 							</a>
 							<a
-								href="/signup"
+								href={resolve('/signup')}
 								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-primary transition-colors hover:text-primary/80"
 								onclick={() => (isMobileMenuOpen = false)}
 							>
 								<UserPlus class="h-5 w-5" />
-								Sign Up
+								{m.nav_sign_up()}
 							</a>
 						{/if}
 
@@ -173,17 +174,20 @@
 						>
 							{#if mode.current === 'dark'}
 								<Sun class="h-5 w-5" />
-								Light Mode
+								{m.nav_light_mode()}
 							{:else}
 								<Moon class="h-5 w-5" />
-								Dark Mode
+								{m.nav_dark_mode()}
 							{/if}
 						</button>
 					</div>
 				</Sheet.Content>
 			</Sheet.Root>
 
-			<a href="/" class="mr-4 flex items-center transition-opacity hover:opacity-90">
+			<a
+				href={resolve('/')}
+				class="mr-4 flex items-center transition-opacity hover:opacity-90"
+			>
 				{#if isDark}
 					<img src={darkFullLogo} alt="Ace Blocker" class="h-[30px] w-auto md:h-9" />
 				{:else}
@@ -192,9 +196,9 @@
 			</a>
 
 			<nav class="hidden h-full items-center gap-1 md:flex">
-				{#each navLinks as link}
+				{#each navLinks as link (link.href)}
 					<a
-						href={link.href}
+						href={resolve(link.href)}
 						class={cn(
 							'inline-flex h-9 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent focus:bg-accent focus:outline-none disabled:pointer-events-none disabled:opacity-50',
 							isActive(link.href)
@@ -215,7 +219,7 @@
 				size="icon"
 				class="h-9 w-9 rounded-md text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
 				onclick={toggleMode}
-				aria-label="Toggle theme"
+				aria-label={m.nav_toggle_theme()}
 			>
 				<Sun
 					class="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"
@@ -223,13 +227,13 @@
 				<Moon
 					class="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"
 				/>
-				<span class="sr-only">Toggle theme</span>
+				<span class="sr-only">{m.nav_toggle_theme()}</span>
 			</Button>
 
 			{#if $session.data}
 				{#if isPro}
 					<a
-						href="/get-pro"
+						href={resolve('/get-pro')}
 						class="hidden items-center gap-2 px-3 text-sm font-medium text-brand transition-colors hover:text-amber-400 sm:flex"
 					>
 						<Crown class="h-4 w-4" />
@@ -237,21 +241,21 @@
 					</a>
 				{:else}
 					<Button
-						href="/get-pro"
+						href={resolve('/get-pro')}
 						class="hidden items-center bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex dark:bg-brand dark:text-slate-950 dark:hover:bg-amber-400"
 					>
 						<Crown class="mr-2 h-4 w-4" />
-						Get Pro
+						{m.account_get_pro()}
 					</Button>
 				{/if}
 
 				{#if $session.data?.user.role === 'admin'}
 					<Button
-						href="/admin/dashboard"
+						href={resolve('/admin/dashboard')}
 						variant="ghost"
 						class="hidden items-center text-slate-600 hover:text-slate-900 sm:inline-flex dark:text-slate-300 dark:hover:text-white"
 					>
-						Admin Dashboard
+						{m.nav_admin_dashboard()}
 					</Button>
 				{/if}
 
@@ -269,7 +273,10 @@
 							>
 						</DropdownMenu.Label>
 						<DropdownMenu.Separator />
-						<DropdownMenu.Item class="cursor-pointer" onclick={() => goto('/account')}>
+						<DropdownMenu.Item
+							class="cursor-pointer"
+							onclick={() => goto(resolve('/account'))}
+						>
 							<User class="mr-2 h-4 w-4" />
 							{m.account_settings()}
 						</DropdownMenu.Item>
@@ -284,18 +291,30 @@
 				</DropdownMenu.DropdownMenu>
 			{:else}
 				<Button
-					href="/signin"
+					href={resolve('/get-pro')}
+					variant="outline"
+					size="sm"
+					class={cn(
+						'hidden items-center border-brand/50 text-amber-700 hover:bg-brand/10 md:inline-flex dark:text-brand',
+						isActive('/get-pro') && 'bg-brand/10'
+					)}
+				>
+					<Crown class="mr-2 h-4 w-4" />
+					{m.account_get_pro()}
+				</Button>
+				<Button
+					href={resolve('/signin')}
 					variant="ghost"
 					class="hidden items-center text-slate-600 hover:text-slate-900 sm:inline-flex dark:text-slate-300 dark:hover:text-white"
 				>
-					Log In
+					{m.nav_log_in()}
 				</Button>
 				<Button
-					href="/signup"
+					href={resolve('/signup')}
 					class="inline-flex items-center bg-slate-900 text-white hover:bg-slate-800 sm:px-6 dark:bg-brand dark:text-slate-950 dark:hover:bg-amber-400"
 				>
-					<span class="hidden sm:inline">Sign Up</span>
-					<span class="px-2 text-xs sm:hidden">Join</span>
+					<span class="hidden sm:inline">{m.nav_sign_up()}</span>
+					<span class="px-2 text-xs sm:hidden">{m.nav_join()}</span>
 				</Button>
 			{/if}
 		</div>

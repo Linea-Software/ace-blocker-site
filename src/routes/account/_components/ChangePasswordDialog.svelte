@@ -21,7 +21,7 @@
 		error = null;
 
 		if (newPassword !== confirmPassword) {
-			error = 'Passwords do not match';
+			error = m.account_passwords_do_not_match();
 			loading = false;
 			return;
 		}
@@ -45,8 +45,8 @@
 			confirmPassword = '';
 			error = null;
 			open = false;
-		} catch (err: any) {
-			error = err.message || m.account_password_error();
+		} catch {
+			error = m.account_password_error();
 		} finally {
 			loading = false;
 		}
@@ -68,7 +68,7 @@
 		<Dialog.Header>
 			<Dialog.Title>{m.account_change_password_title()}</Dialog.Title>
 			<Dialog.Description>
-				Enter your current password and choose a new one.
+				{m.account_change_password_description()}
 			</Dialog.Description>
 		</Dialog.Header>
 		<form onsubmit={handleSubmit}>
@@ -82,6 +82,8 @@
 						type="password"
 						bind:value={currentPassword}
 						required
+						aria-invalid={error ? 'true' : undefined}
+						aria-describedby={error ? 'password-form-error' : undefined}
 						class="mt-1"
 					/>
 				</div>
@@ -95,6 +97,8 @@
 							type="password"
 							bind:value={newPassword}
 							required
+							aria-invalid={error ? 'true' : undefined}
+							aria-describedby={error ? 'password-form-error' : undefined}
 							class="mt-1"
 						/>
 					</div>
@@ -107,17 +111,21 @@
 							type="password"
 							bind:value={confirmPassword}
 							required
+							aria-invalid={error ? 'true' : undefined}
+							aria-describedby={error ? 'password-form-error' : undefined}
 							class="mt-1"
 						/>
 					</div>
 				</div>
 				{#if error}
-					<p class="text-sm text-destructive">{error}</p>
+					<p id="password-form-error" class="text-sm text-destructive" role="alert">
+						{error}
+					</p>
 				{/if}
 			</div>
 			<Dialog.Footer class="flex justify-end gap-2">
 				<Button variant="outline" type="button" onclick={() => (open = false)}
-					>Cancel</Button
+					>{m.account_cancel_action()}</Button
 				>
 				<Button type="submit" disabled={loading}>
 					{#if loading}
