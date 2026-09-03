@@ -22,7 +22,7 @@
 	const adminLinks = $derived([
 		{ href: '/admin/dashboard', label: m.admin_nav_metrics(), icon: LayoutDashboard },
 		{ href: '/admin/users', label: m.admin_nav_users(), icon: Users }
-	]);
+	] as const);
 
 	const releaseLinks = $derived([
 		{
@@ -40,7 +40,7 @@
 			label: m.admin_releases_category_sitepacks(),
 			icon: ListFilter
 		}
-	]);
+	] as const);
 
 	const currentSection = $derived(
 		[...adminLinks, ...releaseLinks].find((link) => page.url.pathname === link.href)?.label ??

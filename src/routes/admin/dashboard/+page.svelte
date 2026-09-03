@@ -1,7 +1,11 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card';
+	import * as Empty from '$lib/components/ui/empty';
 	import * as Table from '$lib/components/ui/table';
 	import { Badge } from '$lib/components/ui/badge';
+	import { Progress } from '$lib/components/ui/progress';
+	import AudienceActivityChart from './_components/AudienceActivityChart.svelte';
+	import MetricCard from './_components/MetricCard.svelte';
 	import {
 		Activity,
 		ChartNoAxesCombined,
@@ -29,9 +33,6 @@
 			visits: visit.value,
 			signups: data.activity.signups[index]?.value ?? 0
 		}))
-	);
-	const maxActivity = $derived(
-		Math.max(1, ...activityDays.flatMap((day) => [day.visits, day.signups]))
 	);
 	const visitsIncreasing = $derived(data.summary.visitTrend >= 0);
 
@@ -91,24 +92,12 @@
 		return `${percentFormatter.format(value)}%`;
 	}
 
-	function formatChartDate(day: string): string {
-		return new Date(`${day}T00:00:00Z`).toLocaleDateString(undefined, {
-			month: 'short',
-			day: 'numeric',
-			timeZone: 'UTC'
-		});
-	}
-
 	function formatDate(date: Date | string): string {
 		return new Date(date).toLocaleDateString(undefined, {
 			year: 'numeric',
 			month: 'short',
 			day: 'numeric'
 		});
-	}
-
-	function barHeight(value: number): string {
-		return `${value === 0 ? 3 : Math.max(8, Math.round((value / maxActivity) * 100))}%`;
 	}
 </script>
 
@@ -141,26 +130,18 @@
 		aria-label={m.admin_metrics_summary()}
 	>
 		{#each summaryStats as stat (stat.label)}
-			<Card.Root class="gap-4 py-5">
-				<Card.Header class="flex-row items-center justify-between px-5">
-					<Card.Title class="text-sm font-medium text-muted-foreground">
-						{stat.label}
-					</Card.Title>
-					<div class="flex size-9 items-center justify-center rounded-lg bg-muted">
-						<stat.icon class="size-4" aria-hidden="true" />
-					</div>
-				</Card.Header>
-				<Card.Content class="px-5">
-					<p class="text-3xl font-bold tracking-tight">{stat.value}</p>
-					<p class="mt-1 text-xs text-muted-foreground">{stat.detail}</p>
-				</Card.Content>
-			</Card.Root>
+			<MetricCard
+				label={stat.label}
+				value={stat.value}
+				detail={stat.detail}
+				Icon={stat.icon}
+			/>
 		{/each}
 	</section>
 
 	<section class="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,1fr)]">
 		<Card.Root>
-			<Card.Header class="flex-row items-start justify-between gap-4">
+			<Card.Header class="flex items-start justify-between gap-4">
 				<div>
 					<Card.Title>{m.admin_metrics_activity_title()}</Card.Title>
 					<Card.Description>{m.admin_metrics_activity_description()}</Card.Description>
@@ -175,47 +156,7 @@
 				</Badge>
 			</Card.Header>
 			<Card.Content>
-				<div class="mb-4 flex items-center gap-5 text-xs text-muted-foreground">
-					<span class="flex items-center gap-2">
-						<span class="size-2.5 rounded-sm bg-primary" aria-hidden="true"></span>
-						{m.admin_metrics_visits()}
-					</span>
-					<span class="flex items-center gap-2">
-						<span class="size-2.5 rounded-sm bg-brand" aria-hidden="true"></span>
-						{m.admin_metrics_signups()}
-					</span>
-				</div>
-				<div
-					class="flex h-56 items-end gap-2"
-					role="img"
-					aria-label={m.admin_metrics_chart_label()}
-				>
-					{#each activityDays as day, index (day.day)}
-						<div class="flex h-full min-w-0 flex-1 flex-col justify-end gap-2">
-							<div class="flex min-h-0 flex-1 items-end justify-center gap-1">
-								<div
-									class="w-full max-w-3 rounded-t-sm bg-primary/80 transition-colors hover:bg-primary"
-									style:height={barHeight(day.visits)}
-									title={m.admin_metrics_visits_on_day({
-										date: formatChartDate(day.day),
-										count: day.visits
-									})}
-								></div>
-								<div
-									class="w-full max-w-3 rounded-t-sm bg-brand/80 transition-colors hover:bg-brand"
-									style:height={barHeight(day.signups)}
-									title={m.admin_metrics_signups_on_day({
-										date: formatChartDate(day.day),
-										count: day.signups
-									})}
-								></div>
-							</div>
-							<span class="truncate text-center text-[10px] text-muted-foreground">
-								{index % 2 === 0 ? formatChartDate(day.day) : ''}
-							</span>
-						</div>
-					{/each}
-				</div>
+				<AudienceActivityChart days={activityDays} />
 			</Card.Content>
 		</Card.Root>
 
@@ -239,19 +180,7 @@
 								{formatNumber(metric.value)} · {formatPercent(metric.rate)}
 							</span>
 						</div>
-						<div
-							class="h-2 overflow-hidden rounded-full bg-muted"
-							role="progressbar"
-							aria-valuemin={0}
-							aria-valuemax={100}
-							aria-valuenow={metric.rate}
-							aria-label={metric.label}
-						>
-							<div
-								class="h-full rounded-full bg-primary"
-								style:width={`${metric.rate}%`}
-							></div>
-						</div>
+						<Progress value={metric.rate} class="h-2" aria-label={metric.label} />
 					</div>
 				{/each}
 				<div class="rounded-lg border bg-muted/30 p-4">
@@ -296,11 +225,14 @@
 						<Badge variant="secondary">{formatNumber(topPage.visits)}</Badge>
 					</div>
 				{:else}
-					<p
-						class="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground"
-					>
-						{m.admin_metrics_no_page_data()}
-					</p>
+					<Empty.Root class="min-h-44 border">
+						<Empty.Header>
+							<Empty.Media variant="icon">
+								<Globe2 aria-hidden="true" />
+							</Empty.Media>
+							<Empty.Title>{m.admin_metrics_no_page_data()}</Empty.Title>
+						</Empty.Header>
+					</Empty.Root>
 				{/each}
 			</Card.Content>
 		</Card.Root>
@@ -357,6 +289,21 @@
 									</Table.Cell>
 									<Table.Cell class="text-right text-muted-foreground">
 										{formatDate(recentUser.createdAt)}
+									</Table.Cell>
+								</Table.Row>
+							{:else}
+								<Table.Row>
+									<Table.Cell colspan={3} class="p-0">
+										<Empty.Root class="min-h-44 rounded-none border-0">
+											<Empty.Header>
+												<Empty.Media variant="icon">
+													<Users aria-hidden="true" />
+												</Empty.Media>
+												<Empty.Title
+													>{m.admin_metrics_no_recent_users()}</Empty.Title
+												>
+											</Empty.Header>
+										</Empty.Root>
 									</Table.Cell>
 								</Table.Row>
 							{/each}

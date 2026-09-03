@@ -94,6 +94,7 @@ const PUBLIC_PAGES: Array<[string, string]> = [
 ];
 
 const ADMIN_PAGES: Array<[string, string]> = [
+	['admin-dashboard', '/admin/dashboard'],
 	['admin-releases-site-packs', '/admin/releases/site-packs'],
 	['admin-releases-installers', '/admin/releases/installers'],
 	['admin-releases-resistance', '/admin/releases/resistance']
@@ -120,6 +121,34 @@ async function capturePages(page: import('playwright').Page, pages: Array<[strin
 	}
 }
 
+async function captureDashboardVariants(page: import('playwright').Page) {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto(BASE_URL + '/admin/dashboard', { waitUntil: 'networkidle', timeout: 60000 });
+	await shot(page, 'admin-dashboard--narrow', false);
+	await shot(page, 'admin-dashboard--narrow', true);
+
+	await page.setViewportSize({ width: 1440, height: 1000 });
+	await page.goto(BASE_URL + '/admin/dashboard', { waitUntil: 'networkidle', timeout: 60000 });
+	await page.evaluate(() => document.documentElement.classList.remove('dark'));
+	await page.waitForTimeout(1100);
+
+	const bars = page.locator('.lc-bar');
+	const tooltipTargets = page.locator('.lc-tooltip-rect');
+	const tooltipTargetCount = await tooltipTargets.count();
+	for (let index = 0; index < (await bars.count()); index += 1) {
+		const bar = bars.nth(index);
+		const bounds = await bar.boundingBox();
+		if (bounds && bounds.height > 4 && tooltipTargetCount > 0) {
+			await tooltipTargets.nth(index % tooltipTargetCount).hover();
+			await page.waitForTimeout(250);
+			const file = path.join(OUT_DIR, 'admin-dashboard--tooltip.png');
+			await page.screenshot({ path: file });
+			console.log('[verify] wrote', file);
+			break;
+		}
+	}
+}
+
 async function adminSessionCookies(): Promise<Array<{ name: string; value: string; url: string }>> {
 	const secret = admin2faSecret();
 	if (!secret) throw new Error('Cannot obtain admin 2FA secret');
@@ -128,11 +157,16 @@ async function adminSessionCookies(): Promise<Array<{ name: string; value: strin
 	const r1 = await fetch(`${BASE_URL}/api/auth/sign-in/email`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json', origin: BASE_URL },
-		body: JSON.stringify({ email: env.DEFAULT_ADMIN_EMAIL, password: env.DEFAULT_ADMIN_PASSWORD }),
+		body: JSON.stringify({
+			email: env.DEFAULT_ADMIN_EMAIL,
+			password: env.DEFAULT_ADMIN_PASSWORD
+		}),
 		redirect: 'manual'
 	});
 	if (r1.status !== 200) throw new Error(`sign-in failed: ${r1.status} ${await r1.text()}`);
-	const challengeCookies = (r1.headers.getSetCookie?.() ?? []).map((c: string) => c.split(';')[0]);
+	const challengeCookies = (r1.headers.getSetCookie?.() ?? []).map(
+		(c: string) => c.split(';')[0]
+	);
 	const challengeHeader = challengeCookies.join('; ');
 
 	// 2. Complete the TOTP challenge.
@@ -173,8 +207,9 @@ async function signInAsAdmin(context: import('playwright').BrowserContext) {
 		console.log('[verify] signing in as admin…');
 		await signInAsAdmin(context);
 
-		console.log('[verify] capturing admin release pages…');
+		console.log('[verify] capturing admin pages…');
 		await capturePages(page, ADMIN_PAGES);
+		await captureDashboardVariants(page);
 
 		console.log('[verify] done →', OUT_DIR);
 	} finally {
