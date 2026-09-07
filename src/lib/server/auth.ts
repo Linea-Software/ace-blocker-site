@@ -26,10 +26,10 @@ import * as m from './messages';
 import type { Locale } from './messages';
 import { createLogger } from './logger';
 import { dodoProducts } from './products';
-import { isProduction } from '../env';
+import { getAuthRateLimitConfig } from './config/auth-security';
 
 export const dodoPayments = new DodoPayments({
-	bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
+	bearerToken: process.env.DODO_PAYMENTS_API_KEY ?? '',
 	environment: 'test_mode' // we're still in early dev phase, so we won't risk charging any user
 });
 
@@ -72,7 +72,7 @@ export const auth = betterAuth({
 		}
 	},
 	rateLimit: {
-		enabled: isProduction(),
+		enabled: getAuthRateLimitConfig().enabled,
 		window: 5 * 60,
 		max: 50
 	},
@@ -148,7 +148,7 @@ export const auth = betterAuth({
 		openAPI(),
 		twoFactor({
 			issuer: m.email_app_name(),
-			skipVerificationOnEnable: true,
+			skipVerificationOnEnable: false,
 			otpOptions: {
 				sendOTP: async ({ user, otp }) => {
 					const log = createLogger('auth:2fa-otp');
@@ -212,7 +212,7 @@ export const auth = betterAuth({
 					authenticatedUsersOnly: true
 				}),
 				webhooks({
-					webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
+					webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET ?? '',
 
 					onPayload: async (payload) => {
 						const log = createLogger('auth:dodo-webhook');

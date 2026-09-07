@@ -9,7 +9,11 @@ bun.lockb
 
 # Build output
 dist/
+build/
 .svelte-kit/
+playwright-report/
+project.inlang/cache/
+*.log
 
 # Version control
 .git/
@@ -40,3 +44,6 @@ Thumbs.db
 # Tests
 coverage/
 test-results/
+
+# Local agent/tooling state
+.ai-bridge/

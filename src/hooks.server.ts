@@ -10,6 +10,8 @@ import { db } from '$lib/server/db';
 import { siteVisits } from '$lib/server/db/schema';
 import crypto from 'crypto';
 import { v7 as uuidv7 } from 'uuid';
+import { dev } from '$app/environment';
+import { assertProductionEnvironment } from '$lib/server/config/production';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
@@ -88,6 +90,7 @@ export const handle: Handle = sequence(handleApi, handleParaglide, handleTrackVi
 
 export async function init() {
 	logger.info('Initializing application...');
+	if (!dev) assertProductionEnvironment();
 	await seedPrices(); // creates Dodo products and populates the checkout plugin's product list
 	await seedDatabase();
 	await initializeCache();

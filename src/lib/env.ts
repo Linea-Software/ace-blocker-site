@@ -1,17 +1,12 @@
 import { z } from 'zod';
 
 /**
- * Zod schema for the environment variables the app reads — the single source
- * of truth for their names and shapes.
- *
- * Every entry is optional (or defaulted): modules that require a specific var
- * enforce their own presence checks (e.g. the CDN helpers and the DB
- * connection throw at import when their keys are missing), and the schema
- * must never fail at import time — tests and the Better Auth CLI run without
- * a full `.env`.
+ * Tooling-safe schema for environment variables the app may read. Production
+ * startup validation is intentionally separate in `$lib/server/config/production`
+ * so tests, migrations, generators, and setup scripts do not need every secret.
  */
 export const envSchema = z.object({
-	ENV_IS_PRODUCTION: z.enum(['true', 'false']).default('false'),
+	NODE_ENV: z.enum(['development', 'test', 'production']).optional(),
 	DATABASE_URL: z.string().min(1).optional(),
 	BETTER_AUTH_URL: z.string().min(1).optional(),
 	ORIGIN: z.string().min(1).optional(),
@@ -23,27 +18,18 @@ export const envSchema = z.object({
 	BUNNY_STORAGE_ZONE: z.string().min(1).optional(),
 	BUNNY_CDN_BASE_URL: z.string().min(1).optional(),
 	BUNNY_STORAGE_ACCESS_KEY: z.string().min(1).optional(),
-	DEFAULT_ADMIN_EMAIL: z.string().min(1).optional(),
-	DEFAULT_ADMIN_USERNAME: z.string().min(1).optional(),
-	DEFAULT_ADMIN_PASSWORD: z.string().min(1).optional(),
 	PUBLIC_BETTER_AUTH_URL: z.string().min(1).optional()
 });
 
-/** Parsed env with defaults applied; never fails (all keys optional). */
-const parsedEnv = envSchema.parse(process.env);
-
 /**
- * Environment detection utility.
- *
- * Checks the {@code ENV_IS_PRODUCTION} environment variable.
- * Returns `true` only when the value is exactly the string `"true"`.
- * All other values (`"false"`, `undefined`, `"invalid"`, etc.) return `false`.
+ * `NODE_ENV` is the single production-mode signal shared by the application,
+ * Docker image, and VPS deployment tooling.
  */
-export function isProduction(): boolean {
-	return parsedEnv.ENV_IS_PRODUCTION === 'true';
+export function isProduction(environment: NodeJS.ProcessEnv = process.env): boolean {
+	return environment.NODE_ENV === 'production';
 }
 
 /** Convenience inverse of {@link isProduction}. */
-export function isDev(): boolean {
-	return !isProduction();
+export function isDev(environment: NodeJS.ProcessEnv = process.env): boolean {
+	return !isProduction(environment);
 }

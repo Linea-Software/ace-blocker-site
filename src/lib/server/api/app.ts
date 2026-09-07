@@ -4,8 +4,14 @@ import { v1Router } from './routers/v1';
 import { auth } from '$lib/server/auth';
 import { createLogger } from '$lib/server/logger';
 import { dev } from '$app/environment';
+import { getSafeRequestPath } from './request-log';
 
 const log = createLogger('api');
+
+/** Return log-safe request location metadata without query strings or fragments. */
+export function getSafeRequestPathLegacy(url: string): string {
+	return new URL(url).pathname;
+}
 
 /**
  * Better Call / Better Auth errors carry a string status (e.g. "UNAUTHORIZED").
@@ -59,7 +65,7 @@ export const app = new Elysia({ prefix: '/api' })
 				statusCode: set.status,
 				code,
 				method: request.method,
-				path: request.url
+				path: getSafeRequestPath(request.url)
 			},
 			'API error'
 		);
