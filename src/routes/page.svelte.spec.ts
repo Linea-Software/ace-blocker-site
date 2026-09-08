@@ -5,9 +5,15 @@ import Page from './+page.svelte';
 
 describe('/+page.svelte', () => {
 	it('should render h1', async () => {
-		render(Page);
+		render(Page, { data: { isPro: false, newRelease: null } });
 
 		const heading = page.getByRole('heading', { level: 1 });
 		await expect.element(heading).toBeInTheDocument();
+	});
+
+	it('shows the current release version when the server marks it as new', async () => {
+		render(Page, { data: { isPro: false, newRelease: { version: '1.2.3' } } });
+
+		await expect.element(page.getByText('Ace Blocker 1.2.3 is now live')).toBeInTheDocument();
 	});
 });

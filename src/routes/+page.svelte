@@ -47,18 +47,20 @@
 	>
 		<div class="relative z-10 container mx-auto px-4">
 			<div class="mx-auto max-w-3xl space-y-8 text-center">
-				<a
-					href={downloadUrl}
-					class="mb-4 inline-flex items-center rounded-full border bg-muted/50 px-3 py-1 text-sm font-medium backdrop-blur-sm transition-all hover:bg-muted dark:border-slate-800 dark:bg-slate-900/50"
-				>
-					<span class="mr-2 text-primary dark:text-brand">{m.hero_new_badge()}</span>
-					<span
-						class="text-muted-foreground transition-colors hover:text-foreground dark:text-slate-400 dark:hover:text-slate-200"
+				{#if data.newRelease}
+					<a
+						href={downloadUrl}
+						class="mb-4 inline-flex items-center rounded-full border bg-muted/50 px-3 py-1 text-sm font-medium backdrop-blur-sm transition-all hover:bg-muted dark:border-slate-800 dark:bg-slate-900/50"
 					>
-						{m.hero_version_available()}
-					</span>
-					<ArrowRight class="ml-2 h-3 w-3" />
-				</a>
+						<span class="mr-2 text-primary dark:text-brand">{m.hero_new_badge()}</span>
+						<span
+							class="text-muted-foreground transition-colors hover:text-foreground dark:text-slate-400 dark:hover:text-slate-200"
+						>
+							{m.hero_version_available({ version: data.newRelease.version })}
+						</span>
+						<ArrowRight class="ml-2 h-3 w-3" />
+					</a>
+				{/if}
 				<h1
 					class="bg-gradient-to-b from-slate-900 to-slate-600 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent md:text-7xl dark:from-white dark:to-white/80"
 				>
