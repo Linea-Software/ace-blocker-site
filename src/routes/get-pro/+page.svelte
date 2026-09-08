@@ -154,7 +154,7 @@
 					<div class="mt-8 flex flex-col gap-4 sm:flex-row">
 						<Button
 							href="/"
-							class="bg-slate-900 px-8 py-6 text-lg font-bold dark:bg-white dark:text-slate-950"
+							class="bg-foreground px-8 py-6 text-lg font-bold text-background hover:bg-foreground/85"
 						>
 							Go to Home
 						</Button>
