@@ -577,6 +577,49 @@ done
 # Re-run migrations on the fresh database
 su - "$USERNAME" -c "cd '${APP_DIR}' && '${BUN}' run db:migrate"
 
+# Provision the initial administrator only after the production database is
+# ready. The password is read silently and passed to provision-admin.ts over
+# stdin, never on argv. If the account already exists, provision-admin.ts keeps
+# its existing password and only confirms/promotes the admin role.
+echo ""
+info "Configure the administrator account."
+while true; do
+    read -rp "  Admin email: " ADMIN_EMAIL
+    if [[ "$ADMIN_EMAIL" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]]; then
+        break
+    fi
+    warn "Enter a valid administrator email address."
+done
+
+while true; do
+    read -rsp "  Admin password: " ADMIN_PW
+    echo ""
+    read -rsp "  Confirm admin password: " ADMIN_PW_CONFIRM
+    echo ""
+    if [[ "$ADMIN_PW" != "$ADMIN_PW_CONFIRM" ]]; then
+        warn "Passwords do not match. Try again."
+    elif [[ ${#ADMIN_PW} -lt 12 ]]; then
+        warn "Administrator password must be at least 12 characters."
+    else
+        break
+    fi
+done
+
+# Keep the email out of shell interpolation by placing it in a short-lived,
+# user-readable 0600 file, then expanding it as a quoted variable in the child
+# shell. The password stays on stdin for the Bun provisioning script.
+ADMIN_EMAIL_FILE="$(mktemp)"; SECRET_FILES+=("$ADMIN_EMAIL_FILE")
+new_secret_file "$ADMIN_EMAIL_FILE" "${USERNAME}:${USERNAME}"
+printf '%s\n' "$ADMIN_EMAIL" > "$ADMIN_EMAIL_FILE"
+if ! printf '%s\n' "$ADMIN_PW" | su - "$USERNAME" -c "cd '${APP_DIR}' && ADMIN_EMAIL=\$(cat '${ADMIN_EMAIL_FILE}') && '${BUN}' scripts/provision-admin.ts --email \"\$ADMIN_EMAIL\" --username Admin --password-stdin"; then
+    unset ADMIN_EMAIL ADMIN_PW ADMIN_PW_CONFIRM
+    err "Administrator provisioning failed."
+    exit 1
+fi
+rm -f "$ADMIN_EMAIL_FILE"
+unset ADMIN_EMAIL ADMIN_PW ADMIN_PW_CONFIRM ADMIN_EMAIL_FILE
+ok "Administrator account provisioned."
+
 echo ""
 ok "Environment configured and saved to ${ENV_FILE}"
 
