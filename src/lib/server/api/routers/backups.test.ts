@@ -141,7 +141,10 @@ const ENGINE_BACKUP = {
 					sunday: true
 				}
 			],
-			userRules: ['example.com', 'pornhub.com'],
+			userRules: [
+				{ rule: 'example.com', ruleType: 'domain' },
+				{ rule: '/shorts(?:/|$)', ruleType: 'regex' }
+			],
 			connectedSitesLists: ['4e2f4a6f-8f3a-4c1e-9d5b-2b7a0f1c3d5e']
 		}
 	],

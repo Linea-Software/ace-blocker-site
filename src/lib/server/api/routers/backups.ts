@@ -45,13 +45,18 @@ const BackupScheduleEntrySchema = t.Object({
 	sunday: t.Boolean()
 });
 
+const BackupUserRuleSchema = t.Object({
+	rule: t.String(),
+	ruleType: t.Union([t.Literal('domain'), t.Literal('regex')])
+});
+
 const BackupNetworkBlockSchema = t.Object({
 	id: t.String({ format: 'uuid' }),
 	name: t.String(),
 	safe_search: t.Boolean(),
 	icon: t.Optional(t.Nullable(t.String())),
 	schedules: t.Array(BackupScheduleEntrySchema),
-	userRules: t.Array(t.String()),
+	userRules: t.Array(BackupUserRuleSchema),
 	// A block may reference built-in packs by their canonical catalog id
 	// (not a UUID), so connected list ids are opaque strings too.
 	connectedSitesLists: t.Array(PackIdString)
