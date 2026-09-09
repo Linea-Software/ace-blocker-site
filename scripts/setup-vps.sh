@@ -605,12 +605,16 @@ while true; do
     fi
 done
 
-# Keep the email out of shell interpolation by placing it in a short-lived,
-# user-readable 0600 file, then expanding it as a quoted variable in the child
-# shell. The password stays on stdin for the Bun provisioning script.
+# Keep the email out of shell interpolation by placing it in a short-lived 0600
+# file, then expanding it as a quoted variable in the child shell. Write while
+# mktemp's file is still root-owned, then hand ownership to ${USERNAME}: hardened
+# Linux systems can deny root's shell redirection into another user's file under
+# sticky /tmp (fs.protected_regular), even though root created it originally.
+# The password stays on stdin for the Bun provisioning script.
 ADMIN_EMAIL_FILE="$(mktemp)"; SECRET_FILES+=("$ADMIN_EMAIL_FILE")
-new_secret_file "$ADMIN_EMAIL_FILE" "${USERNAME}:${USERNAME}"
 printf '%s\n' "$ADMIN_EMAIL" > "$ADMIN_EMAIL_FILE"
+chown "${USERNAME}:${USERNAME}" "$ADMIN_EMAIL_FILE"
+chmod 600 "$ADMIN_EMAIL_FILE"
 if ! printf '%s\n' "$ADMIN_PW" | su - "$USERNAME" -c "cd '${APP_DIR}' && ADMIN_EMAIL=\$(cat '${ADMIN_EMAIL_FILE}') && '${BUN}' scripts/provision-admin.ts --email \"\$ADMIN_EMAIL\" --username Admin --password-stdin"; then
     unset ADMIN_EMAIL ADMIN_PW ADMIN_PW_CONFIRM
     err "Administrator provisioning failed."
