@@ -14,7 +14,7 @@
 	import * as m from '$lib/paraglide/messages';
 	import { cn } from '$lib/utils';
 	import {
-		Crown,
+		Gauge,
 		Mail,
 		MoreHorizontal,
 		Search,
@@ -44,7 +44,7 @@
 	const summaryStats = $derived([
 		{ label: m.admin_users_total(), value: data.summary.total, icon: Users },
 		{ label: m.admin_users_active(), value: data.summary.active, icon: ShieldCheck },
-		{ label: m.admin_users_pro(), value: data.summary.pro, icon: Crown },
+		{ label: m.admin_users_pro(), value: data.summary.pro, icon: Gauge },
 		{ label: m.admin_users_admins(), value: data.summary.admins, icon: UserCog }
 	]);
 
@@ -133,12 +133,12 @@
 <div class="flex flex-col gap-8">
 	<header class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
 		<div class="flex flex-col gap-2">
-			<div class="flex items-center gap-2 text-sm font-semibold text-brand">
+			<div class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
 				<UserCog aria-hidden="true" />
 				{m.admin_users_eyebrow()}
 			</div>
 			<div>
-				<h2 class="text-3xl font-bold tracking-tight">{m.admin_users_title()}</h2>
+				<h2 class="font-display text-3xl font-semibold">{m.admin_users_title()}</h2>
 				<p class="mt-1 max-w-2xl text-muted-foreground">{m.admin_users_description()}</p>
 			</div>
 		</div>
@@ -171,7 +171,7 @@
 					</div>
 				</Card.Header>
 				<Card.Content class="px-5">
-					<p class="text-3xl font-bold tracking-tight">{stat.value.toLocaleString()}</p>
+					<p class="font-display text-3xl font-semibold">{stat.value.toLocaleString()}</p>
 				</Card.Content>
 			</Card.Root>
 		{/each}
@@ -236,7 +236,7 @@
 								<Table.Cell>
 									{#if isPro(user)}
 										<Badge>
-											<Crown aria-hidden="true" />
+											<Gauge aria-hidden="true" />
 											{m.admin_users_pro()}
 										</Badge>
 									{:else}
@@ -276,7 +276,7 @@
 														isProModalOpen = true;
 													}}
 												>
-													<Crown aria-hidden="true" />
+													<Gauge aria-hidden="true" />
 													{m.admin_users_grant_pro()}
 												</DropdownMenu.Item>
 												<DropdownMenu.Item
@@ -368,7 +368,7 @@
 					{m.account_cancel_action()}
 				</Button>
 				<Button type="submit" disabled={isGrantingPro}>
-					<Crown data-icon="inline-start" aria-hidden="true" />
+					<Gauge data-icon="inline-start" aria-hidden="true" />
 					{isGrantingPro ? m.admin_users_granting() : m.admin_users_grant_pro_action()}
 				</Button>
 			</Dialog.Footer>

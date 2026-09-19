@@ -11,7 +11,7 @@
 		ChartNoAxesCombined,
 		CheckCircle2,
 		Cloud,
-		Crown,
+		Gauge,
 		Fingerprint,
 		Globe2,
 		MonitorSmartphone,
@@ -47,7 +47,7 @@
 			label: m.admin_metrics_active_pro(),
 			value: formatNumber(data.summary.proUsers),
 			detail: m.admin_metrics_conversion({ rate: data.health.proConversionRate }),
-			icon: Crown
+			icon: Gauge
 		},
 		{
 			label: m.admin_metrics_monthly_visits(),
@@ -108,12 +108,12 @@
 <div class="flex flex-col gap-8">
 	<header class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
 		<div class="flex flex-col gap-2">
-			<div class="flex items-center gap-2 text-sm font-semibold text-brand">
+			<div class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
 				<ChartNoAxesCombined aria-hidden="true" />
 				{m.admin_metrics_eyebrow()}
 			</div>
 			<div>
-				<h2 class="text-3xl font-bold tracking-tight">{m.admin_metrics_title()}</h2>
+				<h2 class="font-display text-3xl font-semibold">{m.admin_metrics_title()}</h2>
 				<p class="mt-1 max-w-2xl text-muted-foreground">
 					{m.admin_metrics_description()}
 				</p>
