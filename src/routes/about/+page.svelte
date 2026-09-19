@@ -1,316 +1,159 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import { Cpu, Download, Layers, Lock, RefreshCwOff } from '@lucide/svelte';
-	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
-	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
-	import icon from '$lib/assets/logo/SVG/icon.svg';
-	import { mode } from 'mode-watcher';
+	import MarketingFooter from '$lib/components/marketing/MarketingFooter.svelte';
+	import PolicyVisual from '$lib/components/marketing/PolicyVisual.svelte';
+	import ResistanceScale from '$lib/components/marketing/ResistanceScale.svelte';
+	import ScheduleTimeline from '$lib/components/marketing/ScheduleTimeline.svelte';
+	import SitePackVisual from '$lib/components/marketing/SitePackVisual.svelte';
+	import { Download } from '@lucide/svelte';
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	import * as m from '$lib/paraglide/messages';
-	import { getDownloadUrl } from '$lib/utils/platform';
 
 	let { data } = $props();
-	let downloadUrl = $state('/download');
-	let isDark = $derived(mode.current === 'dark');
-
-	$effect(() => {
-		downloadUrl = getDownloadUrl();
-	});
 </script>
 
 <svelte:head>
-	<title>{m.about_hero_app()} — About</title>
-	<meta name="description" content={m.about_hero_description()} />
-	<meta property="og:title" content="{m.about_hero_app()} — About" />
-	<meta property="og:description" content={m.about_hero_description()} />
+	<title>{m.page_title_about()}</title>
+	<meta name="description" content={m.about_mechanism_description()} />
+	<meta property="og:title" content={m.page_title_about()} />
+	<meta property="og:description" content={m.about_mechanism_description()} />
 	<meta property="og:url" content={page.url.href} />
-	<meta name="twitter:title" content="{m.about_hero_app()} — About" />
-	<meta name="twitter:description" content={m.about_hero_description()} />
+	<meta name="twitter:title" content={m.page_title_about()} />
+	<meta name="twitter:description" content={m.about_mechanism_description()} />
 </svelte:head>
 
 <Navbar isPro={data.isPro} />
 
-<main
-	class="flex min-h-[calc(100vh-4rem)] flex-col bg-background text-foreground transition-colors duration-500 dark:bg-background dark:text-slate-50"
->
-	<!-- Hero Section -->
-	<section class="relative overflow-hidden pt-16 pb-16 md:pt-24 md:pb-24">
-		<div class="relative z-10 container mx-auto px-4">
-			<div class="mx-auto max-w-4xl space-y-8 text-center">
-				<h1
-					class="bg-gradient-to-b from-slate-900 to-slate-600 bg-clip-text text-4xl font-black tracking-tight text-transparent sm:text-5xl md:text-6xl dark:from-white dark:to-white/80"
-				>
-					{m.about_hero_title()}
-					<span class="block text-brand dark:text-amber-400">
-						{m.about_hero_app()}
-					</span>
-				</h1>
-				<p
-					class="mx-auto max-w-3xl text-lg leading-relaxed text-slate-700 md:text-xl dark:text-slate-400"
-				>
-					{m.about_hero_description()}
-				</p>
-			</div>
-		</div>
-
-		<!-- Background Decoration -->
+<main id="main-content">
+	<section class="border-b border-border">
 		<div
-			class="pointer-events-none absolute inset-0 z-0 flex items-center justify-center opacity-40"
+			class="ace-shell grid gap-12 py-14 lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:py-20"
 		>
-			<div class="absolute h-[600px] w-[600px] rounded-full bg-brand/10 blur-[150px]"></div>
-			<div
-				class="absolute h-[400px] w-[400px] translate-x-32 translate-y-32 rounded-full bg-blue-600/10 blur-[120px]"
-			></div>
-		</div>
-	</section>
-
-	<!-- Mission Section -->
-	<section
-		class="relative overflow-hidden border-y border-border bg-muted py-20 dark:border-slate-900 dark:bg-slate-950/50"
-	>
-		<!-- Subtle radial backdrop -->
-		<div
-			class="absolute inset-0 z-0 bg-[radial-gradient(circle_at_left,_var(--tw-gradient-stops))] from-brand/5 via-transparent to-transparent"
-		></div>
-
-		<div class="relative z-10 container mx-auto px-4">
-			<div class="mx-auto grid max-w-5xl grid-cols-1 items-center gap-16 md:grid-cols-2">
-				<div class="space-y-6">
-					<h2
-						class="text-3xl font-black tracking-tight text-slate-900 md:text-4xl dark:text-white"
-					>
-						{m.about_mission_title()}
-					</h2>
-					<p class="text-lg leading-relaxed text-slate-600 dark:text-slate-400">
-						{m.about_mission_description()}
-					</p>
-				</div>
-				<div class="group relative flex justify-center">
-					<div
-						class="relative flex h-64 w-64 items-center justify-center rounded-[3rem] border border-border bg-card p-6 shadow-md backdrop-blur-md transition-all duration-500 group-hover:border-brand/50 group-hover:shadow-[0_0_40px_rgba(255,191,0,0.1)] dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-2xl"
-					>
-						<div class="relative flex items-center justify-center">
-							<img
-								src={icon}
-								alt="Ace Blocker"
-								class="h-auto w-[70%] transition-transform duration-700 group-hover:scale-110"
-							/>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</section>
-
-	<!-- The Engine Section (Bento Grid) -->
-	<section class="relative overflow-hidden py-24">
-		<div
-			class="absolute inset-0 z-0 bg-[radial-gradient(circle_at_right,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent"
-		></div>
-
-		<div class="relative z-10 container mx-auto px-4">
-			<div class="mb-16 space-y-4 text-center">
-				<h2
-					class="text-3xl font-black tracking-tight text-slate-900 md:text-4xl dark:text-white"
+			<div class="max-w-xl">
+				<p class="font-mono text-xs text-muted-foreground">{m.about_hero_app()}</p>
+				<h1
+					class="mt-5 font-display text-5xl leading-[0.92] font-semibold tracking-tight sm:text-6xl"
 				>
-					{m.about_tech_title()}
-				</h2>
-				<p class="mx-auto max-w-2xl text-lg text-slate-600 dark:text-slate-400">
-					{m.about_tech_description()}
+					{m.about_mechanism_title()}
+				</h1>
+				<p class="mt-6 text-lg leading-relaxed text-muted-foreground">
+					{m.about_mechanism_description()}
 				</p>
 			</div>
+			<PolicyVisual />
+		</div>
+	</section>
 
-			<div class="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">
-				<!-- System-Wide -->
-				<div
-					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-brand/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
-				>
-					<div
-						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-brand/5 blur-3xl transition-all duration-500 group-hover:bg-brand/20"
-					></div>
-
-					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
-					>
-						<Layers class="h-7 w-7 text-brand" />
-					</div>
-					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
-						{m.about_feature_system_title()}
-					</h3>
-					<p class="leading-relaxed text-slate-600 dark:text-slate-400">
-						{m.about_feature_system_description()}
-					</p>
+	<section class="border-b border-border bg-card">
+		<div
+			class="ace-shell grid gap-8 py-14 lg:grid-cols-[0.68fr_1.32fr] lg:items-start lg:py-20"
+		>
+			<div class="max-w-md">
+				<p class="font-mono text-xs text-muted-foreground">01 / {m.policy_type()}</p>
+				<h2 class="mt-4 font-display text-4xl font-semibold">{m.about_policy_title()}</h2>
+				<p class="mt-5 leading-relaxed text-muted-foreground">
+					{m.about_policy_description()}
+				</p>
+			</div>
+			<div
+				class="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2"
+			>
+				<div class="bg-background p-5">
+					<p class="text-xs text-muted-foreground">{m.policy_target_label()}</p>
+					<p class="mt-2 font-display text-xl font-semibold">{m.policy_target_value()}</p>
 				</div>
-
-				<!-- Intelligent DB -->
-				<div
-					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-brand/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
-				>
-					<div
-						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-brand/5 blur-3xl transition-all duration-500 group-hover:bg-brand/20"
-					></div>
-
-					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
-					>
-						<Cpu class="h-7 w-7 text-brand" />
-					</div>
-					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
-						{m.about_feature_intel_title()}
-					</h3>
-					<p class="leading-relaxed text-slate-600 dark:text-slate-400">
-						{m.about_feature_intel_description()}
-					</p>
+				<div class="bg-background p-5">
+					<p class="text-xs text-muted-foreground">{m.policy_schedule_label()}</p>
+					<p class="mt-2 font-mono text-sm">{m.policy_schedule_time()}</p>
 				</div>
-
-				<!-- Hardened Locks -->
-				<div
-					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-brand/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
-				>
-					<div
-						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-brand/5 blur-3xl transition-all duration-500 group-hover:bg-brand/20"
-					></div>
-
-					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
-					>
-						<Lock class="h-7 w-7 text-brand" />
-					</div>
-					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
-						{m.about_feature_locks_title()}
-					</h3>
-					<p class="leading-relaxed text-slate-600 dark:text-slate-400">
-						{m.about_feature_locks_description()}
-					</p>
+				<div class="bg-background p-5">
+					<p class="text-xs text-muted-foreground">{m.policy_resistance_label()}</p>
+					<p class="mt-2 font-display text-xl font-semibold">{m.resistance_high()}</p>
 				</div>
-
-				<!-- Break the Habit Loop -->
-				<div
-					class="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-brand/50 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/50 dark:shadow-xl dark:hover:shadow-[0_10px_30px_rgba(255,191,0,0.05)]"
-				>
-					<div
-						class="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-brand/5 blur-3xl transition-all duration-500 group-hover:bg-brand/20"
-					></div>
-
-					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl border border-brand/20 bg-brand/10 transition-transform duration-300 group-hover:scale-110"
-					>
-						<RefreshCwOff class="h-7 w-7 text-brand" />
-					</div>
-					<h3 class="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
-						{m.about_feature_scripts_title()}
-					</h3>
-					<p class="leading-relaxed text-slate-600 dark:text-slate-400">
-						{m.about_feature_scripts_description()}
-					</p>
+				<div class="border-l-4 border-signal bg-background p-5">
+					<p class="text-xs text-muted-foreground">{m.policy_lock_title()}</p>
+					<p class="mt-2 font-mono text-sm">{m.policy_lock_until()}</p>
 				</div>
 			</div>
 		</div>
 	</section>
 
-	<!-- CTA Section -->
-	<section class="relative mb-24 py-12">
-		<div class="container mx-auto px-4">
-			<div
-				class="relative space-y-8 overflow-hidden rounded-[3rem] border border-border bg-muted px-8 py-16 text-center shadow-2xl backdrop-blur-md md:py-24 dark:border-slate-800 dark:bg-slate-950/80"
-			>
-				<!-- Decorative pattern & Glows -->
-				<div class="absolute inset-0 z-0">
-					<div
-						class="absolute top-0 left-1/2 h-[300px] w-[500px] -translate-x-1/2 rounded-full bg-brand/10 opacity-50 blur-[100px] dark:opacity-100"
-					></div>
-					<div
-						class="absolute inset-0 opacity-[0.03] dark:opacity-[0.03]"
-						style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 32px 32px;"
-					></div>
-				</div>
+	<section class="border-b border-border py-14 lg:py-20">
+		<div class="ace-shell">
+			<div class="mb-9 max-w-2xl">
+				<p class="font-mono text-xs text-muted-foreground">
+					02 / {m.policy_resistance_label()}
+				</p>
+				<h2 class="mt-4 font-display text-4xl font-semibold">
+					{m.about_resistance_title()}
+				</h2>
+				<p class="mt-5 leading-relaxed text-muted-foreground">
+					{m.about_resistance_description()}
+				</p>
+			</div>
+			<ResistanceScale />
+		</div>
+	</section>
 
-				<div class="relative z-10 mx-auto max-w-3xl space-y-6">
-					<h2
-						class="text-3xl font-black tracking-tight text-slate-900 md:text-5xl dark:text-white"
-					>
-						{m.about_cta_title()}
-					</h2>
-					<p class="text-lg text-slate-700 md:text-xl dark:text-slate-400">
+	<section class="border-b border-border bg-card py-14 lg:py-20">
+		<div class="ace-shell grid gap-14 lg:grid-cols-2">
+			<div>
+				<p class="font-mono text-xs text-muted-foreground">
+					03 / {m.policy_schedule_label()}
+				</p>
+				<h2 class="mt-4 font-display text-3xl font-semibold">{m.about_schedule_title()}</h2>
+				<p class="mt-4 max-w-lg leading-relaxed text-muted-foreground">
+					{m.about_schedule_description()}
+				</p>
+				<div class="mt-7">
+					<ScheduleTimeline />
+				</div>
+			</div>
+			<div>
+				<p class="font-mono text-xs text-muted-foreground">04 / {m.site_pack_scope()}</p>
+				<h2 class="mt-4 font-display text-3xl font-semibold">{m.about_packs_title()}</h2>
+				<p class="mt-4 max-w-lg leading-relaxed text-muted-foreground">
+					{m.about_packs_description()}
+				</p>
+				<div class="mt-7">
+					<SitePackVisual />
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section class="py-12 sm:py-16">
+		<div class="ace-shell">
+			<div
+				class="grid overflow-hidden rounded-lg border border-border bg-card lg:grid-cols-[1fr_auto] lg:items-center"
+			>
+				<div class="px-5 py-7 sm:px-8">
+					<h2 class="font-display text-3xl font-semibold">{m.about_cta_title()}</h2>
+					<p class="mt-3 max-w-2xl leading-relaxed text-muted-foreground">
 						{m.about_cta_description()}
 					</p>
 				</div>
-
 				<div
-					class="relative z-10 mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
+					class="flex flex-col gap-3 border-t border-border p-5 sm:flex-row lg:border-t-0 lg:border-l lg:p-7"
 				>
-					<Button
-						size="lg"
-						class="h-12 w-full bg-foreground px-8 text-lg font-semibold text-background shadow-lg shadow-foreground/10 hover:bg-foreground/85 sm:w-auto dark:bg-slate-50 dark:text-slate-950 dark:shadow-brand/10 dark:hover:bg-white"
-						href={downloadUrl}
+					<a
+						href={resolve('/download')}
+						class="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90"
 					>
-						<Download class="mr-2 h-5 w-5" />
+						<Download class="size-4" aria-hidden="true" />
 						{m.hero_download_button()}
-					</Button>
-					<Button
-						variant="outline"
-						size="lg"
-						class="h-12 w-full border-2 border-foreground/60 px-8 text-lg font-semibold text-foreground hover:bg-foreground/5 sm:w-auto dark:border-brand dark:text-brand dark:hover:bg-brand/10"
-						href="/get-pro"
+					</a>
+					<a
+						href={resolve('/get-pro')}
+						class="inline-flex min-h-12 items-center justify-center rounded-md border border-foreground/30 px-5 font-medium hover:bg-accent"
 					>
 						{m.hero_pro_button()}
-					</Button>
+					</a>
 				</div>
 			</div>
 		</div>
 	</section>
 </main>
 
-<footer class="border-t border-border bg-muted py-16 dark:border-slate-900 dark:bg-background">
-	<div class="container mx-auto px-4">
-		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
-			<div class="flex items-center gap-3">
-				{#if isDark}
-					<img src={darkFullLogo} alt="Ace Blocker" class="h-8 w-auto" />
-				{:else}
-					<img src={lightFullLogo} alt="Ace Blocker" class="h-8 w-auto" />
-				{/if}
-			</div>
-			<p class="text-sm text-muted-foreground">
-				&copy; {new Date().getFullYear()}
-				{m.footer_rights_suffix()}
-			</p>
-			<div
-				class="flex items-center gap-8 text-sm font-bold text-slate-600 dark:text-slate-400"
-			>
-				<a
-					href="/terms"
-					class="transition-colors hover:text-amber-600 dark:hover:text-brand"
-					>{m.footer_terms()}</a
-				>
-				<a
-					href="/privacy"
-					class="transition-colors hover:text-amber-600 dark:hover:text-brand"
-					>{m.footer_privacy()}</a
-				>
-			</div>
-		</div>
-	</div>
-</footer>
-
-<style>
-	:global(html) {
-		scroll-behavior: smooth;
-		background-color: white;
-	}
-
-	:global(html.dark) {
-		background-color: var(--background);
-	}
-
-	:global(body) {
-		background-color: white;
-		color: var(--foreground);
-	}
-
-	:global(.dark body) {
-		background-color: var(--background);
-		color: #f8fafc;
-	}
-</style>
+<MarketingFooter />

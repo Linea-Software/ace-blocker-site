@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import Navbar from '$lib/components/Navbar.svelte';
-	import { Button } from '$lib/components/ui/button';
+	import MarketingFooter from '$lib/components/marketing/MarketingFooter.svelte';
 	import * as m from '$lib/paraglide/messages';
 	import {
 		IconBrandWindows,
@@ -13,7 +13,6 @@
 	} from '@tabler/icons-svelte';
 	import Loader2 from '@lucide/svelte/icons/loader-2';
 	import { onMount } from 'svelte';
-	import { fade } from 'svelte/transition';
 	import PlatformGrid from './_components/PlatformGrid.svelte';
 	import ChecksumCard from './_components/ChecksumCard.svelte';
 
@@ -29,14 +28,12 @@
 
 	type PlatformId = 'windows' | 'macos' | 'linux';
 
-	// Map display arch IDs (used in UI) to the route-compatible arch strings
 	const ARCH_IDS: Record<PlatformId, string> = {
 		windows: 'windows_x64',
 		macos: 'macos_universal',
 		linux: 'linux_x64'
 	};
 
-	// The platform the visitor explicitly requested (?arch=...), when given.
 	const REQUESTED_PLATFORM: PlatformId | null = (() => {
 		const arch = page.url.searchParams.get('arch');
 		if (arch === 'windows_x64' || arch === 'windows_arm64') return 'windows';
@@ -61,17 +58,12 @@
 	let downloadStarting = $state(false);
 	let isManualLoading = $state(false);
 
-	// The platform that matches this visitor (explicit request first, then
-	// OS detection) when it actually has a release. Auto-download only ever
-	// targets one of these — never a different-OS installer.
 	const preferredPlatform = $derived.by<PlatformId | null>(() => {
 		if (REQUESTED_PLATFORM && platformRows[REQUESTED_PLATFORM]) return REQUESTED_PLATFORM;
 		if (detectedPlatform && platformRows[detectedPlatform]) return detectedPlatform;
 		return null;
 	});
 
-	// Manual-download target: the preferred platform, else any platform that
-	// has a release (or null when nothing can be downloaded at all).
 	const effectivePlatform = $derived.by<PlatformId | null>(() => {
 		return preferredPlatform ?? availablePlatforms[0] ?? null;
 	});
@@ -94,9 +86,6 @@
 	onMount(() => {
 		detectedPlatform = detectPlatform();
 
-		// Automatically trigger download on first arrival — only when an
-		// installer exists for the visitor's own platform (requested or
-		// detected). Never auto-download a different-OS installer.
 		const requested =
 			REQUESTED_PLATFORM && rowFor(REQUESTED_PLATFORM) ? REQUESTED_PLATFORM : null;
 		const detected = detectedPlatform && rowFor(detectedPlatform) ? detectedPlatform : null;
@@ -110,48 +99,46 @@
 		}
 	});
 
-	// Hero metadata (version, checksum) always belongs to the platform the
-	// visitor is about to receive.
-	let selectedMeta = $derived<PlatformMeta | null>(
+	const selectedMeta = $derived<PlatformMeta | null>(
 		effectivePlatform ? (platformRows[effectivePlatform] ?? null) : null
 	);
 
 	function formatSize(meta: PlatformMeta | null): string {
-		return meta ? Math.round(meta.size / 1024 / 1024) + 'MB' : '—';
+		return meta ? Math.round(meta.size / 1024 / 1024) + '\u00A0MB' : '—';
 	}
 
-	let platformOptions = $derived([
+	const platformOptions = $derived([
 		{
 			id: 'windows',
 			routeArch: ARCH_IDS.windows,
-			name: 'Windows',
+			name: m.download_platform_windows(),
 			icon: IconBrandWindows,
 			size: formatSize(platformRows.windows),
 			version: platformRows.windows?.version ?? null,
 			ext: '.exe',
-			details: 'x64 Installer',
+			details: m.download_platform_windows_details(),
 			isAvailable: platformRows.windows !== null
 		},
 		{
 			id: 'macos',
 			routeArch: ARCH_IDS.macos,
-			name: 'macOS',
+			name: m.download_platform_macos(),
 			icon: IconBrandApple,
 			size: formatSize(platformRows.macos),
 			version: platformRows.macos?.version ?? null,
 			ext: '.dmg',
-			details: 'Universal Binary',
+			details: m.download_platform_macos_details(),
 			isAvailable: platformRows.macos !== null
 		},
 		{
 			id: 'linux',
 			routeArch: ARCH_IDS.linux,
-			name: 'Linux',
+			name: m.download_platform_linux(),
 			icon: IconBrandUbuntu,
 			size: formatSize(platformRows.linux),
 			version: platformRows.linux?.version ?? null,
 			ext: '.deb',
-			details: 'Debian / Ubuntu',
+			details: m.download_platform_linux_details(),
 			isAvailable: platformRows.linux !== null
 		}
 	]);
@@ -178,121 +165,118 @@
 
 <Navbar isPro={data.isPro} />
 
-<main
-	class="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-4 pt-16 pb-12 transition-colors duration-500 dark:bg-background"
->
-	<!-- Background Aesthetics (Resistance Mode Theme) -->
-	<div
-		class="pointer-events-none absolute inset-0 -z-10 bg-background transition-colors duration-500 dark:bg-background"
-	>
-		<div
-			class="absolute inset-0 bg-radial-[at_50%_50%] from-background via-background to-brand/5 dark:from-background dark:via-background dark:to-brand/10"
-		></div>
-		<div
-			class="absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-200/50 blur-[120px] dark:bg-primary/10"
-		></div>
-
-		<!-- Subtle Moving Orbs -->
-		<div
-			class="absolute -top-24 -left-24 h-96 w-96 animate-pulse rounded-full bg-brand/5 blur-[100px]"
-		></div>
-		<div
-			class="absolute -right-24 -bottom-24 h-96 w-96 animate-pulse rounded-full bg-blue-500/5 blur-[100px]"
-			style="animation-delay: 2s;"
-		></div>
-	</div>
-
-	<div class="w-full max-w-4xl space-y-20 text-center">
-		<!-- Hero Section -->
-		<div class="space-y-10" in:fade={{ delay: 100, duration: 800 }}>
-			<div class="flex justify-center">
-				<img
-					src="https://cdn.aceblocker.com/icon.png"
-					alt="Ace Blocker"
-					width="88"
-					height="88"
-					style="border-radius: 20px;"
-					class="shadow-xl"
-				/>
-			</div>
-
-			<div class="space-y-4">
+<main id="main-content">
+	<section class="border-b border-border">
+		<div class="ace-shell grid gap-10 py-14 lg:grid-cols-[0.78fr_1.22fr] lg:items-end lg:py-20">
+			<div>
+				<p class="font-mono text-xs text-muted-foreground">{m.download_release_label()}</p>
 				<h1
-					class="text-4xl font-black tracking-tighter text-slate-900 md:text-7xl dark:text-white"
+					class="mt-4 font-display text-5xl leading-[0.92] font-semibold tracking-tight sm:text-6xl"
 				>
-					{m.download_title().replace('...', '')}
+					{m.download_platform_title()}
 				</h1>
-
-				{#if downloadStarting}
-					<p
-						class="flex items-center justify-center gap-2 text-sm font-medium text-amber-600 dark:text-brand"
-					>
-						<Loader2 class="h-4 w-4 animate-spin" />
-						Your download is starting…
-					</p>
-				{:else}
-					<p
-						class="mx-auto max-w-xl text-lg font-medium tracking-tight text-slate-600 opacity-80 sm:text-xl dark:text-slate-400"
-					>
-						{m.download_description()}
-					</p>
-				{/if}
+				<p class="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
+					{m.download_platform_description()}
+				</p>
 			</div>
 
-			<div class="flex flex-col items-center gap-6">
-				<Button
-					size="lg"
-					onclick={handleManualDownload}
-					disabled={isManualLoading || !effectivePlatform}
-					class="relative h-14 overflow-hidden rounded-lg bg-brand px-10 text-lg font-bold text-black shadow-xl shadow-brand/20 transition-all hover:scale-105 hover:bg-amber-400 active:scale-95 dark:shadow-brand/10"
-				>
-					{#if isManualLoading}
-						<Loader2 class="mr-2 h-5 w-5 animate-spin" />
-					{:else}
-						<IconDownload class="mr-2 h-5 w-5" />
-					{/if}
-					{m.download_manual_button()}
-				</Button>
-
+			<div class="overflow-hidden rounded-lg border border-border bg-card">
 				{#if selectedMeta}
-					<a
-						href="https://github.com/aintDatCap/ace-blocker/releases"
-						target="_blank"
-						class="group flex items-center gap-1.5 text-sm font-bold text-slate-500 transition-all hover:text-brand dark:text-slate-400"
-					>
-						<IconFileText
-							size={16}
-							class="transition-transform group-hover:rotate-12"
-						/>
-						Version {selectedMeta.version} - Build Notes
-						<IconExternalLink
-							size={12}
-							class="opacity-0 transition-opacity group-hover:opacity-100"
-						/>
-					</a>
+					<div class="grid sm:grid-cols-[1fr_auto] sm:items-stretch">
+						<div class="p-5 sm:p-6">
+							<div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+								<p class="font-display text-2xl font-semibold">
+									{effectivePlatform === 'windows'
+										? m.download_platform_windows()
+										: effectivePlatform === 'macos'
+											? m.download_platform_macos()
+											: m.download_platform_linux()}
+								</p>
+								<p class="font-mono text-xs text-muted-foreground">
+									v{selectedMeta.version}
+								</p>
+								<p class="font-mono text-xs text-muted-foreground">
+									{formatSize(selectedMeta)}
+								</p>
+							</div>
+
+							{#if downloadStarting}
+								<p
+									class="mt-4 flex items-center gap-2 text-sm text-information"
+									aria-live="polite"
+								>
+									<Loader2 class="size-4 animate-spin" aria-hidden="true" />
+									{m.download_starting_status()}
+								</p>
+							{:else}
+								<p class="mt-4 text-sm text-muted-foreground">
+									{m.download_description()}
+								</p>
+							{/if}
+
+							<a
+								href="https://github.com/aintDatCap/ace-blocker/releases"
+								target="_blank"
+								rel="noreferrer"
+								class="mt-5 inline-flex items-center gap-2 text-sm font-medium hover:underline"
+							>
+								<IconFileText size={16} aria-hidden="true" />
+								{m.download_release_notes({ version: selectedMeta.version })}
+								<IconExternalLink size={13} aria-hidden="true" />
+							</a>
+						</div>
+
+						<div
+							class="border-t border-border p-5 sm:flex sm:items-center sm:border-t-0 sm:border-l sm:p-6"
+						>
+							<button
+								type="button"
+								onclick={handleManualDownload}
+								disabled={isManualLoading || !effectivePlatform}
+								class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90 disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
+							>
+								{#if isManualLoading}
+									<Loader2 class="size-4 animate-spin" aria-hidden="true" />
+								{:else}
+									<IconDownload size={18} aria-hidden="true" />
+								{/if}
+								{m.download_manual_button()}
+							</button>
+						</div>
+					</div>
+				{:else}
+					<div class="p-6 text-sm text-muted-foreground">
+						{m.download_not_available()}
+					</div>
 				{/if}
 			</div>
 		</div>
+	</section>
 
-		<!-- Platform Bento Grid -->
-		<PlatformGrid
-			platforms={platformOptions}
-			detectedArch={effectivePlatform ? ARCH_IDS[effectivePlatform] : null}
-		/>
-
-		<!-- SHA-256 Verification -->
-		{#if selectedMeta?.hash}
-			<ChecksumCard hash={selectedMeta.hash} />
-		{/if}
-
-		<!-- Home Navigation -->
-		<div class="pt-8">
-			<a
-				href="/"
-				class="text-sm text-muted-foreground transition-colors hover:text-foreground"
-			>
-				← Back to homepage
-			</a>
+	<section class="border-b border-border bg-card py-12 sm:py-16">
+		<div class="ace-shell">
+			<PlatformGrid
+				platforms={platformOptions}
+				detectedArch={effectivePlatform ? ARCH_IDS[effectivePlatform] : null}
+			/>
 		</div>
-	</div>
+	</section>
+
+	{#if selectedMeta?.hash}
+		<section class="py-12 sm:py-16">
+			<div class="ace-shell grid gap-7 lg:grid-cols-[0.6fr_1.4fr] lg:items-start">
+				<div>
+					<h2 class="font-display text-3xl font-semibold">
+						{m.download_integrity_title()}
+					</h2>
+					<p class="mt-3 max-w-md leading-relaxed text-muted-foreground">
+						{m.download_integrity_description()}
+					</p>
+				</div>
+				<ChecksumCard hash={selectedMeta.hash} />
+			</div>
+		</section>
+	{/if}
 </main>
+
+<MarketingFooter />
