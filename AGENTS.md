@@ -64,6 +64,24 @@ Before performing ANY task related to the technologies below, you MUST use `read
 
 This is the **Ace Blocker** marketing and subscription website — a full-stack SvelteKit application for product publicity, user management, subscriptions, and REST API access. It handles authentication (Better Auth), payments (DodoPayments), file hosting (BunnyCDN), and serves as the upstream content provider for the Ace Engine (site packs, resistance scripts, and binary releases).
 
+## UI Identity
+
+**Before any task that creates, redesigns, or materially alters visible UI, read `docs/ui-identity.md`.** It is the approved target identity for the website and keeps the public site aligned with the desktop app.
+
+The site should be the more expressive side of a shared Ace language:
+
+- Signal amber (`#FFB000`) for intervention/commitment/attention;
+- warm Ink/Paper neutrals instead of blue-slate defaults;
+- IBM Plex Sans / Condensed / Mono;
+- firmer geometry and modest radii;
+- borders, rules, and inset surfaces over floating shadow cards;
+- actual Ace concepts — policies, schedules, locks, resistance, site packs — used as the visual material;
+- restrained, explanatory motion.
+
+Do not default to the old generic marketing composition: centered gradient hero, blurred blobs, release pill, three equal feature cards, rounded icon tiles, hover-lift cards, or generic premium glow/crown treatment.
+
+For visible marketing work, the mandatory design skills are `frontend-design`, `design-taste-frontend`, and `ui-ux-pro-max`. Use `svelte-code-writer`, `svelte-core-bestpractices`, and `svelte-components` for implementation, then `web-design-guidelines` plus real light/dark screenshots for final review. For dense account/admin product UI, treat `frontend-design` + `ui-ux-pro-max` as primary; `design-taste-frontend` must not override product-UI semantics.
+
 ## Project Structure
 
 - `/src/routes/`: Contains SvelteKit pages and API endpoints.
@@ -132,7 +150,7 @@ Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })
 
 ## Nomenclature & Design Patterns
 
-- **Design tokens & UI consistency**: the token system lives in `src/routes/layout.css` (Tailwind v4 `@theme`). Audit results, the de-facto palette, and the pending consolidation decisions are in [`docs/design-tokens.md`](docs/design-tokens.md). Do not change color values or migrate hardcoded `amber-*`/hex usages to tokens without founder approval + visual verification.
+- **Design tokens & UI consistency**: `docs/ui-identity.md` is the approved **target** visual direction. The token system currently lives in `src/routes/layout.css` (Tailwind v4 `@theme`), while [`docs/design-tokens.md`](docs/design-tokens.md) documents the current/legacy token state and prior consolidation work. The new palette is approved as a direction, but migrate it visually and incrementally; do not perform blind global color replacements without screenshot verification.
 - **Svelte Components**: All `.svelte` files MUST use `UpperCamelCase` naming convention (e.g., `Button.svelte`, `UserCard.svelte`).
 - **Page-specific components**: These MUST reside in a `./_components` folder within the route directory OR be prefixed with an underscore (e.g., `_Component.svelte`) to differentiate them from routes.
 - `/messages/`: Localization message files for Paraglide. During development, always prioritize English (`en`). Only translate when explicitly requested.
@@ -192,9 +210,14 @@ The following skills are installed for all agents:
 - **`openapi-spec-generation`** (`wshobson/agents`) — OpenAPI/Swagger spec generation.
 
 ### UI & Styling
-- **`shadcn`** (`shadcn/ui`) — shadcn UI component patterns.
-- **`tailwind-design-system`** (`wshobson/agents`) — Tailwind CSS design system principles.
-- **`tailwind-v4-shadcn`** (`secondsky/claude-skills`) — Tailwind v4 + shadcn integration.
+- **`frontend-design`** — Mandatory for distinctive, intentional visible UI.
+- **`design-taste-frontend`** — Mandatory for marketing/landing redesigns and anti-template review.
+- **`ui-ux-pro-max`** — Mandatory for product-wide UI/UX, typography, accessibility, layout, and interaction reasoning.
+- **`svelte-components`** — Use for Bits UI/headless component patterns.
+- **`web-design-guidelines`** — Final UI/accessibility review where applicable.
+- **`shadcn`** (`shadcn/ui`) — Existing implementation reference; default shadcn styling is not Ace identity.
+- **`tailwind-design-system`** (`wshobson/agents`) — Legacy/reference Tailwind design-system guidance; the Ace identity document is authoritative for visual direction.
+- **`tailwind-v4-shadcn`** (`secondsky/claude-skills`) — Existing integration reference; do not treat its defaults as the target system.
 
 ### Validation
 - **`zod`** (`pproenca/dot-skills`) — Zod schema validation patterns.
