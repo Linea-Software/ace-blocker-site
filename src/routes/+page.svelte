@@ -84,13 +84,11 @@
 			</div>
 
 			<div>
-				<div
-					class="mb-3 flex items-center justify-between gap-4 text-xs text-muted-foreground"
-				>
+				<div class="mb-3 flex items-center gap-3 text-xs text-muted-foreground">
+					<span class="h-px w-6 bg-signal" aria-hidden="true"></span>
 					<span>{m.home_mechanism_caption()}</span>
-					<span class="font-mono">{m.policy_type()} / 01</span>
 				</div>
-				<PolicyVisual interactive />
+				<PolicyVisual />
 			</div>
 		</div>
 	</section>

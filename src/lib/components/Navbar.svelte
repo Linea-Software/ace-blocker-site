@@ -14,8 +14,7 @@
 		User,
 		UserPlus
 	} from '@lucide/svelte';
-	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
-	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
+	import BrandLogo from '$lib/components/BrandLogo.svelte';
 	import { authClient } from '$lib/auth-client';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
@@ -32,7 +31,6 @@
 	];
 
 	let isMobileMenuOpen = $state(false);
-	const isDark = $derived(mode.current === 'dark');
 	const userInitial = $derived(
 		$session.data?.user
 			? ($session.data.user.name?.[0] ?? $session.data.user.email[0]).toUpperCase()
@@ -74,11 +72,7 @@
 				>
 					<Sheet.Header class="border-b border-border px-5 py-5 text-left">
 						<Sheet.Title>
-							<img
-								src={isDark ? darkFullLogo : lightFullLogo}
-								alt={m.about_hero_app()}
-								class="h-7 w-auto"
-							/>
+							<BrandLogo alt={m.about_hero_app()} class="h-7 w-auto" />
 						</Sheet.Title>
 						<Sheet.Description class="mt-2 max-w-xs text-sm">
 							{m.nav_menu_description()}
@@ -183,11 +177,7 @@
 			</Sheet.Root>
 
 			<a href={resolve('/')} class="shrink-0">
-				<img
-					src={isDark ? darkFullLogo : lightFullLogo}
-					alt={m.about_hero_app()}
-					class="h-[29px] w-auto md:h-8"
-				/>
+				<BrandLogo alt={m.about_hero_app()} class="h-[29px] w-auto md:h-8" />
 			</a>
 
 			<nav class="hidden h-16 items-stretch md:flex" aria-label={m.nav_toggle_menu()}>

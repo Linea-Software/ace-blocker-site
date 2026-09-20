@@ -1,53 +1,142 @@
 <script lang="ts">
-	import { LockKeyhole } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 
-	const rows = [
-		{ label: m.schedule_row_morning, start: '06:00', end: '09:00', width: '28%' },
-		{ label: m.schedule_row_work, start: '09:00', end: '17:00', width: '72%' },
-		{ label: m.schedule_row_evening, start: '20:00', end: '23:00', width: '28%' }
+	const days = [
+		m.week_mon_short,
+		m.week_tue_short,
+		m.week_wed_short,
+		m.week_thu_short,
+		m.week_fri_short,
+		m.week_sat_short,
+		m.week_sun_short
 	];
 </script>
 
-<div
-	class="overflow-hidden rounded-lg border border-border bg-card"
-	aria-label={m.schedule_visual_label()}
->
-	<div class="flex items-center justify-between gap-4 border-b border-border px-4 py-3">
-		<p class="font-display font-semibold">{m.schedule_title()}</p>
-		<p class="font-mono text-xs text-muted-foreground">{m.schedule_timezone()}</p>
+<div class="schedule-card" aria-label={m.schedule_visual_label()}>
+	<div class="schedule-header">
+		<p>{m.schedule_title()}</p>
+		<span>{m.schedule_timezone()}</span>
 	</div>
-	<div class="divide-y divide-border">
-		{#each rows as row, index (index)}
-			<div
-				class="grid grid-cols-[5.5rem_1fr] items-center gap-3 px-4 py-3 sm:grid-cols-[7rem_1fr_8rem]"
-			>
-				<div>
-					<p class="text-sm font-medium">{row.label()}</p>
-					<p class="font-mono text-[10px] text-muted-foreground">{row.start}-{row.end}</p>
+
+	<div class="timeline" role="img" aria-label={m.policy_schedule_summary()}>
+		<div class="scale" aria-hidden="true">
+			<span>00</span>
+			<span>06</span>
+			<span>12</span>
+			<span>18</span>
+			<span>24</span>
+		</div>
+
+		<div class="rows" aria-hidden="true">
+			{#each days as day, index (index)}
+				<div class="day-row">
+					<span class="day">{day()}</span>
+					<span class="track">
+						{#if index < 5}
+							<span class="window"></span>
+						{/if}
+					</span>
 				</div>
-				<div class="relative h-6 overflow-hidden border border-border bg-muted">
-					<div
-						class={[
-							'absolute inset-y-0 border-r border-foreground/20',
-							index === 1 ? 'left-[25%] bg-signal' : 'left-[8%] bg-foreground'
-						]}
-						style:width={row.width}
-						aria-hidden="true"
-					></div>
-				</div>
-				<div class="hidden items-center justify-end gap-1.5 text-xs sm:flex">
-					{#if index === 1}
-						<LockKeyhole
-							class="size-3.5 text-signal-deep dark:text-signal"
-							aria-hidden="true"
-						/>
-						{m.schedule_locked()}
-					{:else}
-						{m.schedule_enforced()}
-					{/if}
-				</div>
-			</div>
-		{/each}
+			{/each}
+		</div>
 	</div>
 </div>
+
+<style>
+	.schedule-card {
+		overflow: hidden;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		background: var(--card);
+	}
+
+	.schedule-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 11px 14px;
+		border-bottom: 1px solid var(--border);
+	}
+
+	.schedule-header p {
+		margin: 0;
+		font-family: 'IBM Plex Sans Condensed', sans-serif;
+		font-size: 15px;
+		font-weight: 600;
+	}
+
+	.schedule-header span {
+		color: var(--muted-foreground);
+		font-family: 'IBM Plex Mono', monospace;
+		font-size: 10px;
+	}
+
+	.timeline {
+		display: grid;
+		gap: 5px;
+		padding: 13px 14px 15px;
+	}
+
+	.scale {
+		margin-left: 31px;
+		display: flex;
+		justify-content: space-between;
+		color: var(--muted-foreground);
+		font-family: 'IBM Plex Mono', monospace;
+		font-size: 10px;
+		line-height: 1;
+	}
+
+	.rows {
+		display: grid;
+		gap: 5px;
+	}
+
+	.day-row {
+		display: grid;
+		grid-template-columns: 26px minmax(0, 1fr);
+		align-items: center;
+		gap: 5px;
+	}
+
+	.day {
+		color: var(--muted-foreground);
+		font-family: 'IBM Plex Mono', monospace;
+		font-size: 10px;
+		font-weight: 500;
+	}
+
+	.track {
+		position: relative;
+		height: 8px;
+		overflow: hidden;
+		border-radius: 2px;
+		background: var(--muted);
+	}
+
+	.track::before,
+	.track::after {
+		content: '';
+		position: absolute;
+		inset-block: 0;
+		width: 1px;
+		background: color-mix(in srgb, var(--foreground) 12%, transparent);
+	}
+
+	.track::before {
+		left: 50%;
+	}
+
+	.track::after {
+		left: 75%;
+	}
+
+	.window {
+		position: absolute;
+		inset-block: 0;
+		left: 37.5%;
+		width: 33.333%;
+		background: var(--signal);
+	}
+</style>

@@ -50,32 +50,32 @@
 			class="ace-shell grid gap-8 py-14 lg:grid-cols-[0.68fr_1.32fr] lg:items-start lg:py-20"
 		>
 			<div class="max-w-md">
-				<p class="font-mono text-xs text-muted-foreground">01 / {m.policy_type()}</p>
+				<p class="font-mono text-xs text-muted-foreground">{m.policy_type()}</p>
 				<h2 class="mt-4 font-display text-4xl font-semibold">{m.about_policy_title()}</h2>
 				<p class="mt-5 leading-relaxed text-muted-foreground">
 					{m.about_policy_description()}
 				</p>
 			</div>
-			<div
-				class="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2"
-			>
-				<div class="bg-background p-5">
-					<p class="text-xs text-muted-foreground">{m.policy_target_label()}</p>
-					<p class="mt-2 font-display text-xl font-semibold">{m.policy_target_value()}</p>
+			<dl class="divide-y divide-border border-y border-border">
+				<div class="grid gap-2 py-4 sm:grid-cols-[8rem_1fr] sm:items-baseline">
+					<dt class="text-xs text-muted-foreground">{m.policy_target_label()}</dt>
+					<dd class="font-display text-xl font-semibold">{m.policy_target_value()}</dd>
 				</div>
-				<div class="bg-background p-5">
-					<p class="text-xs text-muted-foreground">{m.policy_schedule_label()}</p>
-					<p class="mt-2 font-mono text-sm">{m.policy_schedule_time()}</p>
+				<div class="grid gap-2 py-4 sm:grid-cols-[8rem_1fr] sm:items-baseline">
+					<dt class="text-xs text-muted-foreground">{m.policy_schedule_label()}</dt>
+					<dd class="font-mono text-sm">{m.policy_schedule_time()}</dd>
 				</div>
-				<div class="bg-background p-5">
-					<p class="text-xs text-muted-foreground">{m.policy_resistance_label()}</p>
-					<p class="mt-2 font-display text-xl font-semibold">{m.resistance_high()}</p>
+				<div class="grid gap-2 py-4 sm:grid-cols-[8rem_1fr] sm:items-baseline">
+					<dt class="text-xs text-muted-foreground">{m.policy_resistance_label()}</dt>
+					<dd class="font-display text-xl font-semibold">{m.resistance_high()}</dd>
 				</div>
-				<div class="border-l-4 border-signal bg-background p-5">
-					<p class="text-xs text-muted-foreground">{m.policy_lock_title()}</p>
-					<p class="mt-2 font-mono text-sm">{m.policy_lock_until()}</p>
+				<div
+					class="grid gap-2 border-l-4 border-signal py-4 pl-4 sm:grid-cols-[8rem_1fr] sm:items-baseline"
+				>
+					<dt class="text-xs text-muted-foreground">{m.policy_lock_title()}</dt>
+					<dd class="font-mono text-sm">{m.policy_lock_until()}</dd>
 				</div>
-			</div>
+			</dl>
 		</div>
 	</section>
 
@@ -83,7 +83,7 @@
 		<div class="ace-shell">
 			<div class="mb-9 max-w-2xl">
 				<p class="font-mono text-xs text-muted-foreground">
-					02 / {m.policy_resistance_label()}
+					{m.policy_resistance_label()}
 				</p>
 				<h2 class="mt-4 font-display text-4xl font-semibold">
 					{m.about_resistance_title()}
@@ -100,7 +100,7 @@
 		<div class="ace-shell grid gap-14 lg:grid-cols-2">
 			<div>
 				<p class="font-mono text-xs text-muted-foreground">
-					03 / {m.policy_schedule_label()}
+					{m.policy_schedule_label()}
 				</p>
 				<h2 class="mt-4 font-display text-3xl font-semibold">{m.about_schedule_title()}</h2>
 				<p class="mt-4 max-w-lg leading-relaxed text-muted-foreground">
@@ -111,7 +111,7 @@
 				</div>
 			</div>
 			<div>
-				<p class="font-mono text-xs text-muted-foreground">04 / {m.site_pack_scope()}</p>
+				<p class="font-mono text-xs text-muted-foreground">{m.site_pack_scope()}</p>
 				<h2 class="mt-4 font-display text-3xl font-semibold">{m.about_packs_title()}</h2>
 				<p class="mt-4 max-w-lg leading-relaxed text-muted-foreground">
 					{m.about_packs_description()}

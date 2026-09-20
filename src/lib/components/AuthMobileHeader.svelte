@@ -1,7 +1,5 @@
 <script lang="ts">
-	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
-	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
-	import { mode } from 'mode-watcher';
+	import BrandLogo from '$lib/components/BrandLogo.svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
 
@@ -9,18 +7,13 @@
 		switchHref: '/signup' | '/signin';
 		switchLabel: string;
 	}>();
-	const isDark = $derived(mode.current === 'dark');
 </script>
 
 <div
 	class="mb-8 flex w-full max-w-md items-center justify-between border-b border-border pb-5 lg:hidden"
 >
 	<a href={resolve('/')} class="inline-flex min-h-11 items-center">
-		<img
-			src={isDark ? darkFullLogo : lightFullLogo}
-			alt={m.about_hero_app()}
-			class="h-6 w-auto"
-		/>
+		<BrandLogo alt={m.about_hero_app()} class="h-6 w-auto" />
 	</a>
 	<a
 		href={resolve(switchHref)}

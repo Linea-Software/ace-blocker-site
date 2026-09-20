@@ -23,6 +23,8 @@ Shared DNA:
 
 The website must not invent a separate “premium SaaS” identity.
 
+When the website depicts Ace product UI, it may simplify scale, data, and interaction for marketing, but it must remain visually faithful to the current desktop app's domain components. Network policies, resistance controls, schedules, locks, and Site Packs should read as reduced representations of the real product rather than a parallel pseudo-app design system. Marketing diagrams can be freer only when they are clearly diagrams rather than screenshots or product surfaces.
+
 ## 2. Mandatory design skills
 
 For any visible marketing redesign or new marketing page:

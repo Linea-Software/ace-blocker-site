@@ -1,9 +1,14 @@
 <script lang="ts">
-	import { LockKeyhole, ShieldCheck, Undo2 } from '@lucide/svelte';
+	import {
+		Eye,
+		Layers3,
+		ListTree,
+		Lock,
+		LockKeyhole,
+		MessageSquare,
+		Trash2
+	} from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
-
-	let { interactive = false } = $props<{ interactive?: boolean }>();
-	let attempted = $state(false);
 
 	const days = [
 		m.week_mon_short,
@@ -16,105 +21,389 @@
 	];
 </script>
 
-<div
-	class="overflow-hidden rounded-lg border border-foreground/20 bg-card"
-	aria-label={m.policy_visual_label()}
->
-	<div class="grid grid-cols-[6px_1fr]">
-		<div class="bg-signal" aria-hidden="true"></div>
-		<div>
-			<div
-				class="flex items-center justify-between gap-4 border-b border-border px-4 py-3 sm:px-5"
-			>
-				<div>
-					<p class="font-display text-lg leading-none font-semibold">{m.policy_name()}</p>
-					<p class="mt-1 text-xs text-muted-foreground">{m.policy_type()}</p>
+<article class="network-policy" aria-label={m.policy_visual_label()}>
+	<span class="state-rail" aria-hidden="true"></span>
+
+	<div class="policy-body">
+		<section class="lock-seal" aria-label={m.policy_lock_title()}>
+			<span class="seal-rail" aria-hidden="true"></span>
+			<span class="seal-mark" aria-hidden="true">
+				<LockKeyhole size={16} strokeWidth={2} />
+			</span>
+			<span class="seal-copy">
+				<strong>{m.policy_lock_title()}</strong>
+				<span>{m.policy_lock_description()}</span>
+			</span>
+			<span class="seal-detail">{m.policy_lock_until()}</span>
+		</section>
+
+		<div class="policy-header">
+			<div class="identity">
+				<div class="state-line">
+					<span class="state-word">{m.policy_state_active()}</span>
+					<span class="state-rule" aria-hidden="true"></span>
 				</div>
-				<div class="flex items-center gap-2 text-sm font-medium">
-					<span class="h-2 w-2 rounded-full bg-success" aria-hidden="true"></span>
-					{m.policy_state_active()}
+
+				<div class="object-identity">
+					<span class="policy-icon" aria-hidden="true">
+						<MessageSquare size={21} strokeWidth={1.8} />
+					</span>
+					<div class="object-copy">
+						<h3>{m.policy_name()}</h3>
+						<p class="schedule-copy">{m.policy_schedule_summary()}</p>
+					</div>
 				</div>
 			</div>
 
-			<dl class="grid border-b border-border sm:grid-cols-2">
-				<div class="border-b border-border px-4 py-4 sm:border-r sm:border-b-0 sm:px-5">
-					<dt class="text-xs text-muted-foreground">{m.policy_target_label()}</dt>
-					<dd class="mt-1 font-medium">{m.policy_target_value()}</dd>
-				</div>
-				<div class="px-4 py-4 sm:px-5">
-					<dt class="text-xs text-muted-foreground">{m.policy_resistance_label()}</dt>
-					<dd class="mt-1 flex items-center gap-2 font-medium">
-						<span class="h-2.5 w-8 bg-signal" aria-hidden="true"></span>
-						{m.resistance_high()}
-					</dd>
-				</div>
-			</dl>
+			<div class="actions" aria-hidden="true">
+				<span><Eye size={14} />{m.policy_view()}</span>
+				<span><Lock size={14} />{m.policy_review_lock()}</span>
+				<span class="disabled"><Trash2 size={14} />{m.policy_delete()}</span>
+			</div>
+		</div>
 
-			<div class="border-b border-border px-4 py-4 sm:px-5">
-				<div class="mb-3 flex items-center justify-between gap-4">
-					<p class="text-xs text-muted-foreground">{m.policy_schedule_label()}</p>
-					<p class="font-mono text-xs">{m.policy_schedule_time()}</p>
+		<div class="policy-grid">
+			<div class="schedule-zone">
+				<div class="scale" aria-hidden="true">
+					<span>00</span>
+					<span>06</span>
+					<span>12</span>
+					<span>18</span>
+					<span>24</span>
 				</div>
-				<div class="grid grid-cols-7 gap-1" aria-label={m.policy_schedule_summary()}>
+				<div class="rows" aria-hidden="true">
 					{#each days as day, index (index)}
-						<div class="min-w-0">
-							<div
-								class={[
-									'h-2 border border-foreground/15',
-									index < 5 ? 'bg-foreground' : 'bg-muted'
-								]}
-								aria-hidden="true"
-							></div>
-							<p class="mt-1 text-center font-mono text-[10px] text-muted-foreground">
-								{day()}
-							</p>
+						<div class="day-row">
+							<span class="day">{day()}</span>
+							<span class="track">
+								{#if index < 5}
+									<span class="window"></span>
+								{/if}
+							</span>
 						</div>
 					{/each}
 				</div>
 			</div>
 
-			<div class="bg-muted/70 px-4 py-4 sm:px-5">
-				<div class="flex items-start gap-3">
-					<div
-						class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md border border-signal-deep bg-signal text-ink"
-					>
-						<LockKeyhole class="size-4" aria-hidden="true" />
-					</div>
-					<div class="min-w-0 flex-1">
-						<div class="flex flex-wrap items-center justify-between gap-2">
-							<p class="font-display font-semibold">{m.policy_lock_title()}</p>
-							<p class="font-mono text-xs">{m.policy_lock_until()}</p>
-						</div>
-						<p class="mt-1 text-sm text-muted-foreground">
-							{m.policy_lock_description()}
-						</p>
-					</div>
+			<dl class="policy-facts">
+				<div>
+					<dt><Layers3 size={14} aria-hidden="true" /> {m.policy_site_packs()}</dt>
+					<dd>1</dd>
 				</div>
-
-				{#if interactive}
-					<div class="mt-4 border-t border-border pt-4">
-						<button
-							type="button"
-							class="inline-flex min-h-11 items-center gap-2 rounded-md border border-foreground/25 bg-card px-3.5 text-sm font-medium hover:bg-accent"
-							onclick={() => (attempted = true)}
-						>
-							<Undo2 class="size-4" aria-hidden="true" />
-							{m.policy_attempt_change()}
-						</button>
-						<div class="mt-3 min-h-10" aria-live="polite">
-							{#if attempted}
-								<p class="flex items-start gap-2 text-sm font-medium">
-									<ShieldCheck
-										class="mt-0.5 size-4 shrink-0 text-signal-deep dark:text-signal"
-										aria-hidden="true"
-									/>
-									<span>{m.policy_attempt_denied()}</span>
-								</p>
-							{/if}
-						</div>
-					</div>
-				{/if}
-			</div>
+				<div>
+					<dt><ListTree size={14} aria-hidden="true" /> {m.policy_rules()}</dt>
+					<dd>0</dd>
+				</div>
+			</dl>
 		</div>
 	</div>
-</div>
+</article>
+
+<style>
+	.network-policy {
+		display: grid;
+		grid-template-columns: 7px minmax(0, 1fr);
+		overflow: hidden;
+		border: 1px solid var(--signal-deep);
+		border-radius: 7px;
+		background: var(--card);
+		box-shadow:
+			inset 0 2px 0 color-mix(in srgb, var(--signal) 20%, transparent),
+			inset 0 -2px 0 color-mix(in srgb, var(--signal) 20%, transparent);
+	}
+
+	.state-rail {
+		background: var(--signal);
+	}
+
+	.policy-body {
+		min-width: 0;
+	}
+
+	.lock-seal {
+		display: grid;
+		grid-template-columns: 5px 28px minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 8px;
+		min-height: 38px;
+		border-bottom: 1px solid var(--signal-deep);
+		background: color-mix(in srgb, var(--signal) 8%, var(--card));
+	}
+
+	.seal-rail {
+		align-self: stretch;
+		background: var(--signal);
+	}
+
+	.seal-mark {
+		width: 26px;
+		height: 26px;
+		display: grid;
+		place-items: center;
+		color: var(--signal-deep);
+	}
+
+	.seal-copy {
+		min-width: 0;
+		display: block;
+		padding-block: 6px;
+	}
+
+	.seal-copy strong {
+		display: block;
+		font-family: 'IBM Plex Sans Condensed', sans-serif;
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 1.1;
+	}
+
+	.seal-copy > span {
+		display: block;
+		margin-top: 1px;
+		color: var(--muted-foreground);
+		font-size: 11px;
+		line-height: 1.35;
+	}
+
+	.seal-detail {
+		margin-right: 12px;
+		color: var(--muted-foreground);
+		font-family: 'IBM Plex Mono', monospace;
+		font-size: 10px;
+		white-space: nowrap;
+	}
+
+	.policy-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 15px 16px 12px;
+	}
+
+	.identity {
+		min-width: 0;
+		flex: 1;
+	}
+
+	.state-line {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 4px;
+	}
+
+	.state-word {
+		color: var(--signal-deep);
+		font-family: 'IBM Plex Sans Condensed', sans-serif;
+		font-size: 12px;
+		font-weight: 600;
+	}
+
+	.state-rule {
+		width: 26px;
+		height: 1px;
+		background: var(--signal-deep);
+	}
+
+	.object-identity {
+		display: flex;
+		min-width: 0;
+		align-items: flex-start;
+		gap: 9px;
+	}
+
+	.policy-icon {
+		width: 21px;
+		height: 21px;
+		flex: 0 0 21px;
+		display: grid;
+		place-items: center;
+		margin-top: 1px;
+		color: color-mix(in srgb, var(--foreground) 76%, var(--muted-foreground));
+	}
+
+	.object-copy {
+		min-width: 0;
+	}
+
+	h3 {
+		margin: 0;
+		overflow: hidden;
+		font-family: 'IBM Plex Sans Condensed', sans-serif;
+		font-size: clamp(19px, 3vw, 23px);
+		font-weight: 600;
+		line-height: 1.05;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.schedule-copy {
+		margin: 5px 0 0;
+		color: var(--muted-foreground);
+		font-family: 'IBM Plex Mono', monospace;
+		font-size: 11px;
+		line-height: 1.35;
+	}
+
+	.actions {
+		display: flex;
+		align-items: center;
+		gap: 2px;
+	}
+
+	.actions span {
+		display: inline-flex;
+		min-height: 32px;
+		align-items: center;
+		gap: 5px;
+		padding: 0 7px;
+		color: var(--muted-foreground);
+		font-size: 11px;
+		font-weight: 500;
+	}
+
+	.actions .disabled {
+		opacity: 0.35;
+	}
+
+	.policy-grid {
+		display: grid;
+		grid-template-columns: minmax(230px, 1fr) auto;
+		align-items: end;
+		gap: 18px;
+		padding: 0 16px 15px;
+	}
+
+	.schedule-zone {
+		min-width: 0;
+		padding-top: 11px;
+		border-top: 1px solid var(--border);
+	}
+
+	.scale {
+		margin-left: 31px;
+		display: flex;
+		justify-content: space-between;
+		color: var(--muted-foreground);
+		font-family: 'IBM Plex Mono', monospace;
+		font-size: 10px;
+		line-height: 1;
+	}
+
+	.rows {
+		display: grid;
+		gap: 4px;
+		margin-top: 5px;
+	}
+
+	.day-row {
+		display: grid;
+		grid-template-columns: 26px minmax(0, 1fr);
+		align-items: center;
+		gap: 5px;
+	}
+
+	.day {
+		color: var(--muted-foreground);
+		font-family: 'IBM Plex Mono', monospace;
+		font-size: 10px;
+		font-weight: 500;
+	}
+
+	.track {
+		position: relative;
+		height: 7px;
+		overflow: hidden;
+		border-radius: 2px;
+		background: var(--muted);
+	}
+
+	.track::before,
+	.track::after {
+		content: '';
+		position: absolute;
+		inset-block: 0;
+		width: 1px;
+		background: color-mix(in srgb, var(--foreground) 12%, transparent);
+	}
+
+	.track::before {
+		left: 50%;
+	}
+
+	.track::after {
+		left: 75%;
+	}
+
+	.window {
+		position: absolute;
+		inset-block: 0;
+		left: 37.5%;
+		width: 33.333%;
+		background: var(--signal);
+	}
+
+	.policy-facts {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(78px, auto));
+		margin: 0;
+		overflow: hidden;
+		border: 1px solid var(--border);
+		border-radius: 4px;
+	}
+
+	.policy-facts > div {
+		min-width: 82px;
+		padding: 7px 9px;
+		background: color-mix(in srgb, var(--muted) 45%, transparent);
+	}
+
+	.policy-facts > div + div {
+		border-left: 1px solid var(--border);
+	}
+
+	dt {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+		color: var(--muted-foreground);
+		font-size: 10px;
+	}
+
+	dd {
+		margin: 2px 0 0 19px;
+		font-family: 'IBM Plex Mono', monospace;
+		font-size: 13px;
+		font-weight: 500;
+	}
+
+	@media (max-width: 620px) {
+		.lock-seal {
+			grid-template-columns: 5px 28px minmax(0, 1fr);
+		}
+
+		.seal-detail {
+			grid-column: 3;
+			margin: -3px 0 8px;
+			white-space: normal;
+		}
+
+		.policy-header {
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		.actions {
+			display: none;
+		}
+
+		.policy-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.policy-facts {
+			justify-self: stretch;
+		}
+	}
+</style>

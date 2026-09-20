@@ -76,6 +76,8 @@ The site should be the more expressive side of a shared Ace language:
 - firmer geometry and modest radii;
 - borders, rules, and inset surfaces over floating shadow cards;
 - actual Ace concepts — policies, schedules, locks, resistance, site packs — used as the visual material;
+- product-UI previews may simplify, but must stay visually faithful to the current desktop app domain components instead of inventing a separate pseudo-app language;
+- theme-dependent brand artwork should follow the CSS `.dark` state rather than hydration-time JavaScript theme guesses, so the correct asset is present on first paint and refresh;
 - restrained, explanatory motion.
 
 Do not default to the old generic marketing composition: centered gradient hero, blurred blobs, release pill, three equal feature cards, rounded icon tiles, hover-lift cards, or generic premium glow/crown treatment.
