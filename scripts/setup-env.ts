@@ -70,6 +70,7 @@ export function formatEnv(env: EnvMap): string {
 		['# ── Auth ──', 'BETTER_AUTH_SECRET'],
 		['# ── Dodo Payments ──', 'DODO_PAYMENTS_API_KEY', 'DODO_PAYMENTS_WEBHOOK_SECRET'],
 		['# ── Email (Resend) ──', 'RESEND_API_KEY'],
+		['# ── Release intake ──', 'ACE_RELEASE_INGEST_TOKEN'],
 		[
 			'# ── BunnyCDN ──',
 			'BUNNY_URL_TOKEN_AUTH_KEY',
@@ -111,6 +112,9 @@ export function configureProductionEnvironment(env: EnvMap, domain: string): Env
 	env.set('PUBLIC_BETTER_AUTH_URL', origin);
 	env.set('ORIGIN', origin);
 	if (!env.get('BETTER_AUTH_SECRET')) env.set('BETTER_AUTH_SECRET', randomBytes(32).toString('hex'));
+	if (!env.get('ACE_RELEASE_INGEST_TOKEN')) {
+		env.set('ACE_RELEASE_INGEST_TOKEN', randomBytes(32).toString('hex'));
+	}
 	deriveDatabaseUrl(env);
 	return env;
 }

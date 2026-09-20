@@ -17,6 +17,13 @@ export const aceBlockerInstaller = pgTable('ace_blocker_installer', {
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	// to be set by the program
 	sha256: text('sha256').notNull(),
+	// Optional CI provenance. Manual/legacy uploads leave these null.
+	sourceRepository: text('source_repository'),
+	sourceCommit: text('source_commit'),
+	sourceRunId: text('source_run_id'),
+	sourceRunUrl: text('source_run_url'),
+	engineCommit: text('engine_commit'),
+	appCommit: text('app_commit'),
 	// to be set by the program
 	size: integer('size').notNull(),
 	// to be set by the admins/program: if there's a new version, this will be set to false

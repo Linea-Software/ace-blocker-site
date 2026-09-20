@@ -233,12 +233,22 @@ export async function uploadResistanceModeScript(
 	return ok({ downloadUrl, hash });
 }
 
+export type InstallerProvenance = {
+	sourceRepository?: string;
+	sourceCommit?: string;
+	sourceRunId?: string;
+	sourceRunUrl?: string;
+	engineCommit?: string;
+	appCommit?: string;
+};
+
 export async function uploadInstaller(
 	file: File,
 	version: string,
 	os: 'windows' | 'linux' | 'macos',
 	architecture: 'x64' | 'arm64',
-	canBeDownloaded: boolean = true
+	canBeDownloaded: boolean = true,
+	provenance?: InstallerProvenance
 ): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
 	const validationError = await validateArtifact(file, version, 'installer', { zip: false });
 	if (validationError) {
@@ -270,6 +280,12 @@ export async function uploadInstaller(
 			architecture: architecture,
 			downloadUrl,
 			sha256: hash,
+			sourceRepository: provenance?.sourceRepository,
+			sourceCommit: provenance?.sourceCommit,
+			sourceRunId: provenance?.sourceRunId,
+			sourceRunUrl: provenance?.sourceRunUrl,
+			engineCommit: provenance?.engineCommit,
+			appCommit: provenance?.appCommit,
 			size: file.size,
 			canBeDownloaded: canBeDownloaded,
 			downloadCount: 0
