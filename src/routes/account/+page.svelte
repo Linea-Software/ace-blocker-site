@@ -396,14 +396,12 @@
 					</Card.Content>
 				</Card.Root>
 
-				<Card.Root class="border-destructive/40">
-					<Card.Header
-						><Card.Title class="text-destructive"
-							>{m.account_danger_zone_title()}</Card.Title
-						><Card.Description>{m.account_danger_zone_description()}</Card.Description
-						></Card.Header
-					>
-					<Card.Content class="flex flex-col gap-4">
+				<Card.Root>
+					<Card.Header>
+						<Card.Title>{m.account_data_title()}</Card.Title>
+						<Card.Description>{m.account_data_description()}</Card.Description>
+					</Card.Header>
+					<Card.Content>
 						<div
 							class="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
 						>
@@ -420,6 +418,17 @@
 								/>{m.account_export_button()}</Button
 							>
 						</div>
+					</Card.Content>
+				</Card.Root>
+
+				<Card.Root class="border-destructive/40">
+					<Card.Header
+						><Card.Title class="text-destructive"
+							>{m.account_danger_zone_title()}</Card.Title
+						><Card.Description>{m.account_danger_zone_description()}</Card.Description
+						></Card.Header
+					>
+					<Card.Content class="flex flex-col gap-4">
 						{#if isAdmin}
 							<div class="flex items-start gap-3 rounded-lg border p-4">
 								<Shield class="mt-0.5 text-muted-foreground" aria-hidden="true" />

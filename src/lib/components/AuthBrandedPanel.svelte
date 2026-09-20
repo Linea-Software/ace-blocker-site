@@ -15,9 +15,11 @@
 	<div class="relative z-10 max-w-xl">
 		<div class="mb-8 h-1 w-16 bg-signal" aria-hidden="true"></div>
 		<p class="font-display text-5xl leading-[0.92] font-semibold tracking-tight xl:text-6xl">
-			{m.home_title()}
+			{m.auth_reclaim_focus_title()}
 		</p>
-		<p class="mt-6 max-w-md text-base leading-relaxed text-paper/60">{m.home_description()}</p>
+		<p class="mt-6 max-w-md text-base leading-relaxed text-paper/60">
+			{m.auth_reclaim_focus_subtitle()}
+		</p>
 
 		<div class="mt-10 overflow-hidden rounded-md border border-white/15 bg-graphite">
 			<div class="flex items-center justify-between gap-4 border-b border-white/10 px-4 py-3">

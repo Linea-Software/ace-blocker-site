@@ -40,10 +40,6 @@
 			class="ace-shell grid gap-12 py-14 lg:grid-cols-[0.86fr_1.14fr] lg:items-center lg:py-20"
 		>
 			<div class="max-w-xl">
-				<div class="mb-8 flex items-center gap-3 text-sm text-muted-foreground">
-					<span class="h-px w-10 bg-foreground" aria-hidden="true"></span>
-					<span>{m.home_decision_label()}</span>
-				</div>
 				<h1
 					class="font-display text-[clamp(3.4rem,7vw,6.1rem)] leading-[0.88] font-semibold tracking-[-0.045em]"
 				>

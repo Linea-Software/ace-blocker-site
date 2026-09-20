@@ -65,10 +65,6 @@
 					<dt class="text-xs text-muted-foreground">{m.policy_schedule_label()}</dt>
 					<dd class="font-mono text-sm">{m.policy_schedule_time()}</dd>
 				</div>
-				<div class="grid gap-2 py-4 sm:grid-cols-[8rem_1fr] sm:items-baseline">
-					<dt class="text-xs text-muted-foreground">{m.policy_resistance_label()}</dt>
-					<dd class="font-display text-xl font-semibold">{m.resistance_high()}</dd>
-				</div>
 				<div
 					class="grid gap-2 border-l-4 border-signal py-4 pl-4 sm:grid-cols-[8rem_1fr] sm:items-baseline"
 				>
