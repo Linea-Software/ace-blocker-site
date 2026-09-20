@@ -1,9 +1,5 @@
 import { err, ok, Result } from 'neverthrow';
-import {
-	getLatestSitePacks,
-	getLatestResistanceScript,
-	getInstallerFor
-} from '$lib/server/cache';
+import { getLatestSitePacks, getLatestResistanceScript, getInstallerFor } from '$lib/server/cache';
 import {
 	CDNErrorType,
 	sitePacksBasePath,
@@ -22,6 +18,16 @@ export function getSitePackURL(
 
 	if (!latestRecord) {
 		return err(CDNErrorType.SitePackNotFound);
+	}
+
+	if (latestRecord.requiresProSubscription && !isUserPro) {
+		return err(CDNErrorType.ProSubscriptionRequired);
+	}
+
+	if (
+		latestRecord.downloadUrl.startsWith('https://github.com/Linea-Software/ace-hosts/releases/')
+	) {
+		return ok(new URL(latestRecord.downloadUrl));
 	}
 
 	let sitePackPath = new URL(latestRecord.fileName, sitePacksBasePath);

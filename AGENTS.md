@@ -107,6 +107,7 @@ For visible marketing work, the mandatory design skills are `frontend-design`, `
         - `api/`: Elysia API implementation using `@elysiajs/openapi` for type-safe RPC and auto-generated documentation.
         - `cdn/`: BunnyCDN file management (`common.ts`, `delete.ts`, `get.ts`, `upload.ts`).
         - `cache.ts`: Server-side caching.
+        - `ace-hosts-site-packs.ts`: Production-only monthly synchronization of canonical site-pack metadata from the latest `Linea-Software/ace-hosts` GitHub release; canonical packs download directly from those GitHub release assets.
         - `email.ts`: Email sending.
         - `messages.ts`: Server-side message/notification logic.
         - `pro.ts`: Pro status management.

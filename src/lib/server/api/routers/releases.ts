@@ -1,12 +1,15 @@
 import { Elysia, t } from 'elysia';
-import {
-	getLatestInstaller,
-	getLatestResistanceScript,
-	getLatestSitePacks
-} from '../../cache';
+import { getLatestInstaller, getLatestResistanceScript, getLatestSitePacks } from '../../cache';
 import { createLogger } from '$lib/server/logger';
 
 const log = createLogger('api:releases');
+
+function sitePackVersion(updatedAt: Date): string {
+	const year = updatedAt.getUTCFullYear();
+	const month = String(updatedAt.getUTCMonth() + 1).padStart(2, '0');
+	const day = String(updatedAt.getUTCDate()).padStart(2, '0');
+	return `${year}.${month}.${day}`;
+}
 
 export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 	'/latest',
@@ -29,18 +32,18 @@ export const releasesRouter = new Elysia({ prefix: '/releases' }).get(
 					: null,
 				resistance: resistance
 					? {
-						version: resistance.version,
-						size: resistance.size,
-						sha256: resistance.sha256,
-						createdAt: resistance.createdAt
-					  }
+							version: resistance.version,
+							size: resistance.size,
+							sha256: resistance.sha256,
+							createdAt: resistance.createdAt
+						}
 					: null,
 				sitePacks: Array.from(sitePacks.entries()).map(([id, pack]) => ({
 					id,
 					name: pack.name,
 					description: `Site pack package: ${pack.name}`,
 					requiresPro: pack.requiresProSubscription,
-					version: pack.fileName.split('.')[0] || pack.fileName,
+					version: sitePackVersion(pack.updatedAt),
 					size: pack.size,
 					updatedAt: pack.updatedAt
 				}))

@@ -12,6 +12,7 @@ import crypto from 'crypto';
 import { v7 as uuidv7 } from 'uuid';
 import { dev } from '$app/environment';
 import { assertProductionEnvironment } from '$lib/server/config/production';
+import { startAceHostsSitePackSync, syncAceHostsSitePacks } from '$lib/server/ace-hosts-site-packs';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
 	paraglideMiddleware(event.request, ({ request, locale }) => {
@@ -86,13 +87,27 @@ const handleTrackVisits: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(handleApi, handleParaglide, handleTrackVisits, handleLogger, handleAuth);
+export const handle: Handle = sequence(
+	handleApi,
+	handleParaglide,
+	handleTrackVisits,
+	handleLogger,
+	handleAuth
+);
 
 export async function init() {
 	logger.info('Initializing application...');
 	if (!dev) assertProductionEnvironment();
 	await seedPrices(); // creates Dodo products and populates the checkout plugin's product list
 	await seedDatabase();
+	if (!dev) {
+		try {
+			await syncAceHostsSitePacks();
+		} catch (error) {
+			logger.error({ err: error }, 'Initial ace-hosts site-pack synchronization failed');
+		}
+	}
 	await initializeCache();
+	if (!dev) startAceHostsSitePackSync();
 	logger.info('Application initialized');
 }
