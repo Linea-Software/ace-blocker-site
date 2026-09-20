@@ -2,12 +2,7 @@ import { err, ok, Result } from 'neverthrow';
 import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
 import { db } from '$lib/server/db';
-import { sql } from 'drizzle-orm';
-import {
-	sitePack,
-	resistanceModeScripts,
-	aceBlockerInstaller
-} from '$lib/server/db/schema';
+import { sitePack, resistanceModeScripts, aceBlockerInstaller } from '$lib/server/db/schema';
 import {
 	invalidateSitePacksCache,
 	invalidateResistanceCache,
@@ -25,7 +20,8 @@ import {
 	isValidArtifactFile,
 	isValidArtifactName,
 	isValidArtifactVersion,
-	MAX_ARTIFACT_SIZE
+	MAX_ARTIFACT_SIZE,
+	MAX_SITE_PACK_SIZE
 } from './common';
 import { deleteFileFromBunnyCDN } from './delete';
 import { createLogger } from '$lib/server/logger';
@@ -39,13 +35,14 @@ const log = createLogger('cdn:upload');
 async function validateArtifactFile(
 	file: File,
 	label: string,
-	options: { zip: boolean }
+	options: { zip: boolean; maxBytes?: number }
 ): Promise<string | null> {
 	if (file.size <= 0) {
 		return `The ${label} file is empty`;
 	}
-	if (file.size > MAX_ARTIFACT_SIZE) {
-		return `The ${label} file exceeds the 100 MB upload limit`;
+	const maxBytes = options.maxBytes ?? MAX_ARTIFACT_SIZE;
+	if (file.size > maxBytes) {
+		return `The ${label} file exceeds the ${maxBytes} byte upload limit`;
 	}
 	if (!(await isValidArtifactFile(file, options))) {
 		return `The ${label} file is not a valid ${options.zip ? 'zip archive' : 'file type'}`;
@@ -61,7 +58,7 @@ async function validateArtifact(
 	file: File,
 	version: string,
 	label: string,
-	options: { zip: boolean }
+	options: { zip: boolean; maxBytes?: number }
 ): Promise<string | null> {
 	if (!isValidArtifactVersion(version)) {
 		return `Invalid ${label} version '${version}': use 1-64 URL-safe characters ([A-Za-z0-9._-], no slashes or traversal)`;
@@ -111,7 +108,8 @@ export async function uploadSitePack(
 	name: string,
 	id: string,
 	requiresProSubscription: boolean,
-	canBeDownloaded: boolean = true
+	canBeDownloaded: boolean = true,
+	updatedAt: Date = new Date()
 ): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
 	// Site pack ids become CDN object names — same path-safety rules as
 	// versions (the canonical catalog ids are URL-safe slugs such as
@@ -127,7 +125,10 @@ export async function uploadSitePack(
 		log.warn({ id, name }, 'Rejected site pack upload: invalid name');
 		return err(CDNErrorType.InvalidArtifact);
 	}
-	const validationError = await validateArtifactFile(file, 'site pack', { zip: true });
+	const validationError = await validateArtifactFile(file, 'site pack', {
+		zip: true,
+		maxBytes: MAX_SITE_PACK_SIZE
+	});
 	if (validationError) {
 		log.warn({ id }, `Rejected site pack upload: ${validationError}`);
 		return err(CDNErrorType.InvalidArtifact);
@@ -156,6 +157,7 @@ export async function uploadSitePack(
 				size: file.size,
 				requiresProSubscription: requiresProSubscription,
 				canBeDownloaded: canBeDownloaded,
+				updatedAt,
 				downloadCount: 0
 			})
 			.onConflictDoUpdate({
@@ -167,7 +169,7 @@ export async function uploadSitePack(
 					sha256: hash,
 					size: file.size,
 					requiresProSubscription: requiresProSubscription,
-					updatedAt: sql`CURRENT_TIMESTAMP`
+					updatedAt
 				}
 			});
 	} catch (error) {
@@ -221,10 +223,7 @@ export async function uploadResistanceModeScript(
 	} catch (error) {
 		// The CDN object is already stored — remove it so a failed DB insert
 		// never leaves an inconsistent database/CDN state behind.
-		log.error(
-			{ err: error, version },
-			'DB insert failed after CDN upload; cleaning up object'
-		);
+		log.error({ err: error, version }, 'DB insert failed after CDN upload; cleaning up object');
 		await deleteFileFromBunnyCDN(endpointUrl);
 		return err(CDNErrorType.UploadFailed);
 	}

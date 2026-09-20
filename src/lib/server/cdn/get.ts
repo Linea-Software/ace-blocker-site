@@ -24,12 +24,6 @@ export function getSitePackURL(
 		return err(CDNErrorType.ProSubscriptionRequired);
 	}
 
-	if (
-		latestRecord.downloadUrl.startsWith('https://github.com/Linea-Software/ace-hosts/releases/')
-	) {
-		return ok(new URL(latestRecord.downloadUrl));
-	}
-
 	let sitePackPath = new URL(latestRecord.fileName, sitePacksBasePath);
 
 	if (latestRecord.requiresProSubscription) {

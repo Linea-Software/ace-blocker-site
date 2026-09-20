@@ -1,7 +1,9 @@
 import { db } from '$lib/server/db';
 import { sitePack } from '$lib/server/db/schema';
-import { invalidateSitePacksCache } from '$lib/server/cache';
+import { eq } from 'drizzle-orm';
 import { createLogger } from '$lib/server/logger';
+import { uploadSitePack } from '$lib/server/cdn/upload';
+import { getArrayBufferChecksum, MAX_SITE_PACK_SIZE } from '$lib/server/cdn/common';
 
 const log = createLogger('ace-hosts-site-packs');
 const ACE_HOSTS_RELEASE_API =
@@ -35,49 +37,49 @@ export const ACE_HOSTS_SITE_PACKS: readonly AceHostsSitePackDefinition[] = [
 		id: 'pack-adult-free',
 		name: 'Adult Websites — Free',
 		description: 'Compact monthly adult-content list from ace-hosts.',
-		assetName: 'adult-hosts00',
+		assetName: 'site-pack-adult-free.zip',
 		requiresProSubscription: false
 	},
 	{
 		id: 'pack-adult-pro',
 		name: 'Adult Websites — Pro',
 		description: 'Extended monthly adult-content list from ace-hosts.',
-		assetName: 'adult-extended.txt',
+		assetName: 'site-pack-adult-pro.zip',
 		requiresProSubscription: true
 	},
 	{
 		id: 'pack-social-free',
 		name: 'Social Media Websites — Free',
 		description: 'Blocks social media sites.',
-		assetName: 'social-hosts00',
+		assetName: 'site-pack-social-free.zip',
 		requiresProSubscription: false
 	},
 	{
 		id: 'pack-gaming-free',
 		name: 'Gaming Websites — Free',
 		description: 'Blocks online gaming sites and services.',
-		assetName: 'gaming-hosts00',
+		assetName: 'site-pack-gaming-free.zip',
 		requiresProSubscription: false
 	},
 	{
 		id: 'pack-gambling-pro',
 		name: 'Gambling Websites — Pro',
 		description: 'Blocks online gambling sites.',
-		assetName: 'gambling-hosts00',
+		assetName: 'site-pack-gambling-pro.zip',
 		requiresProSubscription: true
 	},
 	{
 		id: 'pack-streaming-pro',
 		name: 'Streaming Websites — Pro',
 		description: 'Blocks popular streaming services.',
-		assetName: 'streaming-hosts00',
+		assetName: 'site-pack-streaming-pro.zip',
 		requiresProSubscription: true
 	},
 	{
 		id: 'pack-shopping-pro',
 		name: 'Shopping Websites — Pro',
 		description: 'Blocks popular shopping services.',
-		assetName: 'shopping-hosts00',
+		assetName: 'site-pack-shopping-pro.zip',
 		requiresProSubscription: true
 	}
 ];
@@ -125,10 +127,61 @@ async function fetchChecksums(release: GitHubRelease): Promise<Map<string, strin
 	return parseSha256Checksums(await response.text());
 }
 
+async function getStoredSha256(id: string): Promise<string | null> {
+	const rows = await db
+		.select({ sha256: sitePack.sha256 })
+		.from(sitePack)
+		.where(eq(sitePack.id, id))
+		.limit(1);
+	return rows[0]?.sha256.toLowerCase() ?? null;
+}
+
+async function downloadVerifiedSitePack(
+	asset: GitHubReleaseAsset,
+	expectedSha256: string
+): Promise<File> {
+	if (asset.size > MAX_SITE_PACK_SIZE) {
+		throw new Error(
+			`ace-hosts asset ${asset.name} exceeds the 2 GiB site-pack limit (${asset.size} bytes)`
+		);
+	}
+
+	const response = await fetch(asset.browser_download_url, {
+		headers: { 'User-Agent': 'ace-blocker-site' }
+	});
+	if (!response.ok) {
+		throw new Error(
+			`ace-hosts asset ${asset.name} download failed with status ${response.status}`
+		);
+	}
+
+	const body = await response.arrayBuffer();
+	if (body.byteLength !== asset.size) {
+		throw new Error(
+			`ace-hosts asset ${asset.name} size mismatch: expected ${asset.size}, got ${body.byteLength}`
+		);
+	}
+
+	const actualSha256 = getArrayBufferChecksum(body);
+	if (actualSha256 !== expectedSha256) {
+		throw new Error(
+			`ace-hosts asset ${asset.name} checksum mismatch: expected ${expectedSha256}, got ${actualSha256}`
+		);
+	}
+
+	return new File([body], asset.name, { type: 'application/zip' });
+}
+
 export async function syncAceHostsSitePacks(): Promise<void> {
 	const release = await fetchLatestRelease();
 	const checksums = await fetchChecksums(release);
 	const updatedAt = new Date(release.published_at ?? release.created_at);
+	if (Number.isNaN(updatedAt.getTime())) {
+		throw new Error(`ace-hosts release ${release.tag_name} has an invalid publication date`);
+	}
+
+	let updated = 0;
+	let unchanged = 0;
 
 	const resolvedPacks = ACE_HOSTS_SITE_PACKS.map((definition) => {
 		const asset = release.assets.find((candidate) => candidate.name === definition.assetName);
@@ -148,40 +201,38 @@ export async function syncAceHostsSitePacks(): Promise<void> {
 		return { definition, asset, sha256 };
 	});
 
-	await db.transaction(async (tx) => {
-		for (const { definition, asset, sha256 } of resolvedPacks) {
-			await tx
-				.insert(sitePack)
-				.values({
-					id: definition.id,
-					name: definition.name,
-					fileName: asset.name,
-					requiresProSubscription: definition.requiresProSubscription,
-					downloadUrl: asset.browser_download_url,
-					updatedAt,
-					sha256,
-					size: asset.size,
-					canBeDownloaded: true,
-					downloadCount: 0
-				})
-				.onConflictDoUpdate({
-					target: sitePack.id,
-					set: {
-						name: definition.name,
-						fileName: asset.name,
-						requiresProSubscription: definition.requiresProSubscription,
-						downloadUrl: asset.browser_download_url,
-						updatedAt,
-						sha256,
-						size: asset.size,
-						canBeDownloaded: true
-					}
-				});
+	for (const { definition, asset, sha256 } of resolvedPacks) {
+		if ((await getStoredSha256(definition.id)) === sha256) {
+			unchanged += 1;
+			continue;
 		}
-	});
-	await invalidateSitePacksCache();
+
+		const file = await downloadVerifiedSitePack(asset, sha256);
+		const upload = await uploadSitePack(
+			file,
+			definition.name,
+			definition.id,
+			definition.requiresProSubscription,
+			true,
+			updatedAt
+		);
+		if (upload.isErr()) {
+			throw new Error(
+				`failed to mirror ${definition.assetName} to BunnyCDN (error ${upload.error})`
+			);
+		}
+
+		const uploaded = upload._unsafeUnwrap();
+		if (uploaded.hash !== sha256) {
+			throw new Error(
+				`mirrored ${definition.assetName} checksum changed during upload: expected ${sha256}, got ${uploaded.hash}`
+			);
+		}
+		updated += 1;
+	}
+
 	log.info(
-		{ release: release.tag_name, count: ACE_HOSTS_SITE_PACKS.length },
+		{ release: release.tag_name, updated, unchanged },
 		'Synchronized site packs from ace-hosts'
 	);
 }
