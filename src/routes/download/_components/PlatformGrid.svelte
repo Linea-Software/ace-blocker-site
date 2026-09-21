@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages';
+	import { resolve } from '$app/paths';
 
 	interface PlatformOption {
 		id: string;
@@ -22,87 +23,69 @@
 	} = $props();
 </script>
 
-<div class="space-y-10">
-	<div class="flex items-center gap-4 px-4">
-		<div
-			class="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:via-slate-800"
-		></div>
-		<span
-			class="text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase dark:text-slate-500"
-			>{m.download_other_arch_title()}</span
-		>
-		<div
-			class="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:via-slate-800"
-		></div>
+<div class="overflow-hidden rounded-lg border border-border bg-card">
+	<div class="border-b border-border bg-muted px-5 py-3 sm:px-6">
+		<p class="text-sm font-medium">{m.download_other_arch_title()}</p>
 	</div>
-
-	<div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+	<div class="divide-y divide-border">
 		{#each platforms as option (option.id)}
 			{@const isRecommended = detectedArch === option.routeArch && option.isAvailable}
 			{@const PlatformIcon = option.icon}
-			<div class="group relative" class:opacity-60={!option.isAvailable}>
+			{#if option.isAvailable}
 				<a
-					href={option.isAvailable ? `/download/${option.routeArch}` : undefined}
-					class="relative flex flex-col items-start gap-5 rounded-2xl p-8 text-left transition-all duration-500
-						{option.isAvailable ? 'hover:scale-[1.02] active:scale-[0.98]' : 'cursor-default'}
-						{isRecommended
-						? 'border-2 border-brand/50 bg-amber-50 shadow-2xl shadow-brand/10 dark:bg-brand/5'
-						: 'border border-slate-200 bg-white shadow-sm hover:border-brand/30 hover:bg-amber-50 dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-brand/30 dark:hover:bg-brand/5 dark:hover:shadow-xl'}"
-					aria-disabled={!option.isAvailable}
+					href={resolve('/download/[arch]', { arch: option.routeArch })}
+					class={[
+						'grid min-h-24 gap-4 px-5 py-5 hover:bg-accent sm:grid-cols-[3rem_minmax(0,1fr)_auto] sm:items-center sm:px-6',
+						isRecommended &&
+							'border-l-4 border-information bg-information/5 pl-4 sm:pl-5'
+					]}
 				>
-					{#if isRecommended}
-						<div
-							class="absolute top-6 right-8 rounded-md bg-brand px-3 py-1 text-[10px] font-black tracking-wider text-black uppercase shadow-lg"
-						>
-							{m.download_recommended()}
-						</div>
-					{:else if !option.isAvailable}
-						<div
-							class="absolute top-6 right-8 rounded-md bg-muted px-3 py-1 text-xs font-medium text-muted-foreground"
-						>
-							{m.download_not_available()}
-						</div>
-					{/if}
-
 					<div
-						class="flex h-14 w-14 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 transition-all duration-300 dark:border-slate-800 dark:bg-slate-900/50 {option.isAvailable
-							? 'group-hover:border-brand group-hover:bg-brand group-hover:text-white group-hover:shadow-lg group-hover:shadow-brand/30 dark:group-hover:border-brand/50 dark:group-hover:bg-brand/15 dark:group-hover:text-brand'
-							: ''}"
+						class="flex size-11 items-center justify-center rounded-md border border-border bg-background"
 					>
-						<PlatformIcon size={32} stroke={1.5} />
+						<PlatformIcon size={24} stroke={1.5} aria-hidden="true" />
 					</div>
-
-					<div class="space-y-1">
-						<h3
-							class="text-2xl font-black tracking-tight text-slate-900 dark:text-white"
-						>
-							{option.name}
-						</h3>
-						<p class="text-sm font-bold text-slate-500 dark:text-slate-400">
-							{option.details}
-						</p>
-						{#if option.isAvailable && option.version}
-							<p class="text-xs text-muted-foreground">
+					<div class="min-w-0">
+						<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+							<h3 class="font-display text-xl font-semibold">{option.name}</h3>
+							{#if isRecommended}
+								<span class="text-xs font-medium text-information"
+									>{m.download_detected()}</span
+								>
+							{/if}
+						</div>
+						<p class="mt-1 text-sm text-muted-foreground">{option.details}</p>
+						{#if option.version}
+							<p class="mt-2 font-mono text-[11px] text-muted-foreground">
 								v{option.version}
 							</p>
 						{/if}
 					</div>
-
 					<div
-						class="mt-4 flex w-full items-center justify-between border-t border-slate-200 pt-4 dark:border-slate-800"
+						class="flex items-center gap-3 text-xs text-muted-foreground sm:justify-end"
 					>
-						<span
-							class="text-[10px] font-black tracking-widest text-slate-400 uppercase dark:text-slate-500"
-							>{option.isAvailable ? option.size : '—'}</span
+						<span class="font-mono">{option.size}</span>
+						<span class="rounded-sm border border-border bg-muted px-2 py-1 font-mono"
+							>{option.ext}</span
 						>
-						<span
-							class="rounded-md border border-slate-200 bg-slate-100 px-2 py-1 text-[10px] font-black tracking-wider text-slate-500 uppercase dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
-						>
-							{option.ext}
-						</span>
 					</div>
 				</a>
-			</div>
+			{:else}
+				<div
+					class="grid min-h-24 gap-4 px-5 py-5 opacity-55 sm:grid-cols-[3rem_minmax(0,1fr)_auto] sm:items-center sm:px-6"
+				>
+					<div
+						class="flex size-11 items-center justify-center rounded-md border border-border bg-muted"
+					>
+						<PlatformIcon size={24} stroke={1.5} aria-hidden="true" />
+					</div>
+					<div>
+						<h3 class="font-display text-xl font-semibold">{option.name}</h3>
+						<p class="mt-1 text-sm text-muted-foreground">{option.details}</p>
+					</div>
+					<p class="text-xs text-muted-foreground">{m.download_not_available()}</p>
+				</div>
+			{/if}
 		{/each}
 	</div>
 </div>

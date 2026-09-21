@@ -11,7 +11,7 @@
 		LayoutDashboard,
 		ListFilter,
 		ScrollText,
-		Shield,
+		Gauge,
 		Users
 	} from '@lucide/svelte';
 	import { slide } from 'svelte/transition';
@@ -54,14 +54,14 @@
 
 <div class="min-h-screen bg-muted/30 lg:flex">
 	<aside
-		class="hidden w-72 shrink-0 border-r bg-background lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col"
+		class="hidden w-72 shrink-0 border-r border-border bg-card lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col"
 	>
 		<div class="flex h-20 items-center border-b px-6">
 			<a href={resolve('/')} class="flex items-center gap-3 font-semibold">
 				<span
-					class="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground"
+					class="flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground"
 				>
-					<Shield class="size-5" aria-hidden="true" />
+					<Gauge class="size-5" aria-hidden="true" />
 				</span>
 				<span class="flex flex-col leading-tight">
 					<span>{m.admin_brand()}</span>
@@ -107,7 +107,7 @@
 					)}
 				>
 					<span class="flex items-center gap-3">
-						<Shield class="size-4" aria-hidden="true" />
+						<Gauge class="size-4" aria-hidden="true" />
 						{m.admin_nav_releases()}
 					</span>
 					{#if isReleasesExpanded}
@@ -154,13 +154,13 @@
 	</aside>
 
 	<div class="min-w-0 flex-1">
-		<header class="border-b bg-background/95 backdrop-blur lg:sticky lg:top-0 lg:z-10">
+		<header class="border-b border-border bg-background lg:sticky lg:top-0 lg:z-10">
 			<div class="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
 				<a href={resolve('/')} class="flex items-center gap-2 font-semibold lg:hidden">
 					<span
-						class="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"
+						class="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground"
 					>
-						<Shield class="size-4" aria-hidden="true" />
+						<Gauge class="size-4" aria-hidden="true" />
 					</span>
 					{m.admin_brand()}
 				</a>

@@ -1,5 +1,15 @@
 <script lang="ts">
+	import '@fontsource/ibm-plex-sans/400.css';
+	import '@fontsource/ibm-plex-sans/500.css';
+	import '@fontsource/ibm-plex-sans/600.css';
+	import '@fontsource/ibm-plex-sans-condensed/500.css';
+	import '@fontsource/ibm-plex-sans-condensed/600.css';
+	import '@fontsource/ibm-plex-sans-condensed/700.css';
+	import '@fontsource/ibm-plex-mono/400.css';
+	import '@fontsource/ibm-plex-mono/500.css';
+
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
 	import { ModeWatcher } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages';
@@ -16,7 +26,6 @@
 	<link rel="apple-touch-icon" sizes="180x180" href="https://cdn.aceblocker.com/icon.png" />
 	<link rel="shortcut icon" href="https://cdn.aceblocker.com/icon.png" />
 
-	<!-- Default Open Graph / Social tags -->
 	<meta property="og:site_name" content="Ace Blocker" />
 	<meta property="og:image" content={defaultOgImage} />
 	<meta property="og:image:width" content="256" />
@@ -32,8 +41,8 @@
 
 {@render children()}
 <div style="display:none">
-	{#each locales as locale}
-		<a href={localizeHref(page.url.pathname, { locale })}>
+	{#each locales as locale (locale)}
+		<a href={resolve(localizeHref(page.url.pathname, { locale }) as '/')}>
 			{locale}
 		</a>
 	{/each}

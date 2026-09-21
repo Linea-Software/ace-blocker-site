@@ -1,10 +1,6 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Check, Crown, Shield } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
-	import { cn } from '$lib/utils';
+	import { resolve } from '$app/paths';
 
 	let {
 		pricing,
@@ -21,265 +17,167 @@
 		billingCycle?: string;
 		onupgrade: () => void;
 	}>();
+
+	const comparisonRows = [
+		{
+			label: m.pricing_network_blocks,
+			basic: m.pricing_basic_blocks,
+			pro: m.pricing_pro_blocks
+		},
+		{ label: m.pricing_curated_packs, basic: m.pricing_three_packs, pro: m.pricing_all_packs },
+		{
+			label: m.pricing_resistance,
+			basic: m.pricing_standard_resistance,
+			pro: m.pricing_full_resistance
+		},
+		{ label: m.pricing_cloud_backup, basic: m.pricing_not_included, pro: m.pricing_included },
+		{ label: m.pricing_custom_packs, basic: m.pricing_not_included, pro: m.pricing_included }
+	];
 </script>
 
-<!-- Billing Toggle -->
-<div class="mb-16 flex justify-center">
-	<div
-		class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900/50"
-	>
-		<button
-			class={cn(
-				'flex items-center justify-center rounded-full px-8 py-2.5 text-sm font-bold transition-all duration-200',
-				billingCycle === 'monthly'
-					? 'bg-white text-slate-900 shadow-md dark:bg-slate-800 dark:text-white'
-					: 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-			)}
-			onclick={() => (billingCycle = 'monthly')}
+<div class="space-y-10">
+	<div class="flex justify-start">
+		<div
+			class="inline-grid grid-cols-2 overflow-hidden rounded-md border border-border bg-card"
 		>
-			Monthly
-		</button>
-		<button
-			class={cn(
-				'flex items-center justify-center gap-2 rounded-full px-8 py-2.5 text-sm font-bold transition-all duration-200',
-				billingCycle === 'yearly'
-					? 'bg-brand text-background shadow-[0_0_20px_rgba(255,191,0,0.2)]'
-					: 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-			)}
-			onclick={() => (billingCycle = 'yearly')}
-		>
-			Yearly
-			<span
-				class={cn(
-					'rounded px-1.5 py-0.5 text-[10px] font-black uppercase',
-					billingCycle === 'yearly'
-						? 'bg-black/10'
-						: 'bg-brand/20 text-amber-600 dark:text-brand'
-				)}
+			<button
+				type="button"
+				aria-pressed={billingCycle === 'monthly'}
+				class={[
+					'min-h-11 min-w-28 px-4 text-sm font-medium',
+					billingCycle === 'monthly' ? 'bg-foreground text-background' : 'hover:bg-accent'
+				]}
+				onclick={() => (billingCycle = 'monthly')}
 			>
-				-{pricing.discountPercent}%
-			</span>
-		</button>
+				{m.pricing_cycle_monthly()}
+			</button>
+			<button
+				type="button"
+				aria-pressed={billingCycle === 'yearly'}
+				class={[
+					'min-h-11 min-w-32 border-l border-border px-4 text-sm font-medium',
+					billingCycle === 'yearly' ? 'bg-foreground text-background' : 'hover:bg-accent'
+				]}
+				onclick={() => (billingCycle = 'yearly')}
+			>
+				<span>{m.pricing_cycle_yearly()}</span>
+				<span class="ml-2 font-mono text-[10px]">
+					{m.pricing_save_percent({ percent: pricing.discountPercent })}
+				</span>
+			</button>
+		</div>
 	</div>
-</div>
 
-<!-- Pricing Grid -->
-<div class="mx-auto grid max-w-5xl grid-cols-1 items-stretch gap-8 md:grid-cols-2">
-	<!-- Free Plan -->
-	<Card.Root
-		class="relative flex flex-col overflow-hidden border-slate-200 bg-white shadow-sm transition-all duration-300 dark:border-slate-800/50 dark:bg-slate-900/20"
-	>
-		<Card.Header class="space-y-6 pb-8">
-			<div class="flex items-center gap-2">
-				<div
-					class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
-				>
-					<Shield class="h-6 w-6" />
-				</div>
-				<Card.Title class="text-2xl font-black text-slate-900 dark:text-slate-200"
-					>{m.plan_free_name()}</Card.Title
-				>
-			</div>
-			<div class="flex flex-col">
-				<div class="flex items-baseline gap-1">
-					<span
-						class="text-5xl font-black tracking-tight text-slate-900 dark:text-slate-200"
-						>{m.plan_free_price()}</span
-					>
-					<span class="text-slate-500">/forever</span>
-				</div>
-				<p class="mt-4 text-slate-600 dark:text-slate-400">
-					{m.plan_free_description()}
-				</p>
-			</div>
-		</Card.Header>
-		<Card.Content class="flex flex-1 flex-col space-y-5">
-			<div class="flex items-center gap-4">
-				<div
-					class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/30"
-				>
-					<Check class="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-				</div>
-				<span class="text-sm font-medium text-slate-600 dark:text-slate-400"
-					>{m.feature_unlimited_devices()}</span
-				>
-			</div>
-			<div class="flex items-center gap-4">
-				<div
-					class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/30"
-				>
-					<Check class="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-				</div>
-				<span class="text-sm font-medium text-slate-600 dark:text-slate-400"
-					>{m.feature_blocks_unlimited()}</span
-				>
-			</div>
-			<div class="flex items-center gap-4">
-				<div
-					class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/30"
-				>
-					<Check class="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-				</div>
-				<span class="text-sm font-medium text-slate-600 dark:text-slate-400"
-					>{m.feature_lists_basic()}</span
-				>
-			</div>
-			<div class="mt-auto">
-				<p class="text-center text-xs text-muted-foreground">
-					No credit card required. Free forever.
-				</p>
-			</div>
-		</Card.Content>
-		<Card.Footer class="pt-8">
-			<Button
-				variant="outline"
-				class="h-12 w-full border-slate-200 bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
-				href="/signup"
-			>
-				{m.cta_get_started()}
-			</Button>
-		</Card.Footer>
-	</Card.Root>
-
-	<!-- Pro Plan -->
-	<Card.Root
-		class="relative flex flex-col overflow-hidden border-2 border-brand bg-white shadow-xl transition-all duration-300 md:-mt-4 md:-mb-4 dark:bg-slate-900/60 dark:shadow-[0_0_50px_rgba(255,191,0,0.15)] dark:backdrop-blur-sm"
-	>
-		<!-- Savings Badge -->
-		{#if billingCycle === 'yearly'}
-			<div class="absolute top-0 right-0 p-4">
-				<div class="flex flex-col items-end gap-1">
-					<Badge
-						class="border-none bg-brand px-4 py-1.5 text-[10px] font-black text-background shadow-lg"
-					>
-						{m.savings_badge({ percent: pricing.discountPercent })}
-					</Badge>
-				</div>
-			</div>
-		{/if}
-
-		<Card.Header class="space-y-6 pb-8">
-			<div class="flex items-center gap-3">
-				<div class="relative flex h-12 w-12 items-center justify-center">
-					<div
-						class="absolute inset-0 animate-pulse rounded-xl bg-brand/20 blur-lg"
-					></div>
-					<div
-						class="relative flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-slate-950"
-					>
-						<Crown class="h-7 w-7" />
+	<div class="overflow-hidden rounded-lg border border-border bg-card">
+		<div class="grid md:grid-cols-2">
+			<section class="border-b border-border p-6 sm:p-8 md:border-r md:border-b-0">
+				<div class="flex items-start justify-between gap-5">
+					<div>
+						<p class="font-display text-2xl font-semibold">{m.plan_free_name()}</p>
+						<p class="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+							{m.plan_free_description()}
+						</p>
 					</div>
+					<p class="font-mono text-xs text-muted-foreground">{m.plan_free_name()}</p>
 				</div>
-				<Card.Title class="text-3xl font-black text-brand">{m.plan_pro_name()}</Card.Title>
-			</div>
+				<div class="mt-9 flex items-end gap-2">
+					<span class="font-display text-5xl font-semibold">{m.plan_free_price()}</span>
+					<span class="pb-1 text-sm text-muted-foreground">{m.pricing_forever()}</span>
+				</div>
+				<a
+					href={resolve('/signup')}
+					class="mt-8 inline-flex min-h-12 w-full items-center justify-center rounded-md border border-foreground/30 font-medium hover:bg-accent"
+				>
+					{m.cta_get_started()}
+				</a>
+			</section>
 
-			<div class="flex flex-col">
-				<div class="flex items-baseline gap-2">
+			<section class="relative p-6 sm:p-8">
+				<div class="absolute inset-x-0 top-0 h-1 bg-signal" aria-hidden="true"></div>
+				<div class="flex items-start justify-between gap-5">
+					<div>
+						<p class="font-display text-2xl font-semibold">{m.plan_pro_name()}</p>
+						<p class="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+							{m.plan_pro_description()}
+						</p>
+					</div>
+					<p class="font-mono text-xs text-signal-deep dark:text-signal">
+						{m.plan_pro_name()}
+					</p>
+				</div>
+				<div class="mt-9">
 					{#if billingCycle === 'yearly'}
-						<div class="flex flex-col">
-							<span
-								class="text-sm font-bold text-slate-400 line-through decoration-brand/50 dark:text-slate-500"
-								>{pricing.symbol}{pricing.yearlyStrikethrough}</span
+						<p class="mb-1 font-mono text-xs text-muted-foreground line-through">
+							{pricing.symbol}{pricing.yearlyStrikethrough}
+						</p>
+						<div class="flex items-end gap-2">
+							<span class="font-display text-5xl font-semibold">
+								{pricing.symbol}{pricing.yearlyPrice}
+							</span>
+							<span class="pb-1 text-sm text-muted-foreground"
+								>{m.pricing_per_year()}</span
 							>
-							<div class="flex items-baseline gap-1">
-								<span
-									class="font-mono text-6xl font-black tracking-tighter text-slate-900 dark:text-white"
-									>{pricing.symbol}{pricing.yearlyPrice}</span
-								>
-								<span class="text-slate-500 dark:text-slate-400">/year</span>
-							</div>
 						</div>
 					{:else}
-						<span
-							class="font-mono text-6xl font-black tracking-tighter text-slate-900 dark:text-white"
-							>{pricing.symbol}{pricing.monthlyPrice}</span
-						>
-						<span class="text-slate-500 dark:text-slate-400">/month</span>
+						<div class="flex items-end gap-2">
+							<span class="font-display text-5xl font-semibold">
+								{pricing.symbol}{pricing.monthlyPrice}
+							</span>
+							<span class="pb-1 text-sm text-muted-foreground"
+								>{m.pricing_per_month()}</span
+							>
+						</div>
 					{/if}
+					<p class="mt-2 text-sm text-muted-foreground">{m.trial_subtitle()}</p>
 				</div>
-				<!-- Trial Subtitle -->
-				<p class="mt-2 text-sm font-bold text-amber-600 dark:text-brand/90">
-					{m.trial_subtitle()}
+				<button
+					type="button"
+					class="ace-signal-action mt-8 inline-flex min-h-12 w-full items-center justify-center rounded-md px-5 font-semibold"
+					onclick={onupgrade}
+				>
+					{m.pricing_upgrade_action()}
+				</button>
+				<p class="mt-3 text-xs text-muted-foreground">{m.pricing_tax_disclaimer()}</p>
+			</section>
+		</div>
+
+		<div class="border-t border-border">
+			<div class="border-b border-border px-5 py-5 sm:px-8">
+				<h2 class="font-display text-2xl font-semibold">{m.pricing_compare_title()}</h2>
+				<p class="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+					{m.pricing_compare_description()}
 				</p>
-				<p class="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-					{m.plan_pro_description()}
-				</p>
 			</div>
-		</Card.Header>
-
-		<Card.Content class="flex-1 space-y-5">
-			<div class="mb-2 flex items-center gap-2">
-				<div
-					class="h-[1px] flex-1 bg-gradient-to-r from-brand/0 via-brand/30 to-brand/0"
-				></div>
-				<p class="text-[10px] font-black tracking-widest text-brand uppercase">
-					{m.feature_pro_plus_basic()}
-				</p>
-				<div
-					class="h-[1px] flex-1 bg-gradient-to-r from-brand/0 via-brand/30 to-brand/0"
-				></div>
+			<div class="overflow-x-auto">
+				<table class="w-full min-w-[36rem] border-collapse text-left text-sm">
+					<thead>
+						<tr class="bg-muted">
+							<th class="px-5 py-3 font-medium sm:px-8">{m.pricing_feature()}</th>
+							<th class="w-40 border-l border-border px-5 py-3 font-medium"
+								>{m.pricing_basic()}</th
+							>
+							<th class="w-40 border-l border-border px-5 py-3 font-medium"
+								>{m.pricing_pro()}</th
+							>
+						</tr>
+					</thead>
+					<tbody>
+						{#each comparisonRows as row (row.label())}
+							<tr class="border-t border-border">
+								<th class="px-5 py-3.5 font-medium sm:px-8">{row.label()}</th>
+								<td
+									class="border-l border-border px-5 py-3.5 text-muted-foreground"
+								>
+									{row.basic()}
+								</td>
+								<td class="border-l border-border px-5 py-3.5 font-medium"
+									>{row.pro()}</td
+								>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
 			</div>
-
-			<div class="flex items-center gap-4">
-				<div class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10">
-					<Check class="h-3.5 w-3.5 text-brand" />
-				</div>
-				<span class="text-sm font-bold text-slate-900 dark:text-white"
-					>{m.feature_lists_all()}</span
-				>
-			</div>
-			<div class="flex items-center gap-4">
-				<div class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10">
-					<Check class="h-3.5 w-3.5 text-brand" />
-				</div>
-				<span class="text-sm font-bold text-slate-900 dark:text-white"
-					>{m.feature_lists_custom()}</span
-				>
-			</div>
-			<div class="flex items-center gap-4">
-				<div class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10">
-					<Check class="h-3.5 w-3.5 text-brand" />
-				</div>
-				<span class="text-sm font-bold text-slate-900 dark:text-white"
-					>{m.feature_cloud_backup()}</span
-				>
-			</div>
-			<div class="flex items-center gap-4">
-				<div class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10">
-					<Check class="h-3.5 w-3.5 text-brand" />
-				</div>
-				<span class="text-sm font-bold text-slate-900 dark:text-white"
-					>{m.feature_scripts_premium()}</span
-				>
-			</div>
-			<div class="flex items-center gap-4">
-				<div class="flex h-6 w-6 items-center justify-center rounded-full bg-brand/10">
-					<Check class="h-3.5 w-3.5 text-brand" />
-				</div>
-				<span class="text-sm font-bold text-slate-900 dark:text-white"
-					>{m.feature_unlimited_devices()}</span
-				>
-			</div>
-
-			<p class="pt-3 text-sm leading-relaxed text-slate-600 not-italic dark:text-slate-400">
-				{m.pricing_tax_disclaimer()}
-			</p>
-		</Card.Content>
-
-		<Card.Footer class="flex flex-col gap-3 pt-8 pb-10">
-			<Button
-				class="group relative h-16 w-full overflow-hidden bg-brand text-xl font-black text-white shadow-[0_10px_30px_rgba(255,191,0,0.3)] transition-all hover:scale-[1.02] hover:bg-amber-400 active:scale-95"
-				onclick={onupgrade}
-			>
-				<span class="relative z-10">{m.cta_upgrade_now()}</span>
-				<div
-					class="absolute inset-0 z-0 -translate-x-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 transition-transform duration-500 group-hover:translate-x-full"
-				></div>
-			</Button>
-			<!-- Trial Caption -->
-			<p class="text-center text-xs font-bold text-slate-400">
-				{m.trial_cta_caption()}
-			</p>
-		</Card.Footer>
-	</Card.Root>
+		</div>
+	</div>
 </div>

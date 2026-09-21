@@ -1,29 +1,22 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import {
-		Check,
-		AlertCircle,
-		Loader2,
-		Crown
-	} from '@lucide/svelte';
+	import MarketingFooter from '$lib/components/marketing/MarketingFooter.svelte';
+	import ResistanceScale from '$lib/components/marketing/ResistanceScale.svelte';
+	import SitePackVisual from '$lib/components/marketing/SitePackVisual.svelte';
+	import { AlertCircle, Check, Loader2 } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
-	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
-	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
-	import { mode } from 'mode-watcher';
 	import { authClient } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	import { linkEngine } from '$lib/utils';
 	import { engineConfig } from '$lib/states/engine.svelte';
 	import { apiClient } from '$lib/api-client';
 	import { onMount } from 'svelte';
 	import PricingSection from './_components/PricingSection.svelte';
-	import FeatureShowcase from './_components/FeatureShowcase.svelte';
 
 	let { data } = $props();
 	let billingCycle = $state('yearly');
-	let isDark = $derived(mode.current === 'dark');
 	const session = authClient.useSession();
 	const origin = $derived(page.url.searchParams.get('origin'));
 	const enginePort = $derived(Number(page.url.searchParams.get('engine_port')) || 0);
@@ -66,7 +59,8 @@
 
 	function handleUpgrade() {
 		if (!$session.data) {
-			goto(`/signin${origin ? `?origin=${origin}` : ''}`);
+			const signInUrl = resolve('/signin') + (origin ? `?origin=${origin}` : '');
+			goto(signInUrl);
 			return;
 		}
 
@@ -87,148 +81,125 @@
 
 <Navbar {isPro} />
 
-<main
-	class="min-h-[calc(100vh-4rem)] bg-background py-16 transition-colors duration-500 md:py-24 dark:bg-background dark:text-slate-50"
->
-	<div class="container mx-auto px-4">
-		<!-- Header -->
-		<div class="mx-auto mb-16 max-w-3xl space-y-6 text-center">
-			{#if engineConfig.linkState === 'error'}
+<main id="main-content">
+	<section class="border-b border-border">
+		<div class="ace-shell py-12 sm:py-16">
+			{#if engineConfig.linkState === 'error' || engineConfig.linkState === 'loading' || engineConfig.linkState === 'success'}
 				<div
-					class="mb-6 flex items-center justify-center gap-2 rounded-lg border border-brand/20 bg-brand/5 p-4 text-brand"
+					class={[
+						'mb-8 flex max-w-3xl items-start gap-3 rounded-md border px-4 py-3 text-sm',
+						engineConfig.linkState === 'error' &&
+							'border-danger/35 bg-danger/10 text-foreground',
+						engineConfig.linkState === 'loading' &&
+							'border-information/35 bg-information/10 text-foreground',
+						engineConfig.linkState === 'success' &&
+							'border-success/35 bg-success/10 text-foreground'
+					]}
+					aria-live="polite"
 				>
-					<AlertCircle class="h-5 w-5" />
-					<span class="font-medium">{m.linking_error()}</span>
-				</div>
-			{/if}
-
-			{#if engineConfig.linkState === 'loading'}
-				<div
-					class="mb-6 flex items-center justify-center gap-2 rounded-lg border border-brand/20 bg-brand/5 p-4 text-brand"
-				>
-					<Loader2 class="h-5 w-5 animate-spin" />
-					<span class="font-medium">{m.linking_loading()}</span>
-				</div>
-			{/if}
-
-			{#if engineConfig.linkState === 'success'}
-				<div
-					class="mb-6 flex items-center justify-center gap-2 rounded-lg border-emerald-500/20 bg-emerald-500/5 p-4 text-emerald-500"
-				>
-					<Check class="h-5 w-5" />
-					<span class="font-medium">{m.linking_success()}</span>
+					{#if engineConfig.linkState === 'error'}
+						<AlertCircle
+							class="mt-0.5 size-4 shrink-0 text-danger"
+							aria-hidden="true"
+						/>
+						<span>{m.linking_error()}</span>
+					{:else if engineConfig.linkState === 'loading'}
+						<Loader2
+							class="mt-0.5 size-4 shrink-0 animate-spin text-information"
+							aria-hidden="true"
+						/>
+						<span>{m.linking_loading()}</span>
+					{:else if engineConfig.linkState === 'success'}
+						<Check class="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
+						<span>{m.linking_success()}</span>
+					{/if}
 				</div>
 			{/if}
 
 			{#if !isPro}
-				<h1
-					class="text-4xl font-black tracking-tight text-slate-900 sm:text-5xl md:text-6xl dark:text-white"
-				>
-					{m.pro_title()}
-				</h1>
-				<p class="mx-auto max-w-xl text-lg text-slate-600 md:text-xl dark:text-slate-400">
-					{m.pro_subtitle()}
-				</p>
-			{:else}
-				<div class="flex flex-col items-center justify-center space-y-6 py-12">
-					<div class="relative">
-						<div
-							class="absolute inset-0 animate-pulse rounded-full bg-brand/20 blur-2xl"
-						></div>
-						<div
-							class="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-brand to-amber-600 shadow-2xl"
-						>
-							<Crown class="h-12 w-12 text-slate-950" />
-						</div>
-					</div>
-					<div class="space-y-2">
-						<h1
-							class="text-4xl font-black tracking-tight text-slate-900 dark:text-white"
-						>
-							{m.pro_success_title()}
-						</h1>
-						<p class="mx-auto max-w-lg text-lg text-slate-600 dark:text-slate-400">
-							{m.pro_success_description()}
+				<div class="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
+					<div>
+						<p class="font-mono text-xs text-muted-foreground">
+							{m.about_hero_app()} / {m.plan_pro_name()}
 						</p>
+						<h1
+							class="mt-4 font-display text-5xl leading-[0.92] font-semibold tracking-tight sm:text-6xl"
+						>
+							{m.pro_title()}
+						</h1>
 					</div>
-					<div class="mt-8 flex flex-col gap-4 sm:flex-row">
-						<Button
-							href="/"
-							class="bg-foreground px-8 py-6 text-lg font-bold text-background hover:bg-foreground/85"
+					<p class="max-w-2xl text-lg leading-relaxed text-muted-foreground lg:pb-1">
+						{m.pricing_compare_description()}
+					</p>
+				</div>
+			{:else}
+				<div class="max-w-3xl border-l-4 border-success pl-5 sm:pl-7">
+					<div class="flex items-center gap-2 text-sm font-medium text-success">
+						<Check class="size-4" aria-hidden="true" />
+						{m.plan_pro_name()}
+					</div>
+					<h1 class="mt-4 font-display text-5xl font-semibold">
+						{m.pro_success_title()}
+					</h1>
+					<p class="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+						{m.pro_success_description()}
+					</p>
+					<div class="mt-7 flex flex-col gap-3 sm:flex-row">
+						<a
+							href={resolve('/')}
+							class="inline-flex min-h-12 items-center justify-center rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90"
 						>
-							Go to Home
-						</Button>
-						<Button
-							variant="outline"
+							{m.pro_success_home()}
+						</a>
+						<button
+							type="button"
 							onclick={handleLinkEngine}
-							class="border-brand/50 bg-transparent px-8 py-6 text-lg font-bold text-brand hover:bg-brand/10 dark:border-brand/30"
+							class="inline-flex min-h-12 items-center justify-center rounded-md border border-foreground/30 px-5 font-medium hover:bg-accent"
 						>
-							Open Ace Blocker
-						</Button>
+							{m.pro_success_open_app()}
+						</button>
 					</div>
 				</div>
 			{/if}
 		</div>
+	</section>
 
-		{#if !isPro}
-			<PricingSection pricing={data.pricing} bind:billingCycle onupgrade={handleUpgrade} />
-		{/if}
+	{#if !isPro}
+		<section class="border-b border-border bg-background py-12 sm:py-16">
+			<div class="ace-shell">
+				<PricingSection
+					pricing={data.pricing}
+					bind:billingCycle
+					onupgrade={handleUpgrade}
+				/>
+			</div>
+		</section>
 
-		<FeatureShowcase />
-	</div>
+		<section class="border-b border-border bg-card py-14 sm:py-20">
+			<div class="ace-shell grid gap-12 lg:grid-cols-2">
+				<div>
+					<h2 class="font-display text-3xl font-semibold">
+						{m.about_resistance_title()}
+					</h2>
+					<p class="mt-3 max-w-lg leading-relaxed text-muted-foreground">
+						{m.toolbox_resistance_mode_description()}
+					</p>
+					<div class="mt-7">
+						<ResistanceScale />
+					</div>
+				</div>
+				<div>
+					<h2 class="font-display text-3xl font-semibold">{m.about_packs_title()}</h2>
+					<p class="mt-3 max-w-lg leading-relaxed text-muted-foreground">
+						{m.toolbox_blocklists_description()}
+					</p>
+					<div class="mt-7">
+						<SitePackVisual />
+					</div>
+				</div>
+			</div>
+		</section>
+	{/if}
 </main>
 
-<footer
-	class="border-t border-slate-200 bg-slate-50 py-16 transition-colors duration-500 dark:border-slate-900 dark:bg-background"
->
-	<div class="container mx-auto px-4">
-		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
-			<div class="flex items-center gap-3">
-				{#if isDark}
-					<img src={darkFullLogo} alt="Ace Blocker" class="h-8 w-auto" />
-				{:else}
-					<img src={lightFullLogo} alt="Ace Blocker" class="h-8 w-auto" />
-				{/if}
-			</div>
-			<p class="text-sm text-slate-500">
-				&copy; {new Date().getFullYear()}
-				{m.footer_rights_suffix()}
-			</p>
-			<div
-				class="flex items-center gap-8 text-sm font-bold text-slate-600 dark:text-slate-400"
-			>
-				<a
-					href="/terms"
-					class="transition-colors hover:text-amber-600 dark:hover:text-brand"
-					>{m.footer_terms()}</a
-				>
-				<a
-					href="/privacy"
-					class="transition-colors hover:text-amber-600 dark:hover:text-brand"
-					>{m.footer_privacy()}</a
-				>
-			</div>
-		</div>
-	</div>
-</footer>
-
-<style>
-	:global(html) {
-		scroll-behavior: smooth;
-		background-color: white;
-	}
-
-	:global(html.dark) {
-		background-color: var(--background);
-	}
-
-	:global(body) {
-		background-color: white;
-		color: var(--foreground);
-	}
-
-	:global(.dark body) {
-		background-color: var(--background);
-		color: #f8fafc;
-	}
-</style>
+<MarketingFooter />

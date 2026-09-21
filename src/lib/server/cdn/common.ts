@@ -21,8 +21,10 @@ export enum CDNErrorType {
 	InvalidArtifact
 }
 
-/** Maximum artifact upload size in bytes (100 MB). */
+/** Maximum generic artifact upload size in bytes (100 MiB). */
 export const MAX_ARTIFACT_SIZE = 100 * 1024 * 1024;
+/** Site packs follow the GitHub release asset ceiling and may be much larger. */
+export const MAX_SITE_PACK_SIZE = 2 * 1024 * 1024 * 1024;
 
 /**
  * Version identifiers become CDN object path segments and are stored in the
@@ -58,10 +60,10 @@ const ZIP_MAGIC = [0x50, 0x4b, 0x03, 0x04];
  */
 export async function isValidArtifactFile(
 	file: File,
-	options: { zip: boolean }
+	options: { zip: boolean; maxBytes?: number }
 ): Promise<boolean> {
 	if (!file || file.size <= 0) return false;
-	if (file.size > MAX_ARTIFACT_SIZE) return false;
+	if (file.size > (options.maxBytes ?? MAX_ARTIFACT_SIZE)) return false;
 	if (!options.zip) return true;
 
 	// Read the first bytes without loading the whole file into memory.
@@ -99,9 +101,7 @@ const securityKey = env.BUNNY_URL_TOKEN_AUTH_KEY;
 
 // In production, files are served from the root. In dev, use /dev/ prefix.
 // Trailing slash is required so that new URL(relative, base) appends rather than replaces the last segment.
-const storageZoneBase = new URL(
-	`https://${env.BUNNY_CDN_BASE_URL}/${getCdnEnvironmentPrefix()}`
-);
+const storageZoneBase = new URL(`https://${env.BUNNY_CDN_BASE_URL}/${getCdnEnvironmentPrefix()}`);
 
 export const sitePacksBasePath = new URL(CDNObjectPath.SitePacks + '/', storageZoneBase);
 export const resistanceModeScriptBasePath = new URL(

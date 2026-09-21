@@ -9,15 +9,49 @@ import { createLogger } from '$lib/server/logger';
 const log = createLogger('seeder:user');
 
 /**
- * Seed non-privileged development fixtures only. Production administrator
- * provisioning is an explicit operator action via scripts/provision-admin.ts.
+ * Seed development fixtures only. Production administrator provisioning remains
+ * an explicit operator action via scripts/provision-admin.ts.
  */
 export async function seedDatabase() {
 	if (!dev) return;
 
 	log.info('Seeding development users...');
 
-	const proEmail = 'pro@example.com';
+	const adminEmail = process.env.DEFAULT_ADMIN_EMAIL?.trim().toLowerCase();
+	const adminUsername = process.env.DEFAULT_ADMIN_USERNAME?.trim();
+	const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD;
+
+	if (adminEmail && adminUsername && adminPassword) {
+		let adminUsers = await db.select().from(user).where(eq(user.email, adminEmail)).limit(1);
+
+		if (adminUsers.length === 0) {
+			await auth.api.createUser({
+				body: {
+					name: adminUsername,
+					email: adminEmail,
+					password: adminPassword
+				}
+			});
+			adminUsers = await db.select().from(user).where(eq(user.email, adminEmail)).limit(1);
+			log.info('Created development admin user');
+		}
+
+		const adminUser = adminUsers[0];
+		if (adminUser) {
+			await db
+				.update(user)
+				.set({
+					role: 'admin',
+					emailVerified: true
+				})
+				.where(eq(user.id, adminUser.id));
+			await updateProExpiration(adminEmail, new Date('2099-01-01'));
+		}
+	} else {
+		log.warn('Development admin credentials are not fully configured');
+	}
+
+	const proEmail = 'delivered+pro@resend.dev';
 	let proUser = await db.select().from(user).where(eq(user.email, proEmail)).limit(1);
 	if (proUser.length === 0) {
 		await auth.api.createUser({
@@ -33,7 +67,7 @@ export async function seedDatabase() {
 	}
 
 	for (let i = 1; i <= 5; i++) {
-		const freeEmail = `user${i}@example.com`;
+		const freeEmail = `delivered+user${i}@resend.dev`;
 		const existingFree = await db.select().from(user).where(eq(user.email, freeEmail)).limit(1);
 		if (existingFree.length === 0) {
 			await auth.api.createUser({

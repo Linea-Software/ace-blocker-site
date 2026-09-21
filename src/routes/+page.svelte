@@ -1,207 +1,197 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import { Zap, Lock, ShieldCheck, ArrowRight, Download, Info } from '@lucide/svelte';
-	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
-	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
-	import { mode } from 'mode-watcher';
+	import MarketingFooter from '$lib/components/marketing/MarketingFooter.svelte';
+	import PolicyVisual from '$lib/components/marketing/PolicyVisual.svelte';
+	import ResistanceScale from '$lib/components/marketing/ResistanceScale.svelte';
+	import ScheduleTimeline from '$lib/components/marketing/ScheduleTimeline.svelte';
+	import SitePackVisual from '$lib/components/marketing/SitePackVisual.svelte';
+	import { Download, Info } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
-	import { getDownloadUrl } from '$lib/utils/platform';
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 
 	let { data } = $props();
-	let downloadUrl = $state('/download');
-	let isDark = $derived(mode.current === 'dark');
-
 	const showFarewell = $derived(page.url.searchParams.get('deleted') === 'true');
-
-	$effect(() => {
-		downloadUrl = getDownloadUrl();
-	});
 </script>
 
 <svelte:head>
 	<title>{m.page_title_home()}</title>
 	<meta property="og:title" content={m.page_title_home()} />
-	<meta property="og:description" content={m.hero_description()} />
+	<meta property="og:description" content={m.home_description()} />
 	<meta property="og:url" content={page.url.href} />
 	<meta name="twitter:title" content={m.page_title_home()} />
-	<meta name="twitter:description" content={m.hero_description()} />
+	<meta name="twitter:description" content={m.home_description()} />
 </svelte:head>
 
 <Navbar isPro={data.isPro} />
 
 {#if showFarewell}
-	<div
-		class="flex items-center gap-3 border-b border-brand/20 bg-brand/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300"
-	>
-		<Info class="h-4 w-4 shrink-0" />
-		<p>{m.account_farewell_banner()}</p>
+	<div class="border-b border-information/30 bg-information/10">
+		<div class="ace-shell flex items-start gap-3 py-3 text-sm">
+			<Info class="mt-0.5 size-4 shrink-0 text-information" aria-hidden="true" />
+			<p>{m.account_farewell_banner()}</p>
+		</div>
 	</div>
 {/if}
 
-<main class="flex min-h-[calc(100vh-4rem)] flex-col antialiased">
-	<!-- Hero Section -->
-	<section
-		class="relative overflow-hidden bg-gradient-to-b from-background to-muted pt-20 pb-16 transition-colors duration-500 md:pt-32 md:pb-24 dark:from-slate-950 dark:to-slate-950"
-	>
-		<div class="relative z-10 container mx-auto px-4">
-			<div class="mx-auto max-w-3xl space-y-8 text-center">
-				{#if data.newRelease}
-					<a
-						href={downloadUrl}
-						class="mb-4 inline-flex items-center rounded-full border bg-muted/50 px-3 py-1 text-sm font-medium backdrop-blur-sm transition-all hover:bg-muted dark:border-slate-800 dark:bg-slate-900/50"
-					>
-						<span class="mr-2 text-primary dark:text-brand">{m.hero_new_badge()}</span>
-						<span
-							class="text-muted-foreground transition-colors hover:text-foreground dark:text-slate-400 dark:hover:text-slate-200"
-						>
-							{m.hero_version_available({ version: data.newRelease.version })}
-						</span>
-						<ArrowRight class="ml-2 h-3 w-3" />
-					</a>
-				{/if}
+<main id="main-content">
+	<section class="border-b border-border">
+		<div
+			class="ace-shell grid gap-12 py-14 lg:grid-cols-[0.86fr_1.14fr] lg:items-center lg:py-20"
+		>
+			<div class="max-w-xl">
 				<h1
-					class="bg-gradient-to-b from-slate-900 to-slate-600 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent md:text-7xl dark:from-white dark:to-white/80"
+					class="font-display text-[clamp(3.4rem,7vw,6.1rem)] leading-[0.88] font-semibold tracking-[-0.045em]"
 				>
-					{m.hero_title_focus()}
-					<span class="text-brand dark:text-amber-400">{m.hero_title_app()}</span>
+					{m.home_title()}
 				</h1>
-				<p
-					class="mx-auto max-w-2xl text-xl leading-relaxed text-muted-foreground md:text-2xl dark:text-slate-400"
-				>
-					{m.hero_description()}
+				<p class="mt-7 max-w-lg text-lg leading-relaxed text-muted-foreground sm:text-xl">
+					{m.home_description()}
 				</p>
-				<div class="flex flex-col items-center justify-center gap-4 pt-4 sm:flex-row">
-					<Button
-						size="lg"
-						class="h-12 w-full bg-foreground px-8 text-lg font-semibold text-background shadow-lg shadow-foreground/10 hover:bg-foreground/85 sm:w-auto dark:bg-slate-50 dark:text-slate-950 dark:shadow-brand/10 dark:hover:bg-white"
-						href={downloadUrl}
+
+				<div class="mt-8 flex flex-col gap-3 sm:flex-row">
+					<a
+						href={resolve('/download')}
+						class="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90"
 					>
-						<Download class="mr-2 h-5 w-5" />
+						<Download class="size-4" aria-hidden="true" />
 						{m.hero_download_button()}
-					</Button>
-					<Button
-						variant="outline"
-						size="lg"
-						class="h-12 w-full border-2 border-foreground/60 px-8 text-lg font-semibold text-foreground hover:bg-foreground/5 sm:w-auto dark:border-brand dark:text-brand dark:hover:bg-brand/10"
-						href="/get-pro"
+					</a>
+					<a
+						href={resolve('/get-pro')}
+						class="inline-flex min-h-12 items-center justify-center rounded-md border border-foreground/30 px-5 font-medium hover:bg-accent"
 					>
 						{m.hero_pro_button()}
-					</Button>
+					</a>
 				</div>
-			</div>
-		</div>
 
-		<div
-			class="pointer-events-none absolute top-0 left-1/2 -z-10 h-full w-full -translate-x-1/2 opacity-10 dark:opacity-30"
-		>
-			<div
-				class="absolute top-[-10%] left-[-10%] h-[40%] w-[40%] rounded-full bg-primary blur-[120px] dark:bg-brand/20"
-			></div>
-			<div
-				class="absolute right-[-10%] bottom-[-10%] h-[40%] w-[40%] rounded-full bg-blue-500 blur-[120px] dark:bg-blue-900/20"
-			></div>
+				{#if data.newRelease}
+					<a
+						href={resolve('/download')}
+						class="mt-7 inline-flex items-center gap-3 border-l-2 border-signal pl-3 text-sm hover:underline"
+					>
+						<span class="font-mono text-xs text-muted-foreground"
+							>{m.hero_new_badge()}</span
+						>
+						<span>{m.hero_version_available({ version: data.newRelease.version })}</span
+						>
+					</a>
+				{/if}
+			</div>
+
+			<div>
+				<div class="mb-3 flex items-center gap-3 text-xs text-muted-foreground">
+					<span class="h-px w-6 bg-signal" aria-hidden="true"></span>
+					<span>{m.home_mechanism_caption()}</span>
+				</div>
+				<PolicyVisual />
+			</div>
 		</div>
 	</section>
 
-	<!-- Features Section -->
-	<section
-		class="relative z-10 bg-muted py-24 transition-colors duration-500 dark:bg-slate-900/50"
-	>
-		<div class="container mx-auto px-4">
-			<div class="mb-20 space-y-4 text-center">
-				<h2
-					class="text-3xl font-bold tracking-tight text-card-foreground md:text-4xl dark:text-white"
-				>
-					{m.features_section_title()}
-				</h2>
-				<p class="mx-auto max-w-2xl text-lg text-muted-foreground dark:text-slate-400">
-					{m.features_section_description()}
+	<section class="border-b border-border bg-card">
+		<div class="ace-shell grid md:grid-cols-3">
+			<div class="border-b border-border py-8 md:border-r md:border-b-0 md:pr-8">
+				<p class="font-mono text-xs text-muted-foreground">01</p>
+				<h2 class="mt-5 font-display text-2xl font-semibold">{m.home_decide_title()}</h2>
+				<p class="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
+					{m.home_decide_description()}
 				</p>
 			</div>
+			<div class="border-b border-border py-8 md:border-r md:border-b-0 md:px-8">
+				<p class="font-mono text-xs text-muted-foreground">02</p>
+				<h2 class="mt-5 font-display text-2xl font-semibold">{m.home_enforce_title()}</h2>
+				<p class="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
+					{m.home_enforce_description()}
+				</p>
+			</div>
+			<div class="py-8 md:pl-8">
+				<p class="font-mono text-xs text-signal-deep dark:text-signal">03</p>
+				<h2 class="mt-5 font-display text-2xl font-semibold">{m.home_hold_title()}</h2>
+				<p class="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
+					{m.home_hold_description()}
+				</p>
+			</div>
+		</div>
+	</section>
 
-			<div class="grid grid-cols-1 gap-8 md:grid-cols-3">
-				<div
-					class="group rounded-2xl border border-border bg-card p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
-				>
-					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20 dark:bg-brand/10 dark:group-hover:bg-brand/20"
+	<section class="border-b border-border py-16 sm:py-20">
+		<div class="ace-shell">
+			<div class="grid gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:items-end">
+				<div class="max-w-md">
+					<h2
+						class="font-display text-4xl leading-[0.95] font-semibold tracking-tight sm:text-5xl"
 					>
-						<Lock class="h-7 w-7 text-primary dark:text-brand" />
-					</div>
-					<h3 class="mb-4 text-2xl font-bold text-card-foreground dark:text-white">
-						{m.feature_blocks_title()}
-					</h3>
-					<p class="leading-relaxed text-muted-foreground dark:text-slate-400">
-						{m.feature_blocks_description()}
+						{m.home_resistance_title()}
+					</h2>
+					<p class="mt-5 leading-relaxed text-muted-foreground">
+						{m.home_resistance_description()}
 					</p>
 				</div>
+				<ResistanceScale />
+			</div>
+		</div>
+	</section>
 
-				<div
-					class="group rounded-2xl border border-border bg-card p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
-				>
-					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-500/10 transition-colors group-hover:bg-blue-500/20 dark:bg-blue-500/10 dark:group-hover:bg-blue-500/20"
-					>
-						<Zap class="h-7 w-7 text-blue-500" />
-					</div>
-					<h3 class="mb-4 text-2xl font-bold text-card-foreground dark:text-white">
-						{m.feature_scripts_title()}
-					</h3>
-					<p class="leading-relaxed text-muted-foreground dark:text-slate-400">
-						{m.feature_scripts_description()}
+	<section class="border-b border-border bg-card py-16 sm:py-20">
+		<div class="ace-shell grid gap-14 lg:grid-cols-2">
+			<div>
+				<div class="mb-7 max-w-md">
+					<h2 class="font-display text-3xl font-semibold sm:text-4xl">
+						{m.home_schedule_title()}
+					</h2>
+					<p class="mt-4 leading-relaxed text-muted-foreground">
+						{m.home_schedule_description()}
 					</p>
 				</div>
-
-				<div
-					class="group rounded-2xl border border-border bg-card p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
-				>
-					<div
-						class="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-green-500/10 transition-colors group-hover:bg-green-500/20 dark:bg-green-500/10 dark:group-hover:bg-green-500/20"
-					>
-						<ShieldCheck class="h-7 w-7 text-green-500" />
-					</div>
-					<h3 class="mb-4 text-2xl font-bold text-card-foreground dark:text-white">
-						{m.feature_privacy_title()}
-					</h3>
-					<p class="leading-relaxed text-muted-foreground dark:text-slate-400">
-						{m.feature_privacy_description()}
+				<ScheduleTimeline />
+			</div>
+			<div>
+				<div class="mb-7 max-w-md">
+					<h2 class="font-display text-3xl font-semibold sm:text-4xl">
+						{m.home_packs_title()}
+					</h2>
+					<p class="mt-4 leading-relaxed text-muted-foreground">
+						{m.home_packs_description()}
 					</p>
+				</div>
+				<SitePackVisual />
+			</div>
+		</div>
+	</section>
+
+	<section class="border-b border-border">
+		<div class="ace-shell grid gap-8 py-12 md:grid-cols-[0.45fr_1fr] md:items-start">
+			<h2 class="font-display text-2xl font-semibold">{m.feature_privacy_title()}</h2>
+			<p class="max-w-2xl text-base leading-relaxed text-muted-foreground">
+				{m.home_privacy_note()}
+			</p>
+		</div>
+	</section>
+
+	<section class="py-12 sm:py-16">
+		<div class="ace-shell">
+			<div
+				class="grid overflow-hidden rounded-lg border border-foreground/20 bg-card sm:grid-cols-[6px_1fr_auto] sm:items-center"
+			>
+				<div class="h-2 bg-signal sm:h-full" aria-hidden="true"></div>
+				<div class="px-5 py-7 sm:px-8">
+					<h2 class="font-display text-3xl font-semibold">{m.home_closing_title()}</h2>
+					<p class="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+						{m.home_closing_description()}
+					</p>
+				</div>
+				<div class="border-t border-border p-5 sm:border-t-0 sm:border-l sm:p-7">
+					<a
+						href={resolve('/download')}
+						class="inline-flex min-h-12 w-full items-center justify-center rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90 sm:w-auto"
+					>
+						{m.hero_download_button()}
+					</a>
 				</div>
 			</div>
 		</div>
 	</section>
 </main>
 
-<footer
-	class="border-t border-border bg-muted py-16 transition-colors duration-500 dark:border-slate-800 dark:bg-slate-950"
->
-	<div class="container mx-auto px-4">
-		<div class="flex flex-col items-center justify-between gap-8 md:flex-row">
-			<div class="flex items-center gap-3">
-				{#if isDark}
-					<img src={darkFullLogo} alt="Ace Blocker" class="h-8 w-auto" />
-				{:else}
-					<img src={lightFullLogo} alt="Ace Blocker" class="h-8 w-auto" />
-				{/if}
-			</div>
-			<p class="text-sm text-muted-foreground dark:text-slate-500">
-				&copy; {new Date().getFullYear()}
-				{m.footer_rights_suffix()}
-			</p>
-			<div class="flex items-center gap-8">
-				<a
-					href="/terms"
-					class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground dark:text-slate-400 dark:hover:text-white"
-					>{m.footer_terms()}</a
-				>
-				<a
-					href="/privacy"
-					class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground dark:text-slate-400 dark:hover:text-white"
-					>{m.footer_privacy()}</a
-				>
-			</div>
-		</div>
-	</div>
-</footer>
+<MarketingFooter />

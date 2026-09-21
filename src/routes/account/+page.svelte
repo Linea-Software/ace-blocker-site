@@ -6,7 +6,7 @@
 	import {
 		ArrowLeft,
 		User,
-		Crown,
+		Gauge,
 		Shield,
 		Trash2,
 		Download,
@@ -80,7 +80,7 @@
 			if (ua.includes('Safari') && !ua.includes('Chrome')) {
 				return m.account_browser_safari();
 			}
-			return ua.split(' ')[0] ?? 'Unknown';
+			return ua.split(' ')[0] ?? m.account_unknown_device();
 		} catch {
 			return m.account_unknown_device();
 		}
@@ -237,7 +237,7 @@
 		</Button>
 
 		<header class="mb-8 max-w-2xl">
-			<h1 class="text-3xl font-bold tracking-tight">{m.account_title()}</h1>
+			<h1 class="font-display text-4xl font-semibold">{m.account_title()}</h1>
 			<p class="mt-2 text-muted-foreground">{m.account_description()}</p>
 		</header>
 
@@ -396,14 +396,12 @@
 					</Card.Content>
 				</Card.Root>
 
-				<Card.Root class="border-destructive/40">
-					<Card.Header
-						><Card.Title class="text-destructive"
-							>{m.account_danger_zone_title()}</Card.Title
-						><Card.Description>{m.account_danger_zone_description()}</Card.Description
-						></Card.Header
-					>
-					<Card.Content class="flex flex-col gap-4">
+				<Card.Root>
+					<Card.Header>
+						<Card.Title>{m.account_data_title()}</Card.Title>
+						<Card.Description>{m.account_data_description()}</Card.Description>
+					</Card.Header>
+					<Card.Content>
 						<div
 							class="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
 						>
@@ -420,6 +418,17 @@
 								/>{m.account_export_button()}</Button
 							>
 						</div>
+					</Card.Content>
+				</Card.Root>
+
+				<Card.Root class="border-destructive/40">
+					<Card.Header
+						><Card.Title class="text-destructive"
+							>{m.account_danger_zone_title()}</Card.Title
+						><Card.Description>{m.account_danger_zone_description()}</Card.Description
+						></Card.Header
+					>
+					<Card.Content class="flex flex-col gap-4">
 						{#if isAdmin}
 							<div class="flex items-start gap-3 rounded-lg border p-4">
 								<Shield class="mt-0.5 text-muted-foreground" aria-hidden="true" />
@@ -458,10 +467,10 @@
 			</div>
 
 			<aside class="lg:sticky lg:top-24">
-				<Card.Root class="border-brand/30">
+				<Card.Root class="border-border">
 					<Card.Header
 						><div class="flex items-center justify-between gap-3">
-							<Crown class="text-brand" aria-hidden="true" /><Badge
+							<Gauge class="text-muted-foreground" aria-hidden="true" /><Badge
 								variant={isPro ? 'default' : 'secondary'}
 								>{isPro ? m.account_plan_pro() : m.account_plan_free()}</Badge
 							>
@@ -490,10 +499,8 @@
 								class="w-full text-destructive"
 								onclick={() => (showCancelDialog = true)}
 								>{m.account_cancel_subscription()}</Button
-							>{:else if !isPro}<Button
-								href={resolve('/get-pro')}
-								class="w-full bg-brand text-amber-950 hover:bg-amber-600"
-								><Crown
+							>{:else if !isPro}<Button href={resolve('/get-pro')} class="w-full"
+								><Gauge
 									data-icon="inline-start"
 									aria-hidden="true"
 								/>{m.account_get_pro()}</Button

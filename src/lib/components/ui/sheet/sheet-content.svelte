@@ -26,6 +26,7 @@
 	import SheetOverlay from './sheet-overlay.svelte';
 	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
 	import type { ComponentProps } from 'svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	let {
 		ref = $bindable(null),
@@ -51,10 +52,10 @@
 	>
 		{@render children?.()}
 		<SheetPrimitive.Close
-			class="absolute end-4 top-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none"
+			class="absolute end-3 top-3 inline-flex size-11 items-center justify-center rounded-md opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none"
 		>
-			<XIcon class="size-4" />
-			<span class="sr-only">Close</span>
+			<XIcon class="size-4" aria-hidden="true" />
+			<span class="sr-only">{m.close()}</span>
 		</SheetPrimitive.Close>
 	</SheetPrimitive.Content>
 </SheetPortal>

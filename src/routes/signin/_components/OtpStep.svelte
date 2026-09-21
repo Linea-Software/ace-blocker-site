@@ -4,6 +4,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Loader2, AlertCircle, ArrowLeft, Key } from '@lucide/svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	let {
 		code = $bindable(''),
@@ -20,63 +21,56 @@
 	}>();
 </script>
 
-<div class="mb-8">
-	<h2 class="mb-2 text-4xl font-bold dark:text-white">Two-Factor</h2>
-	<p class="text-muted-foreground">Enter the 6-digit code sent to your email.</p>
-</div>
+<header class="mb-8">
+	<h1 class="font-display text-4xl font-semibold">{m.auth_2fa_title()}</h1>
+	<p class="mt-2 text-muted-foreground">{m.auth_2fa_description()}</p>
+</header>
 
 {#if error}
-	<Alert.Root
-		variant="destructive"
-		class="mb-6 border-red-900/50 bg-red-900/10 text-red-400"
-	>
-		<AlertCircle class="h-4 w-4" />
-		<Alert.Title>Error</Alert.Title>
+	<Alert.Root variant="destructive" class="mb-6 border-danger/40 bg-danger/10 text-foreground">
+		<AlertCircle class="size-4 text-danger" aria-hidden="true" />
+		<Alert.Title>{m.auth_error_generic()}</Alert.Title>
 		<Alert.Description>{error}</Alert.Description>
 	</Alert.Root>
 {/if}
 
-<form onsubmit={onverify} class="space-y-6">
+<form onsubmit={onverify} class="space-y-5">
 	<div class="space-y-2">
-		<Label for="otp" class="text-foreground/80 dark:text-slate-300"
-			>Verification Code</Label
-		>
+		<Label for="otp">{m.auth_verification_code_label()}</Label>
 		<div class="relative">
 			<Input
 				id="otp"
+				name="otp"
 				type="text"
+				spellcheck={false}
+				inputmode="numeric"
+				autocomplete="one-time-code"
 				placeholder="000000"
 				pattern="\d*"
+				minlength={6}
 				maxlength={6}
 				bind:value={code}
 				required
-				class="h-14 border-input bg-card text-center text-2xl font-bold tracking-[0.5em] text-foreground placeholder:text-muted-foreground/30 focus:border-brand/50 focus:ring-brand/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+				class="h-14 bg-card pl-11 text-center font-mono text-2xl tracking-[0.35em]"
 			/>
 			<Key
-				class="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-muted-foreground"
+				class="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+				aria-hidden="true"
 			/>
 		</div>
 	</div>
 
-	<Button
-		type="submit"
-		class="h-12 w-full bg-brand font-bold text-black transition-all hover:bg-amber-400 active:scale-[0.98]"
-		disabled={loading || code.length !== 6}
-	>
+	<Button type="submit" class="h-12 w-full font-medium" disabled={loading}>
 		{#if loading}
-			<Loader2 class="mr-2 h-5 w-5 animate-spin" />
-			Verifying...
+			<Loader2 class="size-4 animate-spin" aria-hidden="true" />
+			{m.auth_verifying_code()}
 		{:else}
-			Verify Code
+			{m.auth_verify_code()}
 		{/if}
 	</Button>
 
-	<Button
-		variant="ghost"
-		class="w-full text-muted-foreground hover:text-foreground"
-		onclick={onback}
-	>
-		<ArrowLeft class="mr-2 h-4 w-4" />
-		Back to login
+	<Button type="button" variant="ghost" class="w-full text-muted-foreground" onclick={onback}>
+		<ArrowLeft class="size-4" aria-hidden="true" />
+		{m.auth_back_login()}
 	</Button>
 </form>

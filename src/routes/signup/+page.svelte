@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { authClient } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
-	import { Button } from '$lib/components/ui/button';
-	import { ArrowLeft, Mail } from '@lucide/svelte';
+	import { Mail } from '@lucide/svelte';
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	import * as m from '$lib/paraglide/messages.js';
 	import AuthBrandedPanel from '$lib/components/AuthBrandedPanel.svelte';
 	import AuthMobileHeader from '$lib/components/AuthMobileHeader.svelte';
@@ -20,7 +20,7 @@
 	async function linkEngine(): Promise<boolean> {
 		try {
 			const delivered = await deliverApiKeyToEngine();
-			if (delivered) goto('/');
+			if (delivered) goto(resolve('/'));
 			return true;
 		} catch (err) {
 			console.error(err);
@@ -33,7 +33,7 @@
 			if (origin === 'ace-engine' || origin === 'aceblocker') {
 				linkEngine();
 			} else {
-				goto('/');
+				goto(resolve('/'));
 			}
 		}
 	});
@@ -54,49 +54,39 @@
 	<meta name="twitter:description" content={m.auth_sign_up_description()} />
 </svelte:head>
 
-<div class="flex min-h-screen w-full bg-background text-foreground transition-colors duration-300">
+<div class="flex min-h-screen w-full bg-background text-foreground">
 	<AuthBrandedPanel />
 
-	<!-- Right Side: Form Container -->
-	<div class="flex w-full flex-col items-center justify-center p-6 lg:w-1/2">
+	<main
+		class="relative flex w-full flex-col items-center justify-center px-5 py-8 sm:px-8 lg:w-1/2"
+	>
 		<AuthMobileHeader switchHref="/signin" switchLabel={m.auth_sign_in_button()} />
+		<AuthTopBar backLabel={m.auth_back_home()} />
 
-		<AuthTopBar backLabel="Back to home" />
-
-		<div class="w-full max-w-md animate-in duration-700 fade-in slide-in-from-bottom-4">
+		<div class="w-full max-w-md">
 			{#if !isSubmitted}
 				<SignUpForm {origin} onlinkengine={linkEngine} onsubmitted={handleSubmitted} />
 			{:else}
-				<div class="animate-in text-center duration-500 zoom-in-95">
-					<div class="relative mx-auto mb-6 h-24 w-24">
-						<div
-							class="absolute inset-0 animate-ping rounded-full bg-brand/20 duration-[3000ms]"
-						></div>
-						<div
-							class="relative flex h-full w-full items-center justify-center rounded-full bg-brand/10"
-						>
-							<Mail class="h-12 w-12 text-brand" />
-						</div>
+				<div class="border-l-4 border-success pl-5">
+					<div
+						class="flex size-11 items-center justify-center rounded-md border border-success/35 bg-success/10 text-success"
+					>
+						<Mail class="size-5" aria-hidden="true" />
 					</div>
-					<h2 class="mb-3 text-3xl font-bold dark:text-white">Check your email</h2>
-					<p class="text-lg leading-relaxed text-muted-foreground">
-						We've sent a verification link to <span class="font-medium text-foreground"
-							>{submittedEmail}</span
-						>.<br />
-						Click the link to activate your account and access your dashboard.
+					<h1 class="mt-6 font-display text-4xl font-semibold">
+						{m.auth_check_email_title()}
+					</h1>
+					<p class="mt-3 leading-relaxed text-muted-foreground">
+						{m.auth_check_email_description({ email: submittedEmail })}
 					</p>
-					<div class="mt-10">
-						<Button
-							variant="outline"
-							href="/signin"
-							class="border-slate-800 bg-transparent text-slate-400 hover:bg-slate-900 hover:text-white"
-						>
-							<ArrowLeft class="mr-2 h-4 w-4" />
-							Back to sign in
-						</Button>
-					</div>
+					<a
+						href={resolve('/signin')}
+						class="mt-8 inline-flex min-h-11 items-center rounded-md border border-border bg-card px-4 text-sm font-medium hover:bg-accent"
+					>
+						{m.auth_back_sign_in()}
+					</a>
 				</div>
 			{/if}
 		</div>
-	</div>
+	</main>
 </div>
