@@ -7,7 +7,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin as adminPlugin } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
-import { db } from '../src/lib/server/db';
+import { db, dbClient } from '../src/lib/server/db';
 import { proStatus, user } from '../src/lib/server/db/schema';
 
 interface Args {
@@ -104,7 +104,11 @@ async function main() {
 	console.log('TOTP is not pre-enabled. Sign in and complete the normal verified 2FA enrollment flow.');
 }
 
-main().catch((error) => {
+try {
+	await main();
+} catch (error) {
 	console.error(`Provisioning failed: ${error instanceof Error ? error.message : 'unknown error'}`);
-	process.exit(1);
-});
+	process.exitCode = 1;
+} finally {
+	await dbClient.end({ timeout: 5 });
+}
