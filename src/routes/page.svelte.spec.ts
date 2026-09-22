@@ -4,11 +4,17 @@ import { render } from 'vitest-browser-svelte';
 import Page from './+page.svelte';
 
 describe('/+page.svelte', () => {
-	it('should render h1', async () => {
+	it('leads with category-first blocking language', async () => {
 		render(Page, { data: { isPro: false, newRelease: null } });
 
 		const heading = page.getByRole('heading', { level: 1 });
 		await expect.element(heading).toBeInTheDocument();
+		await expect
+			.element(page.getByRole('heading', { name: 'Block categories, not domains.' }))
+			.toBeInTheDocument();
+		await expect
+			.element(page.getByRole('heading', { name: 'Curated Categories' }))
+			.toBeInTheDocument();
 	});
 
 	it('shows the current release version when the server marks it as new', async () => {

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
 	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
@@ -94,7 +95,7 @@
 				<p class="leading-relaxed text-muted-foreground">We use the following third-party services:</p>
 				<ul class="mt-2 list-disc space-y-1 pl-6 text-muted-foreground">
 					<li><strong>Dodo Payments</strong>: Processes subscription payments. Their privacy policy applies to payment data.</li>
-					<li><strong>BunnyCDN</strong>: Hosts downloadable content (site packs, scripts). No personal data is shared.</li>
+					<li><strong>BunnyCDN</strong>: Hosts downloadable category data and Resistance Mode scripts. No personal data is shared.</li>
 				</ul>
 			</section>
 
@@ -158,8 +159,8 @@
 				&copy; {new Date().getFullYear()} Ace Blocker. All rights reserved.
 			</p>
 			<div class="flex items-center gap-8">
-				<a href="/terms" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground dark:text-slate-400 dark:hover:text-white">Terms</a>
-				<a href="/privacy" class="text-sm font-medium text-foreground transition-colors">Privacy</a>
+				<a href={resolve('/terms')} class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground dark:text-slate-400 dark:hover:text-white">Terms</a>
+				<a href={resolve('/privacy')} class="text-sm font-medium text-foreground transition-colors">Privacy</a>
 			</div>
 		</div>
 	</div>
