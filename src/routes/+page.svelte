@@ -90,29 +90,26 @@
 	</section>
 
 	<section class="border-b border-border bg-card">
-		<div class="ace-shell grid md:grid-cols-3">
-			<div class="border-b border-border py-8 md:border-r md:border-b-0 md:pr-8">
-				<p class="font-mono text-xs text-muted-foreground">01</p>
-				<h2 class="mt-5 font-display text-2xl font-semibold">{m.home_decide_title()}</h2>
+		<ol class="ace-shell grid list-none md:grid-cols-3">
+			<li class="border-b border-border py-8 md:border-r md:border-b-0 md:pr-8">
+				<h2 class="font-display text-2xl font-semibold">{m.home_decide_title()}</h2>
 				<p class="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
 					{m.home_decide_description()}
 				</p>
-			</div>
-			<div class="border-b border-border py-8 md:border-r md:border-b-0 md:px-8">
-				<p class="font-mono text-xs text-muted-foreground">02</p>
-				<h2 class="mt-5 font-display text-2xl font-semibold">{m.home_enforce_title()}</h2>
+			</li>
+			<li class="border-b border-border py-8 md:border-r md:border-b-0 md:px-8">
+				<h2 class="font-display text-2xl font-semibold">{m.home_enforce_title()}</h2>
 				<p class="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
 					{m.home_enforce_description()}
 				</p>
-			</div>
-			<div class="py-8 md:pl-8">
-				<p class="font-mono text-xs text-signal-deep dark:text-signal">03</p>
-				<h2 class="mt-5 font-display text-2xl font-semibold">{m.home_hold_title()}</h2>
+			</li>
+			<li class="py-8 md:pl-8">
+				<h2 class="font-display text-2xl font-semibold">{m.home_hold_title()}</h2>
 				<p class="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
 					{m.home_hold_description()}
 				</p>
-			</div>
-		</div>
+			</li>
+		</ol>
 	</section>
 
 	<section class="border-b border-border py-16 sm:py-20">
