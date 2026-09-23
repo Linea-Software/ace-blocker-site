@@ -36,7 +36,9 @@ export const productionEnvSchema = z.object({
 	BUNNY_URL_TOKEN_AUTH_KEY: z.string().min(1),
 	BUNNY_STORAGE_ZONE: z.string().min(1),
 	BUNNY_CDN_BASE_URL: z.string().min(1),
-	BUNNY_STORAGE_ACCESS_KEY: z.string().min(1)
+	BUNNY_STORAGE_ACCESS_KEY: z.string().min(1),
+	// Optional rollout gate: when absent, the CI release-ingest endpoint returns 503.
+	ACE_RELEASE_INGEST_TOKEN: z.string().min(32).optional()
 });
 
 export type ProductionEnvironment = z.infer<typeof productionEnvSchema>;

@@ -6,6 +6,7 @@
 	import * as Alert from '$lib/components/ui/alert';
 	import { Loader2, AlertCircle, CheckCircle2 } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages.js';
+	import { resolve } from '$app/paths';
 
 	let {
 		origin = null,
@@ -25,7 +26,6 @@
 	let loading = $state(false);
 
 	const passwordsMatch = $derived(password.length > 0 && password === confirmPassword);
-	const canSubmit = $derived(!loading && name && email && password && passwordsMatch);
 
 	async function handleSignUp(e: Event) {
 		e.preventDefault();
@@ -48,12 +48,11 @@
 						const linked = await onlinkengine();
 						if (!linked) {
 							loading = false;
-							error = 'Failed to generate access keys for the engine.';
+							error = m.auth_link_error();
 						}
 					} else {
 						loading = false;
 						onsubmitted(email);
-						// Clear sensitive data after submission
 						password = '';
 						confirmPassword = '';
 					}
@@ -67,106 +66,91 @@
 	}
 </script>
 
-<div class="mb-8">
-	<h2 class="mb-2 text-4xl font-bold dark:text-white">
-		{m.auth_sign_up_title()}
-	</h2>
-	<p class="text-muted-foreground">{m.auth_sign_up_description()}</p>
-</div>
+<header class="mb-8">
+	<h1 class="font-display text-4xl font-semibold">{m.auth_sign_up_title()}</h1>
+	<p class="mt-2 text-muted-foreground">{m.auth_sign_up_description()}</p>
+</header>
 
 {#if error}
-	<Alert.Root
-		variant="destructive"
-		class="mb-6 border-red-900/50 bg-red-900/10 text-red-400"
-	>
-		<AlertCircle class="h-4 w-4" />
-		<Alert.Title>Error</Alert.Title>
+	<Alert.Root variant="destructive" class="mb-6 border-danger/40 bg-danger/10 text-foreground">
+		<AlertCircle class="size-4 text-danger" aria-hidden="true" />
+		<Alert.Title>{m.auth_error_generic()}</Alert.Title>
 		<Alert.Description>{error}</Alert.Description>
 	</Alert.Root>
 {/if}
 
 <form onsubmit={handleSignUp} class="space-y-5">
 	<div class="space-y-2">
-		<Label for="name" class="text-foreground/80 dark:text-slate-300"
-			>{m.auth_name_label()}</Label
-		>
+		<Label for="name">{m.auth_name_label()}</Label>
 		<Input
 			id="name"
+			name="name"
 			type="text"
-			placeholder="John Doe"
+			autocomplete="name"
+			placeholder={m.auth_name_placeholder()}
 			bind:value={name}
 			required
-			class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-brand/50 focus:ring-brand/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+			class="h-11 bg-card"
 		/>
 	</div>
+
 	<div class="space-y-2">
-		<Label for="email" class="text-foreground/80 dark:text-slate-300"
-			>{m.auth_email_label()}</Label
-		>
+		<Label for="email">{m.auth_email_label()}</Label>
 		<Input
 			id="email"
+			name="email"
 			type="email"
-			placeholder="you@example.com"
+			spellcheck={false}
+			autocomplete="email"
+			placeholder={m.auth_email_placeholder()}
 			bind:value={email}
 			required
-			class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-brand/50 focus:ring-brand/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+			class="h-11 bg-card"
 		/>
 	</div>
+
 	<div class="space-y-2">
-		<Label for="password" class="text-foreground/80 dark:text-slate-300"
-			>{m.auth_password_label()}</Label
-		>
+		<Label for="password">{m.auth_password_label()}</Label>
 		<Input
 			id="password"
+			name="password"
 			type="password"
+			autocomplete="new-password"
 			placeholder="••••••••"
 			bind:value={password}
 			required
-			class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-brand/50 focus:ring-brand/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+			class="h-11 bg-card"
 		/>
 	</div>
+
 	<div class="space-y-2">
-		<div class="flex items-center justify-between">
-			<Label
-				for="confirm-password"
-				class="text-foreground/80 dark:text-slate-300"
-				>{m.auth_confirm_password_label()}</Label
-			>
+		<div class="flex items-center justify-between gap-4">
+			<Label for="confirm-password">{m.auth_confirm_password_label()}</Label>
 			{#if confirmPassword && passwordsMatch}
-				<span
-					class="flex items-center gap-1 text-[10px] font-bold tracking-wider text-green-500 uppercase"
-				>
-					<CheckCircle2 class="h-3 w-3" />
-					Match
+				<span class="flex items-center gap-1 text-xs font-medium text-success">
+					<CheckCircle2 class="size-3.5" aria-hidden="true" />
+					{m.auth_password_match()}
 				</span>
 			{:else if confirmPassword && !passwordsMatch}
-				<span
-					class="text-[10px] font-bold tracking-wider text-red-500 uppercase"
-				>
-					No Match
-				</span>
+				<span class="text-xs font-medium text-danger">{m.auth_password_no_match()}</span>
 			{/if}
 		</div>
 		<Input
 			id="confirm-password"
+			name="confirmPassword"
 			type="password"
+			autocomplete="new-password"
 			placeholder="••••••••"
 			bind:value={confirmPassword}
 			required
-			class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-brand/50 focus:ring-brand/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white {confirmPassword &&
-			!passwordsMatch
-				? 'border-red-900/50 ring-red-900/20'
-				: ''}"
+			aria-invalid={Boolean(confirmPassword) && !passwordsMatch}
+			class={['h-11 bg-card', confirmPassword && !passwordsMatch && 'border-danger']}
 		/>
 	</div>
 
-	<Button
-		type="submit"
-		class="mt-4 h-12 w-full bg-brand font-bold text-black transition-all hover:bg-amber-400 active:scale-[0.98]"
-		disabled={!canSubmit}
-	>
+	<Button type="submit" class="mt-2 h-12 w-full font-medium" disabled={loading}>
 		{#if loading}
-			<Loader2 class="mr-2 h-5 w-5 animate-spin" />
+			<Loader2 class="size-4 animate-spin" aria-hidden="true" />
 			{m.auth_signing_up()}
 		{:else}
 			{m.auth_sign_up_button()}
@@ -174,12 +158,9 @@
 	</Button>
 </form>
 
-<div class="mt-8 text-center text-sm text-slate-500">
+<p class="mt-8 text-center text-sm text-muted-foreground">
 	{m.auth_already_have_account()}
-	<a
-		href="/signin"
-		class="px-1 font-semibold text-brand hover:text-amber-400 hover:underline"
-	>
+	<a href={resolve('/signin')} class="ml-1 font-medium text-foreground hover:underline">
 		{m.auth_sign_in_button()}
 	</a>
-</div>
+</p>

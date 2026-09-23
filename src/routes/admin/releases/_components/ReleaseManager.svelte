@@ -197,12 +197,12 @@
 <div class="flex flex-col gap-8">
 	<header class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
 		<div class="flex flex-col gap-2">
-			<div class="flex items-center gap-2 text-sm font-semibold text-brand">
+			<div class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
 				<Icon aria-hidden="true" />
 				{m.admin_releases_eyebrow()}
 			</div>
 			<div>
-				<h1 class="text-3xl font-bold tracking-tight">{title}</h1>
+				<h1 class="font-display text-3xl font-semibold">{title}</h1>
 				<p class="mt-1 max-w-2xl text-muted-foreground">{description}</p>
 			</div>
 		</div>
@@ -230,8 +230,8 @@
 				<Card.Content class="px-5">
 					<p
 						class={stat.accent
-							? 'text-3xl font-bold tracking-tight text-brand'
-							: 'text-3xl font-bold tracking-tight'}
+							? 'font-display text-3xl font-semibold'
+							: 'font-display text-3xl font-semibold'}
 					>
 						{stat.value}
 					</p>
@@ -309,8 +309,8 @@
 					/>
 					<div
 						class={isDragging
-							? 'flex h-36 flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary bg-primary/5 p-5 text-center'
-							: 'flex h-36 flex-col items-center justify-center rounded-xl border-2 border-dashed bg-muted/30 p-5 text-center transition-colors group-hover:bg-muted/60'}
+							? 'flex h-36 flex-col items-center justify-center rounded-md border-2 border-dashed border-primary bg-primary/5 p-5 text-center'
+							: 'flex h-36 flex-col items-center justify-center rounded-md border-2 border-dashed bg-muted/30 p-5 text-center transition-colors group-hover:bg-muted/60'}
 					>
 						<DropzoneIcon
 							class="mb-2 size-7 text-muted-foreground"

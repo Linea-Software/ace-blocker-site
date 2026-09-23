@@ -1,9 +1,5 @@
 import { err, ok, Result } from 'neverthrow';
-import {
-	getLatestSitePacks,
-	getLatestResistanceScript,
-	getInstallerFor
-} from '$lib/server/cache';
+import { getLatestSitePacks, getLatestResistanceScript, getInstallerFor } from '$lib/server/cache';
 import {
 	CDNErrorType,
 	sitePacksBasePath,
@@ -22,6 +18,10 @@ export function getSitePackURL(
 
 	if (!latestRecord) {
 		return err(CDNErrorType.SitePackNotFound);
+	}
+
+	if (latestRecord.requiresProSubscription && !isUserPro) {
+		return err(CDNErrorType.ProSubscriptionRequired);
 	}
 
 	let sitePackPath = new URL(latestRecord.fileName, sitePacksBasePath);

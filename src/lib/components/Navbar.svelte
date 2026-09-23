@@ -1,28 +1,24 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
 	import * as Sheet from '$lib/components/ui/sheet';
-	import { Separator } from '$lib/components/ui/separator';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import {
 		Download,
-		Crown,
+		Gauge,
 		Info,
-		LogIn,
-		UserPlus,
-		Menu,
 		LayoutDashboard,
+		LogIn,
 		LogOut,
-		Sun,
+		Menu,
 		Moon,
-		User
+		Sun,
+		User,
+		UserPlus
 	} from '@lucide/svelte';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
-	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
+	import BrandLogo from '$lib/components/BrandLogo.svelte';
 	import { authClient } from '$lib/auth-client';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { cn } from '$lib/utils';
 	import { toggleMode, mode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages';
 
@@ -35,14 +31,11 @@
 	];
 
 	let isMobileMenuOpen = $state(false);
-	let isDark = $derived(mode.current === 'dark');
-
 	const userInitial = $derived(
 		$session.data?.user
 			? ($session.data.user.name?.[0] ?? $session.data.user.email[0]).toUpperCase()
 			: '?'
 	);
-
 	const userDisplayName = $derived($session.data?.user?.name ?? $session.data?.user?.email ?? '');
 	const userDisplayEmail = $derived($session.data?.user?.email ?? '');
 
@@ -56,219 +49,203 @@
 	}
 </script>
 
-<header
-	class="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-slate-800 dark:bg-background/95 supports-[backdrop-filter]:dark:bg-background/60"
+<a
+	href="#main-content"
+	class="sr-only fixed top-3 left-3 z-[100] rounded-md bg-foreground px-4 py-3 font-medium text-background focus:not-sr-only"
 >
-	<div class="container mx-auto flex h-16 items-center justify-between px-4">
-		<div class="flex h-full items-center gap-4">
-			<!-- Mobile Menu Button -->
+	{m.skip_to_content()}
+</a>
+
+<header class="sticky top-0 z-50 border-b border-border bg-background">
+	<div class="ace-shell flex h-16 items-center justify-between gap-4">
+		<div class="flex min-w-0 items-center gap-3 md:gap-8">
 			<Sheet.Root bind:open={isMobileMenuOpen}>
 				<Sheet.Trigger
-					class="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground md:hidden"
+					class="inline-flex size-11 items-center justify-center rounded-md border border-border bg-card hover:bg-accent md:hidden"
+					aria-label={m.nav_toggle_menu()}
 				>
-					<Menu class="h-5 w-5" />
-					<span class="sr-only">{m.nav_toggle_menu()}</span>
+					<Menu class="size-5" aria-hidden="true" />
 				</Sheet.Trigger>
-				<Sheet.Content side="left" class="flex w-[300px] flex-col sm:w-[400px]">
-					<Sheet.Header class="text-left">
-						<Sheet.Title class="flex items-center gap-2">
-							{#if isDark}
-								<img src={darkFullLogo} alt="Ace Blocker" class="h-6 w-auto" />
-							{:else}
-								<img src={lightFullLogo} alt="Ace Blocker" class="h-6 w-auto" />
-							{/if}
+				<Sheet.Content
+					side="left"
+					class="flex w-[min(92vw,24rem)] flex-col rounded-none border-r border-border bg-background p-0 shadow-none"
+				>
+					<Sheet.Header class="border-b border-border px-5 py-5 text-left">
+						<Sheet.Title>
+							<BrandLogo alt={m.about_hero_app()} class="h-7 w-auto" />
 						</Sheet.Title>
-						<Sheet.Description>{m.nav_menu_description()}</Sheet.Description>
+						<Sheet.Description class="mt-2 max-w-xs text-sm">
+							{m.nav_menu_description()}
+						</Sheet.Description>
 					</Sheet.Header>
-					<div class="flex flex-1 flex-col gap-4 py-8">
+
+					<nav class="flex flex-1 flex-col" aria-label={m.nav_toggle_menu()}>
 						{#each navLinks as link (link.href)}
 							<a
 								href={resolve(link.href)}
-								class={cn(
-									'flex items-center gap-3 rounded-md px-3 py-2 text-lg font-medium transition-colors hover:text-primary',
+								class={[
+									'flex min-h-14 items-center gap-3 border-b border-border px-5 text-base font-medium',
 									isActive(link.href)
-										? 'bg-accent text-primary'
+										? 'bg-accent text-foreground'
 										: 'text-muted-foreground'
-								)}
+								]}
 								onclick={() => (isMobileMenuOpen = false)}
 							>
-								<link.icon class="h-5 w-5" />
+								<link.icon class="size-4" aria-hidden="true" />
 								{link.label}
 							</a>
 						{/each}
+						<a
+							href={resolve('/get-pro')}
+							class={[
+								'flex min-h-14 items-center gap-3 border-b border-border px-5 text-base font-medium',
+								isActive('/get-pro')
+									? 'bg-accent text-foreground'
+									: 'text-muted-foreground'
+							]}
+							onclick={() => (isMobileMenuOpen = false)}
+						>
+							<Gauge class="size-4" aria-hidden="true" />
+							{isPro ? m.nav_pro_features() : m.account_get_pro()}
+						</a>
 
-						{#if isPro}
-							<a
-								href={resolve('/get-pro')}
-								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-brand transition-colors hover:bg-brand/10"
-								onclick={() => (isMobileMenuOpen = false)}
-							>
-								<Crown class="h-5 w-5" />
-								{m.nav_pro_features()}
-							</a>
-						{:else}
-							<a
-								href={resolve('/get-pro')}
-								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-primary transition-colors hover:text-primary/80"
-								onclick={() => (isMobileMenuOpen = false)}
-							>
-								<Crown class="h-5 w-5 text-brand" />
-								{m.account_get_pro()}
-							</a>
-						{/if}
-
-						<Separator />
-						{#if $session.data}
-							<a
-								href={resolve('/account')}
-								class="flex items-center gap-3 rounded-md px-3 py-2 text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
-								onclick={() => (isMobileMenuOpen = false)}
-							>
-								<User class="h-5 w-5" />
-								{m.account_settings()}
-							</a>
-							{#if $session.data?.user.role === 'admin'}
+						<div class="mt-auto border-t border-border">
+							{#if $session.data}
 								<a
-									href={resolve('/admin/dashboard')}
-									class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
+									href={resolve('/account')}
+									class="flex min-h-14 items-center gap-3 border-b border-border px-5 font-medium"
 									onclick={() => (isMobileMenuOpen = false)}
 								>
-									<LayoutDashboard class="h-5 w-5" />
-									{m.nav_admin_dashboard()}
+									<User class="size-4" aria-hidden="true" />
+									{m.account_settings()}
+								</a>
+								{#if $session.data.user.role === 'admin'}
+									<a
+										href={resolve('/admin/dashboard')}
+										class="flex min-h-14 items-center gap-3 border-b border-border px-5 font-medium"
+										onclick={() => (isMobileMenuOpen = false)}
+									>
+										<LayoutDashboard class="size-4" aria-hidden="true" />
+										{m.nav_admin_dashboard()}
+									</a>
+								{/if}
+								<button
+									type="button"
+									class="flex min-h-14 w-full items-center gap-3 border-b border-border px-5 text-left font-medium text-destructive hover:bg-destructive/10"
+									onclick={() => {
+										handleSignOut();
+										isMobileMenuOpen = false;
+									}}
+								>
+									<LogOut class="size-4" aria-hidden="true" />
+									{m.sign_out()}
+								</button>
+							{:else}
+								<a
+									href={resolve('/signin')}
+									class="flex min-h-14 items-center gap-3 border-b border-border px-5 font-medium"
+									onclick={() => (isMobileMenuOpen = false)}
+								>
+									<LogIn class="size-4" aria-hidden="true" />
+									{m.nav_log_in()}
+								</a>
+								<a
+									href={resolve('/signup')}
+									class="flex min-h-14 items-center gap-3 border-b border-border px-5 font-medium"
+									onclick={() => (isMobileMenuOpen = false)}
+								>
+									<UserPlus class="size-4" aria-hidden="true" />
+									{m.nav_sign_up()}
 								</a>
 							{/if}
 							<button
-								class="flex flex-1 items-center gap-3 rounded-md px-3 py-2 text-lg font-medium text-destructive transition-all duration-200 hover:bg-red-600 hover:text-white active:scale-95"
-								onclick={() => {
-									handleSignOut();
-									isMobileMenuOpen = false;
-								}}
+								type="button"
+								class="flex min-h-14 w-full items-center gap-3 px-5 text-left font-medium"
+								onclick={toggleMode}
 							>
-								<LogOut class="h-5 w-5" />
-								{m.sign_out()}
+								{#if mode.current === 'dark'}
+									<Sun class="size-4" aria-hidden="true" />
+									{m.nav_light_mode()}
+								{:else}
+									<Moon class="size-4" aria-hidden="true" />
+									{m.nav_dark_mode()}
+								{/if}
 							</button>
-						{:else}
-							<a
-								href={resolve('/signin')}
-								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
-								onclick={() => (isMobileMenuOpen = false)}
-							>
-								<LogIn class="h-5 w-5" />
-								{m.nav_log_in()}
-							</a>
-							<a
-								href={resolve('/signup')}
-								class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-primary transition-colors hover:text-primary/80"
-								onclick={() => (isMobileMenuOpen = false)}
-							>
-								<UserPlus class="h-5 w-5" />
-								{m.nav_sign_up()}
-							</a>
-						{/if}
-
-						<Separator />
-
-						<button
-							class="flex items-center gap-3 px-3 py-2 text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
-							onclick={toggleMode}
-						>
-							{#if mode.current === 'dark'}
-								<Sun class="h-5 w-5" />
-								{m.nav_light_mode()}
-							{:else}
-								<Moon class="h-5 w-5" />
-								{m.nav_dark_mode()}
-							{/if}
-						</button>
-					</div>
+						</div>
+					</nav>
 				</Sheet.Content>
 			</Sheet.Root>
 
-			<a
-				href={resolve('/')}
-				class="mr-4 flex items-center transition-opacity hover:opacity-90"
-			>
-				{#if isDark}
-					<img src={darkFullLogo} alt="Ace Blocker" class="h-[30px] w-auto md:h-9" />
-				{:else}
-					<img src={lightFullLogo} alt="Ace Blocker" class="h-[30px] w-auto md:h-9" />
-				{/if}
+			<a href={resolve('/')} class="shrink-0">
+				<BrandLogo alt={m.about_hero_app()} class="h-[29px] w-auto md:h-8" />
 			</a>
 
-			<nav class="hidden h-full items-center gap-1 md:flex">
+			<nav class="hidden h-16 items-stretch md:flex" aria-label={m.nav_toggle_menu()}>
 				{#each navLinks as link (link.href)}
 					<a
 						href={resolve(link.href)}
-						class={cn(
-							'inline-flex h-9 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent focus:bg-accent focus:outline-none disabled:pointer-events-none disabled:opacity-50',
-							isActive(link.href)
-								? 'bg-accent text-primary dark:text-brand'
-								: 'text-slate-600 dark:text-slate-400 dark:hover:text-white'
-						)}
+						class={[
+							'relative flex items-center border-x border-transparent px-4 text-sm font-medium text-muted-foreground hover:text-foreground',
+							isActive(link.href) && 'border-border bg-card text-foreground'
+						]}
 					>
-						<link.icon class="mr-2 h-4 w-4" />
 						{link.label}
 					</a>
 				{/each}
 			</nav>
 		</div>
 
-		<div class="flex h-full items-center gap-2 sm:gap-4">
-			<Button
-				variant="ghost"
-				size="icon"
-				class="h-9 w-9 rounded-md text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+		<div class="flex shrink-0 items-center gap-1.5 sm:gap-2">
+			<a
+				href={resolve('/get-pro')}
+				class={[
+					'hidden min-h-10 items-center rounded-md border px-3 text-sm font-medium sm:inline-flex',
+					isActive('/get-pro')
+						? 'border-foreground bg-foreground text-background'
+						: 'border-border bg-card hover:bg-accent'
+				]}
+			>
+				{isPro ? m.nav_pro_features() : m.account_get_pro()}
+			</a>
+
+			<button
+				type="button"
+				class="relative inline-flex size-10 items-center justify-center rounded-md border border-border bg-card hover:bg-accent"
 				onclick={toggleMode}
 				aria-label={m.nav_toggle_theme()}
 			>
-				<Sun
-					class="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"
-				/>
-				<Moon
-					class="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"
-				/>
-				<span class="sr-only">{m.nav_toggle_theme()}</span>
-			</Button>
+				{#if mode.current === 'dark'}
+					<Sun class="size-4" aria-hidden="true" />
+				{:else}
+					<Moon class="size-4" aria-hidden="true" />
+				{/if}
+			</button>
 
 			{#if $session.data}
-				{#if isPro}
+				{#if $session.data.user.role === 'admin'}
 					<a
-						href={resolve('/get-pro')}
-						class="hidden items-center gap-2 px-3 text-sm font-medium text-brand transition-colors hover:text-amber-400 sm:flex"
-					>
-						<Crown class="h-4 w-4" />
-						{m.nav_pro_features()}
-					</a>
-				{:else}
-					<Button
-						href={resolve('/get-pro')}
-						class="hidden items-center bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex dark:bg-brand dark:text-slate-950 dark:hover:bg-amber-400"
-					>
-						<Crown class="mr-2 h-4 w-4" />
-						{m.account_get_pro()}
-					</Button>
-				{/if}
-
-				{#if $session.data?.user.role === 'admin'}
-					<Button
 						href={resolve('/admin/dashboard')}
-						variant="ghost"
-						class="hidden items-center text-slate-600 hover:text-slate-900 sm:inline-flex dark:text-slate-300 dark:hover:text-white"
+						class="hidden min-h-10 items-center px-2 text-sm font-medium text-muted-foreground hover:text-foreground lg:inline-flex"
 					>
 						{m.nav_admin_dashboard()}
-					</Button>
+					</a>
 				{/if}
 
 				<DropdownMenu.DropdownMenu>
 					<DropdownMenu.Trigger
-						class="hidden h-9 w-9 items-center justify-center rounded-full border border-brand/20 bg-brand/15 text-sm font-medium text-amber-600 sm:inline-flex dark:text-amber-400"
+						class="inline-flex size-10 items-center justify-center rounded-md border border-foreground/25 bg-card font-mono text-xs font-medium hover:bg-accent"
+						aria-label={m.account_settings()}
 					>
 						{userInitial}
 					</DropdownMenu.Trigger>
-					<DropdownMenu.Content class="w-56" align="end">
+					<DropdownMenu.Content
+						class="w-60 rounded-md border-border shadow-none"
+						align="end"
+					>
 						<DropdownMenu.Label class="font-normal">
-							<span class="block text-sm font-medium">{userDisplayName}</span>
-							<span class="block text-xs text-muted-foreground"
+							<span class="block truncate text-sm font-medium">{userDisplayName}</span
+							>
+							<span class="block truncate text-xs text-muted-foreground"
 								>{userDisplayEmail}</span
 							>
 						</DropdownMenu.Label>
@@ -277,45 +254,32 @@
 							class="cursor-pointer"
 							onclick={() => goto(resolve('/account'))}
 						>
-							<User class="mr-2 h-4 w-4" />
+							<User class="mr-2 size-4" aria-hidden="true" />
 							{m.account_settings()}
 						</DropdownMenu.Item>
 						<DropdownMenu.Item
-							class="cursor-pointer text-destructive"
-							onclick={() => handleSignOut()}
+							class="cursor-pointer text-destructive focus:text-destructive"
+							onclick={handleSignOut}
 						>
-							<LogOut class="mr-2 h-4 w-4" />
+							<LogOut class="mr-2 size-4" aria-hidden="true" />
 							{m.sign_out()}
 						</DropdownMenu.Item>
 					</DropdownMenu.Content>
 				</DropdownMenu.DropdownMenu>
 			{:else}
-				<Button
-					href={resolve('/get-pro')}
-					variant="outline"
-					size="sm"
-					class={cn(
-						'hidden items-center border-brand/50 text-amber-700 hover:bg-brand/10 md:inline-flex dark:text-brand',
-						isActive('/get-pro') && 'bg-brand/10'
-					)}
-				>
-					<Crown class="mr-2 h-4 w-4" />
-					{m.account_get_pro()}
-				</Button>
-				<Button
+				<a
 					href={resolve('/signin')}
-					variant="ghost"
-					class="hidden items-center text-slate-600 hover:text-slate-900 sm:inline-flex dark:text-slate-300 dark:hover:text-white"
+					class="hidden min-h-10 items-center px-2 text-sm font-medium sm:inline-flex"
 				>
 					{m.nav_log_in()}
-				</Button>
-				<Button
+				</a>
+				<a
 					href={resolve('/signup')}
-					class="inline-flex items-center bg-slate-900 text-white hover:bg-slate-800 sm:px-6 dark:bg-brand dark:text-slate-950 dark:hover:bg-amber-400"
+					class="inline-flex min-h-10 items-center rounded-md bg-foreground px-3.5 text-sm font-medium text-background hover:opacity-90"
 				>
 					<span class="hidden sm:inline">{m.nav_sign_up()}</span>
-					<span class="px-2 text-xs sm:hidden">{m.nav_join()}</span>
-				</Button>
+					<span class="sm:hidden">{m.nav_join()}</span>
+				</a>
 			{/if}
 		</div>
 	</div>

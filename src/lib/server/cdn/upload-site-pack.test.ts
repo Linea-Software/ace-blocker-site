@@ -62,7 +62,7 @@ vi.mock('$lib/server/cache', async (importOriginal) => {
 });
 
 import { uploadSitePack } from './upload';
-import { CDNErrorType } from './common';
+import { CDNErrorType, MAX_SITE_PACK_SIZE } from './common';
 
 const ZIP_BYTES = new Uint8Array([0x50, 0x4b, 0x03, 0x04, 1, 2, 3, 4, 5, 6, 7, 8]);
 
@@ -157,10 +157,8 @@ describe('uploadSitePack', () => {
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
 
-	it('rejects an oversized file', async () => {
-		const big = new File([new Uint8Array(101 * 1024 * 1024)], 'big.zip', {
-			type: 'application/zip'
-		});
+	it('rejects a site pack larger than 2 GiB', async () => {
+		const big = { size: MAX_SITE_PACK_SIZE + 1 } as File;
 		const result = await uploadSitePack(big, 'Adult Content Pack', 'pack-1', false);
 		if (result.isErr()) {
 			expect(result.error).toBe(CDNErrorType.InvalidArtifact);

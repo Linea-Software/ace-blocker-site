@@ -42,6 +42,7 @@ describe('production environment generation', () => {
 		expect(generated.PUBLIC_BETTER_AUTH_URL).toBe('https://aceblocker.com');
 		expect(generated.ORIGIN).toBe('https://aceblocker.com');
 		expect(generated.BETTER_AUTH_SECRET).toHaveLength(64);
+		expect(generated.ACE_RELEASE_INGEST_TOKEN).toHaveLength(64);
 		expect(isProduction(generated)).toBe(true);
 		expect(getAuthRateLimitConfig(generated).enabled).toBe(true);
 		expect(getCdnEnvironmentPrefix(generated)).toBe('');

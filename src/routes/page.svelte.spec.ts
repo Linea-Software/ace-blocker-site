@@ -4,16 +4,24 @@ import { render } from 'vitest-browser-svelte';
 import Page from './+page.svelte';
 
 describe('/+page.svelte', () => {
-	it('leads with category-first blocking language', async () => {
+	it('keeps category-first blocking language in the redesigned homepage', async () => {
 		render(Page, { data: { isPro: false, newRelease: null } });
 
 		const heading = page.getByRole('heading', { level: 1 });
 		await expect.element(heading).toBeInTheDocument();
 		await expect
-			.element(page.getByRole('heading', { name: 'Block categories, not domains.' }))
+			.element(
+				page.getByRole('heading', {
+					name: 'Block a category without maintaining a domain list.'
+				})
+			)
 			.toBeInTheDocument();
 		await expect
-			.element(page.getByRole('heading', { name: 'Curated Categories' }))
+			.element(
+				page.getByText(
+					'Categories group known destinations so a rule can cover an entire category without maintaining a domain list by hand.'
+				)
+			)
 			.toBeInTheDocument();
 	});
 

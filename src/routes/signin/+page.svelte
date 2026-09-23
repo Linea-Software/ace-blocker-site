@@ -5,8 +5,9 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as Alert from '$lib/components/ui/alert';
-	import { Loader2, AlertCircle } from '@lucide/svelte';
+	import { Loader2, AlertCircle, CheckCircle2 } from '@lucide/svelte';
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	import * as m from '$lib/paraglide/messages.js';
 	import AuthBrandedPanel from '$lib/components/AuthBrandedPanel.svelte';
 	import AuthMobileHeader from '$lib/components/AuthMobileHeader.svelte';
@@ -30,11 +31,11 @@
 		error = null;
 		try {
 			const delivered = await deliverApiKeyToEngine();
-			if (delivered) goto('/');
+			if (delivered) goto(resolve('/'));
 		} catch (err) {
 			console.error(err);
 			loading = false;
-			error = 'Failed to generate access keys for the engine.';
+			error = m.auth_link_error();
 		}
 	}
 
@@ -64,7 +65,7 @@
 						await linkEngine();
 					} else {
 						loading = false;
-						goto('/');
+						goto(resolve('/'));
 					}
 				},
 				onError: (ctx) => {
@@ -80,16 +81,14 @@
 		loading = true;
 		error = null;
 		await authClient.twoFactor.verifyOtp(
-			{
-				code: otpCode
-			},
+			{ code: otpCode },
 			{
 				onSuccess: async () => {
 					if (origin === 'ace-engine' || origin === 'aceblocker') {
 						await linkEngine();
 					} else {
 						loading = false;
-						goto('/');
+						goto(resolve('/'));
 					}
 				},
 				onError: (ctx) => {
@@ -117,90 +116,84 @@
 	<meta name="twitter:description" content={m.auth_sign_in_description()} />
 </svelte:head>
 
-<div class="flex min-h-screen w-full bg-background text-foreground transition-colors duration-300">
+<div class="flex min-h-screen w-full bg-background text-foreground">
 	<AuthBrandedPanel />
 
-	<!-- Right Side: Form Container -->
-	<div class="flex w-full flex-col items-center justify-center p-6 lg:w-1/2">
+	<main
+		class="relative flex w-full flex-col items-center justify-center px-5 py-8 sm:px-8 lg:w-1/2"
+	>
 		<AuthMobileHeader switchHref="/signup" switchLabel={m.auth_sign_up_button()} />
 
 		{#if !origin}
-			<AuthTopBar backLabel="Back to home" />
+			<AuthTopBar backLabel={m.auth_back_home()} />
 		{/if}
 
-		<div class="w-full max-w-md animate-in duration-700 fade-in slide-in-from-bottom-4">
+		<div class="w-full max-w-md">
 			{#if step === 'credentials'}
-				<div class="mb-8">
-					<h2 class="mb-2 text-4xl font-bold dark:text-white">
-						{m.auth_sign_in_title()}
-					</h2>
-					<p class="text-muted-foreground">{m.auth_sign_in_description()}</p>
-				</div>
+				<header class="mb-8">
+					<h1 class="font-display text-4xl font-semibold">{m.auth_sign_in_title()}</h1>
+					<p class="mt-2 text-muted-foreground">{m.auth_sign_in_description()}</p>
+				</header>
 
 				{#if error}
 					<Alert.Root
 						variant="destructive"
-						class="mb-6 border-red-900/50 bg-red-900/10 text-red-400"
+						class="mb-6 border-danger/40 bg-danger/10 text-foreground"
 					>
-						<AlertCircle class="h-4 w-4" />
-						<Alert.Title>Error</Alert.Title>
+						<AlertCircle class="size-4 text-danger" aria-hidden="true" />
+						<Alert.Title>{m.auth_error_title()}</Alert.Title>
 						<Alert.Description>{error}</Alert.Description>
 					</Alert.Root>
 				{/if}
 
 				{#if resetSuccess}
-					<Alert.Root
-						class="mb-6 border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
-					>
-						<AlertCircle class="h-4 w-4" />
-						<Alert.Description>
-							Your password has been reset successfully. Please sign in with your new
-							password.
-						</Alert.Description>
+					<Alert.Root class="mb-6 border-success/40 bg-success/10 text-foreground">
+						<CheckCircle2 class="size-4 text-success" aria-hidden="true" />
+						<Alert.Description>{m.auth_reset_success()}</Alert.Description>
 					</Alert.Root>
 				{/if}
 
-				<form onsubmit={handleSignIn} class="space-y-6">
+				<form onsubmit={handleSignIn} class="space-y-5">
 					<div class="space-y-2">
-						<Label for="email" class="text-foreground/80 dark:text-slate-300"
-							>{m.auth_email_label()}</Label
-						>
+						<Label for="email">{m.auth_email_label()}</Label>
 						<Input
 							id="email"
+							name="email"
 							type="email"
-							placeholder="you@example.com"
+							spellcheck={false}
+							autocomplete="email"
+							placeholder={m.auth_email_placeholder()}
 							bind:value={email}
 							required
-							class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-brand/50 focus:ring-brand/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
-						/>
-					</div>
-					<div class="space-y-2">
-						<div class="flex items-center justify-between">
-							<Label for="password" class="text-foreground/80 dark:text-slate-300"
-								>{m.auth_password_label()}</Label
-							>
-							<a
-								href="/forgot-password"
-								class="text-xs text-brand hover:underline">Forgot password?</a
-							>
-						</div>
-						<Input
-							id="password"
-							type="password"
-							placeholder="••••••••"
-							bind:value={password}
-							required
-							class="border-input bg-card text-foreground placeholder:text-muted-foreground focus:border-brand/50 focus:ring-brand/20 dark:border-slate-800 dark:bg-slate-900/50 dark:text-white"
+							class="h-11 bg-card"
 						/>
 					</div>
 
-					<Button
-						type="submit"
-						class="h-12 w-full bg-brand font-bold text-black transition-all hover:bg-amber-400 active:scale-[0.98]"
-						disabled={loading}
-					>
+					<div class="space-y-2">
+						<div class="flex items-center justify-between gap-4">
+							<Label for="password">{m.auth_password_label()}</Label>
+							<a
+								href={resolve('/forgot-password')}
+								class="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground hover:underline"
+							>
+								{m.auth_forgot_password()}
+							</a>
+						</div>
+						<Input
+							id="password"
+							name="password"
+							type="password"
+							autocomplete="current-password"
+							placeholder="••••••••"
+							bind:value={password}
+							required
+							class="h-11 bg-card"
+						/>
+					</div>
+
+					<Button type="submit" class="h-12 w-full font-medium" disabled={loading}>
 						{#if loading}
-							<Loader2 class="mr-2 h-5 w-5 animate-spin" />
+							<Loader2 class="size-4 animate-spin" aria-hidden="true" />
 							{m.auth_signing_in()}
 						{:else}
 							{m.auth_sign_in_button()}
@@ -208,15 +201,15 @@
 					</Button>
 				</form>
 
-				<div class="mt-8 text-center text-sm text-slate-500">
+				<p class="mt-8 text-center text-sm text-muted-foreground">
 					{m.auth_don_t_have_account()}
 					<a
-						href="/signup"
-						class="px-1 font-semibold text-brand hover:text-amber-400 hover:underline"
+						href={resolve('/signup')}
+						class="ml-1 inline-flex min-h-11 items-center font-medium text-foreground hover:underline"
 					>
 						{m.auth_sign_up_button()}
 					</a>
-				</div>
+				</p>
 			{:else}
 				<OtpStep
 					bind:code={otpCode}
@@ -227,5 +220,5 @@
 				/>
 			{/if}
 		</div>
-	</div>
+	</main>
 </div>
