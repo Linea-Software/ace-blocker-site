@@ -4,6 +4,7 @@ import { admin, openAPI, twoFactor, emailOTP } from 'better-auth/plugins';
 import { apiKey } from '@better-auth/api-key';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from './db';
+import * as schema from './db/schema';
 import { dodopayments, checkout, webhooks, type Product } from '@dodopayments/better-auth';
 import DodoPayments from 'dodopayments';
 import {
@@ -58,7 +59,8 @@ export function apiKeyGetter(ctx: { headers?: Headers | null }): string | null {
 
 export const auth = betterAuth({
 	database: drizzleAdapter(db, {
-		provider: 'pg'
+		provider: 'pg',
+		schema
 	}),
 	user: {
 		additionalFields: {
