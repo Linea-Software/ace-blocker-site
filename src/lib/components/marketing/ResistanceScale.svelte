@@ -1,268 +1,185 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages';
 
+	type ResistanceLevel = 'low' | 'medium' | 'high' | 'maximum';
+
 	let { interactive = true } = $props<{ interactive?: boolean }>();
-	let selected = $state(1);
+	let selected = $state<ResistanceLevel>('medium');
 
 	const levels = [
-		{ label: m.resistance_low, detail: m.resistance_low_detail },
-		{ label: m.resistance_medium, detail: m.resistance_medium_detail },
-		{ label: m.resistance_high, detail: m.resistance_high_detail },
-		{ label: m.resistance_maximum, detail: m.resistance_maximum_detail }
-	];
+		{ value: 'low', label: m.resistance_low, detail: m.resistance_low_detail },
+		{ value: 'medium', label: m.resistance_medium, detail: m.resistance_medium_detail },
+		{ value: 'high', label: m.resistance_high, detail: m.resistance_high_detail },
+		{ value: 'maximum', label: m.resistance_maximum, detail: m.resistance_maximum_detail }
+	] as const;
+
+	const selectedItem = $derived(levels.find((level) => level.value === selected) ?? levels[1]);
 </script>
 
-<section class="resistance-meter" aria-label={m.resistance_visual_label()}>
+<section
+	class={['specimen-stage', !interactive && 'disabled']}
+	aria-labelledby="marketing-resistance-meter-title"
+>
 	<div class="meter-heading">
-		<div>
-			<h3>{m.resistance_meter_title()}</h3>
-			<p>{m.resistance_meter_description()}</p>
-		</div>
+		<h3 id="marketing-resistance-meter-title">{m.resistance_meter_title()}</h3>
+		<p>{m.resistance_meter_description()}</p>
 	</div>
 
-	<div class="constraint-track" role="group" aria-label={m.resistance_meter_title()}>
-		{#each levels as level, index (index)}
+	<div class="selector-plate" role="group" aria-label={m.resistance_meter_title()}>
+		{#each levels as level (level.value)}
+			{@const isSelected = selected === level.value}
 			<button
 				type="button"
+				class={['selector-segment', isSelected && 'selected']}
+				aria-pressed={isSelected}
 				disabled={!interactive}
-				aria-pressed={selected === index}
-				aria-label={level.label()}
-				class:selected={selected === index}
-				class="constraint-step"
-				onclick={() => interactive && (selected = index)}
+				onclick={() => (selected = level.value)}
 			>
-				<span class="step-structure" aria-hidden="true">
-					{#each [0, 1, 2, 3] as notch (notch)}
-						<span
-							class:filled={notch <= index}
-							style:height={String(7 + notch * 4) + 'px'}
-						></span>
-					{/each}
-				</span>
-				<span class="step-index">{String(index + 1).padStart(2, '0')}</span>
-				<strong>{level.label()}</strong>
+				<span>{level.label()}</span>
 			</button>
 		{/each}
 	</div>
 
 	<div class="effect-readout" aria-live="polite">
-		<div class="effect-copy">
-			<span class="effect-label">{levels[selected].label()}</span>
-			<p>{levels[selected].detail()}</p>
-		</div>
-		<div class="script-count">
-			<span>{m.resistance_active_scripts()}</span>
-			<strong>{m.resistance_scripts_count()}</strong>
-		</div>
+		<p>{selectedItem.detail()}</p>
 	</div>
 </section>
 
 <style>
-	.resistance-meter {
-		overflow: hidden;
+	.specimen-stage {
+		container-type: inline-size;
+		padding: clamp(18px, 2.6vw, 24px);
 		border: 1px solid var(--border);
-		border-left: 7px solid var(--information);
-		border-radius: 6px;
-		background: var(--card);
+		border-radius: 8px;
+		background: color-mix(in srgb, var(--muted) 42%, var(--background));
 	}
 
-	.meter-heading {
-		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: 18px;
-		padding: 15px 17px 13px;
-		border-bottom: 1px solid var(--border);
-	}
-
-	h3 {
+	.meter-heading h3 {
 		margin: 0;
 		font-family: 'IBM Plex Sans Condensed', sans-serif;
-		font-size: 20px;
+		font-size: 21px;
 		font-weight: 600;
 		line-height: 1;
+		text-wrap: balance;
 	}
 
 	.meter-heading p {
-		max-width: 620px;
-		margin: 6px 0 0;
+		max-width: 640px;
+		margin: 7px 0 0;
 		color: var(--muted-foreground);
-		font-size: 12px;
+		font-size: 13px;
 		line-height: 1.45;
 	}
 
-	.constraint-track {
+	.selector-plate {
 		display: grid;
 		grid-template-columns: repeat(4, minmax(0, 1fr));
-		border-bottom: 1px solid var(--border);
-		background: color-mix(in srgb, var(--muted) 40%, transparent);
+		overflow: hidden;
+		margin-top: 14px;
+		border: 1px solid var(--border);
+		border-radius: 5px;
+		background: color-mix(in srgb, var(--muted) 38%, var(--card));
 	}
 
-	.constraint-step {
+	.selector-segment {
 		position: relative;
 		min-width: 0;
-		min-height: 88px;
-		display: grid;
-		grid-template-columns: 36px minmax(0, 1fr);
-		grid-template-rows: auto auto;
-		align-content: center;
-		align-items: end;
-		gap: 5px 8px;
+		height: 64px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		border: 0;
-		border-right: 1px solid var(--border);
+		border-left: 1px solid var(--border);
 		border-radius: 0;
-		padding: 11px;
+		padding: 0 12px;
 		background: transparent;
-		color: var(--foreground);
-		text-align: left;
+		color: var(--muted-foreground);
+		font-family: 'IBM Plex Sans Condensed', sans-serif;
+		font-size: 16px;
+		font-weight: 600;
+		line-height: 1;
 		cursor: pointer;
+		text-align: center;
+		touch-action: manipulation;
 		transition:
-			background 150ms ease,
-			color 150ms ease;
+			background 140ms ease,
+			color 140ms ease;
 	}
 
-	.constraint-step:last-child {
-		border-right: 0;
+	.selector-segment:first-child {
+		border-left: 0;
 	}
 
-	.constraint-step:hover:not(:disabled) {
-		background: var(--card);
+	.selector-segment:hover:not(:disabled):not(.selected) {
+		background: color-mix(in srgb, var(--foreground) 5%, transparent);
+		color: var(--foreground);
 	}
 
-	.constraint-step.selected {
-		background: var(--foreground);
-		color: var(--background);
+	.selector-segment:focus-visible {
+		z-index: 1;
+		outline: 2px solid var(--foreground);
+		outline-offset: -4px;
 	}
 
-	.constraint-step.selected::after {
-		content: '';
-		position: absolute;
-		inset: auto 10px 0;
-		height: 4px;
-		background: var(--signal);
-	}
-
-	.constraint-step:disabled {
+	.selector-segment:disabled {
 		cursor: default;
 	}
 
-	.step-structure {
-		grid-row: 1 / 3;
-		height: 28px;
-		display: flex;
-		align-items: end;
-		gap: 3px;
+	.selector-segment.selected {
+		background: color-mix(in srgb, var(--foreground) 9%, var(--card));
+		color: var(--foreground);
+		font-weight: 700;
 	}
 
-	.step-structure span {
-		width: 4px;
-		background: currentColor;
-		opacity: 0.18;
-	}
-
-	.step-structure span.filled {
-		opacity: 0.88;
-	}
-
-	.selected .step-structure span.filled {
+	.selector-segment.selected::after {
+		position: absolute;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		height: 4px;
 		background: var(--signal);
-		opacity: 1;
+		content: '';
 	}
 
-	.step-index {
-		align-self: end;
-		color: var(--muted-foreground);
-		font-family: 'IBM Plex Mono', monospace;
-		font-size: 10px;
-	}
-
-	.selected .step-index {
-		color: color-mix(in srgb, var(--background) 70%, transparent);
-	}
-
-	.constraint-step strong {
-		min-width: 0;
-		overflow: hidden;
-		font-family: 'IBM Plex Sans Condensed', sans-serif;
-		font-size: clamp(13px, 2.2vw, 16px);
-		font-weight: 600;
-		line-height: 1;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+	.specimen-stage.disabled .selector-plate {
+		opacity: 0.64;
 	}
 
 	.effect-readout {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
+		min-height: 30px;
+		display: flex;
 		align-items: center;
-		gap: 18px;
-		padding: 12px 17px 13px;
-		background: var(--card);
+		margin-top: 10px;
 	}
 
-	.effect-copy {
-		min-width: 0;
-	}
-
-	.effect-label {
-		font-family: 'IBM Plex Sans Condensed', sans-serif;
-		font-size: 14px;
-		font-weight: 600;
-	}
-
-	.effect-copy p {
-		margin: 3px 0 0;
+	.effect-readout p {
+		margin: 0;
 		color: var(--muted-foreground);
-		font-size: 12px;
-		line-height: 1.4;
+		font-size: 13px;
+		line-height: 1.45;
 	}
 
-	.script-count {
-		min-width: 150px;
-		padding-left: 16px;
-		border-left: 1px solid var(--border);
+	@media (prefers-reduced-motion: reduce) {
+		.selector-segment {
+			transition: none;
+		}
 	}
 
-	.script-count span,
-	.script-count strong {
-		display: block;
-	}
+	@container (max-width: 470px) {
+		.specimen-stage {
+			padding: 16px;
+		}
 
-	.script-count span {
-		color: var(--muted-foreground);
-		font-size: 11px;
-	}
-
-	.script-count strong {
-		margin-top: 2px;
-		font-family: 'IBM Plex Mono', monospace;
-		font-size: 11px;
-		font-weight: 500;
-	}
-
-	@media (max-width: 620px) {
-		.constraint-track {
+		.selector-plate {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
 
-		.constraint-step:nth-child(2) {
-			border-right: 0;
-		}
-
-		.constraint-step:nth-child(-n + 2) {
-			border-bottom: 1px solid var(--border);
-		}
-
-		.effect-readout {
-			grid-template-columns: 1fr;
-		}
-
-		.script-count {
-			min-width: 0;
-			padding-top: 9px;
-			padding-left: 0;
-			border-top: 1px solid var(--border);
+		.selector-segment:nth-child(3) {
 			border-left: 0;
+		}
+
+		.selector-segment:nth-child(n + 3) {
+			border-top: 1px solid var(--border);
 		}
 	}
 </style>
