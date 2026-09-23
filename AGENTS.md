@@ -144,6 +144,8 @@ Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })
 Use `bun run <script>` for these tasks:
 
 - `setup`: Configures `.env`, starts Docker DB, and applies migrations.
+- `setup-env`: Production `.env` configuration must validate third-party credentials when a safe read-only/non-effectful provider check exists, re-prompt rejected credentials, and fail closed on provider/network ambiguity rather than saving unverified values. Webhook/signing secrets with no standalone verification endpoint must be called out honestly.
+- `scripts/setup-vps.sh`: Deployment credential prompts must validate GitHub/Cloudflare/B2 access before relying on the values and re-prompt invalid credentials without persisting plaintext secrets.
 - `db:start`: Starts the Docker database.
 - `db:delete`: Stops the Docker database and deletes volumes.
 - `db:push`: Pushes schema changes to the database (development).

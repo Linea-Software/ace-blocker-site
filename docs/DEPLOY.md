@@ -11,6 +11,8 @@ This guide provides a step-by-step walkthrough for deploying the Ace Blocker web
 >     --b2-key-id <id> --b2-app-key <key> --b2-bucket <bucket>
 > ```
 > The flags are optional — the script prompts for anything it needs (Cloudflare token, B2 credentials). The manual steps in this guide remain useful for understanding what the script does and for troubleshooting. Where the script and this guide differ, **the script is the source of truth.**
+>
+> Credential-bearing setup steps validate access before continuing. Invalid GitHub, Cloudflare, or B2 credentials are discarded and prompted again. The production .env configurator likewise verifies Dodo, Resend, and Bunny Storage credentials when a safe provider check exists; webhook/signing secrets that have no standalone verification endpoint are required but cannot be remotely authenticated during setup.
 
 ---
 
@@ -533,7 +535,7 @@ sudo apt install -y certbot python3-certbot-dns-cloudflare
     ```bash
     nano ~/.cloudflare.ini
     ```
-2.  Add your Cloudflare API token (ensure the token has `Zone:DNS:Edit` permissions and is **scoped to your specific zone**, not all zones):
+2.  Add your Cloudflare API token (ensure the token has `Zone:Zone:Read` and `Zone:DNS:Edit` permissions and is **scoped to your specific zone**, not all zones):
     ```ini
     dns_cloudflare_api_token = YOUR_CLOUDFLARE_API_TOKEN
     ```

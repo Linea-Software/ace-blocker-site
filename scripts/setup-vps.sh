@@ -477,24 +477,27 @@ rm -f "$CRED_FILE"
 # Git refuses to operate on a repo owned by another user; be explicit.
 su - "$USERNAME" -c "git config --global --add safe.directory '${APP_DIR}' 2>/dev/null; true" || true
 
-# Helper: prompt for GitHub credentials and stage them for GIT_ASKPASS.
+# Helper: prompt for GitHub credentials, stage them for GIT_ASKPASS, and prove
+# that they can read this repository before any clone/pull relies on them.
 prompt_github_auth() {
-    echo ""
-    info "GitHub authentication required for the private repository."
-    info "Tip: a read-only deploy key avoids storing any token. See note above."
-    read -rp "  GitHub username: " GH_USER
-    read -rsp "  GitHub token (classic or fine-grained, scoped to this repo): " GH_TOKEN
-    echo ""
-    if [[ -z "$GH_USER" || -z "$GH_TOKEN" ]]; then
-        err "GitHub username and token are required."
-        exit 1
-    fi
+    while true; do
+        echo ""
+        info "GitHub authentication required for the private repository."
+        info "Tip: a read-only deploy key avoids storing any token. See note above."
+        read -rp "  GitHub username: " GH_USER
+        read -rsp "  GitHub token (classic or fine-grained, scoped to this repo): " GH_TOKEN
+        echo ""
+        if [[ -z "$GH_USER" || -z "$GH_TOKEN" ]]; then
+            warn "GitHub username and token are required. Please enter them again."
+            unset GH_USER GH_TOKEN
+            continue
+        fi
 
-    new_secret_file "$ASKPASS_CREDS" "${USERNAME}:${USERNAME}"
-    printf '%s\n%s\n' "$GH_USER" "$GH_TOKEN" > "$ASKPASS_CREDS"
+        new_secret_file "$ASKPASS_CREDS" "${USERNAME}:${USERNAME}"
+        printf '%s\n%s\n' "$GH_USER" "$GH_TOKEN" > "$ASKPASS_CREDS"
 
-    install -m 700 -o "$USERNAME" -g "$USERNAME" /dev/null "$ASKPASS_SH"
-    cat > "$ASKPASS_SH" << ASKPASS
+        install -m 700 -o "$USERNAME" -g "$USERNAME" /dev/null "$ASKPASS_SH"
+        cat > "$ASKPASS_SH" << ASKPASS
 #!/bin/sh
 # Transient credential helper written by setup-vps.sh; deleted when it exits.
 { IFS= read -r _u; IFS= read -r _t; } < "${ASKPASS_CREDS}"
@@ -504,7 +507,16 @@ case "\$1" in
 esac
 ASKPASS
 
-    unset GH_USER GH_TOKEN
+        unset GH_USER GH_TOKEN
+        info "Validating GitHub repository access..."
+        if git_as_user "git ls-remote '${REPO_URL}' HEAD >/dev/null 2>&1"; then
+            ok "GitHub credentials can access the repository."
+            return 0
+        fi
+
+        warn "GitHub authentication/repository access failed. Please enter the credentials again."
+        rm -f "$ASKPASS_SH" "$ASKPASS_CREDS"
+    done
 }
 
 git_as_user() {  # git_as_user <command string, already quoted>
@@ -516,16 +528,18 @@ if [[ ! -d "${APP_DIR}/.git" ]]; then
     git_as_user "git clone '${REPO_URL}' '${APP_DIR}'"
     ok "Repository cloned (token not persisted to disk)."
 else
-    # Try an unauthenticated/cached pull first; if it fails, prompt and retry.
+    # Try an unauthenticated/cached pull first; if it fails, validate fresh
+    # credentials before retrying. A later failure is then a checkout-state
+    # problem rather than something we should mislabel as authentication.
     if su - "$USERNAME" -c "GIT_TERMINAL_PROMPT=0 git -C '${APP_DIR}' pull --ff-only" 2>/dev/null; then
         ok "Repository updated."
     else
         prompt_github_auth
         # --ff-only on purpose: a deploy checkout should never auto-merge. If
-        # this fails, the working tree has diverged — resolve it by hand.
+        # this fails after auth was verified, the working tree likely diverged.
         git_as_user "git -C '${APP_DIR}' pull --ff-only" || {
-            err "git pull --ff-only failed. The deploy checkout has local commits or"
-            err "changes. Inspect it: sudo -u ${USERNAME} git -C ${APP_DIR} status"
+            err "git pull --ff-only failed after GitHub credentials were verified."
+            err "Inspect checkout state: sudo -u ${USERNAME} git -C ${APP_DIR} status"
             exit 1
         }
         ok "Repository updated (token not persisted to disk)."
@@ -886,59 +900,131 @@ ok "Nginx configured."
 # ── 15. SSL Certificate (Cloudflare DNS Challenge) ──────────────────────────
 step "15. SSL Certificate"
 
-if [[ "$SSL_SKIP" == "true" ]]; then
-    info "SSL already configured (skipped)."
-else
-    echo ""
-    info "A Cloudflare API token is required to obtain an SSL certificate"
-    info "via DNS challenge (required when using Cloudflare proxying)."
-    info "The token needs Zone:DNS:Edit permission scoped to your domain."
-    echo ""
+echo ""
+info "A Cloudflare API token is required for certificate issuance and renewal."
+info "The token needs Zone:Zone:Read + Zone:DNS:Edit scoped to your domain."
+echo ""
 
-    # Use existing token if passed via --cf-token, otherwise prompt
+CF_INI="/root/.cloudflare.ini"
+CLOUDFLARE_RESPONSE=""
+
+cloudflare_api_call() {
+    local method="$1" url="$2" payload="${3:-}" response http_status
+    if [[ -n "$payload" ]]; then
+        response="$(curl -sS --max-time 15 -X "$method" -H "Authorization: Bearer ${CF_TOKEN}" -H "Content-Type: application/json" --data-binary "$payload" -w $'\n%{http_code}' "$url")" || return 2
+    else
+        response="$(curl -sS --max-time 15 -X "$method" -H "Authorization: Bearer ${CF_TOKEN}" -w $'\n%{http_code}' "$url")" || return 2
+    fi
+    http_status="${response##*$'\n'}"
+    CLOUDFLARE_RESPONSE="${response%$'\n'*}"
+    case "$http_status" in
+        401|403) return 1 ;;
+        5??) return 2 ;;
+    esac
+    [[ "$http_status" =~ ^2[0-9][0-9]$ ]] || return 1
+}
+
+validate_cloudflare_token() {
+    local status zone_id probe_name probe_value payload record_id
+
+    status=0
+    cloudflare_api_call GET "https://api.cloudflare.com/client/v4/user/tokens/verify" || status=$?
+    [[ "$status" -eq 0 ]] || return "$status"
+    jq -e '.success == true and .result.status == "active"' <<<"$CLOUDFLARE_RESPONSE" >/dev/null 2>&1 || return 1
+
+    status=0
+    cloudflare_api_call GET "https://api.cloudflare.com/client/v4/zones?name=${DOMAIN}&status=active" || status=$?
+    [[ "$status" -eq 0 ]] || return "$status"
+    zone_id="$(jq -r 'if .success == true then (.result[0].id // empty) else empty end' <<<"$CLOUDFLARE_RESPONSE")"
+    [[ -n "$zone_id" ]] || return 1
+
+    # Prove DNS:Edit rather than merely proving that the token can read DNS.
+    # The temporary TXT record is deleted immediately after creation.
+    probe_name="_ace-setup-auth-check-$(openssl rand -hex 6).${DOMAIN}"
+    probe_value="ace-setup-$(openssl rand -hex 12)"
+    payload="$(jq -nc --arg name "$probe_name" --arg content "$probe_value" '{type:"TXT", name:$name, content:$content, ttl:60}')"
+    status=0
+    cloudflare_api_call POST "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records" "$payload" || status=$?
+    [[ "$status" -eq 0 ]] || return "$status"
+    record_id="$(jq -r 'if .success == true then (.result.id // empty) else empty end' <<<"$CLOUDFLARE_RESPONSE")"
+    [[ -n "$record_id" ]] || return 1
+
+    status=0
+    cloudflare_api_call DELETE "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records/${record_id}" || status=$?
+    if [[ "$status" -ne 0 ]]; then
+        warn "Cloudflare auth probe was created but cleanup failed: ${probe_name}"
+        return "$status"
+    fi
+    if ! jq -e '.success == true' <<<"$CLOUDFLARE_RESPONSE" >/dev/null 2>&1; then
+        warn "Cloudflare auth probe was created but cleanup was rejected: ${probe_name}"
+        return 1
+    fi
+}
+
+# Reuse the renewal credential on reruns. Never source the INI as shell.
+if [[ -z "$CF_TOKEN" && -s "$CF_INI" ]]; then
+    CF_TOKEN="$(awk -F= '$1 ~ /^[[:space:]]*dns_cloudflare_api_token[[:space:]]*$/ { value=$2; sub(/^[[:space:]]*/, "", value); sub(/[[:space:]]*$/, "", value); print value; exit }' "$CF_INI")"
+    [[ -n "$CF_TOKEN" ]] && info "Found existing Cloudflare renewal credential; validating it."
+fi
+
+while true; do
     if [[ -z "$CF_TOKEN" ]]; then
         read -rsp "  Cloudflare API token: " CF_TOKEN
         echo ""
-        if [[ -z "$CF_TOKEN" ]]; then
-            err "Cloudflare API token is required for SSL."
-            err "Run the script again with --cf-token or paste the token above."
-            exit 1
-        fi
+    fi
+    if [[ -z "$CF_TOKEN" ]]; then
+        warn "Cloudflare API token is required. Please enter it again."
+        continue
     fi
 
-    apt-get "${APT_OPTS[@]}" install certbot python3-certbot-dns-cloudflare
+    info "Validating Cloudflare token, zone access, and DNS write permission for ${DOMAIN}..."
+    validation_status=0
+    validate_cloudflare_token || validation_status=$?
+    if [[ "$validation_status" -eq 0 ]]; then
+        ok "Cloudflare token can manage DNS for ${DOMAIN}."
+        break
+    fi
+    if [[ "$validation_status" -eq 2 ]]; then
+        err "Cloudflare could not be reached while validating credentials. Refusing to replace a possibly valid token."
+        exit 1
+    fi
 
-    # This token lives on disk at /root/.cloudflare.ini because certbot's
-    # automatic renewal needs it. Created 0600 before the write so it is never
-    # momentarily world-readable. Scope it to Zone:DNS:Edit on ONLY this
-    # domain's zone — never an account-wide token — so a leak is contained.
-    CF_INI="/root/.cloudflare.ini"
-    new_secret_file "$CF_INI"
-    printf 'dns_cloudflare_api_token = %s\n' "$CF_TOKEN" > "$CF_INI"
+    warn "Cloudflare credential validation failed."
+    warn "Use a token scoped to ${DOMAIN} with Zone:Zone:Read and Zone:DNS:Edit."
+    warn "Please enter the Cloudflare token again."
+    CF_TOKEN=""
+done
 
+apt-get "${APT_OPTS[@]}" install certbot python3-certbot-dns-cloudflare
+new_secret_file "$CF_INI"
+printf 'dns_cloudflare_api_token = %s\n' "$CF_TOKEN" > "$CF_INI"
+
+if [[ "$SSL_SKIP" == "true" ]]; then
+    info "SSL certificate already exists; validated/refreshed the Cloudflare renewal credential."
+else
     if [[ -z "$EMAIL" ]]; then
-        warn "No --email provided. Certbot requires an email for non-interactive registration."
-        read -rp "  Email for Let's Encrypt registration: " EMAIL
-        [[ -z "$EMAIL" ]] && { err "Email is required for SSL certificate."; exit 1; }
+        while true; do
+            warn "No --email provided. Certbot requires an email for non-interactive registration."
+            read -rp "  Email for Let's Encrypt registration: " EMAIL
+            if [[ "$EMAIL" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]]; then
+                break
+            fi
+            warn "Enter a valid email address."
+            EMAIL=""
+        done
     fi
 
     info "Requesting SSL certificate for ${DOMAIN} and *.${DOMAIN}..."
-    # --deploy-hook is stored in the renewal config: without it nginx keeps
-    # serving the OLD certificate after each renewal until someone reloads it by
-    # hand, i.e. the site starts serving an expired cert ~90 days in.
-    certbot certonly --non-interactive --agree-tos \
-        --dns-cloudflare --dns-cloudflare-credentials "$CF_INI" \
-        --dns-cloudflare-propagation-seconds 30 \
-        --email "$EMAIL" \
-        --deploy-hook "systemctl reload nginx" \
-        -d "${DOMAIN}" -d "*.${DOMAIN}" || {
-        err "Certbot failed. Check the Cloudflare token and try:\n         sudo certbot certificates\n         sudo certbot renew --dry-run"
+    certbot certonly --non-interactive --agree-tos --dns-cloudflare --dns-cloudflare-credentials "$CF_INI" --dns-cloudflare-propagation-seconds 30 --email "$EMAIL" --deploy-hook "systemctl reload nginx" -d "${DOMAIN}" -d "*.${DOMAIN}" || {
+        err "Certbot failed after Cloudflare credentials and DNS write access were verified."
+        err "Inspect the Certbot output/logs; this is not being treated as a credential failure."
         exit 1
     }
-    unset CF_TOKEN
-    systemctl enable --now certbot.timer >/dev/null 2>&1 || true
     ok "SSL certificate obtained (renewal reloads nginx automatically)."
 fi
+
+unset CF_TOKEN validation_status CLOUDFLARE_RESPONSE
+systemctl enable --now certbot.timer >/dev/null 2>&1 || true
 
 # ── 16. Update Nginx with SSL ───────────────────────────────────────────────
 step "16. Nginx SSL Configuration"
@@ -987,28 +1073,39 @@ info "(Key ID + Application Key) scoped to one bucket, plus the bucket name."
 info "Create one at: B2 Cloud Storage → Application Keys. Leave blank to skip."
 echo ""
 
-if [[ -z "$B2_KEY_ID" ]]; then
-    read -rp "  B2 Key ID (blank = local-only backups): " B2_KEY_ID
-fi
-if [[ -n "$B2_KEY_ID" ]]; then
+B2_ENABLED=false
+while true; do
+    if [[ -z "$B2_KEY_ID" ]]; then
+        read -rp "  B2 Key ID (blank = local-only backups): " B2_KEY_ID
+    fi
+
+    if [[ -z "$B2_KEY_ID" ]]; then
+        info "Backblaze B2 skipped explicitly; backups will remain local-only."
+        rm -f /root/.config/rclone/rclone.conf
+        rm -f "/home/${USERNAME}/.config/rclone/rclone.conf"
+        break
+    fi
+
     if [[ -z "$B2_APP_KEY" ]]; then
-        read -rsp "  B2 Application Key: " B2_APP_KEY; echo ""
+        read -rsp "  B2 Application Key: " B2_APP_KEY
+        echo ""
     fi
     if [[ -z "$B2_BUCKET" ]]; then
         read -rp "  B2 Bucket name: " B2_BUCKET
     fi
+
     if [[ -z "$B2_APP_KEY" || -z "$B2_BUCKET" ]]; then
-        err "B2 Application Key and Bucket are required when a Key ID is given."
-        exit 1
+        warn "B2 Key ID, Application Key, and Bucket are all required."
+        warn "Please enter all B2 credentials again."
+        B2_KEY_ID=""; B2_APP_KEY=""; B2_BUCKET=""
+        continue
     fi
     if [[ ! "$B2_BUCKET" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]{4,48}$ ]]; then
-        err "Invalid B2 bucket name: '${B2_BUCKET}'"; exit 1
+        warn "Invalid B2 bucket name: '${B2_BUCKET}'."
+        warn "Please enter all B2 credentials again."
+        B2_KEY_ID=""; B2_APP_KEY=""; B2_BUCKET=""
+        continue
     fi
-fi
-
-B2_ENABLED=false
-if [[ -n "$B2_KEY_ID" ]]; then
-    B2_ENABLED=true
 
     # Prefer the signed distro package; fall back to the vendor script only if
     # apt has no rclone (curl|bash is the weaker supply-chain path).
@@ -1019,12 +1116,10 @@ if [[ -n "$B2_KEY_ID" ]]; then
             || { err "rclone install failed."; exit 1; }
     fi
 
-    # rclone config is root-only now, matching the backup job's identity — and
-    # keeping the B2 credentials away from a compromised app process.
+    # rclone config is root-only, matching the backup job's identity. The
+    # application key is obscured from stdin so it never appears in argv.
     RCLONE_DIR="/root/.config/rclone"
     install -d -m 700 -o root -g root "$RCLONE_DIR"
-    # `rclone obscure <key>` would put the application key in argv, where every
-    # local user can read it out of /proc. Feed it on stdin instead.
     OBSCURED_KEY="$(printf '%s\n' "$B2_APP_KEY" | rclone obscure -)"
     new_secret_file "${RCLONE_DIR}/rclone.conf"
     cat > "${RCLONE_DIR}/rclone.conf" << RCLONECONF
@@ -1036,16 +1131,30 @@ RCLONECONF
     # Remove the old user-owned copy if a previous run created one.
     rm -f "/home/${USERNAME}/.config/rclone/rclone.conf"
 
-    # Verify the bucket is reachable with these credentials before relying on it.
-    if rclone lsd "b2backup:${B2_BUCKET}" &>/dev/null; then
-        ok "B2 bucket '${B2_BUCKET}' reachable — off-site backups enabled."
-    else
-        warn "Could not reach B2 bucket '${B2_BUCKET}' with the given key."
-        warn "Backups will still run locally; fix the key/bucket and re-run to enable off-site."
-        B2_ENABLED=false
+    info "Validating B2 key, exact bucket name, upload access, and delete access..."
+    B2_PROBE_LOCAL="$(mktemp)"
+    SECRET_FILES+=("$B2_PROBE_LOCAL")
+    B2_PROBE_REMOTE="b2backup:${B2_BUCKET}/.ace-setup-auth-check-$(openssl rand -hex 8)"
+    printf 'Ace Blocker B2 credential probe\n' > "$B2_PROBE_LOCAL"
+
+    if rclone lsd "b2backup:${B2_BUCKET}" >/dev/null \
+       && rclone copyto "$B2_PROBE_LOCAL" "$B2_PROBE_REMOTE" >/dev/null \
+       && rclone deletefile --b2-hard-delete "$B2_PROBE_REMOTE" >/dev/null; then
+        B2_ENABLED=true
+        rm -f "$B2_PROBE_LOCAL"
+        ok "B2 bucket '${B2_BUCKET}' supports listing, uploads, and hard deletes — off-site backups enabled."
+        break
     fi
-fi
-unset B2_APP_KEY OBSCURED_KEY
+
+    rm -f "$B2_PROBE_LOCAL"
+    warn "B2 credential validation failed for bucket '${B2_BUCKET}'."
+    warn "If the upload succeeded but deletion failed, a tiny probe object may remain at ${B2_PROBE_REMOTE}."
+    warn "The key must allow the backup job to list, upload, and delete files in that exact bucket."
+    warn "Use the application key's keyID (not the account ID), the matching Application Key,"
+    warn "and the exact bucket name. Please enter all three again."
+    B2_KEY_ID=""; B2_APP_KEY=""; B2_BUCKET=""; unset OBSCURED_KEY B2_PROBE_LOCAL B2_PROBE_REMOTE
+done
+unset B2_APP_KEY OBSCURED_KEY B2_PROBE_LOCAL B2_PROBE_REMOTE
 
 # ── Backup encryption passphrase ──
 # Dumps leaving the machine unencrypted is not acceptable, and setup-env.ts
