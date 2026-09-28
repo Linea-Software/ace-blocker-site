@@ -21,8 +21,9 @@ import { createOTP } from '@better-auth/utils/otp';
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { hexToBytes, managedNonce } from '@noble/ciphers/utils.js';
 
-const BASE_URL = process.env.BASE_URL ?? 'http://localhost:5174';
+const BASE_URL = process.env.BASE_URL ?? 'http://localhost:5173';
 const OUT_DIR = process.env.OUT_DIR ?? '.verify-shots';
+const REQUEST_TIMEOUT_MS = 15_000;
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
 // ── .env loader ────────────────────────────────────────────────────────────
@@ -161,7 +162,8 @@ async function adminSessionCookies(): Promise<Array<{ name: string; value: strin
 			email: env.DEFAULT_ADMIN_EMAIL,
 			password: env.DEFAULT_ADMIN_PASSWORD
 		}),
-		redirect: 'manual'
+		redirect: 'manual',
+		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
 	});
 	if (r1.status !== 200) throw new Error(`sign-in failed: ${r1.status} ${await r1.text()}`);
 	const challengeCookies = (r1.headers.getSetCookie?.() ?? []).map(
@@ -175,7 +177,8 @@ async function adminSessionCookies(): Promise<Array<{ name: string; value: strin
 		method: 'POST',
 		headers: { 'content-type': 'application/json', origin: BASE_URL, cookie: challengeHeader },
 		body: JSON.stringify({ code }),
-		redirect: 'manual'
+		redirect: 'manual',
+		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
 	});
 	if (r2.status !== 200) throw new Error(`verify-totp failed: ${r2.status} ${await r2.text()}`);
 

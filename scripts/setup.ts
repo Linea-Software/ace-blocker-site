@@ -24,8 +24,10 @@ async function main() {
 		const hasNss = (await $`dpkg -l libnss3-tools`.nothrow().quiet()).exitCode === 0;
 		if (!hasNss) {
 			console.log('📦 Installing libnss3-tools (required for SSL)...');
-			await runCommand('apt', ['update']);
-			await runCommand('apt', ['install', '-y', 'libnss3-tools']);
+			if (!(await runCommand('apt', ['update'])))
+				throw new Error('Failed to update apt package metadata.');
+			if (!(await runCommand('apt', ['install', '-y', 'libnss3-tools'])))
+				throw new Error('Failed to install libnss3-tools.');
 		} else {
 			console.log('✅ libnss3-tools is already installed.');
 		}
@@ -112,25 +114,23 @@ async function main() {
 	console.log('\n🗄️  Setting up database...');
 
 	// Ensure docker is running
-	if (!(await runCommand('docker', ['compose', 'up', '-d']))) {
-		console.warn('⚠️  Failed to start docker containers. Please make sure Docker is running.');
-	} else {
-		console.log('✅ Docker containers are running.');
-
-		// Wait a bit for Postgres to be ready
-		console.log('⏳ Waiting for database to be ready...');
-		await new Promise((resolve) => setTimeout(resolve, 3000));
-
-		// Push schema
-		console.log('📦 Applying database migrations...');
-		if (!(await runCommand('bun', ['run', 'db:migrate']))) {
-			console.error('❌ Failed to apply database migrations.');
-		} else {
-			console.log('✅ Database migrations applied successfully.');
-		}
+	if (!(await runCommand('docker', ['compose', 'up', '-d', '--wait', '--wait-timeout', '60']))) {
+		throw new Error(
+			'Failed to start a healthy database container. Make sure Docker is running.'
+		);
 	}
+	console.log('Docker containers are running and healthy.');
+
+	console.log('Applying database migrations...');
+	if (!(await runCommand('bun', ['run', 'db:migrate']))) {
+		throw new Error('Failed to apply database migrations.');
+	}
+	console.log('Database migrations applied successfully.');
 
 	console.log('\n✨ Setup complete! You can now run the development server.');
 }
 
-main().catch(console.error);
+main().catch((error) => {
+	console.error(error);
+	process.exitCode = 1;
+});

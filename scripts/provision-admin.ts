@@ -8,6 +8,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin as adminPlugin } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
 import { db, dbClient } from '../src/lib/server/db';
+import * as schema from '../src/lib/server/db/schema';
 import { proStatus, user } from '../src/lib/server/db/schema';
 
 interface Args {
@@ -40,12 +41,34 @@ function parseArgs(argv: string[]): Args {
 	return { email: email.toLowerCase(), username: username.trim(), passwordStdin };
 }
 
+function formatError(error: unknown): string {
+	const messages: string[] = [];
+	let current: unknown = error;
+	while (current instanceof Error) {
+		if (current.message && !messages.includes(current.message)) messages.push(current.message);
+		current = current.cause;
+	}
+	return messages.join(' -> ') || String(error);
+}
+
+function readPasswordFromStdin(): string {
+	if (process.stdin.isTTY) {
+		throw new Error(
+			'--password-stdin requires piped input; refusing to wait for terminal EOF.'
+		);
+	}
+	const password = readFileSync(0, 'utf8').replace(/[\r\n]+$/, '');
+	if (password.length < 12)
+		throw new Error('Administrator password must be at least 12 characters');
+	return password;
+}
+
 // Keep this provisioning instance deliberately minimal. Importing the app's
 // full auth.ts pulls in SvelteKit-only virtual modules such as $env/static/private,
 // which plain `bun scripts/provision-admin.ts` cannot resolve on the VPS.
 // Better Auth still owns password hashing and credential-account creation here.
 const provisioningAuth = betterAuth({
-	database: drizzleAdapter(db, { provider: 'pg' }),
+	database: drizzleAdapter(db, { provider: 'pg', schema }),
 	emailAndPassword: {
 		enabled: true,
 		minPasswordLength: 12
@@ -76,6 +99,9 @@ async function grantAdminProAccess(userId: string): Promise<void> {
 
 async function main() {
 	const args = parseArgs(process.argv.slice(2));
+	if (args.passwordStdin && process.stdin.isTTY) readPasswordFromStdin();
+
+	console.log(`Checking administrator account: ${args.email}`);
 	let existing = await db.select().from(user).where(eq(user.email, args.email)).limit(1);
 	let created = false;
 
@@ -83,8 +109,8 @@ async function main() {
 		if (!args.passwordStdin) {
 			throw new Error('New administrators require --password-stdin');
 		}
-		const password = readFileSync(0, 'utf8').replace(/[\r\n]+$/, '');
-		if (password.length < 12) throw new Error('Administrator password must be at least 12 characters');
+		const password = readPasswordFromStdin();
+		console.log('Creating administrator account with Better Auth...');
 
 		await provisioningAuth.api.createUser({
 			body: { name: args.username, email: args.email, password }
@@ -100,14 +126,20 @@ async function main() {
 	// existing account, and do not bypass Better Auth's verified 2FA enrollment.
 	await grantAdminProAccess(adminUser.id);
 
-	console.log(created ? 'Administrator created and promoted.' : 'Existing account promoted/confirmed as administrator.');
-	console.log('TOTP is not pre-enabled. Sign in and complete the normal verified 2FA enrollment flow.');
+	console.log(
+		created
+			? 'Administrator created and promoted.'
+			: 'Existing account promoted/confirmed as administrator.'
+	);
+	console.log(
+		'TOTP is not pre-enabled. Sign in and complete the normal verified 2FA enrollment flow.'
+	);
 }
 
 try {
 	await main();
 } catch (error) {
-	console.error(`Provisioning failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+	console.error(`Provisioning failed: ${formatError(error)}`);
 	process.exitCode = 1;
 } finally {
 	await dbClient.end({ timeout: 5 });
