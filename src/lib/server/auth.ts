@@ -20,6 +20,7 @@ import {
 	sendPaymentFailedEmail,
 	resend
 } from './email';
+import { emailLogoAttachments } from './email-branding';
 import { handleUserCreatedAfter } from './auth-hooks';
 import { updateProExpiration, clearProExpiration } from './pro';
 import { shouldProcessWebhook } from './webhook-events';
@@ -90,7 +91,8 @@ export const auth = betterAuth({
 					from: 'noreply@aceblocker.com',
 					to: user.email,
 					subject: m.email_reset_password_subject(locale),
-					html: getResetPasswordEmailHtml(url, locale)
+					html: getResetPasswordEmailHtml(url, locale),
+					attachments: emailLogoAttachments
 				});
 
 				if (result.error) {
@@ -123,7 +125,8 @@ export const auth = betterAuth({
 					from: 'noreply@aceblocker.com',
 					to: user.email,
 					subject: m.email_verification_subject(locale),
-					html: getVerificationEmailHtml(url, locale)
+					html: getVerificationEmailHtml(url, locale),
+					attachments: emailLogoAttachments
 				});
 
 				if (result.error) {
@@ -161,7 +164,8 @@ export const auth = betterAuth({
 							from: 'noreply@aceblocker.com',
 							to: user.email,
 							subject: m.email_2fa_subject(locale),
-							html: getTwoFactorEmailHtml(otp, locale)
+							html: getTwoFactorEmailHtml(otp, locale),
+							attachments: emailLogoAttachments
 						});
 
 						if (result.error) {
@@ -192,7 +196,8 @@ export const auth = betterAuth({
 						from: 'noreply@aceblocker.com',
 						to: email,
 						subject,
-						html
+						html,
+						attachments: emailLogoAttachments
 					});
 					if (result.error) {
 						log.error({ err: result.error, type }, 'Failed to send OTP email');

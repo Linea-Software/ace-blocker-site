@@ -6,6 +6,7 @@ import { m as pm } from '$lib/paraglide/messages';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
 import { createLogger } from '$lib/server/logger';
+import { DARK_LOGO_CID, LIGHT_LOGO_CID, emailLogoAttachments } from './email-branding';
 
 export const resend = new Resend(RESEND_API_KEY);
 
@@ -13,10 +14,6 @@ const log = createLogger('email');
 
 /** Base site URL for email links (download, renewal, payment update). */
 const siteUrl = (process.env.PUBLIC_BETTER_AUTH_URL ?? 'http://localhost:5173').replace(/\/+$/, '');
-
-// Logo images served from the CDN.
-const DARK_LOGO_URL = 'https://cdn.aceblocker.com/dark-full-logo.png';
-const LIGHT_LOGO_URL = 'https://cdn.aceblocker.com/light-full-logo.png';
 
 // ── Shared email HTML shell ───────────────────────────────────────────────────
 
@@ -44,14 +41,14 @@ function logoHtml(): string {
 	return `
                     <!-- Dark mode default -->
                     <img class="email-logo-dark"
-                         src="${DARK_LOGO_URL}"
+                         src="cid:${DARK_LOGO_CID}"
                          alt="Ace Blocker"
                          width="180"
                          height="42"
                          style="display:block; margin:0 auto; width:180px; height:auto; border:0;" />
                     <!-- Light mode override -->
                     <img class="email-logo-light"
-                         src="${LIGHT_LOGO_URL}"
+                         src="cid:${LIGHT_LOGO_CID}"
                          alt="Ace Blocker"
                          width="180"
                          height="42"
@@ -416,7 +413,8 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
 			from: 'noreply@aceblocker.com',
 			to,
 			subject,
-			html
+			html,
+			attachments: emailLogoAttachments
 		});
 		if (result.error) {
 			log.error({ err: result.error, to }, 'Failed to send email');
