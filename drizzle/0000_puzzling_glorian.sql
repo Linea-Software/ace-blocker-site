@@ -9,6 +9,16 @@ CREATE TABLE "backups" (
 	CONSTRAINT "backups_user_id_unique" UNIQUE("user_id")
 );
 --> statement-breakpoint
+CREATE TABLE "dodo_webhook_events" (
+	"id" text PRIMARY KEY NOT NULL,
+	"event_key" text NOT NULL,
+	"type" text NOT NULL,
+	"subscription_id" text,
+	"event_timestamp" timestamp NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "dodo_webhook_events_event_key_unique" UNIQUE("event_key")
+);
+--> statement-breakpoint
 CREATE TABLE "pro_status" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
@@ -124,6 +134,12 @@ CREATE TABLE "ace_blocker_installer" (
 	"download_url" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"sha256" text NOT NULL,
+	"source_repository" text,
+	"source_commit" text,
+	"source_run_id" text,
+	"source_run_url" text,
+	"engine_commit" text,
+	"app_commit" text,
 	"size" integer NOT NULL,
 	"can_be_downloaded" boolean DEFAULT true NOT NULL,
 	"download_count" integer DEFAULT 0 NOT NULL
@@ -161,6 +177,8 @@ ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "two_factor" ADD CONSTRAINT "two_factor_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "backups_userId_idx" ON "backups" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "dodo_webhook_events_subscription_idx" ON "dodo_webhook_events" USING btree ("subscription_id");--> statement-breakpoint
+CREATE INDEX "dodo_webhook_events_event_timestamp_idx" ON "dodo_webhook_events" USING btree ("event_timestamp");--> statement-breakpoint
 CREATE INDEX "site_visits_timestamp_idx" ON "site_visits" USING btree ("timestamp");--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "apikey_configId_idx" ON "apikey" USING btree ("config_id");--> statement-breakpoint
