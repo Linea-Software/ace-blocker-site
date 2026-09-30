@@ -173,7 +173,7 @@ Use `bun run <script>` for these tasks:
 - `db:push`: Pushes schema changes to the database (development).
 - `db:migrate`: Runs migrations.
 - `db:studio`: Opens Drizzle Studio.
-- `check`: Runs Svelte-check for type safety and linting.
+- `check`: Compiles the git-ignored Paraglide output first, then runs SvelteKit sync and Svelte-check. Keep this self-contained so fresh CI checkouts do not depend on generated local files.
 - `test`: Runs unit and E2E tests.
 - `format`: Formats code with Prettier.
 - `verify-screenshots`: Captures before/after full-page screenshots (light +
