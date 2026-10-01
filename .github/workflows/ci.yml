@@ -30,6 +30,12 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Production build
+        env:
+          # Static SvelteKit env imports must exist at compile time. These are
+          # intentionally non-secret CI placeholders; real values are supplied
+          # only to the deployed runtime.
+          PUBLIC_BETTER_AUTH_URL: https://ci.invalid
+          RESEND_API_KEY: '[REDACTED_SECRET]'
         run: bun run build
 
   unit-tests:
