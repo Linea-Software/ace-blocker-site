@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+	assertCompatibleBetterAuthProvisioningVersion,
+	normalizeProvisioningAuthError,
 	parseProvisionAdminArgs,
 	readNewAdminPassword,
 	validateAdminPassword
@@ -81,5 +83,29 @@ describe('provision admin input', () => {
 		expect(() => validateAdminPassword('too-short')).toThrow(
 			'Administrator password must be at least 12 characters'
 		);
+	});
+
+	it('rejects Better Auth 1.7.0-1.7.2 without suggesting the reverted issuer schema', () => {
+		for (const version of ['1.7.0', '1.7.1', '1.7.2']) {
+			expect(() => assertCompatibleBetterAuthProvisioningVersion(version)).toThrow(
+				'bun install --frozen-lockfile'
+			);
+		}
+
+		expect(() => assertCompatibleBetterAuthProvisioningVersion('1.7.3')).not.toThrow();
+		expect(() => assertCompatibleBetterAuthProvisioningVersion('1.7.5')).not.toThrow();
+	});
+
+	it('turns the issuer adapter error into an actionable dependency mismatch', () => {
+		const error = normalizeProvisioningAuthError(
+			new Error(
+				'The field "issuer" does not exist in the "account" Drizzle schema. Please update your drizzle schema or re-generate using "npx auth@latest generate".'
+			),
+			'1.7.2'
+		);
+
+		expect(error.message).toContain('bun install --frozen-lockfile');
+		expect(error.message).toContain('do not add account.issuer');
+		expect(error.message).not.toContain('auth@latest generate');
 	});
 });

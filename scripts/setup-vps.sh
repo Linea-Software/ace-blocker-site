@@ -550,7 +550,7 @@ rm -f "$ASKPASS_SH" "$ASKPASS_CREDS"
 
 # ── 10. Install Dependencies & Run Setup ────────────────────────────────────
 step "10. Dependencies & Setup"
-su - "$USERNAME" -c "cd '${APP_DIR}' && '${BUN}' install"
+su - "$USERNAME" -c "cd '${APP_DIR}' && '${BUN}' install --frozen-lockfile"
 su - "$USERNAME" -c "cd '${APP_DIR}' && '${BUN}' run setup"
 ok "Dependencies installed, setup complete."
 

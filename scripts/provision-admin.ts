@@ -2,6 +2,7 @@
 
 import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin as adminPlugin } from 'better-auth/plugins';
@@ -9,7 +10,16 @@ import { eq } from 'drizzle-orm';
 import { db, dbClient } from '../src/lib/server/db';
 import * as schema from '../src/lib/server/db/schema';
 import { proStatus, user } from '../src/lib/server/db/schema';
-import { parseProvisionAdminArgs, readNewAdminPassword } from './provision-admin-input';
+import {
+	assertCompatibleBetterAuthProvisioningVersion,
+	normalizeProvisioningAuthError,
+	parseProvisionAdminArgs,
+	readNewAdminPassword
+} from './provision-admin-input';
+
+const require = createRequire(import.meta.url);
+const installedBetterAuthVersion = (require('better-auth/package.json') as { version: string })
+	.version;
 
 function formatError(error: unknown): string {
 	const messages: string[] = [];
@@ -63,12 +73,17 @@ async function main() {
 	let created = false;
 
 	if (existing.length === 0) {
+		assertCompatibleBetterAuthProvisioningVersion(installedBetterAuthVersion);
 		const password = await readNewAdminPassword(args.passwordStdin);
 		console.log('Creating administrator account with Better Auth...');
 
-		await provisioningAuth.api.createUser({
-			body: { name: args.username, email: args.email, password }
-		});
+		try {
+			await provisioningAuth.api.createUser({
+				body: { name: args.username, email: args.email, password }
+			});
+		} catch (error) {
+			throw normalizeProvisioningAuthError(error, installedBetterAuthVersion);
+		}
 		existing = await db.select().from(user).where(eq(user.email, args.email)).limit(1);
 		created = true;
 	}

@@ -55,6 +55,31 @@ export function validateAdminPassword(password: string): string {
 	return password;
 }
 
+export function assertCompatibleBetterAuthProvisioningVersion(version: string): void {
+	const match = /^1\.7\.(\d+)(?:\D.*)?$/.exec(version);
+	if (!match) return;
+
+	const patch = Number(match[1]);
+	if (patch >= 0 && patch <= 2) {
+		throw new Error(
+			`Installed Better Auth ${version} is incompatible with Ace's current account schema. Better Auth 1.7.0-1.7.2 incorrectly required account.issuer; Ace uses the corrected 1.7.3+ schema. Run "bun install --frozen-lockfile" from the Ace site directory, then retry provisioning. Do not add an issuer column or regenerate the schema with the stale runtime.`
+		);
+	}
+}
+
+export function normalizeProvisioningAuthError(error: unknown, version: string): Error {
+	if (
+		error instanceof Error &&
+		error.message.includes('The field "issuer" does not exist in the "account" Drizzle schema')
+	) {
+		return new Error(
+			`Better Auth runtime/schema mismatch detected (installed better-auth ${version}). Run "bun install --frozen-lockfile" from the Ace site directory, verify "bun pm ls better-auth @better-auth/core" shows 1.7.3 or newer, then retry provisioning. Ace's schema is already correct; do not add account.issuer.`
+		);
+	}
+
+	return error instanceof Error ? error : new Error(String(error));
+}
+
 function readPipedPassword(): string {
 	return validateAdminPassword(readFileSync(0, 'utf8').replace(/[\r\n]+$/, ''));
 }
