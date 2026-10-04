@@ -173,6 +173,7 @@ Use `bun run <script>` for these tasks:
 - `db:push`: Pushes schema changes to the database (development).
 - `db:migrate`: Runs migrations.
 - `db:studio`: Opens Drizzle Studio.
+- `provision-admin`: Idempotently promotes an existing account without changing its password. New accounts securely prompt for and confirm a password during direct interactive use; `--password-stdin` remains available for piped/non-interactive provisioning.
 - `check`: Compiles the git-ignored Paraglide output first, then runs SvelteKit sync and Svelte-check. Keep this self-contained so fresh CI checkouts do not depend on generated local files.
 - `test`: Runs unit and E2E tests.
 - `format`: Formats code with Prettier.
