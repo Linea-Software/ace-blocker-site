@@ -239,7 +239,12 @@ export const auth = betterAuth({
 						if (payload.data.next_billing_date) {
 							await updateProExpiration(email, payload.data.next_billing_date);
 						}
-						await sendPaymentReceiptEmail(email, await getLocaleForEmail(email));
+						await sendPaymentReceiptEmail(email, await getLocaleForEmail(email), {
+							amountMinor: payload.data.recurring_pre_tax_amount,
+							currency: payload.data.currency,
+							processedAt: new Date(payload.timestamp),
+							subscriptionId: payload.data.subscription_id
+						});
 					},
 					onSubscriptionRenewed: async (payload) => {
 						if (!(await shouldProcessWebhook(payload))) return;
@@ -247,7 +252,12 @@ export const auth = betterAuth({
 						if (payload.data.next_billing_date) {
 							await updateProExpiration(email, payload.data.next_billing_date);
 						}
-						await sendPaymentReceiptEmail(email, await getLocaleForEmail(email));
+						await sendPaymentReceiptEmail(email, await getLocaleForEmail(email), {
+							amountMinor: payload.data.recurring_pre_tax_amount,
+							currency: payload.data.currency,
+							processedAt: new Date(payload.timestamp),
+							subscriptionId: payload.data.subscription_id
+						});
 					},
 					onSubscriptionPlanChanged: async (payload) => {
 						if (!(await shouldProcessWebhook(payload))) return;

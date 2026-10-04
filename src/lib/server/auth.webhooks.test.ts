@@ -135,7 +135,13 @@ const SUBSCRIPTION_ID = 'sub_0Nh5UEeRJdJYMY3jNz54E';
 interface SubscriptionData {
 	payload_type: 'Subscription';
 	addons: unknown[];
-	billing: { city: string | null; country: string; state: string | null; street: string | null; zipcode: string | null };
+	billing: {
+		city: string | null;
+		country: string;
+		state: string | null;
+		street: string | null;
+		zipcode: string | null;
+	};
 	brand_id: string;
 	cancel_at_next_billing_date: boolean;
 	created_at: string;
@@ -179,7 +185,11 @@ function subscriptionPayload(opts: {
 		created_at: opts.timestamp,
 		credit_entitlement_cart: [],
 		currency: 'USD',
-		customer: { customer_id: 'cus_0NabYPv75kIhBokp6q3xI', email: opts.email ?? EMAIL, name: 'Test User' },
+		customer: {
+			customer_id: 'cus_0NabYPv75kIhBokp6q3xI',
+			email: opts.email ?? EMAIL,
+			name: 'Test User'
+		},
 		metadata: {},
 		meter_credit_entitlement_cart: [],
 		meters: [],
@@ -280,11 +290,13 @@ describe('dodo webhook → pro lifecycle (signed synthetic deliveries)', () => {
 
 		const res = await postWebhook(payload);
 		expect(res.status).toBe(200);
-		expect(updateProExpiration).toHaveBeenCalledExactlyOnceWith(
-			EMAIL,
-			new Date(nextBilling)
-		);
-		expect(sendPaymentReceiptEmail).toHaveBeenCalledExactlyOnceWith(EMAIL, 'en');
+		expect(updateProExpiration).toHaveBeenCalledExactlyOnceWith(EMAIL, new Date(nextBilling));
+		expect(sendPaymentReceiptEmail).toHaveBeenCalledExactlyOnceWith(EMAIL, 'en', {
+			amountMinor: 399,
+			currency: 'USD',
+			processedAt: expect.any(Date),
+			subscriptionId: SUBSCRIPTION_ID
+		});
 	});
 
 	it('a retried delivery of the same event is a no-op (idempotency)', async () => {
@@ -427,7 +439,12 @@ describe('dodo webhook → pro lifecycle (signed synthetic deliveries)', () => {
 		const res = await postWebhook(payload);
 		expect(res.status).toBe(200);
 		expect(updateProExpiration).toHaveBeenCalledExactlyOnceWith(EMAIL, new Date(nextBilling));
-		expect(sendPaymentReceiptEmail).toHaveBeenCalledExactlyOnceWith(EMAIL, 'en');
+		expect(sendPaymentReceiptEmail).toHaveBeenCalledExactlyOnceWith(EMAIL, 'en', {
+			amountMinor: 399,
+			currency: 'USD',
+			processedAt: expect.any(Date),
+			subscriptionId: SUBSCRIPTION_ID
+		});
 	});
 
 	it('failed payment clears pro and sends the failed email', async () => {

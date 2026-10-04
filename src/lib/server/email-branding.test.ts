@@ -36,7 +36,18 @@ vi.mock('$lib/server/logger', () => ({
 }));
 
 import { emailLogoAttachments } from './email-branding';
-import { getVerificationEmailHtml, sendWelcomeEmail } from './email';
+import {
+	getEmailOtpHtml,
+	getPaymentFailedEmailHtml,
+	getPaymentReceiptEmailHtml,
+	getResetPasswordEmailHtml,
+	getSubscriptionCancelledEmailHtml,
+	getSubscriptionExpiringEmailHtml,
+	getTwoFactorEmailHtml,
+	getVerificationEmailHtml,
+	getWelcomeEmailHtml,
+	sendWelcomeEmail
+} from './email';
 
 describe('email branding', () => {
 	beforeEach(() => {
@@ -78,5 +89,59 @@ describe('email branding', () => {
 				attachments: emailLogoAttachments
 			})
 		);
+	});
+
+	it('uses the shared Ace system-document layout across customer emails', () => {
+		const templates = [
+			getTwoFactorEmailHtml('123456'),
+			getEmailOtpHtml('123456'),
+			getVerificationEmailHtml('https://aceblocker.com/verify'),
+			getWelcomeEmailHtml('https://aceblocker.com/download'),
+			getResetPasswordEmailHtml('https://aceblocker.com/reset'),
+			getPaymentReceiptEmailHtml('en', {
+				amountMinor: 399,
+				currency: 'USD',
+				processedAt: new Date('2026-10-04T12:00:00Z'),
+				subscriptionId: 'sub_preview'
+			}),
+			getSubscriptionExpiringEmailHtml('Oct 31, 2026', 'https://aceblocker.com/get-pro'),
+			getSubscriptionCancelledEmailHtml('Oct 31, 2026'),
+			getPaymentFailedEmailHtml('https://aceblocker.com/account')
+		];
+
+		for (const html of templates) {
+			expect(html).toContain('class="email-document"');
+			expect(html).toContain('text-align:left');
+			expect(html).toContain('width="132"');
+			expect(html).toContain('@media only screen and (max-width: 620px)');
+			expect(html).not.toContain('height: 4px; background-color: #D97706');
+			expect(html).not.toContain('border-radius: 16px');
+		}
+	});
+
+	it('renders the payment confirmation as a state document with structured facts', () => {
+		const html = getPaymentReceiptEmailHtml('en', {
+			amountMinor: 399,
+			currency: 'USD',
+			processedAt: new Date('2026-10-04T12:00:00Z'),
+			subscriptionId: 'sub_preview'
+		});
+
+		expect(html).toContain('Ace Blocker Pro is active');
+		expect(html).toContain(
+			'Your Pro access is active. The payment was processed successfully.'
+		);
+		expect(html).toContain('Plan');
+		expect(html).toContain('Ace Blocker Pro');
+		expect(html).toContain('Status');
+		expect(html).toContain('Active');
+		expect(html).toContain('Amount');
+		expect(html).toContain('$3.99');
+		expect(html).toContain('Processed');
+		expect(html).toContain('Oct 4, 2026');
+		expect(html).toContain('Subscription ID');
+		expect(html).toContain('sub_preview');
+		expect(html).toContain('mailto:support@aceblocker.com');
+		expect(html).not.toContain('Thank you for your payment');
 	});
 });

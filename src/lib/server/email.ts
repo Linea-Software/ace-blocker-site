@@ -15,397 +15,424 @@ const log = createLogger('email');
 /** Base site URL for email links (download, renewal, payment update). */
 const siteUrl = (process.env.PUBLIC_BETTER_AUTH_URL ?? 'http://localhost:5173').replace(/\/+$/, '');
 
-// ── Shared email HTML shell ───────────────────────────────────────────────────
+type EmailAction = {
+	label: string;
+	url: string;
+	tone?: 'ink' | 'signal';
+};
+
+type EmailDetail = {
+	label: string;
+	value: string;
+	tone?: 'default' | 'success' | 'danger' | 'signal';
+};
+
+type SystemEmailOptions = {
+	locale: Locale;
+	heading: string;
+	bodyHtml: string;
+	action?: EmailAction;
+	details?: EmailDetail[];
+	code?: string;
+	footerHtml?: string;
+};
+
+export type PaymentReceiptDetails = {
+	amountMinor?: number;
+	currency?: string;
+	processedAt?: Date;
+	subscriptionId?: string;
+};
 
 const emailHead = `<head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light dark">
 <meta name="supported-color-schemes" content="light dark">
 <style>
-  @media (prefers-color-scheme: light) {
-    .email-body     { background-color: #F8FAFC !important; }
-    .email-card     { background-color: #FFFFFF !important; border-color: #E2E8F0 !important; }
-    .email-heading  { color: #0F172A !important; }
-    .email-text     { color: #475569 !important; }
-    .email-otp-box  { background-color: #F1F5F9 !important; border-color: #CBD5E1 !important; }
-    .email-otp-code { color: #0F172A !important; }
-    .email-divider  { border-top-color: #E2E8F0 !important; }
-    .email-footer   { color: #94A3B8 !important; }
-    .email-logo-dark  { display: none !important; }
-    .email-logo-light { display: block !important; }
+  @media (prefers-color-scheme: dark) {
+    .email-body { background-color: #10100E !important; }
+    .email-document { background-color: #1A1A17 !important; border-color: #3A3933 !important; }
+    .email-heading { color: #FFFDF7 !important; }
+    .email-text { color: #D7D2C7 !important; }
+    .email-muted { color: #A7A59D !important; }
+    .email-divider { border-top-color: #3A3933 !important; }
+    .email-detail-row { border-top-color: #3A3933 !important; }
+    .email-detail-label { color: #A7A59D !important; }
+    .email-detail-value { color: #FFFDF7 !important; }
+    .email-code { color: #FFFDF7 !important; border-color: #4A4942 !important; background-color: #22221E !important; }
+    .email-action-ink { background-color: #FFFDF7 !important; color: #10100E !important; }
+    .email-footer-link { color: #D7D2C7 !important; }
+    .email-logo-light { display: none !important; }
+    .email-logo-dark { display: block !important; }
+  }
+
+  @media only screen and (max-width: 620px) {
+    .email-body-cell { padding: 16px 10px !important; }
+    .email-document-cell { padding: 28px 22px !important; }
+    .email-heading { font-size: 27px !important; line-height: 31px !important; }
+    .email-detail-label,
+    .email-detail-value {
+      display: block !important;
+      width: 100% !important;
+      text-align: left !important;
+    }
+    .email-detail-value { padding-top: 3px !important; }
+    .email-action { display: block !important; text-align: center !important; }
+    .email-code { font-size: 31px !important; letter-spacing: 0.16em !important; }
   }
 </style>
 </head>`;
 
-function logoHtml(): string {
-	return `
-                    <!-- Dark mode default -->
-                    <img class="email-logo-dark"
-                         src="cid:${DARK_LOGO_CID}"
-                         alt="Ace Blocker"
-                         width="180"
-                         height="42"
-                         style="display:block; margin:0 auto; width:180px; height:auto; border:0;" />
-                    <!-- Light mode override -->
-                    <img class="email-logo-light"
-                         src="cid:${LIGHT_LOGO_CID}"
-                         alt="Ace Blocker"
-                         width="180"
-                         height="42"
-                         style="display:none; margin:0 auto; width:180px; height:auto; border:0;" />`;
+function escapeHtml(value: string): string {
+	return value
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&#039;');
 }
 
-// ── Email templates (all use Paraglide for body/footer/button content) ────────
+function logoHtml(locale: Locale): string {
+	const alt = escapeHtml(pm.email_app_name({}, { locale: locale as any }));
 
-export function getTwoFactorEmailHtml(otpCode: string, locale: Locale = 'en'): string {
-	const body = pm.email_2fa_body({}, { locale: locale as any });
-	const footer = pm.email_2fa_footer({}, { locale: locale as any });
+	return `
+<img class="email-logo-light"
+     src="cid:${LIGHT_LOGO_CID}"
+     alt="${alt}"
+     width="132"
+     height="31"
+     style="display:block; width:132px; height:auto; border:0;" />
+<img class="email-logo-dark"
+     src="cid:${DARK_LOGO_CID}"
+     alt="${alt}"
+     width="132"
+     height="31"
+     style="display:none; width:132px; height:auto; border:0;" />`;
+}
+
+function actionHtml(action: EmailAction): string {
+	const tone = action.tone ?? 'ink';
+	const className =
+		tone === 'signal' ? 'email-action email-action-signal' : 'email-action email-action-ink';
+	const background = tone === 'signal' ? '#FFB000' : '#10100E';
+	const color = '#10100E';
+
+	return `<div style="margin-top:28px;">
+<a class="${className}"
+   href="${escapeHtml(action.url)}"
+   style="display:inline-block; background-color:${background}; color:${tone === 'signal' ? color : '#FFFDF7'}; border:1px solid ${tone === 'signal' ? '#D58B00' : '#10100E'}; border-radius:3px; padding:12px 18px; font-family:'IBM Plex Sans', Arial, sans-serif; font-size:14px; line-height:20px; font-weight:600; text-decoration:none;">
+  ${escapeHtml(action.label)}
+</a>
+</div>`;
+}
+
+function detailValueColor(tone: EmailDetail['tone']): string {
+	switch (tone) {
+		case 'success':
+			return '#557E4B';
+		case 'danger':
+			return '#B83F36';
+		case 'signal':
+			return '#9B6600';
+		default:
+			return '#10100E';
+	}
+}
+
+function detailsHtml(details: EmailDetail[]): string {
+	if (details.length === 0) return '';
+
+	const rows = details
+		.map(
+			(detail) => `<tr>
+<td class="email-detail-row" colspan="2" style="border-top:1px solid #D7D2C7; padding:0; height:0; line-height:0; font-size:0;">&nbsp;</td>
+</tr>
+<tr>
+<td class="email-detail-label" valign="top" style="width:42%; padding:11px 12px 11px 0; font-family:'IBM Plex Mono','SFMono-Regular',Consolas,monospace; font-size:11px; line-height:17px; letter-spacing:0.04em; text-transform:uppercase; color:#8B8A82;">
+  ${escapeHtml(detail.label)}
+</td>
+<td class="email-detail-value" valign="top" style="width:58%; padding:11px 0; text-align:right; font-family:'IBM Plex Sans',Arial,sans-serif; font-size:14px; line-height:20px; font-weight:600; color:${detailValueColor(detail.tone)};">
+  ${escapeHtml(detail.value)}
+</td>
+</tr>`
+		)
+		.join('');
+
+	return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%; margin-top:28px; border-collapse:collapse;">
+${rows}
+<tr>
+<td class="email-detail-row" colspan="2" style="border-top:1px solid #D7D2C7; padding:0; height:0; line-height:0; font-size:0;">&nbsp;</td>
+</tr>
+</table>`;
+}
+
+function codeHtml(code: string): string {
+	return `<div class="email-code" style="margin-top:26px; padding:18px 0; border-top:1px solid #D7D2C7; border-bottom:1px solid #D7D2C7; background-color:#F7F4EC; font-family:'IBM Plex Mono','SFMono-Regular',Consolas,monospace; font-size:36px; line-height:44px; font-weight:600; letter-spacing:0.20em; color:#10100E; text-align:center;">
+  ${escapeHtml(code)}
+</div>`;
+}
+
+function renderSystemEmail({
+	locale,
+	heading,
+	bodyHtml,
+	action,
+	details = [],
+	code,
+	footerHtml
+}: SystemEmailOptions): string {
+	const mainContent = `${bodyHtml ? `<div class="email-text" style="font-family:'IBM Plex Sans',Arial,sans-serif; font-size:15px; line-height:24px; color:#4C4B45;">${bodyHtml}</div>` : ''}${code ? codeHtml(code) : ''}${detailsHtml(details)}${action ? actionHtml(action) : ''}`;
+	const footer = footerHtml
+		? `<div class="email-divider" style="border-top:1px solid #D7D2C7; margin-top:30px; padding-top:18px;">
+<p class="email-muted" style="margin:0; font-family:'IBM Plex Sans',Arial,sans-serif; font-size:12px; line-height:18px; color:#8B8A82;">${footerHtml}</p>
+</div>`
+		: '';
 
 	return `<!DOCTYPE html>
 <html lang="${locale}">
 ${emailHead}
-<body style="margin:0;padding:0;">
-    <div class="email-body" style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0B0F19; color: #E2E8F0; padding: 60px 20px; text-align: center; line-height: 1.5;">
-        <div class="email-card" style="max-width: 480px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden;">
-            <div style="height: 4px; background-color: #D97706; width: 100%;"></div>
-
-            <div style="padding: 40px 32px;">
-                <div style="margin-bottom: 32px;">${logoHtml()}
-                </div>
-
-                <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 32px; font-weight: 400;">
-                    ${body}
-                </p>
-
-                <div class="email-otp-box" style="background-color: #0B0F19; border: 1px solid #334155; border-radius: 12px; padding: 24px; margin-bottom: 32px;">
-                    <span class="email-otp-code" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 38px; font-weight: 700; color: #F8FAFC; letter-spacing: 0.25em;">
-                        ${otpCode}
-                    </span>
-                </div>
-
-                <hr class="email-divider" style="border: none; border-top: 1px solid #1F2937; margin: 0 0 24px 0;" />
-
-                <p class="email-footer" style="font-size: 13px; line-height: 20px; color: #64748B; margin: 0;">
-                    ${footer}
-                </p>
-            </div>
-        </div>
-    </div>
+<body style="margin:0; padding:0;">
+<table class="email-body" role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%; border-collapse:collapse; background-color:#F3F0E8;">
+<tr>
+<td class="email-body-cell" align="center" style="padding:32px 16px;">
+  <table class="email-document" role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%; max-width:560px; border-collapse:separate; background-color:#FFFDF7; border:1px solid #D7D2C7; border-radius:4px;">
+  <tr>
+  <td class="email-document-cell" style="padding:34px 36px; text-align:left;">
+    <div style="margin:0 0 24px 0;">${logoHtml(locale)}</div>
+    <div class="email-divider" style="border-top:1px solid #D7D2C7; margin:0 0 26px 0;"></div>
+    <h1 class="email-heading" style="margin:0 0 14px 0; font-family:'IBM Plex Sans Condensed','Arial Narrow',Arial,sans-serif; font-size:31px; line-height:35px; font-weight:600; letter-spacing:-0.01em; color:#10100E;">
+      ${escapeHtml(heading)}
+    </h1>
+    ${mainContent}
+    ${footer}
+  </td>
+  </tr>
+  </table>
+</td>
+</tr>
+</table>
 </body>
 </html>`;
+}
+
+function supportLink(locale: Locale): string {
+	const label = escapeHtml(pm.email_support_link({}, { locale: locale as any }));
+	return `<a class="email-footer-link" href="mailto:support@aceblocker.com" style="color:#4C4B45; text-decoration:underline;">${label}</a>`;
+}
+
+function formatDate(date: Date, locale: Locale): string {
+	return date.toLocaleDateString(locale, {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric'
+	});
+}
+
+function formatAmount(amountMinor: number, currency: string, locale: Locale): string {
+	return new Intl.NumberFormat(locale, {
+		style: 'currency',
+		currency
+	}).format(amountMinor / 100);
+}
+
+// ── Customer-facing transactional email templates ──────────────────────────────
+
+export function getTwoFactorEmailHtml(otpCode: string, locale: Locale = 'en'): string {
+	return renderSystemEmail({
+		locale,
+		heading: pm.email_2fa_title({}, { locale: locale as any }),
+		bodyHtml: pm.email_2fa_body({}, { locale: locale as any }),
+		code: otpCode,
+		footerHtml: pm.email_2fa_footer({}, { locale: locale as any })
+	});
 }
 
 export function getEmailOtpHtml(otpCode: string, locale: Locale = 'en'): string {
-	const body = pm.email_otp_body({ otp: otpCode }, { locale: locale as any });
-	const footer = pm.email_2fa_footer({}, { locale: locale as any });
-
-	return `<!DOCTYPE html>
-<html lang="${locale}">
-${emailHead}
-<body style="margin:0;padding:0;">
-    <div class="email-body" style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0B0F19; color: #E2E8F0; padding: 60px 20px; text-align: center; line-height: 1.5;">
-        <div class="email-card" style="max-width: 480px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden;">
-            <div style="height: 4px; background-color: #D97706; width: 100%;"></div>
-
-            <div style="padding: 40px 32px;">
-                <div style="margin-bottom: 32px;">${logoHtml()}
-                </div>
-
-                <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 32px; font-weight: 400;">
-                    ${body}
-                </p>
-
-                <div class="email-otp-box" style="background-color: #0B0F19; border: 1px solid #334155; border-radius: 12px; padding: 24px; margin-bottom: 32px;">
-                    <span class="email-otp-code" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 38px; font-weight: 700; color: #F8FAFC; letter-spacing: 0.25em;">
-                        ${otpCode}
-                    </span>
-                </div>
-
-                <hr class="email-divider" style="border: none; border-top: 1px solid #1F2937; margin: 0 0 24px 0;" />
-
-                <p class="email-footer" style="font-size: 13px; line-height: 20px; color: #64748B; margin: 0;">
-                    ${footer}
-                </p>
-            </div>
-        </div>
-    </div>
-</body>
-</html>`;
+	return renderSystemEmail({
+		locale,
+		heading: pm.email_otp_title({}, { locale: locale as any }),
+		bodyHtml: pm.email_otp_body({ otp: otpCode }, { locale: locale as any }),
+		code: otpCode,
+		footerHtml: pm.email_2fa_footer({}, { locale: locale as any })
+	});
 }
 
-export function getVerificationEmailHtml(
-	verifyUrl: string,
-	locale: Locale = 'en'
-): string {
-	const body = pm.email_verification_body({}, { locale: locale as any });
-	const button = pm.email_verification_button({}, { locale: locale as any });
-	const footer = pm.email_verification_footer({}, { locale: locale as any });
-
-	return `<!DOCTYPE html>
-<html lang="${locale}">
-${emailHead}
-<body style="margin:0;padding:0;">
-    <div class="email-body" style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0B0F19; color: #E2E8F0; padding: 60px 20px; text-align: center; line-height: 1.5;">
-        <div class="email-card" style="max-width: 480px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden;">
-            <div style="height: 4px; background-color: #D97706; width: 100%;"></div>
-
-            <div style="padding: 40px 32px;">
-                <div style="margin-bottom: 32px;">${logoHtml()}
-                </div>
-
-                <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 36px; font-weight: 400;">
-                    ${body}
-                </p>
-
-                <div style="margin-bottom: 36px;">
-                    <a href="${verifyUrl}" style="display: inline-block; background-color: #D97706; color: #FFFFFF; font-weight: 600; font-size: 16px; text-decoration: none; padding: 16px 36px; border-radius: 10px;">
-                        ${button}
-                    </a>
-                </div>
-
-                <hr class="email-divider" style="border: none; border-top: 1px solid #1F2937; margin: 0 0 24px 0;" />
-
-                <p class="email-footer" style="font-size: 13px; line-height: 20px; color: #64748B; margin: 0;">
-                    ${footer}
-                </p>
-            </div>
-        </div>
-    </div>
-</body>
-</html>`;
+export function getVerificationEmailHtml(verifyUrl: string, locale: Locale = 'en'): string {
+	return renderSystemEmail({
+		locale,
+		heading: pm.email_verification_title({}, { locale: locale as any }),
+		bodyHtml: pm.email_verification_body({}, { locale: locale as any }),
+		action: {
+			label: pm.email_verification_button({}, { locale: locale as any }),
+			url: verifyUrl,
+			tone: 'signal'
+		},
+		footerHtml: pm.email_verification_footer({}, { locale: locale as any })
+	});
 }
 
-// ── Welcome email (new) ───────────────────────────────────────────────────────
-
-export function getWelcomeEmailHtml(
-	downloadUrl: string,
-	locale: Locale = 'en'
-): string {
-	const body = pm.email_welcome_body({}, { locale: locale as any });
-	const button = pm.email_welcome_button({}, { locale: locale as any });
-
-	return `<!DOCTYPE html>
-<html lang="${locale}">
-${emailHead}
-<body style="margin:0;padding:0;">
-    <div class="email-body" style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0B0F19; color: #E2E8F0; padding: 60px 20px; text-align: center; line-height: 1.5;">
-        <div class="email-card" style="max-width: 480px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden;">
-            <div style="height: 4px; background-color: #D97706; width: 100%;"></div>
-
-            <div style="padding: 40px 32px;">
-                <div style="margin-bottom: 32px;">${logoHtml()}
-                </div>
-
-                <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 36px; font-weight: 400;">
-                    ${body}
-                </p>
-
-                <div style="margin-bottom: 36px;">
-                    <a href="${downloadUrl}" style="display: inline-block; background-color: #D97706; color: #FFFFFF; font-weight: 600; font-size: 16px; text-decoration: none; padding: 16px 36px; border-radius: 10px;">
-                        ${button}
-                    </a>
-                </div>
-
-                <hr class="email-divider" style="border: none; border-top: 1px solid #1F2937; margin: 0 0 24px 0;" />
-            </div>
-        </div>
-    </div>
-</body>
-</html>`;
+export function getWelcomeEmailHtml(downloadUrl: string, locale: Locale = 'en'): string {
+	return renderSystemEmail({
+		locale,
+		heading: pm.email_welcome_title({}, { locale: locale as any }),
+		bodyHtml: pm.email_welcome_body({}, { locale: locale as any }),
+		action: {
+			label: pm.email_welcome_button({}, { locale: locale as any }),
+			url: downloadUrl
+		}
+	});
 }
 
-// ── Password reset (new) ──────────────────────────────────────────────────────
-
-export function getResetPasswordEmailHtml(
-	resetUrl: string,
-	locale: Locale = 'en'
-): string {
-	const body = pm.email_reset_password_body({}, { locale: locale as any });
-	const button = pm.email_reset_password_button({}, { locale: locale as any });
-	const footer = pm.email_reset_password_footer({}, { locale: locale as any });
-
-	return `<!DOCTYPE html>
-<html lang="${locale}">
-${emailHead}
-<body style="margin:0;padding:0;">
-    <div class="email-body" style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0B0F19; color: #E2E8F0; padding: 60px 20px; text-align: center; line-height: 1.5;">
-        <div class="email-card" style="max-width: 480px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden;">
-            <div style="height: 4px; background-color: #D97706; width: 100%;"></div>
-
-            <div style="padding: 40px 32px;">
-                <div style="margin-bottom: 32px;">${logoHtml()}
-                </div>
-
-                <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 36px; font-weight: 400;">
-                    ${body}
-                </p>
-
-                <div style="margin-bottom: 36px;">
-                    <a href="${resetUrl}" style="display: inline-block; background-color: #D97706; color: #FFFFFF; font-weight: 600; font-size: 16px; text-decoration: none; padding: 16px 36px; border-radius: 10px;">
-                        ${button}
-                    </a>
-                </div>
-
-                <hr class="email-divider" style="border: none; border-top: 1px solid #1F2937; margin: 0 0 24px 0;" />
-
-                <p class="email-footer" style="font-size: 13px; line-height: 20px; color: #64748B; margin: 0;">
-                    ${footer}
-                </p>
-            </div>
-        </div>
-    </div>
-</body>
-</html>`;
+export function getResetPasswordEmailHtml(resetUrl: string, locale: Locale = 'en'): string {
+	return renderSystemEmail({
+		locale,
+		heading: pm.email_reset_password_title({}, { locale: locale as any }),
+		bodyHtml: pm.email_reset_password_body({}, { locale: locale as any }),
+		action: {
+			label: pm.email_reset_password_button({}, { locale: locale as any }),
+			url: resetUrl,
+			tone: 'signal'
+		},
+		footerHtml: pm.email_reset_password_footer({}, { locale: locale as any })
+	});
 }
-
-// ── Payment receipt (new) ─────────────────────────────────────────────────────
 
 export function getPaymentReceiptEmailHtml(
-	locale: Locale = 'en'
+	locale: Locale = 'en',
+	receipt: PaymentReceiptDetails = {}
 ): string {
-	const body = pm.email_payment_receipt_body({}, { locale: locale as any });
-	const footer = pm.email_payment_receipt_footer({}, { locale: locale as any });
+	const details: EmailDetail[] = [
+		{
+			label: pm.email_detail_plan({}, { locale: locale as any }),
+			value: pm.email_plan_pro({}, { locale: locale as any })
+		},
+		{
+			label: pm.email_detail_status({}, { locale: locale as any }),
+			value: pm.email_status_active({}, { locale: locale as any }),
+			tone: 'success'
+		}
+	];
 
-	return `<!DOCTYPE html>
-<html lang="${locale}">
-${emailHead}
-<body style="margin:0;padding:0;">
-    <div class="email-body" style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0B0F19; color: #E2E8F0; padding: 60px 20px; text-align: center; line-height: 1.5;">
-        <div class="email-card" style="max-width: 480px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden;">
-            <div style="height: 4px; background-color: #D97706; width: 100%;"></div>
+	if (receipt.amountMinor !== undefined && receipt.currency) {
+		details.push({
+			label: pm.email_detail_amount({}, { locale: locale as any }),
+			value: formatAmount(receipt.amountMinor, receipt.currency, locale)
+		});
+	}
 
-            <div style="padding: 40px 32px;">
-                <div style="margin-bottom: 32px;">${logoHtml()}
-                </div>
+	details.push({
+		label: pm.email_detail_processed({}, { locale: locale as any }),
+		value: formatDate(receipt.processedAt ?? new Date(), locale)
+	});
 
-                <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 36px; font-weight: 400;">
-                    ${body}
-                </p>
+	if (receipt.subscriptionId) {
+		details.push({
+			label: pm.email_detail_subscription_id({}, { locale: locale as any }),
+			value: receipt.subscriptionId
+		});
+	}
 
-                <hr class="email-divider" style="border: none; border-top: 1px solid #1F2937; margin: 0 0 24px 0;" />
-
-                <p class="email-footer" style="font-size: 13px; line-height: 20px; color: #64748B; margin: 0;">
-                    ${footer}
-                </p>
-            </div>
-        </div>
-    </div>
-</body>
-</html>`;
+	return renderSystemEmail({
+		locale,
+		heading: pm.email_payment_receipt_title({}, { locale: locale as any }),
+		bodyHtml: pm.email_payment_receipt_body({}, { locale: locale as any }),
+		details,
+		footerHtml: `${escapeHtml(pm.email_payment_receipt_footer({}, { locale: locale as any }))} ${supportLink(locale)}`
+	});
 }
-
-// ── Subscription expiring (new) ───────────────────────────────────────────────
 
 export function getSubscriptionExpiringEmailHtml(
 	expiryDate: string,
 	renewUrl: string,
 	locale: Locale = 'en'
 ): string {
-	const body = pm.email_subscription_expiring_body({ date: expiryDate }, { locale: locale as any });
-	const button = pm.email_subscription_expiring_button({}, { locale: locale as any });
-
-	return `<!DOCTYPE html>
-<html lang="${locale}">
-${emailHead}
-<body style="margin:0;padding:0;">
-    <div class="email-body" style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0B0F19; color: #E2E8F0; padding: 60px 20px; text-align: center; line-height: 1.5;">
-        <div class="email-card" style="max-width: 480px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden;">
-            <div style="height: 4px; background-color: #D97706; width: 100%;"></div>
-
-            <div style="padding: 40px 32px;">
-                <div style="margin-bottom: 32px;">${logoHtml()}
-                </div>
-
-                <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 36px; font-weight: 400;">
-                    ${body}
-                </p>
-
-                <div style="margin-bottom: 36px;">
-                    <a href="${renewUrl}" style="display: inline-block; background-color: #D97706; color: #FFFFFF; font-weight: 600; font-size: 16px; text-decoration: none; padding: 16px 36px; border-radius: 10px;">
-                        ${button}
-                    </a>
-                </div>
-
-                <hr class="email-divider" style="border: none; border-top: 1px solid #1F2937; margin: 0 0 24px 0;" />
-            </div>
-        </div>
-    </div>
-</body>
-</html>`;
+	return renderSystemEmail({
+		locale,
+		heading: pm.email_subscription_expiring_title({}, { locale: locale as any }),
+		bodyHtml: pm.email_subscription_expiring_body(
+			{ date: expiryDate },
+			{ locale: locale as any }
+		),
+		details: [
+			{
+				label: pm.email_detail_plan({}, { locale: locale as any }),
+				value: pm.email_plan_pro({}, { locale: locale as any })
+			},
+			{
+				label: pm.email_detail_status({}, { locale: locale as any }),
+				value: pm.email_status_scheduled_to_end({}, { locale: locale as any }),
+				tone: 'signal'
+			},
+			{
+				label: pm.email_detail_access_until({}, { locale: locale as any }),
+				value: expiryDate
+			}
+		],
+		action: {
+			label: pm.email_subscription_expiring_button({}, { locale: locale as any }),
+			url: renewUrl,
+			tone: 'signal'
+		},
+		footerHtml: `${escapeHtml(pm.email_support_footer({}, { locale: locale as any }))} ${supportLink(locale)}`
+	});
 }
-
-// ── Subscription cancelled (new) ──────────────────────────────────────────────
 
 export function getSubscriptionCancelledEmailHtml(
 	expiryDate: string,
 	locale: Locale = 'en'
 ): string {
-	const body = pm.email_subscription_cancelled_body({ date: expiryDate }, { locale: locale as any });
-
-	return `<!DOCTYPE html>
-<html lang="${locale}">
-${emailHead}
-<body style="margin:0;padding:0;">
-    <div class="email-body" style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0B0F19; color: #E2E8F0; padding: 60px 20px; text-align: center; line-height: 1.5;">
-        <div class="email-card" style="max-width: 480px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden;">
-            <div style="height: 4px; background-color: #D97706; width: 100%;"></div>
-
-            <div style="padding: 40px 32px;">
-                <div style="margin-bottom: 32px;">${logoHtml()}
-                </div>
-
-                <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 36px; font-weight: 400;">
-                    ${body}
-                </p>
-
-                <hr class="email-divider" style="border: none; border-top: 1px solid #1F2937; margin: 0 0 24px 0;" />
-            </div>
-        </div>
-    </div>
-</body>
-</html>`;
+	return renderSystemEmail({
+		locale,
+		heading: pm.email_subscription_cancelled_title({}, { locale: locale as any }),
+		bodyHtml: pm.email_subscription_cancelled_body(
+			{ date: expiryDate },
+			{ locale: locale as any }
+		),
+		details: [
+			{
+				label: pm.email_detail_plan({}, { locale: locale as any }),
+				value: pm.email_plan_pro({}, { locale: locale as any })
+			},
+			{
+				label: pm.email_detail_status({}, { locale: locale as any }),
+				value: pm.email_status_cancelled({}, { locale: locale as any })
+			},
+			{
+				label: pm.email_detail_access_until({}, { locale: locale as any }),
+				value: expiryDate
+			}
+		],
+		footerHtml: `${escapeHtml(pm.email_support_footer({}, { locale: locale as any }))} ${supportLink(locale)}`
+	});
 }
 
-// ── Payment failed (new) ──────────────────────────────────────────────────────
-
-export function getPaymentFailedEmailHtml(
-	updatePaymentUrl: string,
-	locale: Locale = 'en'
-): string {
-	const body = pm.email_subscription_failed_body({}, { locale: locale as any });
-	const button = pm.email_subscription_failed_button({}, { locale: locale as any });
-
-	return `<!DOCTYPE html>
-<html lang="${locale}">
-${emailHead}
-<body style="margin:0;padding:0;">
-    <div class="email-body" style="font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0B0F19; color: #E2E8F0; padding: 60px 20px; text-align: center; line-height: 1.5;">
-        <div class="email-card" style="max-width: 480px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 16px; overflow: hidden;">
-            <div style="height: 4px; background-color: #D97706; width: 100%;"></div>
-
-            <div style="padding: 40px 32px;">
-                <div style="margin-bottom: 32px;">${logoHtml()}
-                </div>
-
-                <p class="email-text" style="font-size: 16px; line-height: 26px; color: #CBD5E1; margin-bottom: 36px; font-weight: 400;">
-                    ${body}
-                </p>
-
-                <div style="margin-bottom: 36px;">
-                    <a href="${updatePaymentUrl}" style="display: inline-block; background-color: #D97706; color: #FFFFFF; font-weight: 600; font-size: 16px; text-decoration: none; padding: 16px 36px; border-radius: 10px;">
-                        ${button}
-                    </a>
-                </div>
-
-                <hr class="email-divider" style="border: none; border-top: 1px solid #1F2937; margin: 0 0 24px 0;" />
-            </div>
-        </div>
-    </div>
-</body>
-</html>`;
+export function getPaymentFailedEmailHtml(updatePaymentUrl: string, locale: Locale = 'en'): string {
+	return renderSystemEmail({
+		locale,
+		heading: pm.email_subscription_failed_title({}, { locale: locale as any }),
+		bodyHtml: pm.email_subscription_failed_body({}, { locale: locale as any }),
+		details: [
+			{
+				label: pm.email_detail_plan({}, { locale: locale as any }),
+				value: pm.email_plan_pro({}, { locale: locale as any })
+			},
+			{
+				label: pm.email_detail_status({}, { locale: locale as any }),
+				value: pm.email_status_payment_action({}, { locale: locale as any }),
+				tone: 'danger'
+			}
+		],
+		action: {
+			label: pm.email_subscription_failed_button({}, { locale: locale as any }),
+			url: updatePaymentUrl,
+			tone: 'signal'
+		},
+		footerHtml: `${escapeHtml(pm.email_support_footer({}, { locale: locale as any }))} ${supportLink(locale)}`
+	});
 }
 
-// ── Sending helpers (wired into signup + Dodo webhook handlers) ────────────
+// ── Sending helpers (wired into signup + Dodo webhook handlers) ────────────────
 
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
 	try {
@@ -448,15 +475,16 @@ export async function sendWelcomeEmail(email: string, locale: Locale = 'en'): Pr
 	);
 }
 
-/** Payment receipt — sent when a subscription becomes active / renews. */
+/** Payment confirmation — sent when a subscription becomes active / renews. */
 export async function sendPaymentReceiptEmail(
 	email: string,
-	locale: Locale = 'en'
+	locale: Locale = 'en',
+	receipt: PaymentReceiptDetails = {}
 ): Promise<void> {
 	await sendEmail(
 		email,
 		pm.email_payment_receipt_subject({}, { locale: locale as any }),
-		getPaymentReceiptEmailHtml(locale)
+		getPaymentReceiptEmailHtml(locale, receipt)
 	);
 }
 
@@ -470,7 +498,7 @@ export async function sendSubscriptionExpiringEmail(
 		email,
 		pm.email_subscription_expiring_subject({}, { locale: locale as any }),
 		getSubscriptionExpiringEmailHtml(
-			expiryDate.toLocaleDateString(locale),
+			formatDate(expiryDate, locale),
 			`${siteUrl}/get-pro`,
 			locale
 		)
@@ -486,15 +514,12 @@ export async function sendSubscriptionCancelledEmail(
 	await sendEmail(
 		email,
 		pm.email_subscription_cancelled_subject({}, { locale: locale as any }),
-		getSubscriptionCancelledEmailHtml(expiryDate.toLocaleDateString(locale), locale)
+		getSubscriptionCancelledEmailHtml(formatDate(expiryDate, locale), locale)
 	);
 }
 
 /** Payment failed — sent when a renewal payment could not be processed. */
-export async function sendPaymentFailedEmail(
-	email: string,
-	locale: Locale = 'en'
-): Promise<void> {
+export async function sendPaymentFailedEmail(email: string, locale: Locale = 'en'): Promise<void> {
 	await sendEmail(
 		email,
 		pm.email_subscription_failed_subject({}, { locale: locale as any }),
