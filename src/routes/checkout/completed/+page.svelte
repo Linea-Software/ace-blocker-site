@@ -154,6 +154,22 @@
 			</div>
 		</section>
 	</main>
+{:else if !isPro}
+	<main id="main-content" class="ace-shell min-h-[55vh] py-16 sm:py-24">
+		<div class="max-w-2xl border-l-4 border-signal pl-6">
+			<Loader2
+				class="size-6 animate-spin text-signal-deep dark:text-signal"
+				aria-hidden="true"
+			/>
+			<h1 class="mt-5 font-display text-4xl font-semibold">{m.checkout_pending_title()}</h1>
+			<p class="mt-4 text-muted-foreground">{m.checkout_pending_description()}</p>
+			<a
+				href={resolve('/account')}
+				class="mt-7 inline-flex min-h-11 items-center rounded-md border border-border px-5 font-medium"
+				>{m.checkout_pending_account()}</a
+			>
+		</div>
+	</main>
 {:else}
 	<main id="main-content">
 		<section class="border-b border-border">

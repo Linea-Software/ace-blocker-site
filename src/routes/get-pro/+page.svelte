@@ -16,7 +16,9 @@
 	import PricingSection from './_components/PricingSection.svelte';
 
 	let { data } = $props();
-	let billingCycle = $state('yearly');
+	let billingCycle = $state(
+		page.url.searchParams.get('cycle') === 'monthly' ? 'monthly' : 'yearly'
+	);
 	const session = authClient.useSession();
 	const origin = $derived(page.url.searchParams.get('origin'));
 	const enginePort = $derived(Number(page.url.searchParams.get('engine_port')) || 0);

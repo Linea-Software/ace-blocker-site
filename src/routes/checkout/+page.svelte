@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import Navbar from '$lib/components/Navbar.svelte';
+	import MarketingFooter from '$lib/components/marketing/MarketingFooter.svelte';
 	import * as m from '$lib/paraglide/messages';
 	import type { CheckoutBreakdownData } from 'dodopayments-checkout';
 
@@ -9,6 +11,7 @@
 	let breakdown = $state<Partial<CheckoutBreakdownData>>({});
 	let ready = $state(false);
 	let failed = $state(false);
+	let expired = $state(false);
 
 	function money(amount: number | undefined, currency: string): string {
 		return amount == null
@@ -20,6 +23,18 @@
 	}
 	const currency = $derived(breakdown.currency ?? data.currency);
 	const totalCurrency = $derived(breakdown.finalTotalCurrency ?? currency);
+	const period = $derived(data.cycle === 'yearly' ? m.pricing_per_year() : m.pricing_per_month());
+	const recurringAmount = $derived(
+		data.recurringPriceMinor == null ? null : money(data.recurringPriceMinor, data.currency)
+	);
+	const planReturn = $derived.by(() => {
+		const params = new URLSearchParams({ cycle: data.cycle, currency: data.currency });
+		const origin = page.url.searchParams.get('origin');
+		const enginePort = page.url.searchParams.get('engine_port');
+		if (origin === 'ace-engine' || origin === 'aceblocker') params.set('origin', origin);
+		if (enginePort && /^\d{1,5}$/.test(enginePort)) params.set('engine_port', enginePort);
+		return `${resolve('/get-pro')}?${params}`;
+	});
 
 	onMount(() => {
 		let active = true;
@@ -44,16 +59,18 @@
 						if (event.event_type === 'checkout.breakdown') {
 							breakdown = (event.data?.message as CheckoutBreakdownData) ?? {};
 						}
-						if (
-							event.event_type === 'checkout.error' ||
-							event.event_type === 'checkout.link_expired'
-						)
+						if (event.event_type === 'checkout.link_expired') {
+							expired = true;
 							failed = true;
+						} else if (event.event_type === 'checkout.error') {
+							failed = true;
+						}
 					}
 				});
 				DodoPayments.Checkout.open({
 					checkoutUrl: data.checkoutUrl,
-					elementId: 'dodo-inline-checkout'
+					elementId: 'dodo-inline-checkout',
+					options: { showTimer: true, showSecurityBadge: true }
 				});
 			})
 			.catch(() => {
@@ -74,7 +91,7 @@
 
 <Navbar isPro={false} />
 <main id="main-content" class="ace-shell py-10 sm:py-16">
-	<a href={resolve('/get-pro')} class="text-sm text-muted-foreground underline underline-offset-4"
+	<a href={planReturn} class="text-sm text-muted-foreground underline underline-offset-4"
 		>{m.inline_checkout_back()}</a
 	>
 	<div
@@ -92,14 +109,21 @@
 					{m.inline_checkout_loading()}
 				</p>{/if}
 			{#if failed}
-				<p class="mt-5 text-sm text-danger" role="alert">{m.inline_checkout_error()}</p>
+				<p class="mt-5 text-sm text-danger" role="alert">
+					{expired ? m.inline_checkout_expired() : m.inline_checkout_error()}
+				</p>
 				<a
 					class="mt-4 inline-flex min-h-11 items-center rounded-md bg-foreground px-5 font-medium text-background"
-					href={data.checkoutUrl}>{m.inline_checkout_hosted()}</a
+					href={expired ? page.url.pathname + page.url.search : data.checkoutUrl}
+					>{expired ? m.inline_checkout_retry() : m.inline_checkout_hosted()}</a
 				>
 			{/if}
 			<!-- Preserve the complete Dodo iframe, including its legal footer. -->
-			<div id="dodo-inline-checkout" class="mt-6 w-full min-w-0"></div>
+			<div
+				id="dodo-inline-checkout"
+				class="mt-6 w-full min-w-0"
+				aria-label={m.inline_checkout_secure_form()}
+			></div>
 		</section>
 		<aside
 			class="border border-border bg-card p-6 sm:p-8"
@@ -111,7 +135,15 @@
 				<p class="mt-1 text-sm text-muted-foreground">
 					{data.cycle === 'yearly' ? m.pricing_cycle_yearly() : m.pricing_cycle_monthly()}
 				</p>
-				<p class="mt-3 text-sm text-muted-foreground">{m.inline_checkout_renewal()}</p>
+				<p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+					{#if recurringAmount}
+						{data.trialDays === 14
+							? m.inline_checkout_trial_renewal({ price: recurringAmount, period })
+							: m.inline_checkout_price_renewal({ price: recurringAmount, period })}
+					{:else}
+						{m.inline_checkout_renewal()}
+					{/if}
+				</p>
 			</div>
 			<dl class="mt-5 space-y-3 text-sm" aria-live="polite">
 				<div class="flex justify-between gap-4">
@@ -143,3 +175,4 @@
 		</aside>
 	</div>
 </main>
+<MarketingFooter />

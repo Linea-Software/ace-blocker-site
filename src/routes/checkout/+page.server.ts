@@ -48,7 +48,13 @@ export const load: PageServerLoad = async ({ request, url }) => {
 		) {
 			throw new Error('Unexpected checkout host');
 		}
-		return { checkoutUrl: checkout.checkout_url, cycle, currency };
+		return {
+			checkoutUrl: checkout.checkout_url,
+			cycle,
+			currency,
+			trialDays: product.trialDays,
+			recurringPriceMinor: product.priceMinor ?? null
+		};
 	} catch (err) {
 		log.error({ err }, 'Could not create inline checkout session');
 		error(502, 'Unable to start checkout');

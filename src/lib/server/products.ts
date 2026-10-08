@@ -14,6 +14,8 @@ import type { Product } from '@dodopayments/better-auth';
 export type DodoProduct = {
 	productId: string;
 	slug: string;
+	priceMinor?: number;
+	trialDays: number;
 };
 
 /** All products keyed by "monthly:USD" / "yearly:GBP" etc. */
@@ -25,10 +27,12 @@ export const dodoProducts: Product[] = [];
 export function registerProduct(
 	billingPeriod: 'monthly' | 'yearly',
 	currency: SupportedCurrency,
-	productId: string
+	productId: string,
+	priceMinor?: number,
+	trialDays = 0
 ): void {
 	const slug = makeSlug(billingPeriod, currency);
-	const entry = { productId, slug };
+	const entry = { productId, slug, priceMinor, trialDays };
 	products.set(`${billingPeriod}:${currency}`, entry);
 	dodoProducts.push(entry);
 }

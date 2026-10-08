@@ -41,7 +41,20 @@ export async function seedPrices() {
 
 			if (existingProduct) {
 				log.info(`found existing: ${name} (${existingProduct.product_id})`);
-				registerProduct(period, currency, existingProduct.product_id);
+				// Existing Dodo products may differ from seeding defaults. Use their
+				// actual recurring price and trial settings for truthful UI copy.
+				const detail = existingProduct.price_detail;
+				registerProduct(
+					period,
+					currency,
+					existingProduct.product_id,
+					detail?.type === 'recurring_price'
+						? detail.price
+						: (existingProduct.price ?? undefined),
+					detail?.type === 'recurring_price' && !detail.trial_amount
+						? (detail.trial_period_days ?? 0)
+						: 0
+				);
 			} else {
 				log.info(`creating: ${name} at ${priceAmount} ${currency}...`);
 				try {
@@ -66,7 +79,7 @@ export async function seedPrices() {
 						tax_category: 'digital_products'
 					});
 					log.info(`created: ${name} → ${result.product_id}`);
-					registerProduct(period, currency, result.product_id);
+					registerProduct(period, currency, result.product_id, priceAmount, 14);
 				} catch (err) {
 					log.error({ err, name }, 'Failed to create product');
 				}
