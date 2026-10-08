@@ -59,13 +59,24 @@
 
 	function handleUpgrade() {
 		if (!$session.data) {
-			const signInUrl = resolve('/signin') + (origin ? `?origin=${origin}` : '');
+			const checkoutParams = new URLSearchParams({
+				cycle: billingCycle,
+				currency: data.pricing.currency
+			});
+			if (origin) checkoutParams.set('origin', origin);
+			if (enginePort) checkoutParams.set('engine_port', String(enginePort));
+			const signInUrl = `${resolve('/signin')}?${new URLSearchParams({ redirectTo: `${resolve('/checkout')}?${checkoutParams}` })}`;
 			goto(signInUrl);
 			return;
 		}
 
-		const slug = billingCycle === 'yearly' ? data.pricing.yearlySlug : data.pricing.monthlySlug;
-		authClient.dodopayments.checkoutSession({ slug });
+		const params = new URLSearchParams({
+			cycle: billingCycle,
+			currency: data.pricing.currency
+		});
+		if (origin) params.set('origin', origin);
+		if (enginePort) params.set('engine_port', String(enginePort));
+		goto(`${resolve('/checkout')}?${params}`);
 	}
 </script>
 

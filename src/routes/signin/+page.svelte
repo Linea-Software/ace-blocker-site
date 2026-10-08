@@ -25,6 +25,14 @@
 
 	const session = authClient.useSession();
 	const origin = $derived(page.url.searchParams.get('origin'));
+	const checkoutReturn = $derived(
+		(() => {
+			const candidate = page.url.searchParams.get('redirectTo');
+			return candidate?.startsWith('/checkout?') && !candidate.startsWith('//')
+				? candidate
+				: null;
+		})()
+	);
 
 	async function linkEngine() {
 		loading = true;
@@ -61,6 +69,9 @@
 						step = 'otp';
 						loading = false;
 						await authClient.twoFactor.sendOtp();
+					} else if (checkoutReturn) {
+						loading = false;
+						await goto(checkoutReturn);
 					} else if (origin === 'ace-engine' || origin === 'aceblocker') {
 						await linkEngine();
 					} else {
@@ -84,6 +95,11 @@
 			{ code: otpCode },
 			{
 				onSuccess: async () => {
+					if (checkoutReturn) {
+						loading = false;
+						await goto(checkoutReturn);
+						return;
+					}
 					if (origin === 'ace-engine' || origin === 'aceblocker') {
 						await linkEngine();
 					} else {
