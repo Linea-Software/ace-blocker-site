@@ -9,7 +9,6 @@
 		onupgrade
 	} = $props<{
 		pricing: {
-			symbol: string;
 			monthlyPrice: string;
 			yearlyPrice: string;
 			yearlyStrikethrough: string;
@@ -26,7 +25,7 @@
 		billingCycle === 'yearly' ? pricing.yearlyTrialDays : pricing.monthlyTrialDays
 	);
 	const billedPrice = $derived(
-		`${pricing.symbol}${billingCycle === 'yearly' ? pricing.yearlyPrice : pricing.monthlyPrice}`
+		billingCycle === 'yearly' ? pricing.yearlyPrice : pricing.monthlyPrice
 	);
 	const billingPeriod = $derived(
 		billingCycle === 'yearly' ? m.pricing_per_year() : m.pricing_per_month()
@@ -134,7 +133,7 @@
 						<p class="text-sm text-muted-foreground">
 							<span
 								class="font-mono text-lg font-semibold text-foreground/75 line-through decoration-2"
-								>{pricing.symbol}{pricing.yearlyStrikethrough}</span
+								>{pricing.yearlyStrikethrough}</span
 							>
 							<span class="ml-2">{m.pricing_monthly_annual_equivalent()}</span>
 						</p>
@@ -148,7 +147,7 @@
 					{#if billingCycle === 'yearly'}
 						<p class="mt-2 text-sm font-medium text-signal-deep dark:text-signal">
 							{m.pricing_save_amount({
-								amount: `${pricing.symbol}${pricing.yearlySavings}`,
+								amount: pricing.yearlySavings,
 								percent: pricing.discountPercent
 							})}
 						</p>

@@ -3,7 +3,7 @@ import type { PageServerLoad } from './$types';
 import { auth, dodoPayments } from '$lib/server/auth';
 import { getProduct } from '$lib/server/products';
 import {
-	localeToCurrency,
+	requestCurrency,
 	SUPPORTED_CURRENCIES,
 	type SupportedCurrency
 } from '$lib/utils/locale-currency';
@@ -24,9 +24,12 @@ export const load: PageServerLoad = async ({ request, url }) => {
 	const currency: SupportedCurrency =
 		requestedCurrency && SUPPORTED_CURRENCIES.includes(requestedCurrency as SupportedCurrency)
 			? (requestedCurrency as SupportedCurrency)
-			: (localeToCurrency(request.headers.get('accept-language')) as SupportedCurrency);
+			: requestCurrency(request.headers);
 	const product = getProduct(cycle, currency);
-	if (!product) error(503, 'Checkout is temporarily unavailable');
+	if (!product || product.priceMinor == null) error(503, 'Checkout is temporarily unavailable');
+	const requestedTheme = url.searchParams.get('theme');
+	const theme =
+		requestedTheme === 'light' || requestedTheme === 'dark' ? requestedTheme : 'system';
 
 	const completed = new URL('/checkout/completed', url);
 	for (const key of ['origin', 'engine_port']) {
@@ -37,10 +40,57 @@ export const load: PageServerLoad = async ({ request, url }) => {
 	}
 
 	try {
+		// Preview the exact regional Dodo subscription, including its actual
+		// free trial and recurring total. Never substitute the USD converted price.
+		const preview = await dodoPayments.checkoutSessions.preview({
+			product_cart: [{ product_id: product.productId, quantity: 1 }],
+			customer: { email: session.user.email, name: session.user.name },
+			billing_currency: currency
+		});
+		if (
+			preview.currency !== currency ||
+			preview.recurring_breakup?.total_amount !== product.priceMinor
+		)
+			throw new Error('Dodo recurring price or currency does not match regional product');
 		const checkout = await dodoPayments.checkoutSessions.create({
 			product_cart: [{ product_id: product.productId, quantity: 1 }],
 			customer: { email: session.user.email, name: session.user.name },
-			return_url: completed.toString()
+			return_url: completed.toString(),
+			billing_currency: currency,
+			feature_flags: { allow_currency_selection: false },
+			// The form lives inside a cross-origin Dodo frame. Customize it through
+			// the checkout session; CSS from this page cannot style its inputs.
+			customization: {
+				theme,
+				theme_config: {
+					radius: '5px',
+					font_size: 'md',
+					light: {
+						bg_primary: '#FFFDF7',
+						bg_secondary: '#F3F0E8',
+						border_primary: '#9B978D',
+						border_secondary: '#D7D2C7',
+						text_primary: '#10100E',
+						text_secondary: '#55534B',
+						text_placeholder: '#68655D',
+						input_focus_border: '#D58B00',
+						button_primary: '#10100E',
+						button_text_primary: '#FFFDF7'
+					},
+					dark: {
+						bg_primary: '#1A1A17',
+						bg_secondary: '#292925',
+						border_primary: '#77756D',
+						border_secondary: '#55534B',
+						text_primary: '#F3F0E8',
+						text_secondary: '#D7D2C7',
+						text_placeholder: '#B5B0A4',
+						input_focus_border: '#FFB000',
+						button_primary: '#FFB000',
+						button_text_primary: '#10100E'
+					}
+				}
+			}
 		});
 		if (
 			!checkout.checkout_url ||
@@ -52,8 +102,9 @@ export const load: PageServerLoad = async ({ request, url }) => {
 			checkoutUrl: checkout.checkout_url,
 			cycle,
 			currency,
-			trialDays: product.trialDays,
-			recurringPriceMinor: product.priceMinor ?? null
+			trialDays: preview.trial_period_days ?? 0,
+			recurringPriceMinor: preview.recurring_breakup.total_amount,
+			dueTodayMinor: preview.current_breakup.total_amount
 		};
 	} catch (err) {
 		log.error({ err }, 'Could not create inline checkout session');

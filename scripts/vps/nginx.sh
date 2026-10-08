@@ -33,6 +33,12 @@ map $http_upgrade $connection_upgrade {
     default upgrade;
     '' close;
 }
+# realip_remote_addr exists only when a trusted Cloudflare edge replaced the IP.
+# Drop any country header supplied directly to the origin.
+map $realip_remote_addr $ace_cf_country {
+    default $http_cf_ipcountry;
+    "" "";
+}
 server_tokens off;
 EOF
 
@@ -94,6 +100,7 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$remote_addr;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header CF-IPCountry \$ace_cf_country;
         proxy_cache_bypass \$http_upgrade;
     }
 }
@@ -115,6 +122,7 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$remote_addr;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header CF-IPCountry \$ace_cf_country;
     }
 }
 EOF

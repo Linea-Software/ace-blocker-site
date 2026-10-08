@@ -29,7 +29,9 @@ vite.config.ts.timestamp-*
 src/lib/paraglide
 project.inlang/cache/
 project.inlang/project_id
- 
+
  # Cert
 .cert/
 .temp/
+
+.codexpro-worktrees/

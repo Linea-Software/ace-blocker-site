@@ -44,6 +44,17 @@ export async function seedPrices() {
 				// Existing Dodo products may differ from seeding defaults. Use their
 				// actual recurring price and trial settings for truthful UI copy.
 				const detail = existingProduct.price_detail;
+				if (
+					detail?.type !== 'recurring_price' ||
+					detail.currency !== currency ||
+					!detail.tax_inclusive
+				) {
+					log.error(
+						{ name, productId: existingProduct.product_id },
+						'Dodo product currency or tax mode does not match catalog'
+					);
+					continue;
+				}
 				registerProduct(
 					period,
 					currency,

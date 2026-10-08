@@ -60,10 +60,12 @@
 	});
 
 	function handleUpgrade() {
+		const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 		if (!$session.data) {
 			const checkoutParams = new URLSearchParams({
 				cycle: billingCycle,
-				currency: data.pricing.currency
+				currency: data.pricing.currency,
+				theme
 			});
 			if (origin) checkoutParams.set('origin', origin);
 			if (enginePort) checkoutParams.set('engine_port', String(enginePort));
@@ -74,7 +76,8 @@
 
 		const params = new URLSearchParams({
 			cycle: billingCycle,
-			currency: data.pricing.currency
+			currency: data.pricing.currency,
+			theme
 		});
 		if (origin) params.set('origin', origin);
 		if (enginePort) params.set('engine_port', String(enginePort));

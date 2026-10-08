@@ -1,62 +1,44 @@
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import {
-	localeToCurrency,
+	formatCurrency,
+	requestCurrency,
 	SUPPORTED_CURRENCIES,
 	type SupportedCurrency
 } from '$lib/utils/locale-currency';
 import { getProduct } from '$lib/server/products';
-import { MONTHLY_PRICE_MAP, YEARLY_PRICE_MAP } from '$lib/server/seeder/price-maps';
-
-/** Currency symbol lookup. */
-const SYMBOL: Record<SupportedCurrency, string> = {
-	USD: '$',
-	EUR: '€',
-	GBP: '£',
-	INR: '₹'
-};
-
-/** Format a price in the smallest denomination to a display string. */
-function formatPrice(cents: number, currency: SupportedCurrency): string {
-	const isINR = currency === 'INR';
-	const divided = cents / 100;
-	if (isINR) return `${Math.round(divided)}`;
-	return divided.toFixed(2);
-}
 
 export const load: PageServerLoad = async ({ request, url }) => {
-	const locale = request.headers.get('accept-language') || 'en-US';
 	const requested = url.searchParams.get('currency');
-	const currency =
+	const currency: SupportedCurrency =
 		requested && SUPPORTED_CURRENCIES.includes(requested as SupportedCurrency)
 			? (requested as SupportedCurrency)
-			: (localeToCurrency(locale) as SupportedCurrency);
+			: requestCurrency(request.headers);
 
 	const monthlyProduct = getProduct('monthly', currency);
 	const yearlyProduct = getProduct('yearly', currency);
+	// Never advertise seed defaults when the checkout product is missing or
+	// Dodo has not supplied an authoritative recurring price for that currency.
+	if (monthlyProduct?.priceMinor == null || yearlyProduct?.priceMinor == null)
+		error(503, 'Pricing is temporarily unavailable');
 
-	const monthlyRaw = monthlyProduct?.priceMinor ?? MONTHLY_PRICE_MAP[currency] ?? 399;
-	const yearlyRaw = yearlyProduct?.priceMinor ?? YEARLY_PRICE_MAP[currency] ?? 2499;
-
-	const monthlyPrice = formatPrice(monthlyRaw, currency);
-	const yearlyPrice = formatPrice(yearlyRaw, currency);
-	const yearlyStrikethrough = formatPrice(monthlyRaw * 12, currency);
-
+	const monthlyRaw = monthlyProduct.priceMinor;
+	const yearlyRaw = yearlyProduct.priceMinor;
 	const savingsRaw = Math.max(0, monthlyRaw * 12 - yearlyRaw);
-	const discountPercent = Math.round((savingsRaw / (monthlyRaw * 12)) * 100);
+	const discountPercent = monthlyRaw > 0 ? Math.round((savingsRaw / (monthlyRaw * 12)) * 100) : 0;
 
 	return {
 		pricing: {
 			currency,
-			symbol: SYMBOL[currency],
-			monthlyPrice,
-			yearlyPrice,
-			yearlyStrikethrough,
-			yearlySavings: formatPrice(savingsRaw, currency),
+			monthlyPrice: formatCurrency(monthlyRaw, currency),
+			yearlyPrice: formatCurrency(yearlyRaw, currency),
+			yearlyStrikethrough: formatCurrency(monthlyRaw * 12, currency),
+			yearlySavings: formatCurrency(savingsRaw, currency),
 			discountPercent,
-			monthlyTrialDays: monthlyProduct?.trialDays ?? 0,
-			yearlyTrialDays: yearlyProduct?.trialDays ?? 0,
-			monthlySlug: monthlyProduct?.slug ?? '',
-			yearlySlug: yearlyProduct?.slug ?? ''
+			monthlyTrialDays: monthlyProduct.trialDays,
+			yearlyTrialDays: yearlyProduct.trialDays,
+			monthlySlug: monthlyProduct.slug,
+			yearlySlug: yearlyProduct.slug
 		}
 	};
 };
