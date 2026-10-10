@@ -64,8 +64,17 @@ describe('inline checkout server loader', () => {
 		expect(createSession.mock.calls[0][0].customization).toMatchObject({
 			theme: 'system',
 			theme_config: {
-				light: { border_primary: '#9B978D' },
-				dark: { border_primary: '#77756D' }
+				light: {
+					bg_primary: '#F3F0E8',
+					bg_secondary: '#FFFDF7',
+					border_primary: '#827C70',
+					input_focus_border: '#946000'
+				},
+				dark: {
+					bg_secondary: '#34342E',
+					border_primary: '#AAA599',
+					input_focus_border: '#FFB000'
+				}
 			}
 		});
 		expect(result).toMatchObject({
