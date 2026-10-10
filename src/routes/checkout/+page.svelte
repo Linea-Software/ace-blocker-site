@@ -141,13 +141,16 @@
 		class="grid items-start gap-7 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.75fr)] lg:gap-10"
 	>
 		<section class="order-2 min-w-0 lg:order-1" aria-label={m.inline_checkout_secure_form()}>
-			<div class="border border-border bg-card p-3 sm:p-5">
+			<div class="border border-border bg-card p-2 sm:p-3">
 				<h2 class="border-b border-border px-1 pb-4 font-display text-xl font-semibold">
 					{m.inline_checkout_payment_details()}
 				</h2>
 				<!-- Dodo owns the iframe's fields, legal content, and final tax calculation. -->
 				<div
-					class="relative mt-4 min-h-[32rem] border border-border bg-background p-3 sm:p-5"
+					class={[
+						'relative mt-3 border border-border bg-background p-2 sm:p-3',
+						!ready && 'min-h-[28rem]'
+					]}
 				>
 					{#if !ready && !loadError}
 						<div

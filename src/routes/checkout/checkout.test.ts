@@ -1,17 +1,21 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-const { getSession, createSession, previewSession, getProduct } = vi.hoisted(() => ({
-	getSession: vi.fn(),
-	createSession: vi.fn(),
-	previewSession: vi.fn(),
-	getProduct: vi.fn()
-}));
+const { getSession, createSession, previewSession, getProduct, checkoutLocale } = vi.hoisted(
+	() => ({
+		checkoutLocale: { current: 'en' },
+		getSession: vi.fn(),
+		createSession: vi.fn(),
+		previewSession: vi.fn(),
+		getProduct: vi.fn()
+	})
+);
 
 vi.mock('$lib/server/auth', () => ({
 	auth: { api: { getSession } },
 	dodoPayments: { checkoutSessions: { create: createSession, preview: previewSession } }
 }));
 vi.mock('$lib/server/products', () => ({ getProduct }));
+vi.mock('$lib/paraglide/runtime', () => ({ getLocale: () => checkoutLocale.current }));
 vi.mock('$lib/server/logger', () => ({ createLogger: () => ({ error: vi.fn() }) }));
 
 import { load } from './+page.server';
@@ -26,6 +30,7 @@ function request(url: string) {
 describe('inline checkout server loader', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		checkoutLocale.current = 'en';
 		getSession.mockResolvedValue({ user: { email: 'customer@example.com', name: 'Customer' } });
 		getProduct.mockReturnValue({
 			productId: 'prod_test',
@@ -63,16 +68,23 @@ describe('inline checkout server loader', () => {
 		);
 		expect(createSession.mock.calls[0][0].customization).toMatchObject({
 			theme: 'system',
+			force_language: 'en',
 			theme_config: {
 				light: {
 					bg_primary: '#F3F0E8',
-					bg_secondary: '#FFFDF7',
-					border_primary: '#827C70',
+					bg_secondary: '#FFFFFF',
+					border_primary: '#746D60',
+					border_secondary: '#968D80',
+					button_primary: '#10100E',
+					button_primary_hover: '#292925',
 					input_focus_border: '#946000'
 				},
 				dark: {
-					bg_secondary: '#34342E',
-					border_primary: '#AAA599',
+					bg_secondary: '#414139',
+					border_primary: '#C3BCAF',
+					border_secondary: '#969088',
+					button_primary: '#FFB000',
+					button_primary_hover: '#FFC533',
 					input_focus_border: '#FFB000'
 				}
 			}
@@ -168,6 +180,38 @@ describe('inline checkout server loader', () => {
 		});
 		await load(event);
 		expect(getProduct).toHaveBeenCalledWith('yearly', 'USD');
+	});
+
+	it('matches the Dodo form language to the selected site locale', async () => {
+		checkoutLocale.current = 'it';
+		previewSession.mockResolvedValueOnce({
+			currency: 'EUR',
+			trial_period_days: 14,
+			current_breakup: { total_amount: 0 },
+			recurring_breakup: { total_amount: 2499 }
+		});
+		await load(request('https://aceblocker.com/checkout?currency=EUR'));
+		expect(createSession.mock.calls[0][0].customization.force_language).toBe('it');
+	});
+
+	it('preserves an explicitly selected USD product even for an Italian visitor', async () => {
+		const url = 'https://aceblocker.com/checkout?cycle=yearly&currency=USD';
+		previewSession.mockResolvedValueOnce({
+			currency: 'USD',
+			trial_period_days: 14,
+			current_breakup: { total_amount: 0 },
+			recurring_breakup: { total_amount: 2499 }
+		});
+		const event = {
+			url: new URL(url),
+			request: new Request(url, {
+				headers: { 'cf-ipcountry': 'IT', 'accept-language': 'it-IT' }
+			})
+		} as Parameters<typeof load>[0];
+		await load(event);
+		expect(getProduct).toHaveBeenCalledWith('yearly', 'USD');
+		expect(previewSession.mock.calls[0][0].billing_currency).toBe('USD');
+		expect(createSession.mock.calls[0][0].billing_currency).toBe('USD');
 	});
 
 	it('rejects a non-test hosted URL', async () => {

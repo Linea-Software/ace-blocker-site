@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 import '../layout.css';
+import { getLocale, setLocale } from '$lib/paraglide/runtime';
 
 vi.mock('$app/state', () => ({
 	page: { url: new URL('http://localhost:5173/checkout?currency=EUR') }
@@ -39,7 +40,7 @@ describe('Checkout summary display', () => {
 			.element(page.getByRole('heading', { name: 'Start your 14-day Pro trial' }))
 			.toBeInTheDocument();
 		await expect
-			.element(page.getByRole('heading', { name: 'Payment details' }))
+			.element(page.getByRole('heading', { name: 'Secure checkout' }))
 			.toBeInTheDocument();
 		await expect.element(page.getByRole('status')).toBeInTheDocument();
 		await expect
@@ -70,6 +71,55 @@ describe('Checkout summary display', () => {
 		await page.screenshot({ path: '../../../test-results/checkout-summary-desktop-dark.png' });
 		document.documentElement.classList.remove('dark');
 		await page.screenshot({ path: '../../../test-results/checkout-summary-desktop-light.png' });
+	});
+
+	it('renders checkout terms in the selected Italian site locale', async () => {
+		setLocale('it', { reload: false });
+		try {
+			expect(getLocale()).toBe('it');
+			render(Checkout, {
+				data: {
+					isPro: false,
+					checkoutUrl:
+						'https://test.checkout.dodopayments.com/checkout?session_id=fixture',
+					currency: 'EUR',
+					cycle: 'yearly',
+					trialDays: 14,
+					recurringPriceMinor: 2499,
+					dueTodayMinor: 0
+				}
+			});
+			await expect
+				.element(page.getByRole('heading', { name: 'Pagamento sicuro' }))
+				.toBeInTheDocument();
+			await expect.element(page.getByText('Riepilogo ordine')).toBeInTheDocument();
+			await expect
+				.element(page.getByText(/Si rinnova automaticamente ogni anno/))
+				.toBeInTheDocument();
+		} finally {
+			setLocale('en', { reload: false });
+		}
+	});
+
+	it('releases the placeholder height when Dodo reports its form ready', async () => {
+		render(Checkout, {
+			data: {
+				isPro: false,
+				checkoutUrl: 'https://test.checkout.dodopayments.com/checkout?session_id=fixture',
+				currency: 'EUR',
+				cycle: 'yearly',
+				trialDays: 14,
+				recurringPriceMinor: 2499,
+				dueTodayMinor: 0
+			}
+		});
+		const surface = document.querySelector('#dodo-inline-checkout')?.parentElement;
+		expect(surface?.className).toContain('min-h-[28rem]');
+		await vi.waitFor(() => expect(checkoutEmitter.send).toBeDefined());
+		const emitEvent = checkoutEmitter.send as (event: { event_type: string }) => void;
+		emitEvent({ event_type: 'checkout.form_ready' });
+		await expect.element(page.getByRole('status')).not.toBeInTheDocument();
+		expect(surface?.className).not.toContain('min-h-[28rem]');
 	});
 
 	it('keeps the payment surface visible and offers retry when Dodo fails to initialize', async () => {

@@ -8,6 +8,7 @@ import {
 	type SupportedCurrency
 } from '$lib/utils/locale-currency';
 import { createLogger } from '$lib/server/logger';
+import { getLocale } from '$lib/paraglide/runtime';
 
 const log = createLogger('checkout:inline');
 
@@ -62,31 +63,34 @@ export const load: PageServerLoad = async ({ request, url }) => {
 			// the checkout session; CSS from this page cannot style its inputs.
 			customization: {
 				theme,
+				force_language: getLocale(),
 				theme_config: {
 					radius: '5px',
 					font_size: 'md',
 					light: {
 						bg_primary: '#F3F0E8',
-						bg_secondary: '#FFFDF7',
-						border_primary: '#827C70',
-						border_secondary: '#B6AEA0',
+						bg_secondary: '#FFFFFF',
+						border_primary: '#746D60',
+						border_secondary: '#968D80',
 						text_primary: '#10100E',
 						text_secondary: '#55534B',
 						text_placeholder: '#59564F',
 						input_focus_border: '#946000',
 						button_primary: '#10100E',
+						button_primary_hover: '#292925',
 						button_text_primary: '#FFFDF7'
 					},
 					dark: {
 						bg_primary: '#1A1A17',
-						bg_secondary: '#34342E',
-						border_primary: '#AAA599',
-						border_secondary: '#77746C',
+						bg_secondary: '#414139',
+						border_primary: '#C3BCAF',
+						border_secondary: '#969088',
 						text_primary: '#F3F0E8',
 						text_secondary: '#D7D2C7',
 						text_placeholder: '#B5B0A4',
 						input_focus_border: '#FFB000',
 						button_primary: '#FFB000',
+						button_primary_hover: '#FFC533',
 						button_text_primary: '#10100E'
 					}
 				}
