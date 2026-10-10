@@ -1,4 +1,7 @@
+import { createRequire } from 'node:module';
 import pino from 'pino';
+
+const require = createRequire(import.meta.url);
 
 // Use process.env so Better Auth CLI (`auth generate`) can resolve this
 // without needing SvelteKit's $app/environment alias.
@@ -17,7 +20,7 @@ export const logger = pino({
 	level: isDev ? 'debug' : 'info',
 	...(isDev && {
 		transport: {
-			target: 'pino-pretty',
+			target: require.resolve('pino-pretty'),
 			options: {
 				colorize: true,
 				translateTime: 'HH:MM:ss',
