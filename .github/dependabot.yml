@@ -1,0 +1,92 @@
+version: 2
+updates:
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      better-auth-minor-patch:
+        patterns:
+          - better-auth
+          - "@better-auth/*"
+        update-types: [minor, patch]
+      svelte-minor-patch:
+        patterns:
+          - svelte
+          - "@sveltejs/kit"
+          - "@sveltejs/adapter-node"
+          - svelte-check
+        update-types: [minor, patch]
+      elysia-minor-patch:
+        patterns:
+          - elysia
+          - "@elysiajs/*"
+        update-types: [minor, patch]
+      drizzle-minor-patch:
+        patterns:
+          - drizzle-kit
+          - drizzle-orm
+        update-types: [minor, patch]
+      vite-vitest-minor-patch:
+        patterns:
+          - vite
+          - vitest
+          - "@vitest/*"
+          - vitest-browser-svelte
+          - "@sveltejs/vite-plugin-svelte"
+        update-types: [minor, patch]
+      playwright-minor-patch:
+        patterns:
+          - playwright
+          - "@playwright/test"
+        update-types: [minor, patch]
+      frontend-minor-patch:
+        patterns:
+          - "@fontsource/*"
+          - "@lucide/svelte"
+          - "@tabler/icons-svelte"
+          - "@tailwindcss/*"
+          - tailwindcss
+          - tailwind-merge
+          - tailwind-variants
+          - tw-animate-css
+          - bits-ui
+          - layerchart
+          - mode-watcher
+          - svelte-sonner
+        update-types: [minor, patch]
+      lint-tooling-minor-patch:
+        patterns:
+          - eslint
+          - "@eslint/*"
+          - "eslint-*"
+          - "typescript-eslint"
+          - "@typescript-eslint/*"
+          - prettier
+          - "prettier-*"
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # Dockerfile: Bun builder and runtime stages share the same base image.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+
+  # compose.yaml: review PostgreSQL image upgrades individually.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 2
