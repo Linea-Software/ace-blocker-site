@@ -87,7 +87,7 @@
 		"@sinclair/typebox": "^0.34.52",
 		"@tabler/icons-svelte": "^3.50.0",
 		"better-auth": "^1.7.14",
-		"dodopayments": "^2.57.0",
+		"dodopayments": "^2.59.0",
 		"dodopayments-checkout": "^2.0.1",
 		"dotenv": "^18.0.9",
 		"elysia": "^1.4.30",
