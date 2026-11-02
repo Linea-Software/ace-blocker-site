@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages.js';
-	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
+	import BrandLogo from '$lib/components/BrandLogo.svelte';
 	import { LockKeyhole } from '@lucide/svelte';
 	import { resolve } from '$app/paths';
 </script>
@@ -9,7 +9,7 @@
 	class="relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-white/10 bg-ink p-10 text-paper lg:flex xl:p-12"
 >
 	<a href={resolve('/')} class="relative z-10 inline-flex items-center">
-		<img src={darkFullLogo} alt={m.about_hero_app()} class="h-8 w-auto" />
+		<BrandLogo variant="dark" alt={m.about_hero_app()} class="h-8 w-auto" />
 	</a>
 
 	<div class="relative z-10 max-w-xl">

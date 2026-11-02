@@ -101,13 +101,13 @@ function logoHtml(locale: Locale): string {
      src="cid:${LIGHT_LOGO_CID}"
      alt="${alt}"
      width="132"
-     height="31"
+     height="40"
      style="display:block; width:132px; height:auto; border:0;" />
 <img class="email-logo-dark"
      src="cid:${DARK_LOGO_CID}"
      alt="${alt}"
      width="132"
-     height="31"
+     height="40"
      style="display:none; width:132px; height:auto; border:0;" />`;
 }
 

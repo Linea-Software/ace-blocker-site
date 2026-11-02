@@ -1,9 +1,23 @@
 <script lang="ts">
-	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
-	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
+	import darkLockup from '$lib/assets/logo/ace-lockup-dark.svg';
+	import lightLockup from '$lib/assets/logo/ace-lockup-light.svg';
 
-	let { alt, class: className = '' }: { alt: string; class?: string } = $props();
+	let {
+		alt,
+		class: className = '',
+		variant = 'auto'
+	}: {
+		alt: string;
+		class?: string;
+		variant?: 'auto' | 'light' | 'dark';
+	} = $props();
 </script>
 
-<img src={lightFullLogo} {alt} class={`${className} dark:hidden`} />
-<img src={darkFullLogo} {alt} class={`${className} hidden dark:block`} />
+{#if variant === 'dark'}
+	<img src={darkLockup} {alt} class={className} />
+{:else if variant === 'light'}
+	<img src={lightLockup} {alt} class={className} />
+{:else}
+	<img src={lightLockup} {alt} class={`${className} dark:hidden`} />
+	<img src={darkLockup} {alt} class={`${className} hidden dark:block`} />
+{/if}
