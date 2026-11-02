@@ -1,4 +1,4 @@
-FROM oven/bun:1.4.1 AS builder
+FROM oven/bun:1.4.4 AS builder
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ COPY . .
 RUN bun run build
 
 # Production image
-FROM oven/bun:1.4.1 AS runtime
+FROM oven/bun:1.4.4 AS runtime
 
 WORKDIR /app
 
