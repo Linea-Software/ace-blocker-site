@@ -16,8 +16,15 @@ jobs:
           bun-version: '1.4.0'
       - name: Install dependencies
         run: bun install --frozen-lockfile
-      - name: svelte-kit sync + svelte-check
-        run: bun run check
+      - name: Generate translations and typecheck
+        run: |
+          # This is a clean checkout: generated Paraglide modules are not committed.
+          ci_suffix="$(openssl rand -hex 16)"
+          export PUBLIC_BETTER_AUTH_URL="https://ci.example.invalid"
+          export RESEND_API_KEY="re_ci_${ci_suffix}"
+          export BUNNY_STORAGE_ACCESS_KEY="ci_${ci_suffix}"
+          bun x paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide
+          bun run check
 
   build:
     name: Build (vite build)
@@ -29,8 +36,25 @@ jobs:
           bun-version: '1.4.0'
       - name: Install dependencies
         run: bun install --frozen-lockfile
-      - name: Production build
-        run: bun run build
+      - name: Production build (CI-only dummy credentials)
+        run: |
+          # SvelteKit imports server modules during the build. Provide
+          # nonfunctional placeholders only for this step; never use real secrets
+          # or expose these values to a deploy/publish job.
+          ci_suffix="$(openssl rand -hex 16)"
+          export PUBLIC_BETTER_AUTH_URL="https://ci.example.invalid"
+          export BETTER_AUTH_URL="$PUBLIC_BETTER_AUTH_URL"
+          export ORIGIN="$PUBLIC_BETTER_AUTH_URL"
+          export DATABASE_URL="postgresql://ci:ci@db.ci.invalid:5432/ci"
+          export BETTER_AUTH_SECRET="ci_${ci_suffix}${ci_suffix}"
+          export DODO_PAYMENTS_API_KEY="ci_${ci_suffix}"
+          export DODO_PAYMENTS_WEBHOOK_SECRET="ci_${ci_suffix}"
+          export RESEND_API_KEY="re_ci_${ci_suffix}"
+          export BUNNY_URL_TOKEN_AUTH_KEY="ci_${ci_suffix}"
+          export BUNNY_STORAGE_ZONE="ci-placeholder"
+          export BUNNY_CDN_BASE_URL="cdn.example.invalid"
+          export BUNNY_STORAGE_ACCESS_KEY="ci_${ci_suffix}"
+          bun run build
 
   unit-tests:
     name: Unit tests (server)
