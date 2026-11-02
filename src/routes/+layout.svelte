@@ -9,6 +9,7 @@
 	import '@fontsource/ibm-plex-mono/500.css';
 
 	import { page } from '$app/state';
+	import { jsonLdScript, organizationAndWebsiteData } from '$lib/structured-data';
 	import { resolve } from '$app/paths';
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
 	import {
@@ -51,6 +52,7 @@
 	<meta name="twitter:image:alt" content={m.site_og_image_alt()} />
 	{#if isIndexablePage(page.url.pathname)}
 		<link rel="canonical" href={canonicalUrl(page.url.pathname)} />
+		{@html jsonLdScript(organizationAndWebsiteData())}
 		{#each alternateUrls(page.url.pathname) as alternate (alternate.locale)}
 			<link rel="alternate" hreflang={alternate.locale} href={alternate.url} />
 		{/each}
