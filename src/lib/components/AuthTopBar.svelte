@@ -3,7 +3,7 @@
 	import ThemeToggleButton from './ThemeToggleButton.svelte';
 	import { resolve } from '$app/paths';
 
-	let { backHref = '/', backLabel } = $props<{ backHref?: '/' | '/signin'; backLabel: string }>();
+	let { backHref = '/', backLabel }: { backHref?: '/' | '/signin'; backLabel: string } = $props();
 </script>
 
 <div

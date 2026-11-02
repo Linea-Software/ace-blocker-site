@@ -18,12 +18,11 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Generate translations and typecheck
         run: |
-          # This is a clean checkout: generated Paraglide modules are not committed.
+          # bun run check generates the untracked Paraglide modules itself.
           ci_suffix="$(openssl rand -hex 16)"
           export PUBLIC_BETTER_AUTH_URL="https://ci.example.invalid"
           export RESEND_API_KEY="re_ci_${ci_suffix}"
           export BUNNY_STORAGE_ACCESS_KEY="ci_${ci_suffix}"
-          bun x paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide
           bun run check
 
   build:

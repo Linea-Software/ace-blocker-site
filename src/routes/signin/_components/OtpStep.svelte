@@ -12,13 +12,13 @@
 		loading = false,
 		onverify,
 		onback
-	} = $props<{
+	}: {
 		code?: string;
 		error?: string | null;
 		loading?: boolean;
 		onverify: (e: Event) => void;
 		onback: () => void;
-	}>();
+	} = $props();
 </script>
 
 <header class="mb-8">

@@ -15,7 +15,7 @@
 		actionLabel,
 		onaction,
 		circle = false
-	} = $props<{
+	}: {
 		colspan?: number;
 		Icon: Component;
 		title: string;
@@ -23,7 +23,7 @@
 		actionLabel: string;
 		onaction?: () => void;
 		circle?: boolean;
-	}>();
+	} = $props();
 </script>
 
 <tr>

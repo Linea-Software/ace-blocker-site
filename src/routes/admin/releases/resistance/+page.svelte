@@ -10,7 +10,7 @@
 	import { Calendar, Eye, EyeOff, ScrollText, Trash2, UploadCloud } from '@lucide/svelte';
 	import ReleaseManager from '../_components/ReleaseManager.svelte';
 
-	let { data } = $props<{ data: any }>();
+	let { data }: { data: any } = $props();
 	let uploadVersion = $state('');
 
 	const liveScripts = $derived(

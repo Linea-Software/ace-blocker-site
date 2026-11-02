@@ -7,7 +7,7 @@
 		pricing,
 		billingCycle = $bindable('yearly'),
 		onupgrade
-	} = $props<{
+	}: {
 		pricing: {
 			monthlyPrice: string;
 			yearlyPrice: string;
@@ -19,7 +19,7 @@
 		};
 		billingCycle?: string;
 		onupgrade: () => void;
-	}>();
+	} = $props();
 
 	const trialDays = $derived(
 		billingCycle === 'yearly' ? pricing.yearlyTrialDays : pricing.monthlyTrialDays
