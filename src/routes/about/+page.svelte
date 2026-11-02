@@ -7,6 +7,7 @@
 	import SitePackVisual from '$lib/components/marketing/SitePackVisual.svelte';
 	import { Download } from '@lucide/svelte';
 	import { page } from '$app/state';
+	import { canonicalUrl } from '$lib/seo';
 	import { resolve } from '$app/paths';
 	import * as m from '$lib/paraglide/messages';
 
@@ -18,7 +19,7 @@
 	<meta name="description" content={m.about_mechanism_description()} />
 	<meta property="og:title" content={m.page_title_about()} />
 	<meta property="og:description" content={m.about_mechanism_description()} />
-	<meta property="og:url" content={page.url.href} />
+	<meta property="og:url" content={canonicalUrl(page.url.pathname)} />
 	<meta name="twitter:title" content={m.page_title_about()} />
 	<meta name="twitter:description" content={m.about_mechanism_description()} />
 </svelte:head>

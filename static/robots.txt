@@ -1,11 +1,25 @@
-# Ace Blocker - robots.txt
-# Sensitive and user-specific pages are disallowed from indexing.
-
+# Public marketing content is available to traditional and AI search crawlers.
+# Keep private application resources out of the search index.
 User-agent: *
 Disallow: /admin/
 Disallow: /account/
 Disallow: /api/
 Disallow: /checkout/
 Disallow: /dev/
+Disallow: /es/admin/
+Disallow: /es/account/
+Disallow: /es/api/
+Disallow: /es/checkout/
+Disallow: /es/dev/
+Disallow: /it/admin/
+Disallow: /it/account/
+Disallow: /it/api/
+Disallow: /it/checkout/
+Disallow: /it/dev/
+Disallow: /de/admin/
+Disallow: /de/account/
+Disallow: /de/api/
+Disallow: /de/checkout/
+Disallow: /de/dev/
 
 Sitemap: https://aceblocker.com/sitemap.xml

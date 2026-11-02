@@ -1,37 +1,32 @@
 import type { RequestHandler } from './$types';
+import { alternateUrls, INDEXABLE_PATHS, localizedPath, SEO_LOCALES, SITE_URL } from '$lib/seo';
 
-const BASE_URL = 'https://aceblocker.com';
-
-const PUBLIC_PAGES = [
-	{ loc: '/', changefreq: 'weekly', priority: '1.0' },
-	{ loc: '/about', changefreq: 'monthly', priority: '0.8' },
-	{ loc: '/privacy', changefreq: 'monthly', priority: '0.4' },
-	{ loc: '/terms', changefreq: 'monthly', priority: '0.4' },
-	{ loc: '/get-pro', changefreq: 'weekly', priority: '0.9' },
-	{ loc: '/download', changefreq: 'weekly', priority: '0.9' },
-	{ loc: '/signin', changefreq: 'monthly', priority: '0.3' },
-	{ loc: '/signup', changefreq: 'monthly', priority: '0.3' },
-	{ loc: '/forgot-password', changefreq: 'monthly', priority: '0.1' }
-] as const;
-
-export const GET: RequestHandler = async () => {
-	const urls = PUBLIC_PAGES.map(
-		(page) => `	<url>
-		<loc>${BASE_URL}${page.loc}</loc>
-		<changefreq>${page.changefreq}</changefreq>
-		<priority>${page.priority}</priority>
-	</url>`
+export const GET: RequestHandler = () => {
+	const urls = INDEXABLE_PATHS.flatMap((pathname) =>
+		SEO_LOCALES.map(
+			(locale) => `  <url>
+    <loc>${SITE_URL}${localizedPath(pathname, locale)}</loc>
+${alternateUrls(pathname)
+	.map(
+		(alternate) =>
+			`    <xhtml:link rel="alternate" hreflang="${alternate.locale}" href="${alternate.url}" />`
+	)
+	.join('\n')}
+    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE_URL}${pathname}" />
+  </url>`
+		)
 	).join('\n');
 
-	const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+	return new Response(
+		`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${urls}
-</urlset>`;
-
-	return new Response(xml, {
-		headers: {
-			'Content-Type': 'application/xml',
-			'Cache-Control': 'public, max-age=3600, s-maxage=3600'
+</urlset>`,
+		{
+			headers: {
+				'Content-Type': 'application/xml; charset=utf-8',
+				'Cache-Control': 'public, max-age=3600, s-maxage=3600'
+			}
 		}
-	});
+	);
 };

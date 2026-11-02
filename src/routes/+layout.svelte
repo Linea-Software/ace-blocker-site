@@ -11,6 +11,14 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
+	import {
+		alternateUrls,
+		basePath,
+		canonicalUrl,
+		isIndexablePage,
+		localeFromPath,
+		SITE_URL
+	} from '$lib/seo';
 	import { ModeWatcher } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages';
 	import './layout.css';
@@ -32,10 +40,24 @@
 	<meta property="og:image:height" content="630" />
 	<meta property="og:image:alt" content={m.site_og_image_alt()} />
 	<meta property="og:type" content="website" />
-	<meta property="og:locale" content="en_US" />
+	<meta
+		property="og:locale"
+		content={{ en: 'en_US', es: 'es_ES', it: 'it_IT', de: 'de_DE' }[
+			localeFromPath(page.url.pathname)
+		]}
+	/>
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:image" content={defaultOgImage} />
 	<meta name="twitter:image:alt" content={m.site_og_image_alt()} />
+	{#if isIndexablePage(page.url.pathname)}
+		<link rel="canonical" href={canonicalUrl(page.url.pathname)} />
+		{#each alternateUrls(page.url.pathname) as alternate (alternate.locale)}
+			<link rel="alternate" hreflang={alternate.locale} href={alternate.url} />
+		{/each}
+		<link rel="alternate" hreflang="x-default" href={SITE_URL + basePath(page.url.pathname)} />
+	{:else}
+		<meta name="robots" content="noindex, nofollow" />
+	{/if}
 </svelte:head>
 
 <ModeWatcher defaultMode="light" track={true} />

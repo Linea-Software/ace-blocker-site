@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { canonicalUrl } from '$lib/seo';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import MarketingFooter from '$lib/components/marketing/MarketingFooter.svelte';
 	import * as m from '$lib/paraglide/messages';
@@ -158,7 +159,7 @@
 	<meta name="description" content={m.download_description()} />
 	<meta property="og:title" content={m.page_title_download()} />
 	<meta property="og:description" content={m.download_description()} />
-	<meta property="og:url" content={page.url.href} />
+	<meta property="og:url" content={canonicalUrl(page.url.pathname)} />
 	<meta name="twitter:title" content={m.page_title_download()} />
 	<meta name="twitter:description" content={m.download_description()} />
 </svelte:head>

@@ -8,6 +8,7 @@
 	import { Download, Info } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { page } from '$app/state';
+	import { canonicalUrl } from '$lib/seo';
 	import { resolve } from '$app/paths';
 
 	let { data } = $props();
@@ -16,9 +17,10 @@
 
 <svelte:head>
 	<title>{m.page_title_home()}</title>
+	<meta name="description" content={m.home_seo_description()} />
 	<meta property="og:title" content={m.page_title_home()} />
 	<meta property="og:description" content={m.home_description()} />
-	<meta property="og:url" content={page.url.href} />
+	<meta property="og:url" content={canonicalUrl(page.url.pathname)} />
 	<meta name="twitter:title" content={m.page_title_home()} />
 	<meta name="twitter:description" content={m.home_description()} />
 </svelte:head>

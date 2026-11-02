@@ -8,6 +8,7 @@
 	import { authClient } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { canonicalUrl } from '$lib/seo';
 	import { resolve } from '$app/paths';
 	import { linkEngine } from '$lib/utils';
 	import { engineConfig } from '$lib/states/engine.svelte';
@@ -90,7 +91,7 @@
 	<meta name="description" content={m.page_description_get_pro()} />
 	<meta property="og:title" content={m.page_title_get_pro()} />
 	<meta property="og:description" content={m.page_description_get_pro()} />
-	<meta property="og:url" content={page.url.href} />
+	<meta property="og:url" content={canonicalUrl(page.url.pathname)} />
 	<meta name="twitter:title" content={m.page_title_get_pro()} />
 	<meta name="twitter:description" content={m.page_description_get_pro()} />
 </svelte:head>
