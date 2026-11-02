@@ -29,8 +29,18 @@ export async function seedPrices() {
 		return;
 	}
 
-	// Fetch all existing products from Dodo
-	const existing = await dodoPayments.products.list();
+	// An invalid test-mode key (401) or an offline payment API must not prevent
+	// the development server from starting. Keep production fail-closed.
+	let existing: Awaited<ReturnType<typeof dodoPayments.products.list>>;
+	try {
+		existing = await dodoPayments.products.list();
+	} catch (error) {
+		if (isProduction()) throw error;
+		log.warn(
+			'Dodo Payments price synchronization unavailable in development; check DODO_PAYMENTS_API_KEY and its test-mode permissions'
+		);
+		return;
+	}
 	const existingNames = new Map(existing.items.map((p) => [p.name, p]));
 
 	log.info(`found ${existing.items.length} existing products`);

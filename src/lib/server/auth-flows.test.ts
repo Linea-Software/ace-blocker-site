@@ -43,13 +43,17 @@ vi.mock('better-auth/adapters/drizzle', async () => {
 	};
 });
 
-// The real auth.ts creates a DodoPayments client and (createCustomerOnSignUp)
-// calls the Dodo API on signup; the SDK is the seam — no network in tests.
+// Local signups must never reach Dodo, even when a test-mode key gets a 401.
+// The SDK mock deliberately rejects customer calls so regression tests catch it.
+const { dodoCustomerList, dodoCustomerCreate } = vi.hoisted(() => ({
+	dodoCustomerList: vi.fn().mockRejectedValue(new Error('401 status code (no body)')),
+	dodoCustomerCreate: vi.fn().mockRejectedValue(new Error('401 status code (no body)'))
+}));
 vi.mock('dodopayments', () => ({
 	default: class DodoPaymentsMock {
 		customers = {
-			list: vi.fn().mockResolvedValue({ items: [] }),
-			create: vi.fn().mockResolvedValue({ customer_id: 'cus_test_1' }),
+			list: dodoCustomerList,
+			create: dodoCustomerCreate,
 			update: vi.fn().mockResolvedValue({ customer_id: 'cus_test_1' })
 		};
 		subscriptions = { list: vi.fn().mockResolvedValue({ items: [] }), update: vi.fn() };
@@ -490,6 +494,26 @@ describe('site auth config (real auth.ts, in-memory adapter)', () => {
 		expect((verificationSend![0] as { to: string }).to).toBe(email);
 
 		// databaseHooks.user.create.after (auth.ts) sent the welcome email.
+		expect(sendWelcomeEmail).toHaveBeenCalledWith(email, 'en');
+	});
+
+	it('real site signup survives a Dodo 401 without calling the payment service in development', async () => {
+		const email = 'dodo-rejected@example.com';
+		const response = await siteAuth.handler(
+			new Request('http://localhost/api/auth/sign-up/email', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({
+					name: 'Local User',
+					email,
+					password: 'correct-horse-battery-staple'
+				})
+			})
+		);
+
+		expect(response.status).toBe(200);
+		expect(dodoCustomerList).not.toHaveBeenCalled();
+		expect(dodoCustomerCreate).not.toHaveBeenCalled();
 		expect(sendWelcomeEmail).toHaveBeenCalledWith(email, 'en');
 	});
 

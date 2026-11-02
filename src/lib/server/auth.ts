@@ -29,6 +29,7 @@ import type { Locale } from './messages';
 import { createLogger } from './logger';
 import { dodoProducts } from './products';
 import { getAuthRateLimitConfig } from './config/auth-security';
+import { shouldCreateDodoCustomerOnSignUp } from './config/dodo';
 
 export const dodoPayments = new DodoPayments({
 	bearerToken: process.env.DODO_PAYMENTS_API_KEY ?? '',
@@ -211,7 +212,9 @@ export const auth = betterAuth({
 		}),
 		dodopayments({
 			client: dodoPayments,
-			createCustomerOnSignUp: true,
+			// Signup is independent of the Dodo API in development. Invalid/missing
+			// test-mode credentials must not prevent a local account being created.
+			createCustomerOnSignUp: shouldCreateDodoCustomerOnSignUp(),
 			use: [
 				checkout({
 					products: dodoProducts,

@@ -161,6 +161,9 @@ The project uses **Elysia** to handle all API requests under the `/api` prefix.
 
 Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })` in `src/lib/server/auth.ts`.
 
+- **Signup/customer creation:** The Dodo Better Auth plugin auto-creates billing customers only in production (`shouldCreateDodoCustomerOnSignUp` in `src/lib/server/config/dodo.ts`). Local signup must never contact Dodo, even with a configured but rejected test-mode API key; in production, the API key remains required and customer synchronization remains enabled.
+- **Price startup sync:** If Dodo returns a 401 or is offline, development logs a warning and leaves checkout products unavailable instead of aborting startup. Production still fails on these errors. Do not fake payment products or enable checkout with unverified prices.
+
 - **Checkout**: `/get-pro` calls `authClient.dodopayments.checkoutSession({ slug })` → plugin endpoint `POST /api/auth/dodopayments/checkout-session` (Better Auth mounts plugin routes under its base path `/api/auth`). Returns `{ url, redirect: true }` — in test mode the host is `test.checkout.dodopayments.com`.
 - **Webhooks**: Dodo deliveries arrive at `POST /api/auth/dodopayments/webhooks` — the Dodo dashboard endpoint must be `https://<host>/api/auth/dodopayments/webhooks`. Signature verification (Svix-style `webhook-id`/`webhook-timestamp`/`webhook-signature`) happens in the plugin via `@dodopayments/core/webhook`.
 - **Idempotency**: webhook events are recorded in `dodo_webhook_events` (keyed by a payload digest, see `src/lib/server/webhook-events.ts`). Every `onSubscription*` handler in `auth.ts` is gated by `shouldProcessWebhook()`, so retried deliveries are no-ops and stale events (older timestamp for the same subscription) are rejected.

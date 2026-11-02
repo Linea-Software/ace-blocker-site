@@ -34,6 +34,24 @@ describe('Dodo price seeding without a provider key', () => {
 		expect(productsList).not.toHaveBeenCalled();
 	});
 
+	it('survives rejected test-mode credentials during development', async () => {
+		process.env.NODE_ENV = 'development';
+		process.env.DODO_PAYMENTS_API_KEY = 'sk_test_invalid';
+		productsList.mockRejectedValueOnce(new Error('401 status code (no body)'));
+
+		await expect(seedPrices()).resolves.toBeUndefined();
+		expect(productsList).toHaveBeenCalledOnce();
+	});
+
+	it('still fails startup when production credentials are rejected', async () => {
+		process.env.NODE_ENV = 'production';
+		process.env.DODO_PAYMENTS_API_KEY = 'sk_test_invalid';
+		productsList.mockRejectedValueOnce(new Error('401 status code (no body)'));
+
+		await expect(seedPrices()).rejects.toThrow('401');
+		expect(productsList).toHaveBeenCalledOnce();
+	});
+
 	it('does not relax the missing-key requirement in production', async () => {
 		process.env.NODE_ENV = 'production';
 		delete process.env.DODO_PAYMENTS_API_KEY;
