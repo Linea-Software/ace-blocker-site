@@ -93,6 +93,18 @@
 		</div>
 	</section>
 
+	<section class="border-b border-border py-12 sm:py-16" aria-labelledby="home-what-is">
+		<div class="ace-shell grid gap-6 md:grid-cols-[0.42fr_1fr] md:gap-12">
+			<h2 id="home-what-is" class="font-display text-3xl font-semibold">
+				{m.home_what_is_title()}
+			</h2>
+			<div class="max-w-3xl space-y-4 leading-relaxed">
+				<p>{m.home_what_is_description()}</p>
+				<p class="text-muted-foreground">{m.home_what_is_detail()}</p>
+			</div>
+		</div>
+	</section>
+
 	<section class="border-b border-border bg-card">
 		<ol class="ace-shell grid list-none md:grid-cols-3">
 			<li class="border-b border-border py-8 md:border-r md:border-b-0 md:pr-8">
