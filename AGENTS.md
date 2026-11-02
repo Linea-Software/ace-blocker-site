@@ -12,7 +12,7 @@ ALWAYS use **Bun** for all package management and script execution tasks.
 - **TypeScript compatibility**: Keep `typescript@~6` and `@typescript/native@npm:typescript@7` installed together while `svelte-check` requires both. The `check` script uses `--tsgo`. Do not bump the root `typescript` dependency to 7 until Svelte tooling supports it without TypeScript 6.
 - **Adapter compatibility**: Keep `@sveltejs/adapter-node` on v5 while using SvelteKit 2; adapter-node v6 requires SvelteKit 3. Review the migration as a coordinated major update.
 - **Running Locally**: The development server is ALWAYS running at `https://localhost:5173/` during development. You do NOT need to run `bun run dev` yourself. Use this URL to test and verify changes.
-- **Initial Setup**: Run `bun run setup` to automatically configure the `.env` file (including secrets), start the Docker database, and apply Drizzle migrations.
+- **Initial Setup**: Run `bun run setup` to configure `.env` (generating `BETTER_AUTH_SECRET` if needed), start Docker PostgreSQL, and apply Drizzle migrations. `scripts/setup.ts` detects Debian/Ubuntu, Arch, Fedora/RHEL, openSUSE and Alpine via `os-release`, checks `certutil` first, and installs distro-specific NSS tools only when needed; package selection lives in `scripts/linux-setup.ts` and is covered by unit tests. See README.md. The production VPS script `scripts/setup-vps.sh` is separately Debian/Ubuntu-specific; do not treat it as portable.
 - **Database Management**: Run `bun run db:delete` to stop the Docker database and delete its associated volumes (virtual disk).
 - **Development Credentials**: In development mode, a default admin user is automatically created:
     - **Email**: `dev@example.com`

@@ -1,10 +1,12 @@
 import { $ } from 'bun';
 import { join } from 'path';
+import { resolveLinuxNssInstallPlan } from './linux-setup';
 
 async function runCommand(command: string, args: string[]) {
-	// Use sudo on Linux for docker and apt commands
+	// Use sudo only for privileged Linux commands and only when not already root.
 	const isLinux = process.platform === 'linux';
-	const useSudo = isLinux && (command === 'docker' || command === 'apt');
+	const privilegedCommands = ['docker', 'apt', 'pacman', 'dnf', 'zypper', 'apk'];
+	const useSudo = isLinux && process.getuid?.() !== 0 && privilegedCommands.includes(command);
 
 	console.log(`🚀 Running: ${useSudo ? 'sudo ' : ''}${command} ${args.join(' ')}...`);
 
@@ -15,22 +17,60 @@ async function runCommand(command: string, args: string[]) {
 	return result.exitCode === 0;
 }
 
-async function main() {
-	const isLinux = process.platform === 'linux';
+async function ensureLinuxNssTools() {
+	console.log('\n🛠️  Checking system dependencies...');
 
-	// 0. Install system dependencies (Linux only)
-	if (isLinux) {
-		console.log('\n🛠️  Checking system dependencies...');
-		const hasNss = (await $`dpkg -l libnss3-tools`.nothrow().quiet()).exitCode === 0;
-		if (!hasNss) {
-			console.log('📦 Installing libnss3-tools (required for SSL)...');
-			if (!(await runCommand('apt', ['update'])))
-				throw new Error('Failed to update apt package metadata.');
-			if (!(await runCommand('apt', ['install', '-y', 'libnss3-tools'])))
-				throw new Error('Failed to install libnss3-tools.');
-		} else {
-			console.log('✅ libnss3-tools is already installed.');
+	// certutil is provided by different packages on different Linux distros.
+	// Checking the executable also handles manually installed NSS tools.
+	if (Bun.which('certutil')) {
+		console.log('✅ NSS certutil is already installed.');
+		return;
+	}
+
+	const osReleasePaths = ['/etc/os-release', '/usr/lib/os-release'];
+	let osRelease = '';
+	for (const path of osReleasePaths) {
+		if (await Bun.file(path).exists()) {
+			osRelease = await Bun.file(path).text();
+			break;
 		}
+	}
+	const plan = resolveLinuxNssInstallPlan(osRelease);
+	if (!plan) {
+		throw new Error(
+			'Unsupported Linux distribution: please install NSS certutil manually and rerun setup.'
+		);
+	}
+
+	console.log(
+		`📦 Installing ${plan.packageName} (${plan.family}) for local HTTPS certificates...`
+	);
+	for (const { command, args } of plan.commands) {
+		if (!Bun.which(command)) {
+			throw new Error(
+				`Missing ${command} package manager. Install NSS certutil manually or check your Linux distribution.`
+			);
+		}
+		if (!(await runCommand(command, args))) {
+			throw new Error(
+				`Could not install ${plan.packageName} with ${command}. Install it manually and rerun setup.` +
+					(command === 'pacman'
+						? ' On Arch, update your system with sudo pacman -Syu first if package databases are outdated.'
+						: '')
+			);
+		}
+	}
+
+	if (!Bun.which('certutil')) {
+		throw new Error(`Installed ${plan.packageName}, but certutil is not on PATH.`);
+	}
+	console.log('✅ NSS certutil is available.');
+}
+
+async function main() {
+	// 0. Install system dependencies (Linux only)
+	if (process.platform === 'linux') {
+		await ensureLinuxNssTools();
 	}
 	const rootDir = process.cwd();
 	const envPath = join(rootDir, '.env');

@@ -1,38 +1,42 @@
-# sv
+# Ace Blocker Site
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+SvelteKit website, account portal, and API for Ace Blocker.
 
-## Creating a project
+## Local development
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Install [Bun](https://bun.sh/) and Docker with the Docker Compose plugin. Start the Docker daemon, then run from the repository root:
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+bun install
+bun run setup
+bun run dev
 ```
 
-## Building
+`bun run setup` checks for NSS `certutil` (needed for trusting local HTTPS certificates), creates or updates `.env`, starts the local PostgreSQL container and applies database migrations. The development site is served at `https://localhost:5173/`.
 
-To create a production version of your app:
+On Linux the script detects the distribution through `/etc/os-release` (falling back to `/usr/lib/os-release`) and installs the missing NSS tools with the appropriate package manager:
+
+| Distribution family                                 | Package manager | NSS tools package   |
+| --------------------------------------------------- | --------------- | ------------------- |
+| Debian, Ubuntu, Linux Mint and derivatives          | `apt`           | `libnss3-tools`     |
+| Arch, Manjaro, EndeavourOS, CachyOS and derivatives | `pacman`        | `nss`               |
+| Fedora, RHEL and derivatives                        | `dnf`           | `nss-tools`         |
+| openSUSE                                            | `zypper`        | `mozilla-nss-tools` |
+| Alpine                                              | `apk`           | `nss-tools`         |
+
+If `certutil` is already installed, no system packages are changed. Installation may request a sudo password. Unsupported Linux distributions can install NSS `certutil` manually before running setup. On Arch, the script does not perform an automatic system-wide upgrade; if the package database is outdated, run `sudo pacman -Syu` yourself before retrying.
+
+**Note:** `scripts/setup-vps.sh` is a separate, Debian/Ubuntu-specific production server provisioning script. It has not been adapted to Arch or other server distributions; do not use it there.
+
+Development keys for Resend, BunnyCDN and Dodo Payments can be left unset, but their respective features will remain unavailable. The database and Docker are still required.
+
+## Verification
 
 ```sh
-npm run build
+bun run check
+bun run lint
+bun run test:unit -- --run
+bun run build
 ```
 
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+See [docs/DEPLOY.md](docs/DEPLOY.md) for supported production deployment instructions.
