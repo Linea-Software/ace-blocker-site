@@ -13,6 +13,7 @@ Ace Blocker is a network and program blocking application designed to help users
 ## 3. User Responsibilities
 
 You are responsible for:
+
 - Maintaining the confidentiality of your account credentials
 - Ensuring your use of the Software complies with all applicable laws
 - Using the Software in a manner consistent with its intended purpose

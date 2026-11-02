@@ -98,7 +98,10 @@ describe('installer release ingest', () => {
 		getArrayBufferChecksum.mockReturnValue(SHA256);
 		uploadInstaller.mockResolvedValue({
 			isErr: () => false,
-			_unsafeUnwrap: () => ({ downloadUrl: 'https://cdn.example/installer.msi', hash: SHA256 })
+			_unsafeUnwrap: () => ({
+				downloadUrl: 'https://cdn.example/installer.msi',
+				hash: SHA256
+			})
 		});
 	});
 

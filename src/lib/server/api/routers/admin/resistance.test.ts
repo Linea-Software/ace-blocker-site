@@ -3,12 +3,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Router-level tests for the admin resistance endpoints: auth gating and
 // upload validation (size/type/version) — no live DB or CDN needed.
 
-const validZip = new File([new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0])], 'resistance-scripts.zip', {
-	type: 'application/zip'
-});
+const validZip = new File(
+	[new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0])],
+	'resistance-scripts.zip',
+	{
+		type: 'application/zip'
+	}
+);
 
 vi.mock('$lib/server/auth', () => ({
-	dodoPayments: { licenses: { validate: vi.fn() }, subscriptions: { list: vi.fn(), update: vi.fn() } },
+	dodoPayments: {
+		licenses: { validate: vi.fn() },
+		subscriptions: { list: vi.fn(), update: vi.fn() }
+	},
 	auth: {
 		handler: () => new Response('Not found', { status: 404 }),
 		api: {
@@ -145,7 +152,10 @@ describe('admin resistance endpoints', () => {
 
 	it('rejects an unsafe version before any upload', async () => {
 		await asAdmin();
-		uploadResistanceModeScript.mockResolvedValue({ isErr: () => false, _unsafeUnwrap: () => ({}) });
+		uploadResistanceModeScript.mockResolvedValue({
+			isErr: () => false,
+			_unsafeUnwrap: () => ({})
+		});
 
 		for (const bad of ['../../evil', 'a/b', 'a\\b', '..', 'sp ace', '', 'x'.repeat(65)]) {
 			const res = await handle('/admin/resistance/upload', {
@@ -182,7 +192,9 @@ describe('admin resistance endpoints', () => {
 
 	it('rejects an oversized upload', async () => {
 		await asAdmin();
-		const big = new File([new Uint8Array(101 * 1024 * 1024)], 'big.zip', { type: 'application/zip' });
+		const big = new File([new Uint8Array(101 * 1024 * 1024)], 'big.zip', {
+			type: 'application/zip'
+		});
 
 		const res = await handle('/admin/resistance/upload', {
 			method: 'POST',

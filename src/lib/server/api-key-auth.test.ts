@@ -134,7 +134,11 @@ describe('API-key auth compatibility', () => {
 			new Request(`${BASE_URL}/api/auth/sign-up/email`, {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ name: 'Engine User', email, password: 'correct-horse-battery-staple' })
+				body: JSON.stringify({
+					name: 'Engine User',
+					email,
+					password: 'correct-horse-battery-staple'
+				})
 			})
 		);
 		expect(signup.status).toBe(200);

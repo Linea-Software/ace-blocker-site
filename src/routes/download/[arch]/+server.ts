@@ -39,7 +39,13 @@ export const GET: RequestHandler = async ({ params }) => {
 		const { url, version } = result._unsafeUnwrap();
 		await incrementInstallerDownloadCount(target.os, target.architecture);
 		log.info(
-			{ arch, os: target.os, architecture: target.architecture, version, url: url.toString() },
+			{
+				arch,
+				os: target.os,
+				architecture: target.architecture,
+				version,
+				url: url.toString()
+			},
 			'Redirecting installer download to CDN'
 		);
 		throw redirect(302, url);

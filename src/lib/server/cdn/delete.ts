@@ -2,11 +2,7 @@ import { err, ok, Result } from 'neverthrow';
 import { env } from '$env/dynamic/private';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import {
-	sitePack,
-	resistanceModeScripts,
-	aceBlockerInstaller
-} from '$lib/server/db/schema';
+import { sitePack, resistanceModeScripts, aceBlockerInstaller } from '$lib/server/db/schema';
 import {
 	invalidateSitePacksCache,
 	invalidateResistanceCache,

@@ -64,7 +64,10 @@ function subscriptionActivePayload(email: string, nextBillingDate: string): obje
 	};
 }
 
-test('pro funnel: signup → get-pro → checkout → webhook → pro granted', async ({ page, request }) => {
+test('pro funnel: signup → get-pro → checkout → webhook → pro granted', async ({
+	page,
+	request
+}) => {
 	test.skip(
 		!process.env.DODO_PAYMENTS_WEBHOOK_SECRET,
 		'DODO_PAYMENTS_WEBHOOK_SECRET is required to sign the synthetic webhook delivery'
@@ -90,7 +93,10 @@ test('pro funnel: signup → get-pro → checkout → webhook → pro granted', 
 	// 3. get-pro → upgrade → the checkout session redirects to the Dodo
 	//    TEST-mode host (payments stay in test mode).
 	await page.goto('/get-pro');
-	await page.getByRole('button', { name: /upgrade to pro/i }).first().click();
+	await page
+		.getByRole('button', { name: /upgrade to pro/i })
+		.first()
+		.click();
 	await expect(page).toHaveURL(/test\.checkout\.dodopayments\.com/, { timeout: 15_000 });
 
 	// 4. Synthetic signed webhook: subscription.active for the seeded user.

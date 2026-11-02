@@ -13,7 +13,8 @@ class CookieJar {
 		for (const header of response.headers.getSetCookie()) {
 			const [pair] = header.split(';');
 			const separator = pair.indexOf('=');
-			if (separator > 0) this.cookies.set(pair.slice(0, separator), pair.slice(separator + 1));
+			if (separator > 0)
+				this.cookies.set(pair.slice(0, separator), pair.slice(separator + 1));
 		}
 	}
 
@@ -67,7 +68,8 @@ function decodeBase32(value: string): Buffer {
 		bits += index.toString(2).padStart(5, '0');
 	}
 	const bytes: number[] = [];
-	for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(Number.parseInt(bits.slice(i, i + 8), 2));
+	for (let i = 0; i + 8 <= bits.length; i += 8)
+		bytes.push(Number.parseInt(bits.slice(i, i + 8), 2));
 	return Buffer.from(bytes);
 }
 
@@ -122,10 +124,9 @@ describe('verified TOTP enrollment', () => {
 			new CookieJar()
 		);
 		expect(beforeVerification.status).toBe(200);
-		expect((await beforeVerification.json()) as { twoFactorRedirect?: boolean }).not.toHaveProperty(
-			'twoFactorRedirect',
-			true
-		);
+		expect(
+			(await beforeVerification.json()) as { twoFactorRedirect?: boolean }
+		).not.toHaveProperty('twoFactorRedirect', true);
 
 		const verify = await post(
 			auth,

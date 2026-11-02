@@ -17,51 +17,79 @@ export function email_app_name(_locale?: Locale) {
 /** Used by Better Auth emailVerification callback (subject line). */
 export function email_verification_subject(locale?: Locale): string {
 	switch (locale) {
-		case 'de': return 'Bestätige deine E-Mail';
-		case 'es': return 'Verifica tu correo electrónico';
-		case 'it': return 'Verifica la tua email';
-		case 'pt': return 'Verifique o seu e-mail';
-		case 'fr': return 'Vérifiez votre adresse e-mail';
-		case 'pt-BR': return 'Verifique seu e-mail';
-		default: return 'Verify your email';
+		case 'de':
+			return 'Bestätige deine E-Mail';
+		case 'es':
+			return 'Verifica tu correo electrónico';
+		case 'it':
+			return 'Verifica la tua email';
+		case 'pt':
+			return 'Verifique o seu e-mail';
+		case 'fr':
+			return 'Vérifiez votre adresse e-mail';
+		case 'pt-BR':
+			return 'Verifique seu e-mail';
+		default:
+			return 'Verify your email';
 	}
 }
 
 /** Used by Better Auth twoFactor callback (subject line). */
 export function email_2fa_subject(locale?: Locale): string {
 	switch (locale) {
-		case 'de': return 'Dein 2FA-Code — Ace Blocker';
-		case 'es': return 'Tu código 2FA — Ace Blocker';
-		case 'it': return 'Il tuo codice 2FA — Ace Blocker';
-		case 'pt': return 'Seu código 2FA — Ace Blocker';
-		case 'fr': return 'Votre code 2FA — Ace Blocker';
-		case 'pt-BR': return 'Seu código 2FA — Ace Blocker';
-		default: return 'Your 2FA Code — Ace Blocker';
+		case 'de':
+			return 'Dein 2FA-Code — Ace Blocker';
+		case 'es':
+			return 'Tu código 2FA — Ace Blocker';
+		case 'it':
+			return 'Il tuo codice 2FA — Ace Blocker';
+		case 'pt':
+			return 'Seu código 2FA — Ace Blocker';
+		case 'fr':
+			return 'Votre code 2FA — Ace Blocker';
+		case 'pt-BR':
+			return 'Seu código 2FA — Ace Blocker';
+		default:
+			return 'Your 2FA Code — Ace Blocker';
 	}
 }
 
 /** Used by Better Auth emailOTP callback (subject line, {otp} placeholder). */
 export function email_otp_subject(locale?: Locale): string {
 	switch (locale) {
-		case 'de': return 'Dein Bestätigungscode: {otp}';
-		case 'es': return 'Tu código de verificación: {otp}';
-		case 'it': return 'Il tuo codice di verifica: {otp}';
-		case 'pt': return 'Seu código de verificação: {otp}';
-		case 'fr': return 'Votre code de vérification : {otp}';
-		case 'pt-BR': return 'Seu código de verificação: {otp}';
-		default: return 'Your verification code: {otp}';
+		case 'de':
+			return 'Dein Bestätigungscode: {otp}';
+		case 'es':
+			return 'Tu código de verificación: {otp}';
+		case 'it':
+			return 'Il tuo codice di verifica: {otp}';
+		case 'pt':
+			return 'Seu código de verificação: {otp}';
+		case 'fr':
+			return 'Votre code de vérification : {otp}';
+		case 'pt-BR':
+			return 'Seu código de verificação: {otp}';
+		default:
+			return 'Your verification code: {otp}';
 	}
 }
 
 /** Used by Better Auth emailAndPassword.sendResetPassword (subject line). */
 export function email_reset_password_subject(locale?: Locale): string {
 	switch (locale) {
-		case 'de': return 'Setze dein Passwort zurück';
-		case 'es': return 'Restablece tu contraseña';
-		case 'it': return 'Reimposta la tua password';
-		case 'pt': return 'Redefina a sua senha';
-		case 'fr': return 'Réinitialisez votre mot de passe';
-		case 'pt-BR': return 'Redefina sua senha';
-		default: return 'Reset your password';
+		case 'de':
+			return 'Setze dein Passwort zurück';
+		case 'es':
+			return 'Restablece tu contraseña';
+		case 'it':
+			return 'Reimposta la tua password';
+		case 'pt':
+			return 'Redefina a sua senha';
+		case 'fr':
+			return 'Réinitialisez votre mot de passe';
+		case 'pt-BR':
+			return 'Redefina sua senha';
+		default:
+			return 'Reset your password';
 	}
 }

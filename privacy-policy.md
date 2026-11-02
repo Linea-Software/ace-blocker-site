@@ -7,21 +7,25 @@
 Ace Blocker is designed with privacy as a core principle. We collect minimal information necessary to provide the service:
 
 ### Account Information
+
 - Email address (for account creation and communication)
 - Account preferences and settings
 
 ### Usage Data (Pro Users Only)
+
 - Blocked domain statistics (aggregated, anonymized counts)
 - Resistance mode interaction metrics
 - Backup data (stored encrypted)
 
 ### Technical Data
+
 - Software version and platform information
 - Error and crash reports (opt-in)
 
 ## 2. What We Do Not Collect
 
 We do not:
+
 - Log your browsing history
 - Track individual website visits
 - Collect personal browsing patterns
@@ -31,6 +35,7 @@ We do not:
 ## 3. How We Use Your Information
 
 Your information is used exclusively to:
+
 - Provide and maintain the Software
 - Process your subscription payments (via Dodo Payments)
 - Sync your settings across devices (cloud backup)
@@ -44,6 +49,7 @@ Account data is stored on secure servers with encryption at rest and in transit.
 ## 5. Third-Party Services
 
 We use the following third-party services:
+
 - **Dodo Payments**: Processes subscription payments. Their privacy policy applies to payment data.
 - **BunnyCDN**: Hosts downloadable content (site packs, scripts). No personal data is shared.
 
@@ -54,6 +60,7 @@ Account data is retained for the duration of your account. You may request delet
 ## 7. Your Rights
 
 Depending on your jurisdiction, you may have rights to:
+
 - Access your personal data
 - Correct inaccurate data
 - Delete your data

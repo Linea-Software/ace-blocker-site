@@ -44,7 +44,9 @@ describe('getResistanceModeScriptsURL', () => {
 
 		expect(version).toBe('2026-09-01');
 		expect(sha256).toBe('abc123');
-		expect(url.pathname).toBe('/dev/resistance-mode-scripts/2026-09-01/resistance-mode-scripts.zip');
+		expect(url.pathname).toBe(
+			'/dev/resistance-mode-scripts/2026-09-01/resistance-mode-scripts.zip'
+		);
 		expect(url.searchParams.get('token')).toMatch(/^[A-Za-z0-9_-]+$/);
 		const expires = Number(url.searchParams.get('expires'));
 		expect(expires).toBeGreaterThan(Math.round(Date.now() / 1000));

@@ -1,6 +1,6 @@
 # Ace Blocker — Design Tokens & UI Consistency
 
-Status: audit + consolidation plan. The token *system* already exists (Tailwind
+Status: audit + consolidation plan. The token _system_ already exists (Tailwind
 CSS v4 + shadcn-svelte); this document records it, catalogues where UI code
 bypasses it, and lists the decisions needed before a mechanical migration.
 
@@ -26,16 +26,16 @@ becomes a pale slate-blue (`oklch(0.929 0.013 255.508)`) — i.e. the semantic
 
 ## 2. De-facto palette (measured across `src/`, excluding `lib/components/ui`)
 
-| Role | Value(s) actually used | Count | Notes |
-|---|---|---|---|
-| Brand amber (marketing accent) | `amber-500` (`#f59e0b`) | 247× | dominant CTA/accent |
-| Brand amber (bright) | `#FFBF00` | 31× | home page hero/badges |
-| Brand amber (hover) | `amber-600` (`#d97706`) | 51× | hover states |
-| Brand amber (lighter) | `amber-400` | 29× | gradients/hover |
-| Dark page background | `#0B0B0F` | 52× | home + layout + navbar |
-| Dark surfaces (variants) | `#0B0F19`, `#111827`, `#1F2937`, `#0F172A` | 8–9× each | inconsistent dark cards/panels |
-| Light surface | `#F8FAFC` (slate-50) | 9× | light panels |
-| Neutrals (raw) | `#CBD5E1`, `#64748B`, `#E2E8F0`, `#94A3B8` | 1–8× | borders/text |
+| Role                           | Value(s) actually used                     | Count     | Notes                          |
+| ------------------------------ | ------------------------------------------ | --------- | ------------------------------ |
+| Brand amber (marketing accent) | `amber-500` (`#f59e0b`)                    | 247×      | dominant CTA/accent            |
+| Brand amber (bright)           | `#FFBF00`                                  | 31×       | home page hero/badges          |
+| Brand amber (hover)            | `amber-600` (`#d97706`)                    | 51×       | hover states                   |
+| Brand amber (lighter)          | `amber-400`                                | 29×       | gradients/hover                |
+| Dark page background           | `#0B0B0F`                                  | 52×       | home + layout + navbar         |
+| Dark surfaces (variants)       | `#0B0F19`, `#111827`, `#1F2937`, `#0F172A` | 8–9× each | inconsistent dark cards/panels |
+| Light surface                  | `#F8FAFC` (slate-50)                       | 9×        | light panels                   |
+| Neutrals (raw)                 | `#CBD5E1`, `#64748B`, `#E2E8F0`, `#94A3B8` | 1–8×      | borders/text                   |
 
 ### Key inconsistency findings
 
@@ -72,6 +72,7 @@ repeated inline `rounded-xl border … p-6` card recipe.
 ## 5. Migration status
 
 **Done (committed):**
+
 - Added `--color-brand: #f59e0b` to `layout.css` `@theme`.
 - Replaced `amber-500` → `brand` (247×) and `[#FFBF00]` → `brand` (46×) across 17
   `.svelte` files. `amber-500`→`brand` is value-identical (verified in the built
@@ -84,6 +85,7 @@ repeated inline `rounded-xl border … p-6` card recipe.
   effectively unchanged — no regression.
 
 **Pending (require visual verification, light + dark):**
+
 - ~~`amber-400`/`amber-600`/`amber-700` remain as explicit **shade steps** for
   gradients and hover states — flattening them to `brand` would remove hover
   affordance; decide whether to keep them or derive dark/light brand shades.~~
@@ -113,4 +115,3 @@ repeated inline `rounded-xl border … p-6` card recipe.
   The account page's `Tabs.TabsContent` cards still pass the recipe as a
   `class` prop (a wrapper would alter the tabpanel DOM) — they can follow once
   the recipe is shared as a constant.
-

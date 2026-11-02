@@ -8,7 +8,7 @@ export const LIST_ICON_MAP: Record<string, string> = {
 	'ti-device-gamepad-2': 'ti-device-gamepad-2',
 	'ti-cards': 'ti-cards',
 	'ti-player-play': 'ti-player-play',
-	'ti-news': 'ti-news',
+	'ti-news': 'ti-news'
 };
 
 export const FALLBACK_ICON = 'ti-database';

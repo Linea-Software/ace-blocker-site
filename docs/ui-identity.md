@@ -34,9 +34,9 @@ For any visible marketing redesign or new marketing page:
 3. Use `design-taste-frontend`.
 4. Use `ui-ux-pro-max`.
 5. For Svelte implementation, use:
-   - `svelte-code-writer`;
-   - `svelte-core-bestpractices`;
-   - `svelte-components`.
+    - `svelte-code-writer`;
+    - `svelte-core-bestpractices`;
+    - `svelte-components`.
 6. Use `web-design-guidelines` for final review.
 7. Verify meaningful visual changes with real screenshots in light and dark themes.
 
@@ -46,18 +46,18 @@ For account/admin product UI, use `frontend-design` + `ui-ux-pro-max` as the pri
 
 Target shared palette:
 
-| Token | Hex |
-| --- | --- |
-| Signal | `#FFB000` |
+| Token         | Hex       |
+| ------------- | --------- |
+| Signal        | `#FFB000` |
 | Signal Bright | `#FFC533` |
-| Signal Deep | `#D58B00` |
-| Ink | `#10100E` |
-| Graphite | `#1A1A17` |
-| Steel | `#292925` |
-| Ash | `#8B8A82` |
-| Paper | `#F3F0E8` |
-| Paper Strong | `#FFFDF7` |
-| Line | `#D7D2C7` |
+| Signal Deep   | `#D58B00` |
+| Ink           | `#10100E` |
+| Graphite      | `#1A1A17` |
+| Steel         | `#292925` |
+| Ash           | `#8B8A82` |
+| Paper         | `#F3F0E8` |
+| Paper Strong  | `#FFFDF7` |
+| Line          | `#D7D2C7` |
 
 Semantic colors remain exceptional and meaning-driven:
 

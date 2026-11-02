@@ -215,7 +215,9 @@ describe('admin set-downloadable lifecycle', () => {
 
 	it('marks a resistance release downloadable', async () => {
 		const { db } = await import('$lib/server/db');
-		vi.mocked(db.query.resistanceModeScripts.findFirst).mockResolvedValue({ id: 'r1' } as never);
+		vi.mocked(db.query.resistanceModeScripts.findFirst).mockResolvedValue({
+			id: 'r1'
+		} as never);
 		vi.mocked(db.update).mockReturnValue(updateChain() as never);
 
 		const res = await markDownloadable('/admin/resistance/set-downloadable', 'r1', true);
@@ -225,7 +227,9 @@ describe('admin set-downloadable lifecycle', () => {
 
 	it('revokes a resistance release', async () => {
 		const { db } = await import('$lib/server/db');
-		vi.mocked(db.query.resistanceModeScripts.findFirst).mockResolvedValue({ id: 'r1' } as never);
+		vi.mocked(db.query.resistanceModeScripts.findFirst).mockResolvedValue({
+			id: 'r1'
+		} as never);
 		const chain = updateChain();
 		vi.mocked(db.update).mockReturnValue(chain as never);
 
@@ -240,7 +244,9 @@ describe('admin set-downloadable lifecycle', () => {
 		const { db } = await import('$lib/server/db');
 		vi.mocked(db.query.resistanceModeScripts.findFirst).mockResolvedValue(null as never);
 
-		expect((await markDownloadable('/admin/resistance/set-downloadable', 'nope', true)).status).toBe(404);
+		expect(
+			(await markDownloadable('/admin/resistance/set-downloadable', 'nope', true)).status
+		).toBe(404);
 		// A missing id never reaches the handler: Elysia rejects the body with
 		// 422 (the handler's own 400 branch is defense-in-depth for callers
 		// that bypass HTTP validation).

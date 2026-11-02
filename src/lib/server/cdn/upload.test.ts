@@ -120,7 +120,9 @@ describe('uploadResistanceModeScript', () => {
 		const putCall = fetchMock.mock.calls[0];
 		const putUrl = putCall[0] as URL;
 		const putInit = putCall[1] as RequestInit;
-		expect(putUrl.toString()).toContain('/resistance-mode-scripts/2026-09-01/resistance-mode-scripts.zip');
+		expect(putUrl.toString()).toContain(
+			'/resistance-mode-scripts/2026-09-01/resistance-mode-scripts.zip'
+		);
 		const headers = new Headers(putInit.headers);
 		expect(headers.get('Checksum')).toMatch(/^[0-9a-f]{64}$/);
 

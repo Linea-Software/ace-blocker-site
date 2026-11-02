@@ -1,9 +1,5 @@
 import { db } from '$lib/server/db';
-import {
-	aceBlockerInstaller,
-	resistanceModeScripts,
-	sitePack
-} from '$lib/server/db/schema';
+import { aceBlockerInstaller, resistanceModeScripts, sitePack } from '$lib/server/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { createLogger } from '$lib/server/logger';
 
@@ -116,11 +112,7 @@ export async function invalidateSitePacksCache(): Promise<
 // ============ INITIALIZE ALL CACHES ============
 
 export async function initializeCache(): Promise<void> {
-	await Promise.all([
-		loadLatestInstaller(),
-		loadLatestResistanceScript(),
-		loadLatestSitePacks()
-	]);
+	await Promise.all([loadLatestInstaller(), loadLatestResistanceScript(), loadLatestSitePacks()]);
 }
 
 // ============ DOWNLOAD COUNT INCREMENT ============
@@ -169,7 +161,10 @@ export async function incrementResistanceScriptDownloadCount(): Promise<void> {
 		.where(eq(resistanceModeScripts.id, latest.id));
 
 	if (latestResistanceScript) {
-		latestResistanceScript = { ...latestResistanceScript, downloadCount: latestResistanceScript.downloadCount + 1 };
+		latestResistanceScript = {
+			...latestResistanceScript,
+			downloadCount: latestResistanceScript.downloadCount + 1
+		};
 	}
 
 	log.debug({ id: latest.id }, 'Incremented resistance scripts download count');

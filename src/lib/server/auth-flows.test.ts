@@ -204,7 +204,12 @@ class CookieJar {
 	}
 }
 
-async function post(auth: ReturnType<typeof makeAuth>, path: string, body: unknown, jar: CookieJar) {
+async function post(
+	auth: ReturnType<typeof makeAuth>,
+	path: string,
+	body: unknown,
+	jar: CookieJar
+) {
 	const res = await auth.handler(
 		new Request(`${BASE_URL}${path}`, {
 			method: 'POST',
@@ -243,7 +248,12 @@ describe('auth flows (in-memory Better Auth with the site config)', () => {
 
 	it('signup sends a verification email and the welcome email', async () => {
 		const jar = new CookieJar();
-		const res = await post(auth, '/api/auth/sign-up/email', { name: 'Flow User', email, password }, jar);
+		const res = await post(
+			auth,
+			'/api/auth/sign-up/email',
+			{ name: 'Flow User', email, password },
+			jar
+		);
 		expect(res.status).toBe(200);
 
 		// Verification email fired for the new user.
@@ -261,7 +271,12 @@ describe('auth flows (in-memory Better Auth with the site config)', () => {
 	});
 
 	it('signin is rejected until the email is verified', async () => {
-		await post(auth, '/api/auth/sign-up/email', { name: 'Flow User', email, password }, new CookieJar());
+		await post(
+			auth,
+			'/api/auth/sign-up/email',
+			{ name: 'Flow User', email, password },
+			new CookieJar()
+		);
 
 		const jar = new CookieJar();
 		const res = await post(auth, '/api/auth/sign-in/email', { email, password }, jar);
@@ -269,7 +284,12 @@ describe('auth flows (in-memory Better Auth with the site config)', () => {
 	});
 
 	it('signin works after verifying the email (auto sign-in on verify)', async () => {
-		await post(auth, '/api/auth/sign-up/email', { name: 'Flow User', email, password }, new CookieJar());
+		await post(
+			auth,
+			'/api/auth/sign-up/email',
+			{ name: 'Flow User', email, password },
+			new CookieJar()
+		);
 		const verificationCall = verificationEmail.mock.calls[0][0] as { url: string };
 		const token = tokenFromUrl(verificationCall.url, 'verify-email');
 
@@ -287,10 +307,17 @@ describe('auth flows (in-memory Better Auth with the site config)', () => {
 
 	it('password reset: request sends a reset email, reset sets a new password', async () => {
 		// Verify the user first so sign-in is possible afterwards.
-		await post(auth, '/api/auth/sign-up/email', { name: 'Flow User', email, password }, new CookieJar());
+		await post(
+			auth,
+			'/api/auth/sign-up/email',
+			{ name: 'Flow User', email, password },
+			new CookieJar()
+		);
 		const verificationCall = verificationEmail.mock.calls[0][0] as { url: string };
 		await auth.handler(
-			new Request(`${BASE_URL}/api/auth/verify-email?token=${tokenFromUrl(verificationCall.url, 'verify-email')}&callbackURL=${BASE_URL}/`)
+			new Request(
+				`${BASE_URL}/api/auth/verify-email?token=${tokenFromUrl(verificationCall.url, 'verify-email')}&callbackURL=${BASE_URL}/`
+			)
 		);
 
 		const jar = new CookieJar();
@@ -321,9 +348,16 @@ describe('auth flows (in-memory Better Auth with the site config)', () => {
 
 		// The old password no longer works, the new one does.
 		const oldJar = new CookieJar();
-		expect((await post(auth, '/api/auth/sign-in/email', { email, password }, oldJar)).status).toBe(401);
+		expect(
+			(await post(auth, '/api/auth/sign-in/email', { email, password }, oldJar)).status
+		).toBe(401);
 		const newJar = new CookieJar();
-		const signInRes = await post(auth, '/api/auth/sign-in/email', { email, password: newPassword }, newJar);
+		const signInRes = await post(
+			auth,
+			'/api/auth/sign-in/email',
+			{ email, password: newPassword },
+			newJar
+		);
 		expect(signInRes.status).toBe(200);
 	});
 
@@ -333,22 +367,36 @@ describe('auth flows (in-memory Better Auth with the site config)', () => {
 		await post(auth, '/api/auth/sign-up/email', { name: 'Flow User', email, password }, jar);
 		const verificationCall = verificationEmail.mock.calls[0][0] as { url: string };
 		await auth.handler(
-			new Request(`${BASE_URL}/api/auth/verify-email?token=${tokenFromUrl(verificationCall.url, 'verify-email')}&callbackURL=${BASE_URL}/`)
+			new Request(
+				`${BASE_URL}/api/auth/verify-email?token=${tokenFromUrl(verificationCall.url, 'verify-email')}&callbackURL=${BASE_URL}/`
+			)
 		);
 		await post(auth, '/api/auth/sign-in/email', { email, password }, jar);
 
 		// Enroll: enable OTP 2FA with the current password (the site's plugin
 		// configures otpOptions, so the client sends method: 'otp').
-		const enableRes = await post(auth, '/api/auth/two-factor/enable', { password, method: 'otp' }, jar);
+		const enableRes = await post(
+			auth,
+			'/api/auth/two-factor/enable',
+			{ password, method: 'otp' },
+			jar
+		);
 		expect(enableRes.status).toBe(200);
 		expect(((await enableRes.json()) as { method: string }).method).toBe('otp');
 
 		// Sign out, then sign in → 2FA challenge.
 		await post(auth, '/api/auth/sign-out', {}, jar);
 		const challengeJar = new CookieJar();
-		const signInRes = await post(auth, '/api/auth/sign-in/email', { email, password }, challengeJar);
+		const signInRes = await post(
+			auth,
+			'/api/auth/sign-in/email',
+			{ email, password },
+			challengeJar
+		);
 		expect(signInRes.status).toBe(200);
-		expect(((await signInRes.json()) as { twoFactorRedirect?: boolean }).twoFactorRedirect).toBe(true);
+		expect(
+			((await signInRes.json()) as { twoFactorRedirect?: boolean }).twoFactorRedirect
+		).toBe(true);
 
 		// Request the OTP — it must be emailed.
 		const otpRequest = await post(auth, '/api/auth/two-factor/send-otp', {}, challengeJar);
@@ -358,7 +406,12 @@ describe('auth flows (in-memory Better Auth with the site config)', () => {
 		expect(otp).toMatch(/^\d{6}$/);
 
 		// Verify the OTP → full session granted.
-		const verifyRes = await post(auth, '/api/auth/two-factor/verify-otp', { code: otp }, challengeJar);
+		const verifyRes = await post(
+			auth,
+			'/api/auth/two-factor/verify-otp',
+			{ code: otp },
+			challengeJar
+		);
 		expect(verifyRes.status).toBe(200);
 		const verified = (await verifyRes.json()) as { token: string; user: { email: string } };
 		expect(verified.user.email).toBe(email);
@@ -382,7 +435,10 @@ describe('welcome email gating (databaseHooks.user.create.after)', () => {
 	});
 
 	it('sends the welcome email for a real signup (context present)', async () => {
-		await handleUserCreatedAfter({ email: 'signup@example.com', locale: 'en' }, { request: {} });
+		await handleUserCreatedAfter(
+			{ email: 'signup@example.com', locale: 'en' },
+			{ request: {} }
+		);
 		expect(sendWelcomeEmail).toHaveBeenCalledExactlyOnceWith('signup@example.com', 'en');
 	});
 

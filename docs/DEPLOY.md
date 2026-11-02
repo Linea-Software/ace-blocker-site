@@ -4,12 +4,14 @@ This guide provides a step-by-step walkthrough for deploying the Ace Blocker web
 
 > [!TIP]
 > **Automated path:** Most of the steps below are automated by `scripts/setup-vps.sh`. To use it:
+>
 > ```bash
 > sudo bash scripts/setup-vps.sh            # uses defaults (domain: aceblocker.com)
 > # or override:
 > sudo bash scripts/setup-vps.sh --domain aceblocker.com --email admin@aceblocker.com \
 >     --b2-key-id <id> --b2-app-key <key> --b2-bucket <bucket>
 > ```
+>
 > The flags are optional — the script prompts for anything it needs (Cloudflare token, B2 credentials). The manual steps in this guide remain useful for understanding what the script does and for troubleshooting. Where the script and this guide differ, **the script is the source of truth.**
 >
 > Credential-bearing setup steps validate access before continuing. Invalid GitHub, Cloudflare, or B2 credentials are discarded and prompted again. The production .env configurator likewise verifies Dodo, Resend, and Bunny Storage credentials when a safe provider check exists; webhook/signing secrets that have no standalone verification endpoint are required but cannot be remotely authenticated during setup.
@@ -141,7 +143,7 @@ Secure your SSH connection by disabling root login and limiting login attempts.
     > still enabled. Put the settings above in
     > `/etc/ssh/sshd_config.d/00-hardening.conf` instead (`00-` sorts ahead of
     > `50-cloud-init`), then confirm with `sudo sshd -T | grep -E
-    > 'passwordauthentication|permitrootlogin'` — that prints the *effective*
+'passwordauthentication|permitrootlogin'` — that prints the _effective_
     > config, which is the only thing worth trusting here.
 
 3. Validate the config, then reload (don't blindly restart — a bad config plus a restart can drop sshd and lock you out):
@@ -316,7 +318,11 @@ services:
         volumes:
             - pgdata:/var/lib/postgresql/data
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-aceblocker}"]
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-aceblocker}'
+                ]
             interval: 10s
             timeout: 5s
             retries: 5

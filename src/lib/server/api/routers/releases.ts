@@ -137,7 +137,10 @@ export const releasesRouter = new Elysia({ prefix: '/releases' })
 			} = body;
 
 			if (!file.name.toLowerCase().endsWith('.msi')) {
-				return status(400, { error: true, message: 'Installer candidate must be an MSI file' });
+				return status(400, {
+					error: true,
+					message: 'Installer candidate must be an MSI file'
+				});
 			}
 
 			const existing = await db.query.aceBlockerInstaller.findFirst({
@@ -157,10 +160,19 @@ export const releasesRouter = new Elysia({ prefix: '/releases' })
 			const computedSha256 = getArrayBufferChecksum(await file.arrayBuffer());
 			if (computedSha256 !== sha256.toLowerCase()) {
 				log.warn(
-					{ version, sourceRepository, sourceCommit, expectedSha256: sha256, computedSha256 },
+					{
+						version,
+						sourceRepository,
+						sourceCommit,
+						expectedSha256: sha256,
+						computedSha256
+					},
 					'Rejected installer candidate with mismatched checksum'
 				);
-				return status(400, { error: true, message: 'Installer SHA-256 does not match the submitted checksum' });
+				return status(400, {
+					error: true,
+					message: 'Installer SHA-256 does not match the submitted checksum'
+				});
 			}
 
 			const result = await uploadInstaller(file, version, os, architecture, false, {

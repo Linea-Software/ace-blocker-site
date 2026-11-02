@@ -164,6 +164,12 @@ Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })
 - `/scripts/`: Development and maintenance scripts. **ALWAYS use TypeScript** for these scripts.
 - `/drizzle/`: Database migrations managed by Drizzle.
 
+## Formatting and linting
+
+- Run `bun run format` to format owned source/docs, and `bun run lint` to generate Paraglide files, sync SvelteKit, then check formatting and ESLint (also required by CI). `.prettierignore` excludes vendor-provided `.agents/skills`, generated files and build artifacts; do not reformat those inputs.
+- ESLint 10 uses `@ninoseki/eslint-plugin-neverthrow` (not the obsolete `eslint-plugin-neverthrow`) with TypeScript project services in the server/ CDN code where `neverthrow` Results are produced and consumed. Always handle cleanup Results explicitly; a failed best-effort cleanup must still be logged.
+- `eslint-suppressions.json` records the **pre-existing** lint debt. It does not disable rules for new code. After fixing a recorded violation, run `bunx eslint . --prune-suppressions` and review the diff. Do not regenerate the baseline automatically or use suppressions for new neverthrow errors.
+
 ## Scripts
 
 Use `bun run <script>` for these tasks:
@@ -202,24 +208,29 @@ You have specialized **Skills** at your disposal located in `./.agents/skills/` 
 The following skills are installed for all agents:
 
 ### Core Framework
+
 - **`svelte5-best-practices`** (`ejirocodes/agent-skills`) — Svelte 5 runes, patterns, and best practices.
 - **`sveltekit-structure`** (`spences10/svelte-skills-kit`) — SvelteKit project structure conventions.
 - **`sveltekit-data-flow`** (`spences10/svelte-skills-kit`) — SvelteKit data loading, forms, and actions.
 - **`sveltekit-svelte5-tailwind-skill`** (`claude-skills/sveltekit-svelte5-tailwind-skill`) — Combined SvelteKit + Svelte 5 + Tailwind patterns.
 
 ### Database
+
 - **`drizzle-orm-patterns`** (`giuseppe-trisciuoglio/developer-kit`) — Drizzle ORM schema design, queries, and migrations.
 
 ### Authentication
+
 - **`better-auth-best-practices`** (`better-auth/skills`) — Core Better Auth setup and configuration.
 - **`better-auth-security-best-practices`** (`better-auth/skills`) — Security hardening for Better Auth.
 - **`email-and-password-best-practices`** (`better-auth/skills`) — Email/password authentication patterns.
 
 ### API & Documentation
+
 - **`elysiajs`** (`elysiajs/skills`) — Elysia API framework patterns.
 - **`openapi-spec-generation`** (`wshobson/agents`) — OpenAPI/Swagger spec generation.
 
 ### UI & Styling
+
 - **`frontend-design`** — Mandatory for distinctive, intentional visible UI.
 - **`design-taste-frontend`** — Mandatory for marketing/landing redesigns and anti-template review.
 - **`ui-ux-pro-max`** — Mandatory for product-wide UI/UX, typography, accessibility, layout, and interaction reasoning.
@@ -230,32 +241,40 @@ The following skills are installed for all agents:
 - **`tailwind-v4-shadcn`** (`secondsky/claude-skills`) — Existing integration reference; do not treat its defaults as the target system.
 
 ### Validation
+
 - **`zod`** (`pproenca/dot-skills`) — Zod schema validation patterns.
 
 ### Runtime
+
 - **`bun-runtime`** (`affaan-m/everything-claude-code`) — Bun runtime best practices.
 
 ### Localization
+
 - **`paraglide-js-internationalization-i18n`** (`oimiragieo/agent-studio`) — Paraglide JS i18n patterns.
 
 ### Infrastructure
+
 - **`docker-expert`** (`sickn33/antigravity-awesome-skills`) — Docker containerization and Compose patterns.
 
 ### Payments (DodoPayments)
+
 - **`dodo-best-practices`** (`dodopayments/skills`) — DodoPayments SDK best practices.
 - **`checkout-integration`** (`dodopayments/skills`) — DodoPayments checkout integration.
 - **`subscription-integration`** (`dodopayments/skills`) — DodoPayments subscription management.
 
 ### Testing
+
 - **`vitest`** (`antfu/skills`) — Vitest unit testing patterns.
 - **`playwright-cli`** (`microsoft/playwright-cli`) — Playwright CLI usage.
 - **`playwright-best-practices`** (`currents-dev/playwright-best-practices-skill`) — Playwright E2E best practices.
 - **`webapp-testing`** (`anthropics/skills`) — General web application testing strategies.
 
 ### TypeScript
+
 - **`typescript-advanced-types`** (`wshobson/agents`) — Advanced TypeScript type patterns.
 
 ### Git & Code Quality
+
 - **`git-commit`** (`github/awesome-copilot`) — Conventional commit message patterns.
 - **`eslint-prettier-config`** (`patricio0312rev/skills`) — ESLint + Prettier configuration and usage.
 

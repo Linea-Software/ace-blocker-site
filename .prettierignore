@@ -1,10 +1,23 @@
-# Package Managers
+# Package managers / lockfiles
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
 bun.lock
 bun.lockb
 
-# Miscellaneous
+# Third-party agent skills (vendored reference material)
+.agents/
+
+# Generated files and build/test output
 /static/
 /drizzle/
+/.svelte-kit/
+/build/
+/src/lib/paraglide/
+/src/lib/server/db/auth-schema.ts
+/project.inlang/cache/
+/project.inlang/.meta.json
+/docs/openapi.json
+/test-results/
+/skills-lock.json
+/eslint-suppressions.json

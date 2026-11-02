@@ -75,7 +75,12 @@ class CookieJar {
 	}
 }
 
-async function post(auth: ReturnType<typeof makeAuth>, path: string, body: unknown, jar: CookieJar) {
+async function post(
+	auth: ReturnType<typeof makeAuth>,
+	path: string,
+	body: unknown,
+	jar: CookieJar
+) {
 	const res = await auth.handler(
 		new Request(`${BASE_URL}${path}`, {
 			method: 'POST',
@@ -110,7 +115,8 @@ describe('dodo checkout session endpoint', () => {
 			return new Response(
 				JSON.stringify({
 					session_id: 'cs_test_1',
-					checkout_url: 'https://test.checkout.dodopayments.com/checkout?session_id=cs_test_1'
+					checkout_url:
+						'https://test.checkout.dodopayments.com/checkout?session_id=cs_test_1'
 				}),
 				{ status: 200, headers: { 'content-type': 'application/json' } }
 			);
@@ -124,7 +130,11 @@ describe('dodo checkout session endpoint', () => {
 		const res = await post(
 			auth,
 			'/api/auth/sign-up/email',
-			{ name: 'Checkout User', email: 'checkout@example.com', password: 'correct-horse-battery-staple' },
+			{
+				name: 'Checkout User',
+				email: 'checkout@example.com',
+				password: 'correct-horse-battery-staple'
+			},
 			jar
 		);
 		expect(res.status).toBe(200);
@@ -133,7 +143,12 @@ describe('dodo checkout session endpoint', () => {
 
 	it('returns a test-mode session URL for a known slug', async () => {
 		const jar = await signedInJar();
-		const res = await post(auth, '/api/auth/dodopayments/checkout-session', { slug: 'ace_blocker_monthly_usd' }, jar);
+		const res = await post(
+			auth,
+			'/api/auth/dodopayments/checkout-session',
+			{ slug: 'ace_blocker_monthly_usd' },
+			jar
+		);
 		expect(res.status).toBe(200);
 
 		const body = (await res.json()) as { url: string; redirect: boolean };
@@ -144,13 +159,20 @@ describe('dodo checkout session endpoint', () => {
 
 	it('sends the resolved product cart to the Dodo API with the session customer', async () => {
 		const jar = await signedInJar();
-		const res = await post(auth, '/api/auth/dodopayments/checkout-session', { slug: 'ace_blocker_monthly_usd' }, jar);
+		const res = await post(
+			auth,
+			'/api/auth/dodopayments/checkout-session',
+			{ slug: 'ace_blocker_monthly_usd' },
+			jar
+		);
 		expect(res.status).toBe(200);
 
 		expect(fetchMock).toHaveBeenCalledOnce();
 		const [, init] = fetchMock.mock.calls[0] as [unknown, RequestInit];
 		// The API key authenticates the request.
-		expect((init.headers as Headers).get('authorization')).toBe('Bearer sk_test_0000000000000000');
+		expect((init.headers as Headers).get('authorization')).toBe(
+			'Bearer sk_test_0000000000000000'
+		);
 		// The request body carries the slug-resolved product cart and the
 		// signed-in user's email as the customer.
 		const sentBody = JSON.parse(String(init.body)) as {
@@ -166,7 +188,12 @@ describe('dodo checkout session endpoint', () => {
 
 	it('rejects an unknown slug with 400 before any Dodo call', async () => {
 		const jar = await signedInJar();
-		const res = await post(auth, '/api/auth/dodopayments/checkout-session', { slug: 'ace_blocker_nope_usd' }, jar);
+		const res = await post(
+			auth,
+			'/api/auth/dodopayments/checkout-session',
+			{ slug: 'ace_blocker_nope_usd' },
+			jar
+		);
 		expect(res.status).toBe(400);
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
@@ -179,7 +206,12 @@ describe('dodo checkout session endpoint', () => {
 	});
 
 	it('requires a signed-in user (authenticatedUsersOnly)', async () => {
-		const res = await post(auth, '/api/auth/dodopayments/checkout-session', { slug: 'ace_blocker_monthly_usd' }, new CookieJar());
+		const res = await post(
+			auth,
+			'/api/auth/dodopayments/checkout-session',
+			{ slug: 'ace_blocker_monthly_usd' },
+			new CookieJar()
+		);
 		expect(res.status).toBe(401);
 		expect(fetchMock).not.toHaveBeenCalled();
 	});

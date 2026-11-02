@@ -174,7 +174,11 @@ export async function uploadSitePack(
 			});
 	} catch (error) {
 		log.error({ err: error, id }, 'DB write failed after CDN upload; cleaning up object');
-		await deleteFileFromBunnyCDN(endpointUrl);
+		(await deleteFileFromBunnyCDN(endpointUrl)).match(
+			() => undefined,
+			(cleanupError) =>
+				log.error({ id, cleanupError }, 'CDN cleanup failed after site pack DB error')
+		);
 		return err(CDNErrorType.UploadFailed);
 	}
 
@@ -224,7 +228,11 @@ export async function uploadResistanceModeScript(
 		// The CDN object is already stored — remove it so a failed DB insert
 		// never leaves an inconsistent database/CDN state behind.
 		log.error({ err: error, version }, 'DB insert failed after CDN upload; cleaning up object');
-		await deleteFileFromBunnyCDN(endpointUrl);
+		(await deleteFileFromBunnyCDN(endpointUrl)).match(
+			() => undefined,
+			(cleanupError) =>
+				log.error({ version, cleanupError }, 'CDN cleanup failed after DB error')
+		);
 		return err(CDNErrorType.UploadFailed);
 	}
 
@@ -292,7 +300,11 @@ export async function uploadInstaller(
 		});
 	} catch (error) {
 		log.error({ err: error, version }, 'DB insert failed after CDN upload; cleaning up object');
-		await deleteFileFromBunnyCDN(endpointUrl);
+		(await deleteFileFromBunnyCDN(endpointUrl)).match(
+			() => undefined,
+			(cleanupError) =>
+				log.error({ version, cleanupError }, 'CDN cleanup failed after DB error')
+		);
 		return err(CDNErrorType.UploadFailed);
 	}
 

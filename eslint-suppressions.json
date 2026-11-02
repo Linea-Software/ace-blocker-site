@@ -1,0 +1,199 @@
+{
+  "scripts/setup.ts": {
+    "no-useless-assignment": {
+      "count": 1
+    }
+  },
+  "src/lib/components/ui/button/button.svelte": {
+    "svelte/no-navigation-without-resolve": {
+      "count": 1
+    }
+  },
+  "src/lib/components/ui/chart/chart-tooltip.svelte": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/lib/server/api/routers/account.ts": {
+    "@typescript-eslint/ban-ts-comment": {
+      "count": 3
+    },
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 3
+    }
+  },
+  "src/lib/server/api/routers/admin/installers.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/lib/server/api/routers/admin/resistance.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/lib/server/api/routers/admin/users.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 3
+    }
+  },
+  "src/lib/server/api/routers/backups.test.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    }
+  },
+  "src/lib/server/auth.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 6
+    }
+  },
+  "src/lib/server/auth.webhooks.test.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 6
+    }
+  },
+  "src/lib/server/cdn/common.ts": {
+    "no-control-regex": {
+      "count": 1
+    }
+  },
+  "src/lib/server/db/artifacts-schema.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/lib/server/email.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 59
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/lib/server/messages.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/lib/server/pro.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    }
+  },
+  "src/lib/server/seeder/price-maps.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/lib/server/seeder/price-seeder.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    }
+  },
+  "src/lib/server/seeder/user-seeder.ts": {
+    "prefer-const": {
+      "count": 1
+    }
+  },
+  "src/routes/account/+page.server.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    }
+  },
+  "src/routes/account/+page.svelte": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 3
+    }
+  },
+  "src/routes/account/_components/CancelSubscriptionDialog.svelte": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/routes/admin/releases/_components/ReleaseManager.svelte": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 11
+    }
+  },
+  "src/routes/admin/releases/installers/+page.svelte": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 7
+    }
+  },
+  "src/routes/admin/releases/resistance/+page.svelte": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 7
+    }
+  },
+  "src/routes/admin/releases/site-packs/+page.svelte": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 7
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/routes/checkout/+error.svelte": {
+    "svelte/no-navigation-without-resolve": {
+      "count": 1
+    }
+  },
+  "src/routes/checkout/+page.svelte": {
+    "svelte/no-navigation-without-resolve": {
+      "count": 1
+    },
+    "svelte/prefer-svelte-reactivity": {
+      "count": 1
+    }
+  },
+  "src/routes/checkout/completed/+page.server.ts": {
+    "prefer-const": {
+      "count": 1
+    }
+  },
+  "src/routes/checkout/completed/+page.svelte": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/routes/download/_components/PlatformGrid.svelte": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "src/routes/forgot-password/+page.svelte": {
+    "svelte/no-navigation-without-resolve": {
+      "count": 1
+    }
+  },
+  "src/routes/get-pro/+page.svelte": {
+    "svelte/no-navigation-without-resolve": {
+      "count": 2
+    },
+    "svelte/prefer-svelte-reactivity": {
+      "count": 2
+    }
+  },
+  "src/routes/signin/+page.svelte": {
+    "svelte/no-navigation-without-resolve": {
+      "count": 2
+    }
+  },
+  "src/routes/signup/_components/SignUpForm.svelte": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  }
+}

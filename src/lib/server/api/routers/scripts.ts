@@ -2,13 +2,8 @@ import { Elysia, t } from 'elysia';
 import { isUserPro } from '$lib/server/pro';
 import { auth } from '$lib/server/auth';
 import { env } from '$env/dynamic/private';
-import {
-	getResistanceModeScriptsURL,
-	CDNErrorType
-} from '$lib/server/cdn';
-import {
-	incrementResistanceScriptDownloadCount
-} from '$lib/server/cache';
+import { getResistanceModeScriptsURL, CDNErrorType } from '$lib/server/cdn';
+import { incrementResistanceScriptDownloadCount } from '$lib/server/cache';
 
 if (!env.BUNNY_URL_TOKEN_AUTH_KEY) {
 	throw new Error('❌ BUNNY_URL_TOKEN_AUTH_KEY is missing in environment variables');
@@ -49,27 +44,27 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 
 			const info = result._unsafeUnwrap();
 
-				// Fire-and-forget: increment download count
-				incrementResistanceScriptDownloadCount();
+			// Fire-and-forget: increment download count
+			incrementResistanceScriptDownloadCount();
 
-				return {
-					url: info.url.toString(),
-					version: info.version,
-					sha256: info.sha256
-				};
+			return {
+				url: info.url.toString(),
+				version: info.version,
+				sha256: info.sha256
+			};
+		},
+		{
+			detail: {
+				operationId: 'getResistanceModeScripts',
+				summary: 'Get download URL for resistance mode scripts',
+				security: [{ APIKeyHeader: [] }]
 			},
-			{
-				detail: {
-					operationId: 'getResistanceModeScripts',
-					summary: 'Get download URL for resistance mode scripts',
-					security: [{ APIKeyHeader: [] }]
-				},
-				response: {
-					200: t.Object({
-						url: t.String(),
-						version: t.String(),
-						sha256: t.String()
-					}),
+			response: {
+				200: t.Object({
+					url: t.String(),
+					version: t.String(),
+					sha256: t.String()
+				}),
 				401: t.String(),
 				403: t.String(),
 				404: t.String(),

@@ -24,7 +24,7 @@ export function getSitePackURL(
 		return err(CDNErrorType.ProSubscriptionRequired);
 	}
 
-	let sitePackPath = new URL(latestRecord.fileName, sitePacksBasePath);
+	const sitePackPath = new URL(latestRecord.fileName, sitePacksBasePath);
 
 	if (latestRecord.requiresProSubscription) {
 		if (!isUserPro) {
@@ -53,7 +53,7 @@ export function getResistanceModeScriptsURL(): Result<
 		return err(CDNErrorType.NoReleaseAvailable);
 	}
 
-	let resistanceScriptsPath = new URL(
+	const resistanceScriptsPath = new URL(
 		`${latestRecord.version}/${latestRecord.fileName}`,
 		resistanceModeScriptBasePath
 	);
@@ -82,7 +82,7 @@ export function getInstallerURL(
 		return err(CDNErrorType.NoReleaseAvailable);
 	}
 
-	let installerPath = new URL(
+	const installerPath = new URL(
 		`${latestRecord.version}/${latestRecord.os}/${latestRecord.architecture}/${latestRecord.fileName}`,
 		installersBasePath
 	);
