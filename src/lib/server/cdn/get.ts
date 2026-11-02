@@ -5,13 +5,15 @@ import {
 	sitePacksBasePath,
 	resistanceModeScriptBasePath,
 	installersBasePath,
-	generateBunnyCDNToken
+	generateBunnyCDNToken,
+	isBunnyCdnConfigured
 } from './common';
 
 export function getSitePackURL(
 	sitePackUuid: string,
 	isUserPro: boolean
 ): Result<URL, CDNErrorType> {
+	if (!isBunnyCdnConfigured()) return err(CDNErrorType.ServiceUnavailable);
 	const cache = getLatestSitePacks();
 
 	const latestRecord = cache.get(sitePackUuid);
@@ -47,6 +49,7 @@ export function getResistanceModeScriptsURL(): Result<
 	{ url: URL; version: string; sha256: string },
 	CDNErrorType
 > {
+	if (!isBunnyCdnConfigured()) return err(CDNErrorType.ServiceUnavailable);
 	const latestRecord = getLatestResistanceScript();
 
 	if (!latestRecord) {
@@ -76,6 +79,7 @@ export function getInstallerURL(
 	os: 'windows' | 'linux' | 'macos',
 	architecture: 'x64' | 'arm64'
 ): Result<{ url: URL; version: string; sha256: string; size: number }, CDNErrorType> {
+	if (!isBunnyCdnConfigured()) return err(CDNErrorType.ServiceUnavailable);
 	const latestRecord = getInstallerFor(os, architecture);
 
 	if (!latestRecord) {

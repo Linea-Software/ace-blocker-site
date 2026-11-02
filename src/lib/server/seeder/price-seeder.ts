@@ -14,12 +14,21 @@ import {
 import { registerProduct, productCount } from '$lib/server/products';
 import { MONTHLY_PRICE_MAP, YEARLY_PRICE_MAP } from '$lib/server/seeder/price-maps';
 import { createLogger } from '$lib/server/logger';
+import { isProduction } from '$lib/env';
 
 const log = createLogger('seeder:prices');
 
 const BILLING_PERIODS = ['monthly', 'yearly'] as const;
 
 export async function seedPrices() {
+	if (!process.env.DODO_PAYMENTS_API_KEY?.trim()) {
+		if (isProduction()) {
+			throw new Error('DODO_PAYMENTS_API_KEY is required for production price seeding');
+		}
+		log.warn('Dodo Payments is disabled in development: DODO_PAYMENTS_API_KEY is missing');
+		return;
+	}
+
 	// Fetch all existing products from Dodo
 	const existing = await dodoPayments.products.list();
 	const existingNames = new Map(existing.items.map((p) => [p.name, p]));

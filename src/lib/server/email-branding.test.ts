@@ -10,8 +10,8 @@ vi.mock('resend', () => ({
 	}
 }));
 
-vi.mock('$env/static/private', () => ({
-	RESEND_API_KEY: '[REDACTED_SECRET]'
+vi.mock('$env/dynamic/private', () => ({
+	env: { RESEND_API_KEY: '[REDACTED_SECRET]' }
 }));
 
 vi.mock('$lib/server/db', () => ({

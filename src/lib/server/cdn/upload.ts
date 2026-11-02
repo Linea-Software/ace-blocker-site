@@ -21,7 +21,8 @@ import {
 	isValidArtifactName,
 	isValidArtifactVersion,
 	MAX_ARTIFACT_SIZE,
-	MAX_SITE_PACK_SIZE
+	MAX_SITE_PACK_SIZE,
+	isBunnyCdnConfigured
 } from './common';
 import { deleteFileFromBunnyCDN } from './delete';
 import { createLogger } from '$lib/server/logger';
@@ -70,6 +71,7 @@ async function uploadFileToBunnyCDN(
 	file: File,
 	endpointUrl: URL
 ): Promise<Result<{ hash: string }, CDNErrorType>> {
+	if (!isBunnyCdnConfigured()) return err(CDNErrorType.ServiceUnavailable);
 	const arrayBuffer = await file.arrayBuffer();
 	const hash = getArrayBufferChecksum(arrayBuffer);
 

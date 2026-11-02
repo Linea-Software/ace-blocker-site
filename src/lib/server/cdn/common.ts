@@ -2,6 +2,7 @@ import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
 import { getCdnEnvironmentPrefix } from './environment';
 import { createLogger } from '$lib/server/logger';
+import { isProduction } from '$lib/env';
 
 const log = createLogger('cdn');
 
@@ -18,7 +19,8 @@ export enum CDNErrorType {
 	UploadFailed,
 	NetworkFailure,
 	DeleteFailed,
-	InvalidArtifact
+	InvalidArtifact,
+	ServiceUnavailable
 }
 
 /** Maximum generic artifact upload size in bytes (100 MiB). */
@@ -79,29 +81,29 @@ export async function isValidArtifactFile(
 	}
 }
 
-if (!env.BUNNY_URL_TOKEN_AUTH_KEY) {
-	throw Error('❌ BUNNY_URL_TOKEN_AUTH_KEY is missing in environment variables');
+const requiredBunnySettings = [
+	'BUNNY_URL_TOKEN_AUTH_KEY',
+	'BUNNY_STORAGE_ZONE',
+	'BUNNY_CDN_BASE_URL',
+	'BUNNY_STORAGE_ACCESS_KEY'
+] as const;
+
+export function isBunnyCdnConfigured(): boolean {
+	return requiredBunnySettings.every((key) => Boolean(env[key]?.trim()));
 }
 
-if (!env.BUNNY_STORAGE_ZONE) {
-	throw Error('❌ BUNNY_STORAGE_ZONE is missing in environment variables');
+const missingBunnySettings = requiredBunnySettings.filter((key) => !env[key]?.trim());
+if (missingBunnySettings.length && !isProduction()) {
+	log.warn({ missing: missingBunnySettings }, 'BunnyCDN is disabled in development');
 }
-
-if (!env.BUNNY_CDN_BASE_URL) {
-	throw Error('❌ BUNNY_CDN_BASE_URL is missing in environment variables');
-}
-
-if (!env.BUNNY_STORAGE_ACCESS_KEY) {
-	throw Error('❌ BUNNY_STORAGE_ACCESS_KEY is missing in environment variables');
-}
-
-const securityKey = env.BUNNY_URL_TOKEN_AUTH_KEY;
 
 // === Base paths/URLs declarations === //
 
 // In production, files are served from the root. In dev, use /dev/ prefix.
 // Trailing slash is required so that new URL(relative, base) appends rather than replaces the last segment.
-const storageZoneBase = new URL(`https://${env.BUNNY_CDN_BASE_URL}/${getCdnEnvironmentPrefix()}`);
+const storageZoneBase = new URL(
+	`https://${env.BUNNY_CDN_BASE_URL?.trim() || 'unconfigured.invalid'}/${getCdnEnvironmentPrefix()}`
+);
 
 export const sitePacksBasePath = new URL(CDNObjectPath.SitePacks + '/', storageZoneBase);
 export const resistanceModeScriptBasePath = new URL(
@@ -112,10 +114,12 @@ export const installersBasePath = new URL(CDNObjectPath.Installer + '/', storage
 
 // === Upload base paths === //
 const bunnyUploadBase = new URL(
-	`https://storage.bunnycdn.com/${env.BUNNY_STORAGE_ZONE}/${getCdnEnvironmentPrefix()}`
+	`https://storage.bunnycdn.com/${env.BUNNY_STORAGE_ZONE?.trim() || '_unconfigured'}/${getCdnEnvironmentPrefix()}`
 );
 
-log.info({ url: bunnyUploadBase.toString() }, 'Bunny upload base URL configured');
+if (isBunnyCdnConfigured()) {
+	log.info({ url: bunnyUploadBase.toString() }, 'Bunny upload base URL configured');
+}
 
 export const sitePacksUploadBase = new URL(CDNObjectPath.SitePacks + '/', bunnyUploadBase);
 export const resistanceModeScriptsUploadBase = new URL(
@@ -137,6 +141,10 @@ export const resistanceModeScriptsFileName = 'resistance-mode-scripts.zip';
  * The signed path must be the exact request path (no query string).
  */
 export function generateBunnyCDNToken(path: string, expiration: number): string {
+	if (!isBunnyCdnConfigured()) {
+		throw new Error('BunnyCDN is not configured; cannot sign download URL');
+	}
+	const securityKey = env.BUNNY_URL_TOKEN_AUTH_KEY;
 	const hashableBase = path + expiration;
 
 	const token = crypto

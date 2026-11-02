@@ -86,6 +86,12 @@ Do not default to the old generic marketing composition: centered gradient hero,
 
 For visible marketing work, the mandatory design skills are `frontend-design`, `design-taste-frontend`, and `ui-ux-pro-max`. Use `svelte-code-writer`, `svelte-core-bestpractices`, and `svelte-components` for implementation, then `web-design-guidelines` plus real light/dark screenshots for final review. For dense account/admin product UI, treat `frontend-design` + `ui-ux-pro-max` as primary; `design-taste-frontend` must not override product-UI semantics.
 
+## Optional integrations in development
+
+- Missing `RESEND_API_KEY` or BunnyCDN credentials must not throw during module imports or non-production builds. Missing `DODO_PAYMENTS_API_KEY` must skip the startup price synchronization only in development. The email transport returns an explicit error instead of making a network request; CDN operations return `CDNErrorType.ServiceUnavailable` and never issue placeholder URLs or network writes.
+- Production validation in `src/lib/server/config/production.ts` and `hooks.server.ts:init` must remain strict. Do not add production dummy credentials or suppress startup validation.
+- See `src/lib/server/optional-providers.test.ts` for missing-key regression tests. Set real local credentials only when exercising email delivery or CDN-dependent features; restart the development server after updating `.env`.
+
 ## SEO and AI-search conventions
 
 - Canonical production origin: `https://aceblocker.com`. Use `src/lib/seo.ts` to manage indexable public routes, canonical URLs, and language alternatives. Do not add private routes to the sitemap.

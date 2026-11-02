@@ -12,7 +12,8 @@ import {
 	CDNErrorType,
 	sitePacksUploadBase,
 	resistanceModeScriptsUploadBase,
-	installersUploadBase
+	installersUploadBase,
+	isBunnyCdnConfigured
 } from './common';
 import { createLogger } from '$lib/server/logger';
 
@@ -23,6 +24,7 @@ const log = createLogger('cdn:delete');
 export async function deleteFileFromBunnyCDN(
 	endpointUrl: URL
 ): Promise<Result<void, CDNErrorType>> {
+	if (!isBunnyCdnConfigured()) return err(CDNErrorType.ServiceUnavailable);
 	try {
 		const response = await fetch(endpointUrl, {
 			method: 'DELETE',

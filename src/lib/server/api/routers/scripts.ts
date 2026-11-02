@@ -1,13 +1,8 @@
 import { Elysia, t } from 'elysia';
 import { isUserPro } from '$lib/server/pro';
 import { auth } from '$lib/server/auth';
-import { env } from '$env/dynamic/private';
 import { getResistanceModeScriptsURL, CDNErrorType } from '$lib/server/cdn';
 import { incrementResistanceScriptDownloadCount } from '$lib/server/cache';
-
-if (!env.BUNNY_URL_TOKEN_AUTH_KEY) {
-	throw new Error('❌ BUNNY_URL_TOKEN_AUTH_KEY is missing in environment variables');
-}
 
 export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 	.derive(async ({ request }) => {
@@ -36,6 +31,12 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 			if (result.isErr()) {
 				// No release is currently marked downloadable (never published
 				// or revoked) — this is a "not found", not a server failure.
+				if (result.error === CDNErrorType.ServiceUnavailable) {
+					return status(
+						503,
+						'Resistance scripts download is unavailable: CDN is not configured'
+					);
+				}
 				if (result.error === CDNErrorType.NoReleaseAvailable) {
 					return status(404, 'No resistance scripts release available');
 				}
@@ -68,7 +69,8 @@ export const scriptsRouter = new Elysia({ prefix: '/scripts' })
 				401: t.String(),
 				403: t.String(),
 				404: t.String(),
-				500: t.String()
+				500: t.String(),
+				503: t.String()
 			}
 		}
 	);

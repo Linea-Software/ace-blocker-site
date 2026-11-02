@@ -1,16 +1,33 @@
 import 'dotenv/config';
 import { Resend } from 'resend';
 import type { Locale } from './messages';
-import { RESEND_API_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { m as pm } from '$lib/paraglide/messages';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
 import { createLogger } from '$lib/server/logger';
 import { DARK_LOGO_CID, LIGHT_LOGO_CID, emailLogoAttachments } from './email-branding';
 
-export const resend = new Resend(RESEND_API_KEY);
-
 const log = createLogger('email');
+
+// In development the site can start without Resend. Never issue network calls
+// with invented credentials or report an unsent email as delivered.
+const disabledResendSend: Resend['emails']['send'] = async () => ({
+	data: null,
+	error: {
+		name: 'missing_api_key',
+		statusCode: 503,
+		message: 'Email unavailable: RESEND_API_KEY is not configured'
+	},
+	headers: null
+});
+export const resend: { emails: { send: Resend['emails']['send'] } } = env.RESEND_API_KEY?.trim()
+	? new Resend(env.RESEND_API_KEY.trim())
+	: { emails: { send: disabledResendSend } };
+
+if (!env.RESEND_API_KEY?.trim()) {
+	log.warn('Resend is disabled: RESEND_API_KEY is missing; emails will not be sent');
+}
 
 /** Base site URL for email links (download, renewal, payment update). */
 const siteUrl = (process.env.PUBLIC_BETTER_AUTH_URL ?? 'http://localhost:5173').replace(/\/+$/, '');

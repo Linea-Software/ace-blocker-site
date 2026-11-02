@@ -31,6 +31,20 @@ describe('production runtime configuration', () => {
 		expect(() => validateProductionEnvironment(env)).toThrow();
 	});
 
+	it('requires Resend and BunnyCDN credentials in production', () => {
+		for (const key of [
+			'RESEND_API_KEY',
+			'BUNNY_URL_TOKEN_AUTH_KEY',
+			'BUNNY_STORAGE_ZONE',
+			'BUNNY_CDN_BASE_URL',
+			'BUNNY_STORAGE_ACCESS_KEY'
+		]) {
+			const environment = validEnv();
+			delete environment[key];
+			expect(() => validateProductionEnvironment(environment)).toThrow();
+		}
+	});
+
 	it('rejects weak Better Auth secrets', () => {
 		const env = validEnv();
 		env.BETTER_AUTH_SECRET = 'change-me';
