@@ -2,6 +2,7 @@
 	import * as Sheet from '$lib/components/ui/sheet';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import {
+		BookOpen,
 		Download,
 		Gauge,
 		Info,
@@ -19,6 +20,7 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { localizeHref } from '$lib/paraglide/runtime';
 	import { toggleMode, mode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages';
 
@@ -27,7 +29,8 @@
 
 	const navLinks = [
 		{ href: '/download' as const, label: m.nav_download(), icon: Download },
-		{ href: '/about' as const, label: m.nav_about(), icon: Info }
+		{ href: '/about' as const, label: m.nav_about(), icon: Info },
+		{ href: '/faq' as const, label: m.nav_faq(), icon: BookOpen }
 	];
 
 	let isMobileMenuOpen = $state(false);
@@ -82,7 +85,7 @@
 					<nav class="flex flex-1 flex-col" aria-label={m.nav_toggle_menu()}>
 						{#each navLinks as link (link.href)}
 							<a
-								href={resolve(link.href)}
+								href={localizeHref(resolve(link.href))}
 								class={[
 									'flex min-h-14 items-center gap-3 border-b border-border px-5 text-base font-medium',
 									isActive(link.href)
@@ -96,7 +99,7 @@
 							</a>
 						{/each}
 						<a
-							href={resolve('/get-pro')}
+							href={localizeHref(resolve('/get-pro'))}
 							class={[
 								'flex min-h-14 items-center gap-3 border-b border-border px-5 text-base font-medium',
 								isActive('/get-pro')
@@ -112,7 +115,7 @@
 						<div class="mt-auto border-t border-border">
 							{#if $session.data}
 								<a
-									href={resolve('/account')}
+									href={localizeHref(resolve('/account'))}
 									class="flex min-h-14 items-center gap-3 border-b border-border px-5 font-medium"
 									onclick={() => (isMobileMenuOpen = false)}
 								>
@@ -121,7 +124,7 @@
 								</a>
 								{#if $session.data.user.role === 'admin'}
 									<a
-										href={resolve('/admin/dashboard')}
+										href={localizeHref(resolve('/admin/dashboard'))}
 										class="flex min-h-14 items-center gap-3 border-b border-border px-5 font-medium"
 										onclick={() => (isMobileMenuOpen = false)}
 									>
@@ -142,7 +145,7 @@
 								</button>
 							{:else}
 								<a
-									href={resolve('/signin')}
+									href={localizeHref(resolve('/signin'))}
 									class="flex min-h-14 items-center gap-3 border-b border-border px-5 font-medium"
 									onclick={() => (isMobileMenuOpen = false)}
 								>
@@ -150,7 +153,7 @@
 									{m.nav_log_in()}
 								</a>
 								<a
-									href={resolve('/signup')}
+									href={localizeHref(resolve('/signup'))}
 									class="flex min-h-14 items-center gap-3 border-b border-border px-5 font-medium"
 									onclick={() => (isMobileMenuOpen = false)}
 								>
@@ -176,14 +179,14 @@
 				</Sheet.Content>
 			</Sheet.Root>
 
-			<a href={resolve('/')} class="shrink-0">
+			<a href={localizeHref(resolve('/'))} class="shrink-0">
 				<BrandLogo alt={m.about_hero_app()} class="h-[29px] w-auto md:h-8" />
 			</a>
 
 			<nav class="hidden h-16 items-stretch md:flex" aria-label={m.nav_toggle_menu()}>
 				{#each navLinks as link (link.href)}
 					<a
-						href={resolve(link.href)}
+						href={localizeHref(resolve(link.href))}
 						class={[
 							'relative flex items-center border-x border-transparent px-4 text-sm font-medium text-muted-foreground hover:text-foreground',
 							isActive(link.href) && 'border-border bg-card text-foreground'
@@ -197,7 +200,7 @@
 
 		<div class="flex shrink-0 items-center gap-1.5 sm:gap-2">
 			<a
-				href={resolve('/get-pro')}
+				href={localizeHref(resolve('/get-pro'))}
 				class={[
 					'hidden min-h-10 items-center rounded-md border px-3 text-sm font-medium sm:inline-flex',
 					isActive('/get-pro')
@@ -224,7 +227,7 @@
 			{#if $session.data}
 				{#if $session.data.user.role === 'admin'}
 					<a
-						href={resolve('/admin/dashboard')}
+						href={localizeHref(resolve('/admin/dashboard'))}
 						class="hidden min-h-10 items-center px-2 text-sm font-medium text-muted-foreground hover:text-foreground lg:inline-flex"
 					>
 						{m.nav_admin_dashboard()}
@@ -268,13 +271,13 @@
 				</DropdownMenu.DropdownMenu>
 			{:else}
 				<a
-					href={resolve('/signin')}
+					href={localizeHref(resolve('/signin'))}
 					class="hidden min-h-10 items-center px-2 text-sm font-medium sm:inline-flex"
 				>
 					{m.nav_log_in()}
 				</a>
 				<a
-					href={resolve('/signup')}
+					href={localizeHref(resolve('/signup'))}
 					class="inline-flex min-h-10 items-center rounded-md bg-foreground px-3.5 text-sm font-medium text-background hover:opacity-90"
 				>
 					<span class="hidden sm:inline">{m.nav_sign_up()}</span>

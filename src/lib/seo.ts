@@ -6,6 +6,7 @@ export type SeoLocale = (typeof SEO_LOCALES)[number];
 export const INDEXABLE_PATHS = [
 	'/',
 	'/about',
+	'/faq',
 	'/download',
 	'/get-pro',
 	'/privacy',

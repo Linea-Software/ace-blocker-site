@@ -10,6 +10,7 @@
 	import { page } from '$app/state';
 	import { canonicalUrl } from '$lib/seo';
 	import { resolve } from '$app/paths';
+	import { localizeHref } from '$lib/paraglide/runtime';
 	import { linkEngine } from '$lib/utils';
 	import { engineConfig } from '$lib/states/engine.svelte';
 	import { apiClient } from '$lib/api-client';
@@ -163,7 +164,7 @@
 					</p>
 					<div class="mt-7 flex flex-col gap-3 sm:flex-row">
 						<a
-							href={resolve('/')}
+							href={localizeHref(resolve('/'))}
 							class="inline-flex min-h-12 items-center justify-center rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90"
 						>
 							{m.pro_success_home()}
