@@ -30,6 +30,17 @@ If `certutil` is already installed, no system packages are changed. Installation
 
 Development keys for Resend, BunnyCDN and Dodo Payments can be left unset, but their respective features will remain unavailable. The database and Docker are still required.
 
+### Existing local databases and rebased migrations
+
+If the Docker database already has an older Drizzle migration history, the checked-in `0000` migration may otherwise attempt to recreate existing tables. `bun run setup` now runs `bun scripts/db-baseline.ts` before `bun run db:migrate`. This local-only reconciliation:
+
+- Verifies that the existing tables, columns, indexes, constraints and enums match the committed baseline.
+- Preserves all existing migration records and adds the current baseline record only after validation.
+- Removes the obsolete Better Auth `account.issuer` column only when its table has **zero rows**, inside the same transaction. If account records exist or the database has any unexpected schema differences, it refuses to change the database.
+- Requires a local `DATABASE_URL` whose database name matches `POSTGRES_DB`; it cannot be used as a production migration repair mechanism.
+
+Run `bun scripts/db-baseline.ts --dry-run` to inspect a legacy database without modifying it. Never delete the database or manually edit Drizzle history to resolve a rebase until you have checked the actual schema and made a backup.
+
 ## Verification
 
 ```sh

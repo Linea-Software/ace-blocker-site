@@ -161,6 +161,13 @@ async function main() {
 	}
 	console.log('Docker containers are running and healthy.');
 
+	console.log('Checking local migration history...');
+	if (!(await runCommand('bun', ['scripts/db-baseline.ts']))) {
+		throw new Error(
+			'Failed to reconcile local migration history. No database reset was performed.'
+		);
+	}
+
 	console.log('Applying database migrations...');
 	if (!(await runCommand('bun', ['run', 'db:migrate']))) {
 		throw new Error('Failed to apply database migrations.');
