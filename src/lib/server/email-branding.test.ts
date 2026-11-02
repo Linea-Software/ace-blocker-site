@@ -62,21 +62,23 @@ describe('email branding', () => {
 		expect(html).not.toContain('src="https://cdn.aceblocker.com/');
 	});
 
-	it('defines both logo images as inline Resend attachments', () => {
-		expect(emailLogoAttachments).toEqual([
-			{
-				path: 'https://cdn.aceblocker.com/dark-full-logo.png',
-				filename: 'dark-full-logo.png',
+	it('embeds the official PNG lockups as base64 inline Resend attachments', () => {
+		expect(emailLogoAttachments).toHaveLength(2);
+		for (const [attachment, filename, cid] of [
+			[emailLogoAttachments[0], 'ace-lockup-dark.png', 'ace-blocker-logo-dark'],
+			[emailLogoAttachments[1], 'ace-lockup-light.png', 'ace-blocker-logo-light']
+		] as const) {
+			expect(attachment).toMatchObject({
+				filename,
 				contentType: 'image/png',
-				contentId: 'ace-blocker-logo-dark'
-			},
-			{
-				path: 'https://cdn.aceblocker.com/light-full-logo.png',
-				filename: 'light-full-logo.png',
-				contentType: 'image/png',
-				contentId: 'ace-blocker-logo-light'
-			}
-		]);
+				contentId: cid
+			});
+			expect(attachment.content).toMatch(/^[A-Za-z0-9+/=]+$/);
+			expect(Buffer.from(attachment.content, 'base64').subarray(0, 8)).toEqual(
+				Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+			);
+			expect(attachment).not.toHaveProperty('path');
+		}
 	});
 
 	it('includes the inline logo attachments on transactional sends', async () => {
