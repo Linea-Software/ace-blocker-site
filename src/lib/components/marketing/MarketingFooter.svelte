@@ -8,20 +8,21 @@
 <footer class="border-t border-border bg-card">
 	<div class="ace-shell grid gap-8 py-10 sm:grid-cols-[1fr_auto] sm:items-end">
 		<div>
-			<a href={localizeHref(resolve('/'))} class="inline-flex items-center">
+			<a href={resolve(localizeHref('/') as '/')} class="inline-flex items-center">
 				<BrandLogo alt={m.about_hero_app()} class="h-7 w-auto" />
 			</a>
 			<p class="mt-4 max-w-md text-sm text-muted-foreground">{m.footer_identity_line()}</p>
 		</div>
 		<div class="sm:text-right">
-			<a href={localizeHref(resolve('/faq'))} class="text-sm font-medium hover:underline"
-				>{m.nav_faq()}</a
+			<a
+				href={resolve(localizeHref('/faq') as '/faq')}
+				class="text-sm font-medium hover:underline">{m.nav_faq()}</a
 			>
 			<nav class="flex gap-5 text-sm" aria-label={m.footer_legal_navigation()}>
-				<a href={localizeHref(resolve('/terms'))} class="hover:underline"
+				<a href={resolve(localizeHref('/terms') as '/terms')} class="hover:underline"
 					>{m.footer_terms()}</a
 				>
-				<a href={localizeHref(resolve('/privacy'))} class="hover:underline"
+				<a href={resolve(localizeHref('/privacy') as '/privacy')} class="hover:underline"
 					>{m.footer_privacy()}</a
 				>
 			</nav>

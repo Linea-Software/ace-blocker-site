@@ -179,9 +179,6 @@
     }
   },
   "src/routes/get-pro/+page.svelte": {
-    "svelte/no-navigation-without-resolve": {
-      "count": 2
-    },
     "svelte/prefer-svelte-reactivity": {
       "count": 2
     }

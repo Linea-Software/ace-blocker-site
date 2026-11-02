@@ -9,6 +9,7 @@
 	import '@fontsource/ibm-plex-mono/500.css';
 
 	import { page } from '$app/state';
+	import { env } from '$env/dynamic/public';
 	import { jsonLdScript, organizationAndWebsiteData } from '$lib/structured-data';
 	import { resolve } from '$app/paths';
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
@@ -35,6 +36,12 @@
 	<link rel="apple-touch-icon" sizes="180x180" href="/ace-apple-touch-icon.png" />
 	<link rel="shortcut icon" href="/ace-favicon-32.png" />
 
+	{#if env.PUBLIC_GOOGLE_SITE_VERIFICATION}
+		<meta name="google-site-verification" content={env.PUBLIC_GOOGLE_SITE_VERIFICATION} />
+	{/if}
+	{#if env.PUBLIC_BING_SITE_VERIFICATION}
+		<meta name="msvalidate.01" content={env.PUBLIC_BING_SITE_VERIFICATION} />
+	{/if}
 	<meta property="og:site_name" content="Ace Blocker" />
 	<meta property="og:image" content={defaultOgImage} />
 	<meta property="og:image:width" content="1200" />
@@ -52,6 +59,7 @@
 	<meta name="twitter:image:alt" content={m.site_og_image_alt()} />
 	{#if isIndexablePage(page.url.pathname)}
 		<link rel="canonical" href={canonicalUrl(page.url.pathname)} />
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -- JSON serialization escapes all '<' characters -->
 		{@html jsonLdScript(organizationAndWebsiteData())}
 		{#each alternateUrls(page.url.pathname) as alternate (alternate.locale)}
 			<link rel="alternate" hreflang={alternate.locale} href={alternate.url} />

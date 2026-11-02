@@ -12,6 +12,7 @@
 		"preview": "vite preview",
 		"paraglide:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide --strategy url baseLocale",
 		"prepare": "svelte-kit sync || echo ''",
+		"seo:audit": "bun scripts/seo-audit.ts",
 		"check": "bun run paraglide:compile && svelte-kit sync && svelte-check --tsgo --tsconfig ./tsconfig.json",
 		"check:watch": "bun run paraglide:compile && svelte-kit sync && svelte-check --tsgo --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",

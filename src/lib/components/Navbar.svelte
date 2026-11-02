@@ -85,7 +85,7 @@
 					<nav class="flex flex-1 flex-col" aria-label={m.nav_toggle_menu()}>
 						{#each navLinks as link (link.href)}
 							<a
-								href={localizeHref(resolve(link.href))}
+								href={resolve(localizeHref(link.href) as typeof link.href)}
 								class={[
 									'flex min-h-14 items-center gap-3 border-b border-border px-5 text-base font-medium',
 									isActive(link.href)
@@ -99,7 +99,7 @@
 							</a>
 						{/each}
 						<a
-							href={localizeHref(resolve('/get-pro'))}
+							href={resolve(localizeHref('/get-pro') as '/get-pro')}
 							class={[
 								'flex min-h-14 items-center gap-3 border-b border-border px-5 text-base font-medium',
 								isActive('/get-pro')
@@ -115,7 +115,7 @@
 						<div class="mt-auto border-t border-border">
 							{#if $session.data}
 								<a
-									href={localizeHref(resolve('/account'))}
+									href={resolve(localizeHref('/account') as '/account')}
 									class="flex min-h-14 items-center gap-3 border-b border-border px-5 font-medium"
 									onclick={() => (isMobileMenuOpen = false)}
 								>
@@ -124,7 +124,9 @@
 								</a>
 								{#if $session.data.user.role === 'admin'}
 									<a
-										href={localizeHref(resolve('/admin/dashboard'))}
+										href={resolve(
+											localizeHref('/admin/dashboard') as '/admin/dashboard'
+										)}
 										class="flex min-h-14 items-center gap-3 border-b border-border px-5 font-medium"
 										onclick={() => (isMobileMenuOpen = false)}
 									>
@@ -145,7 +147,7 @@
 								</button>
 							{:else}
 								<a
-									href={localizeHref(resolve('/signin'))}
+									href={resolve(localizeHref('/signin') as '/signin')}
 									class="flex min-h-14 items-center gap-3 border-b border-border px-5 font-medium"
 									onclick={() => (isMobileMenuOpen = false)}
 								>
@@ -153,7 +155,7 @@
 									{m.nav_log_in()}
 								</a>
 								<a
-									href={localizeHref(resolve('/signup'))}
+									href={resolve(localizeHref('/signup') as '/signup')}
 									class="flex min-h-14 items-center gap-3 border-b border-border px-5 font-medium"
 									onclick={() => (isMobileMenuOpen = false)}
 								>
@@ -179,14 +181,14 @@
 				</Sheet.Content>
 			</Sheet.Root>
 
-			<a href={localizeHref(resolve('/'))} class="shrink-0">
+			<a href={resolve(localizeHref('/') as '/')} class="shrink-0">
 				<BrandLogo alt={m.about_hero_app()} class="h-[29px] w-auto md:h-8" />
 			</a>
 
 			<nav class="hidden h-16 items-stretch md:flex" aria-label={m.nav_toggle_menu()}>
 				{#each navLinks as link (link.href)}
 					<a
-						href={localizeHref(resolve(link.href))}
+						href={resolve(localizeHref(link.href) as typeof link.href)}
 						class={[
 							'relative flex items-center border-x border-transparent px-4 text-sm font-medium text-muted-foreground hover:text-foreground',
 							isActive(link.href) && 'border-border bg-card text-foreground'
@@ -200,7 +202,7 @@
 
 		<div class="flex shrink-0 items-center gap-1.5 sm:gap-2">
 			<a
-				href={localizeHref(resolve('/get-pro'))}
+				href={resolve(localizeHref('/get-pro') as '/get-pro')}
 				class={[
 					'hidden min-h-10 items-center rounded-md border px-3 text-sm font-medium sm:inline-flex',
 					isActive('/get-pro')
@@ -227,7 +229,7 @@
 			{#if $session.data}
 				{#if $session.data.user.role === 'admin'}
 					<a
-						href={localizeHref(resolve('/admin/dashboard'))}
+						href={resolve(localizeHref('/admin/dashboard') as '/admin/dashboard')}
 						class="hidden min-h-10 items-center px-2 text-sm font-medium text-muted-foreground hover:text-foreground lg:inline-flex"
 					>
 						{m.nav_admin_dashboard()}
@@ -271,13 +273,13 @@
 				</DropdownMenu.DropdownMenu>
 			{:else}
 				<a
-					href={localizeHref(resolve('/signin'))}
+					href={resolve(localizeHref('/signin') as '/signin')}
 					class="hidden min-h-10 items-center px-2 text-sm font-medium sm:inline-flex"
 				>
 					{m.nav_log_in()}
 				</a>
 				<a
-					href={localizeHref(resolve('/signup'))}
+					href={resolve(localizeHref('/signup') as '/signup')}
 					class="inline-flex min-h-10 items-center rounded-md bg-foreground px-3.5 text-sm font-medium text-background hover:opacity-90"
 				>
 					<span class="hidden sm:inline">{m.nav_sign_up()}</span>

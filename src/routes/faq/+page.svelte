@@ -31,6 +31,7 @@
 	<meta property="og:url" content={canonicalUrl(page.url.pathname)} />
 	<meta name="twitter:title" content={m.faq_page_title()} />
 	<meta name="twitter:description" content={m.faq_page_description()} />
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- JSON serialization escapes all '<' characters -->
 	{@html jsonLdScript({
 		'@context': 'https://schema.org',
 		'@type': 'FAQPage',
@@ -83,7 +84,7 @@
 		>
 			<h2 class="font-display text-3xl font-semibold">{m.faq_cta_title()}</h2>
 			<a
-				href={localizeHref(resolve('/download'))}
+				href={resolve(localizeHref('/download') as '/download')}
 				class="inline-flex min-h-12 items-center justify-center rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90"
 			>
 				{m.faq_cta_link()}

@@ -13,6 +13,16 @@ export const INDEXABLE_PATHS = [
 	'/terms'
 ] as const;
 
+// Only the FAQ currently has fully translated main content in all four languages.
+// Most other marketing pages fall back to English. Avoid false hreflang signals.
+const FULLY_LOCALIZED_PAGES = ['/faq'] as const;
+
+export function localesForPath(pathname: string): readonly SeoLocale[] {
+	return (FULLY_LOCALIZED_PAGES as readonly string[]).includes(basePath(pathname))
+		? SEO_LOCALES
+		: ['en'];
+}
+
 export function basePath(pathname: string): string {
 	const path = pathname.replace(/^\/(?:es|it|de)(?=\/|$)/, '') || '/';
 	return path.length > 1 ? path.replace(/\/$/, '') : path;
@@ -33,11 +43,14 @@ export function canonicalUrl(pathname: string): string {
 }
 
 export function isIndexablePage(pathname: string): boolean {
-	return (INDEXABLE_PATHS as readonly string[]).includes(basePath(pathname));
+	return (
+		(INDEXABLE_PATHS as readonly string[]).includes(basePath(pathname)) &&
+		localesForPath(pathname).includes(localeFromPath(pathname))
+	);
 }
 
 export function alternateUrls(pathname: string) {
-	return SEO_LOCALES.map((locale) => ({
+	return localesForPath(pathname).map((locale) => ({
 		locale,
 		url: `${SITE_URL}${localizedPath(pathname, locale)}`
 	}));

@@ -136,14 +136,14 @@
 					class="flex flex-col gap-3 border-t border-border p-5 sm:flex-row lg:border-t-0 lg:border-l lg:p-7"
 				>
 					<a
-						href={localizeHref(resolve('/download'))}
+						href={resolve(localizeHref('/download') as '/download')}
 						class="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90"
 					>
 						<Download class="size-4" aria-hidden="true" />
 						{m.hero_download_button()}
 					</a>
 					<a
-						href={localizeHref(resolve('/get-pro'))}
+						href={resolve(localizeHref('/get-pro') as '/get-pro')}
 						class="inline-flex min-h-12 items-center justify-center rounded-md border border-foreground/30 px-5 font-medium hover:bg-accent"
 					>
 						{m.hero_pro_button()}

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 import '../layout.css';
-import { getLocale, setLocale } from '$lib/paraglide/runtime';
+import { getLocale } from '$lib/paraglide/runtime';
 
 vi.mock('$app/state', () => ({
 	page: { url: new URL('http://localhost:5173/checkout?currency=EUR') }
@@ -74,7 +74,8 @@ describe('Checkout summary display', () => {
 	});
 
 	it('renders checkout terms in the selected Italian site locale', async () => {
-		setLocale('it', { reload: false });
+		const previousUrl = window.location.href;
+		window.history.replaceState(window.history.state, '', '/it/checkout?currency=EUR');
 		try {
 			expect(getLocale()).toBe('it');
 			render(Checkout, {
@@ -97,7 +98,7 @@ describe('Checkout summary display', () => {
 				.element(page.getByText(/Si rinnova automaticamente ogni anno/))
 				.toBeInTheDocument();
 		} finally {
-			setLocale('en', { reload: false });
+			window.history.replaceState(window.history.state, '', previousUrl);
 		}
 	});
 

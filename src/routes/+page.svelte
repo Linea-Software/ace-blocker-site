@@ -20,6 +20,7 @@
 <svelte:head>
 	<title>{m.page_title_home()}</title>
 	<meta name="description" content={m.home_seo_description()} />
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- JSON serialization escapes all '<' characters -->
 	{@html jsonLdScript(softwareData(m.home_seo_description()))}
 	<meta property="og:title" content={m.page_title_home()} />
 	<meta property="og:description" content={m.home_description()} />
@@ -56,14 +57,14 @@
 
 				<div class="mt-8 flex flex-col gap-3 sm:flex-row">
 					<a
-						href={localizeHref(resolve('/download'))}
+						href={resolve(localizeHref('/download') as '/download')}
 						class="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90"
 					>
 						<Download class="size-4" aria-hidden="true" />
 						{m.hero_download_button()}
 					</a>
 					<a
-						href={localizeHref(resolve('/get-pro'))}
+						href={resolve(localizeHref('/get-pro') as '/get-pro')}
 						class="inline-flex min-h-12 items-center justify-center rounded-md border border-foreground/30 px-5 font-medium hover:bg-accent"
 					>
 						{m.hero_pro_button()}
@@ -72,7 +73,7 @@
 
 				{#if data.newRelease}
 					<a
-						href={localizeHref(resolve('/download'))}
+						href={resolve(localizeHref('/download') as '/download')}
 						class="mt-7 inline-flex items-center gap-3 border-l-2 border-signal pl-3 text-sm hover:underline"
 					>
 						<span class="font-mono text-xs text-muted-foreground"
@@ -103,7 +104,7 @@
 				<p>{m.home_what_is_description()}</p>
 				<p class="text-muted-foreground">{m.home_what_is_detail()}</p>
 				<a
-					href={localizeHref(resolve('/faq'))}
+					href={resolve(localizeHref('/faq') as '/faq')}
 					class="inline-block text-sm font-semibold underline underline-offset-4"
 					>{m.nav_faq()}</a
 				>
@@ -202,7 +203,7 @@
 				</div>
 				<div class="border-t border-border p-5 sm:border-t-0 sm:border-l sm:p-7">
 					<a
-						href={localizeHref(resolve('/download'))}
+						href={resolve(localizeHref('/download') as '/download')}
 						class="inline-flex min-h-12 w-full items-center justify-center rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90 sm:w-auto"
 					>
 						{m.hero_download_button()}

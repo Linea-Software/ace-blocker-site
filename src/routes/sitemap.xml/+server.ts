@@ -1,9 +1,9 @@
 import type { RequestHandler } from './$types';
-import { alternateUrls, INDEXABLE_PATHS, localizedPath, SEO_LOCALES, SITE_URL } from '$lib/seo';
+import { alternateUrls, INDEXABLE_PATHS, localizedPath, localesForPath, SITE_URL } from '$lib/seo';
 
 export const GET: RequestHandler = () => {
 	const urls = INDEXABLE_PATHS.flatMap((pathname) =>
-		SEO_LOCALES.map(
+		localesForPath(pathname).map(
 			(locale) => `  <url>
     <loc>${SITE_URL}${localizedPath(pathname, locale)}</loc>
 ${alternateUrls(pathname)

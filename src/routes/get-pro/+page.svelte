@@ -72,6 +72,7 @@
 			if (origin) checkoutParams.set('origin', origin);
 			if (enginePort) checkoutParams.set('engine_port', String(enginePort));
 			const signInUrl = `${resolve('/signin')}?${new URLSearchParams({ redirectTo: `${resolve('/checkout')}?${checkoutParams}` })}`;
+			// eslint-disable-next-line svelte/no-navigation-without-resolve -- signInUrl was built using resolve().
 			goto(signInUrl);
 			return;
 		}
@@ -83,6 +84,7 @@
 		});
 		if (origin) params.set('origin', origin);
 		if (enginePort) params.set('engine_port', String(enginePort));
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- URL is composed using resolve().
 		goto(`${resolve('/checkout')}?${params}`);
 	}
 </script>
@@ -164,7 +166,7 @@
 					</p>
 					<div class="mt-7 flex flex-col gap-3 sm:flex-row">
 						<a
-							href={localizeHref(resolve('/'))}
+							href={resolve(localizeHref('/') as '/')}
 							class="inline-flex min-h-12 items-center justify-center rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90"
 						>
 							{m.pro_success_home()}
