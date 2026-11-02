@@ -5,6 +5,15 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # svelte-check requires TypeScript 6 alongside the TS7 native alias.
+    # Do not re-open the incompatible TypeScript 7 major version update.
+    # This does not block Dependabot security update PRs.
+    ignore:
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # adapter-node 6 requires SvelteKit 3; the site still uses SvelteKit 2.
+      - dependency-name: "@sveltejs/adapter-node"
+        update-types: ["version-update:semver-major"]
     groups:
       better-auth-minor-patch:
         patterns:
