@@ -2,7 +2,7 @@
 	import darkFullLogo from '$lib/assets/logo/SVG/dark-full-logo.svg';
 	import lightFullLogo from '$lib/assets/logo/SVG/light-full-logo.svg';
 
-	let { alt, class: className = '' } = $props<{ alt: string; class?: string }>();
+	let { alt, class: className = '' }: { alt: string; class?: string } = $props();
 </script>
 
 <img src={lightFullLogo} {alt} class={`${className} dark:hidden`} />

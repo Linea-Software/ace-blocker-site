@@ -21,7 +21,7 @@
 	} from '@lucide/svelte';
 	import ReleaseManager from '../_components/ReleaseManager.svelte';
 
-	let { data } = $props<{ data: any }>();
+	let { data }: { data: any } = $props();
 	let uploadId = $state('');
 	let uploadName = $state('');
 	let uploadRequiresPro = $state(true);

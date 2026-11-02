@@ -156,6 +156,7 @@ Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })
 
 - **Design tokens & UI consistency**: `docs/ui-identity.md` is the approved **target** visual direction. The token system currently lives in `src/routes/layout.css` (Tailwind v4 `@theme`), while [`docs/design-tokens.md`](docs/design-tokens.md) documents the current/legacy token state and prior consolidation work. The new palette is approved as a direction, but migrate it visually and incrementally; do not perform blind global color replacements without screenshot verification.
 - **Svelte Components**: All `.svelte` files MUST use `UpperCamelCase` naming convention (e.g., `Button.svelte`, `UserCard.svelte`).
+- **Typed Svelte props**: Use a type annotation on the destructuring (`let { foo }: { foo: string } = $props();`) rather than `$props<{ foo: string }>()`; the latter breaks the current `svelte-check --tsgo` CI typecheck.
 - **Page-specific components**: These MUST reside in a `./_components` folder within the route directory OR be prefixed with an underscore (e.g., `_Component.svelte`) to differentiate them from routes.
 - `/messages/`: Localization message files for Paraglide. During development, always prioritize English (`en`). Only translate when explicitly requested.
 - `/scripts/`: Development and maintenance scripts. **ALWAYS use TypeScript** for these scripts.

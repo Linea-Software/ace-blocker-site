@@ -12,11 +12,11 @@
 		origin = null,
 		onlinkengine,
 		onsubmitted
-	} = $props<{
+	}: {
 		origin?: string | null;
 		onlinkengine: () => Promise<boolean>;
 		onsubmitted: (email: string) => void;
-	}>();
+	} = $props();
 
 	let name = $state('');
 	let email = $state('');

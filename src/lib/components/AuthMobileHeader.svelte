@@ -3,10 +3,13 @@
 	import * as m from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
 
-	let { switchHref, switchLabel } = $props<{
+	let {
+		switchHref,
+		switchLabel
+	}: {
 		switchHref: '/signup' | '/signin';
 		switchLabel: string;
-	}>();
+	} = $props();
 </script>
 
 <div

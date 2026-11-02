@@ -20,7 +20,7 @@
 	} from '@lucide/svelte';
 	import ReleaseManager from '../_components/ReleaseManager.svelte';
 
-	let { data } = $props<{ data: any }>();
+	let { data }: { data: any } = $props();
 	let uploadVersion = $state('');
 	let uploadOs = $state('windows');
 	let uploadArchitecture = $state('x64');

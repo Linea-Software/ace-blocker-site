@@ -11,17 +11,17 @@
 		variant = 'default',
 		class: className,
 		children
-	} = $props<{
+	}: {
 		variant?: 'default' | 'surface';
 		class?: string;
 		children?: Snippet;
-	}>();
+	} = $props();
 </script>
 
 <div
 	class={cn(
 		variant === 'surface'
-			? 'rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 p-5 backdrop-blur-sm'
+			? 'rounded-xl border border-slate-200 bg-slate-100 p-5 backdrop-blur-sm dark:border-white/10 dark:bg-white/5'
 			: 'rounded-xl border border-border bg-card p-6',
 		className
 	)}

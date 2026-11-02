@@ -3,7 +3,7 @@
 
 	type ResistanceLevel = 'low' | 'medium' | 'high' | 'maximum';
 
-	let { interactive = true } = $props<{ interactive?: boolean }>();
+	let { interactive = true }: { interactive?: boolean } = $props();
 	let selected = $state<ResistanceLevel>('medium');
 
 	const levels = [

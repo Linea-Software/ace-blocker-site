@@ -4,7 +4,7 @@
 	import { ShieldCheck } from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 
-	let { hash } = $props<{ hash: string }>();
+	let { hash }: { hash: string } = $props();
 	let copied = $state(false);
 
 	async function copyHash() {
