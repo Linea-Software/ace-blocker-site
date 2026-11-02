@@ -10,7 +10,7 @@ jobs:
     name: Typecheck (svelte-check)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.4.0'
@@ -30,7 +30,7 @@ jobs:
     name: Build (vite build)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.4.0'
@@ -60,7 +60,7 @@ jobs:
     name: Unit tests (server)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.4.0'
