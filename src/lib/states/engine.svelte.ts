@@ -4,6 +4,6 @@ export const engineConfig = $state({
 });
 
 // if !isPro and in the server there's a pro licence,
-// prompt the user to send an api key to ace blocker
+// prompt the user to send an API key to Ace Blocker
 // using the custom protocol: aceblocker://account/api-key#apiKey={generated api key}
 // (the key rides in the URL fragment, never the query string)
