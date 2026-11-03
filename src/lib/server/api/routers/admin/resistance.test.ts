@@ -97,6 +97,16 @@ vi.mock('$lib/server/cache', async (importOriginal) => {
 	};
 });
 
+const { getBoredomEngineImportStatus, importBoredomEngineRelease } = vi.hoisted(() => ({
+	getBoredomEngineImportStatus: vi.fn(),
+	importBoredomEngineRelease: vi.fn()
+}));
+
+vi.mock('$lib/server/boredom-engine-release', () => ({
+	getBoredomEngineImportStatus,
+	importBoredomEngineRelease
+}));
+
 import { adminRouter } from './index';
 
 function handle(path: string, init?: RequestInit) {
@@ -107,6 +117,53 @@ function handle(path: string, init?: RequestInit) {
 describe('admin resistance endpoints', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		getBoredomEngineImportStatus.mockReturnValue({
+			running: false,
+			lastStartedAt: null,
+			lastCompletedAt: null,
+			lastError: null,
+			lastResult: null
+		});
+		importBoredomEngineRelease.mockResolvedValue({
+			release: 'v1.2.3',
+			version: '1.2.3',
+			sha256: 'a'.repeat(64),
+			imported: true
+		});
+	});
+
+	it('requires admin access for GitHub import and status', async () => {
+		const statusResponse = await handle('/admin/resistance/github-import-status');
+		const importResponse = await handle('/admin/resistance/github-import', { method: 'POST' });
+		expect(statusResponse.status).toBe(403);
+		expect(importResponse.status).toBe(403);
+		expect(importBoredomEngineRelease).not.toHaveBeenCalled();
+	});
+
+	it('starts a background GitHub import for an admin', async () => {
+		await asAdmin();
+		const statusResponse = await handle('/admin/resistance/github-import-status');
+		expect(statusResponse.status).toBe(200);
+		expect(await statusResponse.json()).toMatchObject({ running: false, lastResult: null });
+
+		const response = await handle('/admin/resistance/github-import', { method: 'POST' });
+		expect(response.status).toBe(202);
+		expect(await response.json()).toEqual({ started: true });
+		expect(importBoredomEngineRelease).toHaveBeenCalledOnce();
+	});
+
+	it('rejects concurrent GitHub imports', async () => {
+		await asAdmin();
+		getBoredomEngineImportStatus.mockReturnValue({
+			running: true,
+			lastStartedAt: '2026-11-03T13:00:00Z',
+			lastCompletedAt: null,
+			lastError: null,
+			lastResult: null
+		});
+		const response = await handle('/admin/resistance/github-import', { method: 'POST' });
+		expect(response.status).toBe(409);
+		expect(importBoredomEngineRelease).not.toHaveBeenCalled();
 	});
 
 	it('rejects non-admin sessions with 403', async () => {
