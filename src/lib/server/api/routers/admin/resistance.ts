@@ -13,6 +13,10 @@ import {
 import { invalidateResistanceCache } from '$lib/server/cache';
 import crypto from 'crypto';
 import { createLogger } from '$lib/server/logger';
+import {
+	getBoredomEngineImportStatus,
+	importBoredomEngineRelease
+} from '$lib/server/boredom-engine-release';
 
 const log = createLogger('api:admin:resistance');
 
@@ -47,6 +51,57 @@ export const resistanceRouter = new Elysia({ prefix: '/resistance' })
 					totalDownloads: t.Number()
 				}),
 				403: t.String()
+			}
+		}
+	)
+	.get('/github-import-status', () => getBoredomEngineImportStatus(), {
+		detail: {
+			operationId: 'getBoredomEngineReleaseImportStatus',
+			summary: 'Read the latest Boredom Engine GitHub import status',
+			security: [{ APIKeyHeader: [] }]
+		},
+		response: {
+			200: t.Object({
+				running: t.Boolean(),
+				lastStartedAt: t.Nullable(t.String()),
+				lastCompletedAt: t.Nullable(t.String()),
+				lastError: t.Nullable(t.String()),
+				lastResult: t.Nullable(
+					t.Object({
+						release: t.String(),
+						version: t.String(),
+						sha256: t.String(),
+						imported: t.Boolean()
+					})
+				)
+			}),
+			403: t.String()
+		}
+	})
+	.post(
+		'/github-import',
+		({ set }) => {
+			if (getBoredomEngineImportStatus().running) {
+				set.status = 409;
+				return { error: true, message: 'A Boredom Engine import is already running' };
+			}
+			// Downloading the verified ZIP and uploading to the CDN may take time.
+			void importBoredomEngineRelease().catch((error: unknown) => {
+				log.error({ err: error }, 'Manual Boredom Engine GitHub import failed');
+			});
+			set.status = 202;
+			return { started: true };
+		},
+		{
+			detail: {
+				operationId: 'importBoredomEngineRelease',
+				summary: 'Import the latest Boredom Engine GitHub release as staged',
+				security: [{ APIKeyHeader: [] }]
+			},
+			response: {
+				202: t.Object({ started: t.Boolean() }),
+				403: t.String(),
+				409: t.Object({ error: t.Boolean(), message: t.String() })
 			}
 		}
 	)
