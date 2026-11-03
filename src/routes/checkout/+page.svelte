@@ -115,7 +115,7 @@
 <header class="border-b border-border bg-background">
 	<div class="ace-shell flex min-h-16 items-center justify-between gap-4 py-3">
 		<a href={resolve('/')} class="shrink-0" aria-label={m.about_hero_app()}>
-			<BrandLogo alt="" class="h-7 w-auto sm:h-8" />
+			<BrandLogo alt="" class="h-10 w-auto sm:h-12" />
 		</a>
 		<a
 			href={planReturn}

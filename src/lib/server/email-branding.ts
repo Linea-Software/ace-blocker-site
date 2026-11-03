@@ -1,5 +1,5 @@
-import darkLogoDataUrl from '$lib/assets/logo/ace-lockup-dark.png?inline';
-import lightLogoDataUrl from '$lib/assets/logo/ace-lockup-light.png?inline';
+import darkLogoDataUrl from '$lib/assets/logo/ace-lockup-dark-transparent.png?inline';
+import lightLogoDataUrl from '$lib/assets/logo/ace-lockup-light-transparent.png?inline';
 
 export const DARK_LOGO_CID = 'ace-blocker-logo-dark';
 export const LIGHT_LOGO_CID = 'ace-blocker-logo-light';
@@ -11,13 +11,13 @@ export const LIGHT_LOGO_CID = 'ace-blocker-logo-light';
 export const emailLogoAttachments = [
 	{
 		content: darkLogoDataUrl.split(',')[1],
-		filename: 'ace-lockup-dark.png',
+		filename: 'ace-lockup-dark-transparent.png',
 		contentType: 'image/png',
 		contentId: DARK_LOGO_CID
 	},
 	{
 		content: lightLogoDataUrl.split(',')[1],
-		filename: 'ace-lockup-light.png',
+		filename: 'ace-lockup-light-transparent.png',
 		contentType: 'image/png',
 		contentId: LIGHT_LOGO_CID
 	}

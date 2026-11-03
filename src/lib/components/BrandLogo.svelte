@@ -1,6 +1,6 @@
 <script lang="ts">
-	import darkLockup from '$lib/assets/logo/ace-lockup-dark.svg';
-	import lightLockup from '$lib/assets/logo/ace-lockup-light.svg';
+	import darkLockup from '$lib/assets/logo/ace-lockup-dark-transparent.svg';
+	import lightLockup from '$lib/assets/logo/ace-lockup-light-transparent.svg';
 
 	let {
 		alt,

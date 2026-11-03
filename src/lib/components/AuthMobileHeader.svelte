@@ -16,7 +16,7 @@
 	class="mb-8 flex w-full max-w-md items-center justify-between border-b border-border pb-5 lg:hidden"
 >
 	<a href={resolve('/')} class="inline-flex min-h-11 items-center">
-		<BrandLogo alt={m.about_hero_app()} class="h-6 w-auto" />
+		<BrandLogo alt={m.about_hero_app()} class="h-10 w-auto" />
 	</a>
 	<a
 		href={resolve(switchHref)}

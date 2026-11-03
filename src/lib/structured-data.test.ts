@@ -8,6 +8,7 @@ describe('structured data', () => {
 		expect(software.offers.price).toBe('0');
 		expect(software).not.toHaveProperty('aggregateRating');
 		expect(organizationAndWebsiteData()['@graph']).toHaveLength(2);
+		expect(organizationAndWebsiteData()['@graph'][0].logo).toMatch(/\/ace-brand-icon\.png$/);
 	});
 
 	it('prevents script termination from translated descriptions', () => {

@@ -65,8 +65,8 @@ describe('email branding', () => {
 	it('embeds the official PNG lockups as base64 inline Resend attachments', () => {
 		expect(emailLogoAttachments).toHaveLength(2);
 		for (const [attachment, filename, cid] of [
-			[emailLogoAttachments[0], 'ace-lockup-dark.png', 'ace-blocker-logo-dark'],
-			[emailLogoAttachments[1], 'ace-lockup-light.png', 'ace-blocker-logo-light']
+			[emailLogoAttachments[0], 'ace-lockup-dark-transparent.png', 'ace-blocker-logo-dark'],
+			[emailLogoAttachments[1], 'ace-lockup-light-transparent.png', 'ace-blocker-logo-light']
 		] as const) {
 			expect(attachment).toMatchObject({
 				filename,
@@ -77,6 +77,10 @@ describe('email branding', () => {
 			expect(Buffer.from(attachment.content, 'base64').subarray(0, 8)).toEqual(
 				Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
 			);
+			// PNG IHDR color type 6: the logo retains an alpha channel.
+			expect(Buffer.from(attachment.content, 'base64')[25]).toBe(6);
+			// IHDR color type 6 = true-color PNG with alpha (RGBA).
+			expect(Buffer.from(attachment.content, 'base64')[25]).toBe(6);
 			expect(attachment).not.toHaveProperty('path');
 		}
 	});
@@ -114,7 +118,7 @@ describe('email branding', () => {
 		for (const html of templates) {
 			expect(html).toContain('class="email-document"');
 			expect(html).toContain('text-align:left');
-			expect(html).toContain('width="132"');
+			expect(html).toContain('width="176"');
 			expect(html).toContain('@media only screen and (max-width: 620px)');
 			expect(html).not.toContain('height: 4px; background-color: #D97706');
 			expect(html).not.toContain('border-radius: 16px');

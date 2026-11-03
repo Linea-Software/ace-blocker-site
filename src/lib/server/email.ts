@@ -117,15 +117,15 @@ function logoHtml(locale: Locale): string {
 <img class="email-logo-light"
      src="cid:${LIGHT_LOGO_CID}"
      alt="${alt}"
-     width="132"
-     height="40"
-     style="display:block; width:132px; height:auto; border:0;" />
+     width="176"
+     height="53"
+     style="display:block; width:176px; height:auto; border:0;" />
 <img class="email-logo-dark"
      src="cid:${DARK_LOGO_CID}"
      alt="${alt}"
-     width="132"
-     height="40"
-     style="display:none; width:132px; height:auto; border:0;" />`;
+     width="176"
+     height="53"
+     style="display:none; width:176px; height:auto; border:0;" />`;
 }
 
 function actionHtml(action: EmailAction): string {

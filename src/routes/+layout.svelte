@@ -33,8 +33,19 @@
 <svelte:head>
 	<link rel="icon" type="image/png" sizes="16x16" href="/ace-favicon-16.png" />
 	<link rel="icon" type="image/png" sizes="32x32" href="/ace-favicon-32.png" />
+	<link
+		rel="icon"
+		type="image/svg+xml"
+		href="/ace-favicon.svg"
+		media="(prefers-color-scheme: light)"
+	/>
+	<link
+		rel="icon"
+		type="image/svg+xml"
+		href="/ace-favicon-dark.svg"
+		media="(prefers-color-scheme: dark)"
+	/>
 	<link rel="apple-touch-icon" sizes="180x180" href="/ace-apple-touch-icon.png" />
-	<link rel="shortcut icon" href="/ace-favicon-32.png" />
 
 	{#if env.PUBLIC_GOOGLE_SITE_VERIFICATION}
 		<meta name="google-site-verification" content={env.PUBLIC_GOOGLE_SITE_VERIFICATION} />

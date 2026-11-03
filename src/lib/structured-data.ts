@@ -9,7 +9,7 @@ export function organizationAndWebsiteData() {
 				'@id': `${SITE_URL}/#organization`,
 				name: 'Ace Blocker',
 				url: SITE_URL,
-				logo: `${SITE_URL}/ace-social-preview.png`
+				logo: `${SITE_URL}/ace-brand-icon.png`
 			},
 			{
 				'@type': 'WebSite',
