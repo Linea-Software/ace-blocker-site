@@ -28,6 +28,16 @@ vi.mock('$lib/server/auth', () => ({
 	}
 }));
 
+const { getAceHostsSitePackSyncStatus, syncAceHostsSitePacks } = vi.hoisted(() => ({
+	getAceHostsSitePackSyncStatus: vi.fn(),
+	syncAceHostsSitePacks: vi.fn()
+}));
+
+vi.mock('$lib/server/ace-hosts-site-packs', () => ({
+	getAceHostsSitePackSyncStatus,
+	syncAceHostsSitePacks
+}));
+
 vi.mock('$lib/server/db', () => ({
 	db: {
 		query: {
@@ -106,6 +116,52 @@ function handle(path: string, init?: RequestInit) {
 describe('admin site-pack endpoints', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		getAceHostsSitePackSyncStatus.mockReturnValue({
+			running: false,
+			lastStartedAt: null,
+			lastCompletedAt: null,
+			lastError: null,
+			lastResult: null
+		});
+		syncAceHostsSitePacks.mockResolvedValue({
+			release: 'v2026.11.01',
+			updated: 1,
+			unchanged: 14
+		});
+	});
+
+	it('requires admin access for both the status and manual sync', async () => {
+		const statusResponse = await handle('/admin/site-packs/sync-status');
+		const syncResponse = await handle('/admin/site-packs/sync', { method: 'POST' });
+		expect(statusResponse.status).toBe(403);
+		expect(syncResponse.status).toBe(403);
+		expect(syncAceHostsSitePacks).not.toHaveBeenCalled();
+	});
+
+	it('allows admins to check the sync status and initiate an asynchronous pull', async () => {
+		await asAdmin();
+		const statusResponse = await handle('/admin/site-packs/sync-status');
+		expect(statusResponse.status).toBe(200);
+		expect(await statusResponse.json()).toMatchObject({ running: false, lastResult: null });
+
+		const syncResponse = await handle('/admin/site-packs/sync', { method: 'POST' });
+		expect(syncResponse.status).toBe(202);
+		expect(await syncResponse.json()).toEqual({ started: true });
+		expect(syncAceHostsSitePacks).toHaveBeenCalledOnce();
+	});
+
+	it('rejects a second manual sync while the current run is active', async () => {
+		await asAdmin();
+		getAceHostsSitePackSyncStatus.mockReturnValue({
+			running: true,
+			lastStartedAt: '2026-11-01T04:00:00Z',
+			lastCompletedAt: null,
+			lastError: null,
+			lastResult: null
+		});
+		const response = await handle('/admin/site-packs/sync', { method: 'POST' });
+		expect(response.status).toBe(409);
+		expect(syncAceHostsSitePacks).not.toHaveBeenCalled();
 	});
 
 	it('rejects non-admin sessions with 403', async () => {

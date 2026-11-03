@@ -24,6 +24,20 @@ interface GitHubRelease {
 	assets: GitHubReleaseAsset[];
 }
 
+export interface AceHostsSitePackSyncResult {
+	release: string;
+	updated: number;
+	unchanged: number;
+}
+
+export interface AceHostsSitePackSyncStatus {
+	running: boolean;
+	lastStartedAt: string | null;
+	lastCompletedAt: string | null;
+	lastError: string | null;
+	lastResult: AceHostsSitePackSyncResult | null;
+}
+
 export interface AceHostsSitePackDefinition {
 	id: string;
 	name: string;
@@ -80,6 +94,62 @@ export const ACE_HOSTS_SITE_PACKS: readonly AceHostsSitePackDefinition[] = [
 		name: 'Shopping Websites — Pro',
 		description: 'Blocks popular shopping services.',
 		assetName: 'site-pack-shopping-pro.zip',
+		requiresProSubscription: true
+	},
+	{
+		id: 'pack-anime-manga-pro',
+		name: 'Anime & Manga Websites — Pro',
+		description: 'Blocks anime and manga websites.',
+		assetName: 'site-pack-anime-manga-pro.zip',
+		requiresProSubscription: true
+	},
+	{
+		id: 'pack-anime-manga-extended',
+		name: 'Anime & Manga Websites — Extended',
+		description: 'Extended anime and manga website list.',
+		assetName: 'site-pack-anime-manga-extended.zip',
+		requiresProSubscription: true
+	},
+	{
+		id: 'pack-forums-pro',
+		name: 'Forums & Communities — Pro',
+		description: 'Blocks forums and community websites.',
+		assetName: 'site-pack-forums-pro.zip',
+		requiresProSubscription: true
+	},
+	{
+		id: 'pack-news-pro',
+		name: 'News Websites — Pro',
+		description: 'Blocks news websites.',
+		assetName: 'site-pack-news-pro.zip',
+		requiresProSubscription: true
+	},
+	{
+		id: 'pack-sports-pro',
+		name: 'Sports Websites — Pro',
+		description: 'Blocks sports websites.',
+		assetName: 'site-pack-sports-pro.zip',
+		requiresProSubscription: true
+	},
+	{
+		id: 'pack-messaging-pro',
+		name: 'Messaging Websites — Pro',
+		description: 'Blocks messaging websites.',
+		assetName: 'site-pack-messaging-pro.zip',
+		requiresProSubscription: true
+	},
+	{
+		id: 'pack-ai-tools-pro',
+		name: 'AI Tools Websites — Pro',
+		description: 'Blocks AI tool websites.',
+		assetName: 'site-pack-ai-tools-pro.zip',
+		requiresProSubscription: true
+	},
+	{
+		id: 'pack-dating-pro',
+		name: 'Dating Websites — Pro',
+		description: 'Blocks dating websites.',
+		assetName: 'site-pack-dating-pro.zip',
 		requiresProSubscription: true
 	}
 ];
@@ -172,7 +242,7 @@ async function downloadVerifiedSitePack(
 	return new File([body], asset.name, { type: 'application/zip' });
 }
 
-export async function syncAceHostsSitePacks(): Promise<void> {
+async function performAceHostsSitePackSync(): Promise<AceHostsSitePackSyncResult> {
 	const release = await fetchLatestRelease();
 	const checksums = await fetchChecksums(release);
 	const updatedAt = new Date(release.published_at ?? release.created_at);
@@ -235,6 +305,46 @@ export async function syncAceHostsSitePacks(): Promise<void> {
 		{ release: release.tag_name, updated, unchanged },
 		'Synchronized site packs from ace-hosts'
 	);
+	return { release: release.tag_name, updated, unchanged };
+}
+
+let runningSync: Promise<AceHostsSitePackSyncResult> | null = null;
+let lastStartedAt: string | null = null;
+let lastCompletedAt: string | null = null;
+let lastError: string | null = null;
+let lastResult: AceHostsSitePackSyncResult | null = null;
+
+export function getAceHostsSitePackSyncStatus(): AceHostsSitePackSyncStatus {
+	return {
+		running: runningSync !== null,
+		lastStartedAt,
+		lastCompletedAt,
+		lastError,
+		lastResult
+	};
+}
+
+// Startup, the monthly timer and the admin button share one in-process run.
+export function syncAceHostsSitePacks(): Promise<AceHostsSitePackSyncResult> {
+	if (runningSync) return runningSync;
+
+	lastStartedAt = new Date().toISOString();
+	lastError = null;
+	runningSync = performAceHostsSitePackSync()
+		.then((result) => {
+			lastResult = result;
+			lastCompletedAt = new Date().toISOString();
+			return result;
+		})
+		.catch((error: unknown) => {
+			lastError = error instanceof Error ? error.message : 'Unknown synchronization error';
+			lastCompletedAt = new Date().toISOString();
+			throw error;
+		})
+		.finally(() => {
+			runningSync = null;
+		});
+	return runningSync;
 }
 
 let monthlySyncTimer: ReturnType<typeof setTimeout> | null = null;

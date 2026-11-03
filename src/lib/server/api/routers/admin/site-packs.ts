@@ -5,6 +5,10 @@ import { desc, eq, sql } from 'drizzle-orm';
 import { uploadSitePack, deleteSitePack, CDNErrorType } from '$lib/server/cdn';
 import { invalidateSitePacksCache } from '$lib/server/cache';
 import { createLogger } from '$lib/server/logger';
+import {
+	getAceHostsSitePackSyncStatus,
+	syncAceHostsSitePacks
+} from '$lib/server/ace-hosts-site-packs';
 
 const log = createLogger('api:admin:site-packs');
 
@@ -36,6 +40,57 @@ export const sitePacksRouter = new Elysia({ prefix: '/site-packs' })
 					totalDownloads: t.Number()
 				}),
 				403: t.String()
+			}
+		}
+	)
+	.get('/sync-status', () => getAceHostsSitePackSyncStatus(), {
+		detail: {
+			operationId: 'getSitePackSyncStatus',
+			summary: 'Get the latest ace-hosts GitHub sync status',
+			security: [{ APIKeyHeader: [] }]
+		},
+		response: {
+			200: t.Object({
+				running: t.Boolean(),
+				lastStartedAt: t.Nullable(t.String()),
+				lastCompletedAt: t.Nullable(t.String()),
+				lastError: t.Nullable(t.String()),
+				lastResult: t.Nullable(
+					t.Object({
+						release: t.String(),
+						updated: t.Number(),
+						unchanged: t.Number()
+					})
+				)
+			}),
+			403: t.String()
+		}
+	})
+	.post(
+		'/sync',
+		({ set }) => {
+			if (getAceHostsSitePackSyncStatus().running) {
+				set.status = 409;
+				return { error: true, message: 'Site pack synchronization is already running' };
+			}
+
+			// The release can be large; do not hold the admin HTTP request open.
+			void syncAceHostsSitePacks().catch((error: unknown) => {
+				log.error({ err: error }, 'Manual ace-hosts site pack synchronization failed');
+			});
+			set.status = 202;
+			return { started: true };
+		},
+		{
+			detail: {
+				operationId: 'syncSitePacksFromGitHub',
+				summary: 'Trigger a site pack sync from the latest ace-hosts GitHub release',
+				security: [{ APIKeyHeader: [] }]
+			},
+			response: {
+				202: t.Object({ started: t.Boolean() }),
+				403: t.String(),
+				409: t.Object({ error: t.Boolean(), message: t.String() })
 			}
 		}
 	)

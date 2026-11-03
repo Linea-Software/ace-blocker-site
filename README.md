@@ -41,6 +41,35 @@ If the Docker database already has an older Drizzle migration history, the check
 
 Run `bun scripts/db-baseline.ts --dry-run` to inspect a legacy database without modifying it. Never delete the database or manually edit Drizzle history to resolve a rebase until you have checked the actual schema and made a backup.
 
+## Site pack synchronization
+
+The production site **pulls** the canonical site-pack ZIPs from the latest public
+[`Linea-Software/ace-hosts` GitHub Release](https://github.com/Linea-Software/ace-hosts/releases/latest).
+The `ace-hosts` workflow only builds and publishes GitHub release assets; it
+does **not** push them to the website. The site mirrors the 15 known
+`site-pack-*.zip` assets to BunnyCDN using the existing site-pack paths and
+database records. Each ZIP's SHA-256 must match its GitHub release digest or
+`sha256_checksums.txt` entry before any upload. Already-matching hashes are
+skipped, so regular syncs do not rewrite unchanged files.
+
+- **Startup:** the production server runs a sync during `hooks.server.ts:init`.
+  Errors are logged without preventing startup; the existing cached records
+  remain available.
+- **Monthly:** while the production server runs, it schedules a sync on the
+  **2nd day of each month at 04:00 UTC** (after the upstream 1st-day release).
+  The timer is process-local: keep the app process running, or restart it to
+  trigger startup sync after downtime.
+- **On demand:** an administrator can select **Admin → Releases → Site Packs →
+  Sync from GitHub**, which submits an async POST to
+  `/api/v1/admin/site-packs/sync`. The protected
+  `/api/v1/admin/site-packs/sync-status` endpoint reports progress and the
+  result. A running job cannot be started a second time on the same process.
+
+The existing administrator file-upload operation remains a separate manual
+fallback; GitHub Actions does not invoke it. No GitHub write token or
+GitHub-to-site upload webhook is required for site pack synchronization.
+BunnyCDN storage credentials must be configured on the website.
+
 ## Verification
 
 ```sh

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { apiClient } from '$lib/api-client';
+	import { invalidateAll } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -13,6 +15,7 @@
 		Hash,
 		List,
 		Lock,
+		RefreshCw,
 		Settings,
 		Trash2,
 		Unlock,
@@ -25,6 +28,18 @@
 	let uploadId = $state('');
 	let uploadName = $state('');
 	let uploadRequiresPro = $state(true);
+	type SyncStatus = {
+		running: boolean;
+		lastStartedAt: string | null;
+		lastCompletedAt: string | null;
+		lastError: string | null;
+		lastResult: { release: string; updated: number; unchanged: number } | null;
+	};
+	let liveSyncStatus = $state<SyncStatus | null>(null);
+	let syncStatus = $derived(liveSyncStatus ?? (data.syncStatus as SyncStatus));
+	let syncRequestPending = $state(false);
+	let syncMessage = $state('');
+	let lastNotifiedCompletion: string | null = null;
 
 	const proPacks = $derived(
 		data.sitePacks.filter(
@@ -47,6 +62,50 @@
 			day: 'numeric',
 			year: 'numeric'
 		});
+	}
+
+	async function refreshSyncStatus() {
+		const response = await apiClient.v1.admin['site-packs']['sync-status'].get();
+		if (!response.data) return;
+
+		const completedAt = response.data.lastCompletedAt;
+		const newCompletion =
+			completedAt !== null &&
+			completedAt !== (lastNotifiedCompletion ?? data.syncStatus.lastCompletedAt);
+		liveSyncStatus = response.data;
+		if (newCompletion) {
+			lastNotifiedCompletion = completedAt;
+			syncMessage = '';
+			await invalidateAll();
+		}
+	}
+
+	onMount(() => {
+		const timer = setInterval(() => {
+			void refreshSyncStatus().catch(() => {
+				// A transient status request failure must not stop future polls.
+			});
+		}, 3000);
+		return () => clearInterval(timer);
+	});
+
+	async function triggerSync() {
+		syncRequestPending = true;
+		syncMessage = '';
+		try {
+			const response = await apiClient.v1.admin['site-packs'].sync.post();
+			if (response.error) {
+				syncMessage = errorMessage(response, m.admin_sitepacks_sync_request_failed());
+				return;
+			}
+			liveSyncStatus = { ...syncStatus, running: true, lastError: null };
+			syncMessage = m.admin_sitepacks_sync_started();
+			await refreshSyncStatus();
+		} catch {
+			syncMessage = m.admin_sitepacks_sync_request_failed();
+		} finally {
+			syncRequestPending = false;
+		}
 	}
 
 	function resetUploadForm() {
@@ -322,6 +381,52 @@
 		{m.admin_releases_delete_site_pack({ name: item.name })}
 	</p>
 {/snippet}
+
+<section
+	class="mb-6 flex flex-col gap-4 rounded-lg border bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
+>
+	<div class="flex flex-col gap-2">
+		<h2 class="text-base font-semibold">{m.admin_sitepacks_sync_title()}</h2>
+		<p class="max-w-2xl text-sm text-muted-foreground">
+			{m.admin_sitepacks_sync_description()}
+		</p>
+		{#if syncStatus.running}
+			<p class="text-sm" role="status">{m.admin_sitepacks_sync_running()}</p>
+		{:else if syncStatus.lastError}
+			<p class="text-sm text-destructive" role="alert">
+				{m.admin_sitepacks_sync_failed()}: {syncStatus.lastError}
+			</p>
+		{:else if syncStatus.lastResult}
+			<p class="text-sm" role="status">
+				{m.admin_sitepacks_sync_complete({
+					release: syncStatus.lastResult.release,
+					updated: String(syncStatus.lastResult.updated),
+					unchanged: String(syncStatus.lastResult.unchanged)
+				})}
+			</p>
+		{:else}
+			<p class="text-sm text-muted-foreground">{m.admin_sitepacks_sync_never()}</p>
+		{/if}
+		{#if syncStatus.lastCompletedAt}
+			<p class="text-xs text-muted-foreground">
+				{m.admin_sitepacks_sync_last_completed({
+					date: formatDate(syncStatus.lastCompletedAt)
+				})}
+			</p>
+		{/if}
+		{#if syncMessage}
+			<p class="text-sm" role="status">{syncMessage}</p>
+		{/if}
+	</div>
+	<Button
+		variant="outline"
+		disabled={syncRequestPending || syncStatus.running}
+		onclick={triggerSync}
+	>
+		<RefreshCw class={syncStatus.running ? 'animate-spin' : undefined} aria-hidden="true" />
+		{m.admin_sitepacks_sync_button()}
+	</Button>
+</section>
 
 <ReleaseManager
 	Icon={List}

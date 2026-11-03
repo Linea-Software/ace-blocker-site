@@ -54,6 +54,7 @@ vi.mock('$lib/server/cdn/upload', () => ({ uploadSitePack }));
 import {
 	ACE_HOSTS_SITE_PACKS,
 	millisecondsUntilNextAceHostsSync,
+	getAceHostsSitePackSyncStatus,
 	parseSha256Checksums,
 	syncAceHostsSitePacks
 } from './ace-hosts-site-packs';
@@ -86,6 +87,63 @@ describe('ace-hosts site-pack sync', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		storedHashes.clear();
+	});
+
+	it('includes all 15 canonical ace-hosts release site packs', () => {
+		expect(ACE_HOSTS_SITE_PACKS).toHaveLength(15);
+		expect(new Set(ACE_HOSTS_SITE_PACKS.map((pack) => pack.id)).size).toBe(15);
+		expect(ACE_HOSTS_SITE_PACKS.map((pack) => pack.assetName)).toContain(
+			'site-pack-dating-pro.zip'
+		);
+		expect(ACE_HOSTS_SITE_PACKS.map((pack) => pack.assetName)).toContain(
+			'site-pack-anime-manga-extended.zip'
+		);
+	});
+
+	it('shares an in-flight sync between startup, monthly and manual triggers', async () => {
+		for (const definition of ACE_HOSTS_SITE_PACKS) {
+			storedHashes.set(definition.id, 'a'.repeat(64));
+		}
+		let finishFetch!: (response: Response) => void;
+		const responsePending = new Promise<Response>((resolve) => {
+			finishFetch = resolve;
+		});
+		const fetchMock = vi.fn().mockReturnValue(responsePending);
+		vi.stubGlobal('fetch', fetchMock);
+
+		const first = syncAceHostsSitePacks();
+		const second = syncAceHostsSitePacks();
+		expect(first).toBe(second);
+		expect(getAceHostsSitePackSyncStatus().running).toBe(true);
+
+		finishFetch(new Response(JSON.stringify(releaseResponse()), { status: 200 }));
+		await Promise.all([first, second]);
+		expect(fetchMock).toHaveBeenCalledOnce();
+		expect(getAceHostsSitePackSyncStatus()).toMatchObject({
+			running: false,
+			lastError: null,
+			lastResult: { release: 'v2026.09.01', updated: 0, unchanged: 15 }
+		});
+	});
+
+	it('records fetch errors and releases the lock for a retry', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(new Response('Unavailable', { status: 503 }));
+		vi.stubGlobal('fetch', fetchMock);
+
+		await expect(syncAceHostsSitePacks()).rejects.toThrow('status 503');
+		expect(getAceHostsSitePackSyncStatus()).toMatchObject({
+			running: false,
+			lastError: expect.stringContaining('503')
+		});
+
+		for (const definition of ACE_HOSTS_SITE_PACKS) {
+			storedHashes.set(definition.id, 'a'.repeat(64));
+		}
+		fetchMock.mockResolvedValue(
+			new Response(JSON.stringify(releaseResponse()), { status: 200 })
+		);
+		await expect(syncAceHostsSitePacks()).resolves.toMatchObject({ updated: 0, unchanged: 15 });
+		expect(getAceHostsSitePackSyncStatus().lastError).toBeNull();
 	});
 
 	it('parses sha256sum manifests', () => {

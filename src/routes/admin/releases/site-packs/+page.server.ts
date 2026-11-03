@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { sitePack } from '$lib/server/db/schema';
 import { desc } from 'drizzle-orm';
+import { getAceHostsSitePackSyncStatus } from '$lib/server/ace-hosts-site-packs';
 
 export const load: PageServerLoad = async () => {
 	const sitePacks = await db.select().from(sitePack).orderBy(desc(sitePack.updatedAt));
@@ -9,6 +10,7 @@ export const load: PageServerLoad = async () => {
 
 	return {
 		sitePacks,
-		totalDownloads
+		totalDownloads,
+		syncStatus: getAceHostsSitePackSyncStatus()
 	};
 };
