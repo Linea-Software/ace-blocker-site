@@ -22,11 +22,9 @@ const BILLING_PERIODS = ['monthly', 'yearly'] as const;
 
 export async function seedPrices() {
 	if (!process.env.DODO_PAYMENTS_API_KEY?.trim()) {
-		if (isProduction()) {
-			throw new Error('DODO_PAYMENTS_API_KEY is required for production price seeding');
-		}
-		log.warn('Dodo Payments is disabled in development: DODO_PAYMENTS_API_KEY is missing');
-		return;
+		throw new Error(
+			'[ACE ENV ERROR] Startup aborted: DODO_PAYMENTS_API_KEY is missing or empty'
+		);
 	}
 
 	// An invalid test-mode key (401) or an offline payment API must not prevent

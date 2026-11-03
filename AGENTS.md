@@ -88,11 +88,13 @@ Do not default to the old generic marketing composition: centered gradient hero,
 
 For visible marketing work, the mandatory design skills are `frontend-design`, `design-taste-frontend`, and `ui-ux-pro-max`. Use `svelte-code-writer`, `svelte-core-bestpractices`, and `svelte-components` for implementation, then `web-design-guidelines` plus real light/dark screenshots for final review. For dense account/admin product UI, treat `frontend-design` + `ui-ux-pro-max` as primary; `design-taste-frontend` must not override product-UI semantics.
 
-## Optional integrations in development
+## Environment validation at startup
 
-- Missing `RESEND_API_KEY` or BunnyCDN credentials must not throw during module imports or non-production builds. Missing `DODO_PAYMENTS_API_KEY` must skip the startup price synchronization only in development. The email transport returns an explicit error instead of making a network request; CDN operations return `CDNErrorType.ServiceUnavailable` and never issue placeholder URLs or network writes.
-- Production validation in `src/lib/server/config/production.ts` and `hooks.server.ts:init` must remain strict. Do not add production dummy credentials or suppress startup validation.
-- See `src/lib/server/optional-providers.test.ts` for missing-key regression tests. Set real local credentials only when exercising email delivery or CDN-dependent features; restart the development server after updating `.env`.
+- **Development now fails closed:** Vite's `configureServer` hook validates the presence and nonblank values of every required server environment setting **before the dev server listens**. `hooks.server.ts:init` repeats the check. Missing settings cause a clearly labeled `[ACE ENV ERROR]` with the missing variable names, not secret values. Fill in all required settings before starting development.
+- `src/lib/server/config/development.ts` derives the required keys from the production schema, excluding runtime `NODE_ENV`, production-only `BETTER_AUTH_URL` and `ORIGIN`, and optional settings such as `ACE_RELEASE_INGEST_TOKEN`. Empty and whitespace-only values count as missing; it does **not** make network calls or prove API credentials are valid.
+- **Builds, tests, migrations and scripts remain import-safe:** missing provider credentials must not throw at module import time, and the Vite startup check runs only for the real dev server (not Vitest). Email/CDN services still return explicit errors if invoked in a missing-key test. See `src/lib/server/optional-providers.test.ts`.
+- Production retains strict syntax/security validation in `src/lib/server/config/production.ts` and `hooks.server.ts:init`. Never bypass production validation or insert dummy production credentials.
+- In development, `BETTER_AUTH_URL` is not required: Better Auth resolves its base URL from `PUBLIC_BETTER_AUTH_URL` when absent. `ORIGIN` is read by the production SvelteKit Node adapter, not required by the Vite development server. Both remain strictly required by the production schema.
 
 ## SEO and AI-search conventions
 

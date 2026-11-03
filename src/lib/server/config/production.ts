@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { isProduction } from '../../env';
+import { isProduction } from '../../env.ts';
 
 const httpsUrl = z
 	.string()

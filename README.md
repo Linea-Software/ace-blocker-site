@@ -28,7 +28,9 @@ If `certutil` is already installed, no system packages are changed. Installation
 
 **Note:** `scripts/setup-vps.sh` is a separate, Debian/Ubuntu-specific production server provisioning script. It has not been adapted to Arch or other server distributions; do not use it there.
 
-Development keys for Resend, BunnyCDN and Dodo Payments can be left unset, but their respective features will remain unavailable. The database and Docker are still required.
+The **development server will refuse to start** if any required environment variable is absent, blank or whitespace-only. It prints a `[ACE ENV ERROR]` message listing the missing keys (never their values). Configure `.env` before launching `bun run dev`; `bun run setup` creates the file, but empty credential placeholders must be filled in. This includes Dodo Payments, Resend and BunnyCDN credentials. In development, `BETTER_AUTH_URL` is unnecessary because Better Auth falls back to `PUBLIC_BETTER_AUTH_URL`, and `ORIGIN` is only used by SvelteKit's production Node adapter; neither is required by the dev startup check. Both remain mandatory in production. Configure `PUBLIC_BETTER_AUTH_URL` for the local HTTPS origin. An absent optional `ACE_RELEASE_INGEST_TOKEN` or development-admin fixture credential does not block startup.
+
+The startup check verifies **presence**, not that external API credentials work; production keeps its stricter URL/secret validation. Tests, builds and configuration scripts do not require live provider credentials. The database and Docker are still required.
 
 ### Existing local databases and rebased migrations
 

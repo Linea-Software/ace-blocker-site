@@ -25,12 +25,12 @@ afterEach(() => {
 	vi.clearAllMocks();
 });
 
-describe('Dodo price seeding without a provider key', () => {
-	it('skips external API calls during development', async () => {
+describe('Dodo price seeding credential checks', () => {
+	it('rejects missing Dodo credentials during development before any API calls', async () => {
 		process.env.NODE_ENV = 'development';
 		delete process.env.DODO_PAYMENTS_API_KEY;
 
-		await expect(seedPrices()).resolves.toBeUndefined();
+		await expect(seedPrices()).rejects.toThrow(/\[ACE ENV ERROR\].*DODO_PAYMENTS_API_KEY/);
 		expect(productsList).not.toHaveBeenCalled();
 	});
 

@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 /**
- * Tooling-safe schema for environment variables the app may read. Production
- * startup validation is intentionally separate in `$lib/server/config/production`
- * so tests, migrations, generators, and setup scripts do not need every secret.
+ * Tooling-safe schema for environment variables the app may read. Required
+ * production and development startup checks live in their server/config modules
+ * so tests, migrations, generators, and setup scripts remain importable.
  */
 export const envSchema = z.object({
 	NODE_ENV: z.enum(['development', 'test', 'production']).optional(),

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-// Simulate an environment with none of the optional provider credentials.
+// Simulate provider module imports without credentials. The real development
+// server now refuses to start in this state; test/build imports must remain safe.
 vi.mock('$env/dynamic/private', () => ({ env: {} }));
 const { sendTransport, fetchTransport } = vi.hoisted(() => ({
 	sendTransport: vi.fn(),
@@ -29,7 +30,7 @@ import { getInstallerURL, getResistanceModeScriptsURL } from './cdn/get';
 import { deleteFileFromBunnyCDN } from './cdn/delete';
 import { uploadResistanceModeScript } from './cdn/upload';
 
-describe('development without optional API credentials', () => {
+describe('import-safe providers without configured credentials', () => {
 	it('imports the email service without creating a real Resend client or sending emails', async () => {
 		const result = await resend.emails.send({
 			from: 'noreply@aceblocker.com',

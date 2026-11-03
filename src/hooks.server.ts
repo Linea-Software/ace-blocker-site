@@ -12,6 +12,7 @@ import crypto from 'crypto';
 import { v7 as uuidv7 } from 'uuid';
 import { dev } from '$app/environment';
 import { assertProductionEnvironment } from '$lib/server/config/production';
+import { assertDevelopmentEnvironment } from '$lib/server/config/development';
 import { startAceHostsSitePackSync, syncAceHostsSitePacks } from '$lib/server/ace-hosts-site-packs';
 
 const handleParaglide: Handle = ({ event, resolve }) =>
@@ -97,7 +98,8 @@ export const handle: Handle = sequence(
 
 export async function init() {
 	logger.info('Initializing application...');
-	if (!dev) assertProductionEnvironment();
+	if (dev) assertDevelopmentEnvironment();
+	else assertProductionEnvironment();
 	await seedPrices(); // creates Dodo products and populates the checkout plugin's product list
 	await seedDatabase();
 	if (!dev) {
