@@ -14,6 +14,10 @@ bun run dev
 
 `bun run setup` checks for NSS `certutil` (needed for trusting local HTTPS certificates), creates or updates `.env`, starts the local PostgreSQL container and applies database migrations. The development site is served at `https://localhost:5173/`.
 
+**Local development admin:** `bun run setup` also fills in missing or empty `DEFAULT_ADMIN_EMAIL`, `DEFAULT_ADMIN_USERNAME` and `DEFAULT_ADMIN_PASSWORD` settings. After `bun run dev` initializes the database, sign in at [https://localhost:5173/signin](https://localhost:5173/signin) with **`dev@example.com` / `dev-password`** (unless you provided custom credentials in `.env`). There is no separate provisioning command or manual email verification in development. Existing accounts are promoted to admin and verified without resetting their passwords; if the account already exists, continue using its original password. Never expose the development server or its default credentials on a public network.
+
+Development fixtures run **only against a local PostgreSQL URL** (`localhost`, `127.0.0.1` or `::1`) and abort startup if the database is remote or the environment is marked as production. A custom `DEFAULT_ADMIN_EMAIL` requires a custom `DEFAULT_ADMIN_PASSWORD` (at least 12 characters); otherwise the setup aborts instead of assigning a publicly known password to a custom address. The production administrator must still be provisioned separately via `bun run provision-admin` / the VPS setup workflow.
+
 On Linux the script detects the distribution through `/etc/os-release` (falling back to `/usr/lib/os-release`) and installs the missing NSS tools with the appropriate package manager:
 
 | Distribution family                                 | Package manager | NSS tools package   |

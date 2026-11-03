@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { createUser, selectQueue, updateSet, updateWhere, updateProExpiration } = vi.hoisted(() => ({
 	createUser: vi.fn(),
@@ -67,8 +67,25 @@ function queueExistingNonAdminFixtures() {
 	);
 }
 
+const originalEnvironment = { ...process.env };
+
+afterEach(() => {
+	for (const key of [
+		'DATABASE_URL',
+		'NODE_ENV',
+		'DEFAULT_ADMIN_EMAIL',
+		'DEFAULT_ADMIN_USERNAME',
+		'DEFAULT_ADMIN_PASSWORD'
+	] as const) {
+		if (originalEnvironment[key] === undefined) delete process.env[key];
+		else process.env[key] = originalEnvironment[key];
+	}
+});
+
 describe('development user seeder', () => {
 	beforeEach(() => {
+		process.env.NODE_ENV = 'development';
+		process.env.DATABASE_URL = 'postgresql://postgres@localhost:5432/aceblocker';
 		vi.clearAllMocks();
 		selectQueue.length = 0;
 		process.env.DEFAULT_ADMIN_EMAIL = 'Admin@Example.com';
@@ -101,6 +118,35 @@ describe('development user seeder', () => {
 			'admin@example.com',
 			new Date('2099-01-01')
 		);
+	});
+
+	it('uses the default development admin when .env has no admin credentials', async () => {
+		delete process.env.DEFAULT_ADMIN_EMAIL;
+		delete process.env.DEFAULT_ADMIN_USERNAME;
+		delete process.env.DEFAULT_ADMIN_PASSWORD;
+		selectQueue.push([], [{ id: 'dev-id', email: 'dev@example.com' }]);
+		queueExistingNonAdminFixtures();
+
+		await seedDatabase();
+
+		expect(createUser).toHaveBeenCalledWith({
+			body: { name: 'Admin', email: 'dev@example.com', password: 'dev-password' }
+		});
+		expect(updateSet).toHaveBeenCalledWith({ role: 'admin', emailVerified: true });
+	});
+
+	it('refuses to seed any user accounts into a nonlocal database', async () => {
+		process.env.DATABASE_URL = 'postgresql://postgres@db.example.com:5432/aceblocker';
+		await expect(seedDatabase()).rejects.toThrow(/\[ACE DEV SEED ERROR\]/);
+		expect(createUser).not.toHaveBeenCalled();
+		expect(updateSet).not.toHaveBeenCalled();
+	});
+
+	it('never creates a custom admin with the default password', async () => {
+		process.env.DEFAULT_ADMIN_EMAIL = 'real@example.com';
+		delete process.env.DEFAULT_ADMIN_PASSWORD;
+		await expect(seedDatabase()).rejects.toThrow(/custom DEFAULT_ADMIN_PASSWORD/);
+		expect(createUser).not.toHaveBeenCalled();
 	});
 
 	it('re-promotes an existing configured development admin without resetting its password', async () => {

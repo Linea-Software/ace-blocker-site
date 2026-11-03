@@ -1,6 +1,7 @@
 import { $ } from 'bun';
 import { join } from 'path';
 import { resolveLinuxNssInstallPlan } from './linux-setup';
+import { configureDevelopmentAdminEnv } from './dev-admin-setup';
 
 async function runCommand(command: string, args: string[]) {
 	// Use sudo only for privileged Linux commands and only when not already root.
@@ -68,6 +69,12 @@ async function ensureLinuxNssTools() {
 }
 
 async function main() {
+	if (process.env.NODE_ENV === 'production') {
+		throw new Error(
+			'[ACE DEV SETUP ERROR] bun run setup is development-only. Use the production VPS provisioning workflow instead.'
+		);
+	}
+
 	// 0. Install system dependencies (Linux only)
 	if (process.platform === 'linux') {
 		await ensureLinuxNssTools();
@@ -125,13 +132,12 @@ async function main() {
 		needsUpdate = true;
 	}
 
-	// 1.6. Set ADMIN_EMAIL if missing
-	if (!envContent.includes('ADMIN_EMAIL')) {
-		console.log('📧 Adding ADMIN_EMAIL...');
-		if (!envContent.endsWith('\n')) envContent += '\n';
-		envContent += `ADMIN_EMAIL="admin@aceblocker.com"\n`;
-		needsUpdate = true;
-	}
+	// 1.6. Prepare the local development admin account, independent of the
+	// production-only provisioning flow. Existing custom credentials are kept.
+	const devAdminSetup = configureDevelopmentAdminEnv(envContent);
+	envContent = devAdminSetup.content;
+	needsUpdate ||= devAdminSetup.changed;
+	console.log(`👤 Development administrator: ${devAdminSetup.email}`);
 
 	// 2. Check DODO_PAYMENTS_API_KEY
 	if (
@@ -175,6 +181,10 @@ async function main() {
 	console.log('Database migrations applied successfully.');
 
 	console.log('\n✨ Setup complete! You can now run the development server.');
+	console.log(`🔐 Development admin: ${devAdminSetup.email} — https://localhost:5173/signin`);
+	console.log(
+		'   New accounts use the password configured in DEFAULT_ADMIN_PASSWORD (existing passwords are not changed).'
+	);
 }
 
 main().catch((error) => {

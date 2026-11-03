@@ -5,6 +5,10 @@ import { eq } from 'drizzle-orm';
 import { dev } from '$app/environment';
 import { updateProExpiration } from '$lib/server/pro';
 import { createLogger } from '$lib/server/logger';
+import {
+	assertLocalDevelopmentDatabase,
+	resolveDevelopmentAdmin
+} from '$lib/server/config/dev-admin';
 
 const log = createLogger('seeder:user');
 
@@ -15,41 +19,49 @@ const log = createLogger('seeder:user');
 export async function seedDatabase() {
 	if (!dev) return;
 
+	// Guard before any reads/writes: fixture passwords must never reach a
+	// remote DB, even when a dev bundle is accidentally started against one.
+	assertLocalDevelopmentDatabase();
+	const {
+		email: adminEmail,
+		username: adminUsername,
+		password: adminPassword
+	} = resolveDevelopmentAdmin();
 	log.info('Seeding development users...');
 
-	const adminEmail = process.env.DEFAULT_ADMIN_EMAIL?.trim().toLowerCase();
-	const adminUsername = process.env.DEFAULT_ADMIN_USERNAME?.trim();
-	const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD;
+	let adminUsers = await db.select().from(user).where(eq(user.email, adminEmail)).limit(1);
+	const adminAlreadyExists = adminUsers.length > 0;
 
-	if (adminEmail && adminUsername && adminPassword) {
-		let adminUsers = await db.select().from(user).where(eq(user.email, adminEmail)).limit(1);
-
-		if (adminUsers.length === 0) {
-			await auth.api.createUser({
-				body: {
-					name: adminUsername,
-					email: adminEmail,
-					password: adminPassword
-				}
-			});
-			adminUsers = await db.select().from(user).where(eq(user.email, adminEmail)).limit(1);
-			log.info('Created development admin user');
-		}
-
-		const adminUser = adminUsers[0];
-		if (adminUser) {
-			await db
-				.update(user)
-				.set({
-					role: 'admin',
-					emailVerified: true
-				})
-				.where(eq(user.id, adminUser.id));
-			await updateProExpiration(adminEmail, new Date('2099-01-01'));
-		}
-	} else {
-		log.warn('Development admin credentials are not fully configured');
+	if (!adminAlreadyExists) {
+		await auth.api.createUser({
+			body: {
+				name: adminUsername,
+				email: adminEmail,
+				password: adminPassword
+			}
+		});
+		adminUsers = await db.select().from(user).where(eq(user.email, adminEmail)).limit(1);
+		log.info('Created development admin user');
 	}
+
+	const adminUser = adminUsers[0];
+	if (!adminUser)
+		throw new Error('[ACE DEV SEED ERROR] Development administrator was not created');
+
+	await db
+		.update(user)
+		.set({
+			role: 'admin',
+			emailVerified: true
+		})
+		.where(eq(user.id, adminUser.id));
+	await updateProExpiration(adminEmail, new Date('2099-01-01'));
+	log.info(
+		{ email: adminEmail, url: 'https://localhost:5173/signin' },
+		adminAlreadyExists
+			? 'Development admin ready (existing password unchanged)'
+			: 'Development admin created (password configured via DEFAULT_ADMIN_PASSWORD)'
+	);
 
 	const proEmail = 'delivered+pro@resend.dev';
 	let proUser = await db.select().from(user).where(eq(user.email, proEmail)).limit(1);

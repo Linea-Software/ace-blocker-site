@@ -12,12 +12,15 @@ ALWAYS use **Bun** for all package management and script execution tasks.
 - **TypeScript compatibility**: Keep `typescript@~6` and `@typescript/native@npm:typescript@7` installed together while `svelte-check` requires both. The `check` script uses `--tsgo`. Do not bump the root `typescript` dependency to 7 until Svelte tooling supports it without TypeScript 6.
 - **Adapter compatibility**: Keep `@sveltejs/adapter-node` on v5 while using SvelteKit 2; adapter-node v6 requires SvelteKit 3. Review the migration as a coordinated major update.
 - **Running Locally**: The development server is ALWAYS running at `https://localhost:5173/` during development. You do NOT need to run `bun run dev` yourself. Use this URL to test and verify changes.
-- **Initial Setup**: Run `bun run setup` to configure `.env` (generating `BETTER_AUTH_SECRET` if needed), start Docker PostgreSQL, and apply Drizzle migrations. `scripts/setup.ts` detects Debian/Ubuntu, Arch, Fedora/RHEL, openSUSE and Alpine via `os-release`, checks `certutil` first, and installs distro-specific NSS tools only when needed; package selection lives in `scripts/linux-setup.ts` and is covered by unit tests. See README.md. The production VPS script `scripts/setup-vps.sh` is separately Debian/Ubuntu-specific; do not treat it as portable.
+- **Initial Setup**: Run `bun run setup` to configure `.env` (generating `BETTER_AUTH_SECRET` and filling missing `DEFAULT_ADMIN_*` fixture credentials if needed), start Docker PostgreSQL, and apply Drizzle migrations. `scripts/setup.ts` detects Debian/Ubuntu, Arch, Fedora/RHEL, openSUSE and Alpine via `os-release`, checks `certutil` first, and installs distro-specific NSS tools only when needed; package selection lives in `scripts/linux-setup.ts` and is covered by unit tests. See README.md. The production VPS script `scripts/setup-vps.sh` is separately Debian/Ubuntu-specific; do not treat it as portable.
 - **Local DB migration rebases**: The checked-in `drizzle/0000` replaces earlier development migration files. `bun run setup` executes `bun scripts/db-baseline.ts` before `db:migrate`; it compares the existing local catalog against the checked-in snapshot and, only for a matching legacy schema, records the new baseline while preserving older migration history. It removes the obsolete `account.issuer` field only if `account` is empty under an exclusive lock. Any unexpected differences or non-local/prod URL must fail closed. Run `bun scripts/db-baseline.ts --dry-run` for read-only diagnosis. Do not reset user databases or hand-edit migration history. See README.md.
 - **Database Management**: Run `bun run db:delete` to stop the Docker database and delete its associated volumes (virtual disk); this is destructive and must never be used as an automatic migration-repair step.
-- **Development Credentials**: In development mode, a default admin user is automatically created:
+- **Development Credentials**: `bun run setup` fills missing/blank `DEFAULT_ADMIN_EMAIL`, `DEFAULT_ADMIN_USERNAME` and `DEFAULT_ADMIN_PASSWORD` in `.env` without overwriting nonblank custom values. The dev seeder also falls back to these defaults:
     - **Email**: `dev@example.com`
+    - **Username**: `Admin`
     - **Password**: `dev-password`
+    - **Login**: `https://localhost:5173/signin` after `bun run dev`
+      Both `hooks.server.ts:init` and `seedDatabase()` require a local loopback PostgreSQL URL before seeding any dev account. Existing users retain their passwords; only role/email verification/Pro fixture are updated. For custom admin emails, require a custom 12+-character password (never assign the public dev password). Do not log passwords. The production provisioning flow in `scripts/provision-admin.ts` remains separate and unchanged.
 - **Committing Changes**: You **MUST** perform git commits yourself. Once you have finished a task and verified it, run `git add .` and `git commit -m "..."` with a descriptive message. Do NOT ask the user to commit for you.
 
 ## Self-Maintenance (IMPORTANT)
@@ -194,7 +197,7 @@ Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })
 
 Use `bun run <script>` for these tasks:
 
-- `setup`: Configures `.env`, starts Docker DB, and applies migrations.
+- `setup`: Configures `.env`, including default development admin credentials, starts Docker DB, and applies migrations. The pure `.env` helper `scripts/dev-admin-setup.ts` refuses remote/production database targets and preserves custom credentials; see the config and seeder tests.
 - `setup-env`: Production `.env` configuration must validate third-party credentials when a safe read-only/non-effectful provider check exists, re-prompt rejected credentials, and fail closed on provider/network ambiguity rather than saving unverified values. Webhook/signing secrets with no standalone verification endpoint must be called out honestly.
 - `scripts/setup-vps.sh`: Deployment credential prompts must validate GitHub/Cloudflare/B2 access before relying on the values and re-prompt invalid credentials without persisting plaintext secrets.
 - `db:start`: Starts the Docker database.
