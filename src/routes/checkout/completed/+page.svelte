@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { CheckCircle2, CircleAlert, Download, Loader2, RefreshCw } from '@lucide/svelte';
+	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import Navbar from '$lib/components/Navbar.svelte';
@@ -7,6 +8,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { apiClient } from '$lib/api-client';
 	import { buildEngineLinkUrl } from '$lib/utils';
+	import { pollForProConfirmation } from '$lib/utils/checkout-confirmation';
 	import * as m from '$lib/paraglide/messages.js';
 
 	let { data } = $props();
@@ -16,17 +18,18 @@
 	const isFailed = $derived(status === 'failed');
 
 	const isPro = $derived(data.isPro);
-	let verificationInProcess = $state(false);
+	let confirmationState = $state<'checking' | 'pending' | 'error'>('checking');
+	let verificationBusy = false;
+	let verificationAbort: AbortController | null = null;
 	let activationStatus = $state<'idle' | 'activating' | 'pending' | 'failed'>('idle');
 
 	const pageTitle = $derived(
 		isFailed ? m.checkout_page_title_failed() : m.checkout_page_title_success()
 	);
 
-	$effect(() => {
-		if (isSuccess && !isPro && !verificationInProcess && data.success) {
-			verifyProStatus();
-		}
+	onMount(() => {
+		if (isSuccess && !isPro && data.success) void verifyProStatus();
+		return () => verificationAbort?.abort();
 	});
 
 	$effect(() => {
@@ -36,21 +39,54 @@
 		}
 	});
 
+	function waitForVerification(signal: AbortSignal): Promise<void> {
+		return new Promise((resolve, reject) => {
+			if (signal.aborted) return reject(new Error('Verification cancelled'));
+			const onAbort = () => {
+				clearTimeout(timer);
+				reject(new Error('Verification cancelled'));
+			};
+			const timer = setTimeout(() => {
+				signal.removeEventListener('abort', onAbort);
+				resolve();
+			}, 2000);
+			signal.addEventListener('abort', onAbort, { once: true });
+		});
+	}
+
 	async function verifyProStatus() {
-		verificationInProcess = true;
+		if (verificationBusy) return;
+		verificationBusy = true;
+		confirmationState = 'checking';
+		verificationAbort?.abort();
+		const controller = new AbortController();
+		verificationAbort = controller;
 		try {
-			await new Promise((resolve) => setTimeout(resolve, 2000));
-			const res = await fetch('/api/v1/account/verify-pro', { method: 'POST' });
-			if (res.ok) {
-				const result = await res.json();
-				if (result.isActive) {
-					await invalidateAll();
-				}
+			const outcome = await pollForProConfirmation(
+				async () => {
+					// Bound each request: an unreachable provider should not leave
+					// checkout stuck on a spinner indefinitely.
+					const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]);
+					const res = await fetch('/api/v1/account/verify-pro', {
+						method: 'POST',
+						signal
+					});
+					if (!res.ok) throw new Error(`Verification returned HTTP ${res.status}`);
+					const result: { isActive: boolean } = await res.json();
+					return result.isActive;
+				},
+				() => waitForVerification(controller.signal)
+			);
+			if (controller.signal.aborted) return;
+			if (outcome === 'active') await invalidateAll();
+			else confirmationState = 'pending';
+		} catch (error) {
+			if (!controller.signal.aborted) {
+				console.error('Pro verification failed', error);
+				confirmationState = 'error';
 			}
-		} catch (e) {
-			console.error('Verification failed', e);
 		} finally {
-			verificationInProcess = false;
+			verificationBusy = false;
 		}
 	}
 
@@ -140,17 +176,43 @@
 {:else if !isPro}
 	<main id="main-content" class="ace-shell min-h-[55vh] py-16 sm:py-24">
 		<div class="max-w-2xl border-l-4 border-signal pl-6">
-			<Loader2
-				class="size-6 animate-spin text-signal-deep dark:text-signal"
-				aria-hidden="true"
-			/>
-			<h1 class="mt-5 font-display text-4xl font-semibold">{m.checkout_pending_title()}</h1>
-			<p class="mt-4 text-muted-foreground">{m.checkout_pending_description()}</p>
-			<a
-				href={resolve('/account')}
-				class="mt-7 inline-flex min-h-11 items-center rounded-md border border-border px-5 font-medium"
-				>{m.checkout_pending_account()}</a
-			>
+			{#if data.success && confirmationState === 'checking'}
+				<Loader2
+					class="size-6 animate-spin text-signal-deep dark:text-signal"
+					aria-hidden="true"
+				/>
+			{:else}
+				<CircleAlert class="size-6 text-signal-deep dark:text-signal" aria-hidden="true" />
+			{/if}
+			<h1 class="mt-5 font-display text-4xl font-semibold">
+				{data.success && confirmationState === 'checking'
+					? m.checkout_pending_title()
+					: m.checkout_pending_delayed_title()}
+			</h1>
+			<p class="mt-4 text-muted-foreground" role="status">
+				{!data.success || confirmationState === 'error'
+					? m.checkout_pending_error_description()
+					: confirmationState === 'pending'
+						? m.checkout_pending_delayed_description()
+						: m.checkout_pending_description()}
+			</p>
+			<div class="mt-7 flex flex-wrap gap-3">
+				{#if data.success && confirmationState !== 'checking'}
+					<button
+						type="button"
+						onclick={verifyProStatus}
+						class="inline-flex min-h-11 items-center gap-2 rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90"
+					>
+						<RefreshCw class="size-4" aria-hidden="true" />
+						{m.checkout_pending_retry()}
+					</button>
+				{/if}
+				<a
+					href={resolve('/account')}
+					class="inline-flex min-h-11 items-center rounded-md border border-border px-5 font-medium"
+					>{m.checkout_pending_account()}</a
+				>
+			</div>
 		</div>
 	</main>
 {:else}
