@@ -2,6 +2,10 @@ import { $ } from 'bun';
 import { join } from 'path';
 import { resolveLinuxNssInstallPlan } from './linux-setup';
 import { configureDevelopmentAdminEnv } from './dev-admin-setup';
+import {
+	defaultEntitlementKeyDirectory,
+	ensureEntitlementKeysInText
+} from './entitlement-key-setup';
 
 async function runCommand(command: string, args: string[]) {
 	// Use sudo only for privileged Linux commands and only when not already root.
@@ -139,6 +143,20 @@ async function main() {
 	needsUpdate ||= devAdminSetup.changed;
 	console.log(`👤 Development administrator: ${devAdminSetup.email}`);
 
+	// 1.7. Local Ed25519 signing keys. VPS bootstrapping generates its own
+	// production pair via setup-env.ts instead of inheriting development keys.
+	if (process.env.ACE_VPS_BOOTSTRAP !== '1') {
+		const entitlement = ensureEntitlementKeysInText(
+			envContent,
+			defaultEntitlementKeyDirectory('development')
+		);
+		envContent = entitlement.content;
+		needsUpdate ||= entitlement.changed;
+		console.log(
+			'🔐 Entitlement signing keys: ' + entitlement.source + ' (private key not shown).'
+		);
+	}
+
 	// 2. Check DODO_PAYMENTS_API_KEY
 	if (
 		!envContent.includes('DODO_PAYMENTS_API_KEY') ||
@@ -151,6 +169,8 @@ async function main() {
 
 	if (isNewFile || needsUpdate) {
 		await Bun.write(envPath, envContent);
+		if (process.platform !== 'win32')
+			await (await import('node:fs/promises')).chmod(envPath, 0o600);
 		console.log(`✅ ${isNewFile ? 'Created' : 'Updated'} .env file successfully.`);
 	} else {
 		console.log('✨ .env is already up to date.');

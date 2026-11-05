@@ -907,11 +907,12 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 
 ## Signed Pro entitlements
 
-The desktop engine accepts only signed, API-key-bound Ed25519 leases. Create a
-key pair on a trusted machine **outside the repository**:
+The desktop engine accepts only signed, API-key-bound Ed25519 leases. In development, `bun run setup` or `bun run gen:entitlement-keys` creates/reuses the dev pair under `~/.config/ace-blocker/dev-entitlement-keys` and adds both signing variables to `.env`. On VPS, `setup-vps.sh` → `setup-env.ts` (also used by `scripts/vps/app-service.sh`) creates/reuses a separate production pair under `~/.config/ace-blocker/entitlement-keys` and writes both values to the deployment `.env` (mode 0600). Valid existing values are preserved; partial/mismatched pairs fail rather than rotating.
+
+To generate a standalone pair on a trusted machine **outside the repository** without modifying `.env`, run:
 
 ```bash
-bun scripts/generate-entitlement-keys.ts "$HOME/.config/ace-blocker/entitlement-keys"
+bun run gen:entitlement-keys -- "$HOME/.config/ace-blocker/entitlement-keys"
 ```
 
 The resulting `server-signing-private.b64` contains the PKCS#8 DER private key

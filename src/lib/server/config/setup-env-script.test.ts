@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { generateKeyPairSync } from 'node:crypto';
 import { isProduction } from '../../env';
 import { getAuthRateLimitConfig } from './auth-security';
 import { getCdnEnvironmentPrefix } from '../cdn/environment';
@@ -12,11 +13,25 @@ import {
 	validateResendApiKey
 } from '../../../../scripts/setup-env';
 
+const { privateKey: testSigningKey, publicKey: testVerificationKey } =
+	generateKeyPairSync('ed25519');
+
 function configuredEnv() {
 	return new Map<string, string>([
 		['POSTGRES_USER', 'postgres'],
 		['POSTGRES_PASSWORD', 'db-password'],
 		['POSTGRES_DB', 'aceblocker'],
+		[
+			'ACE_ENTITLEMENT_SIGNING_KEY_BASE64',
+			testSigningKey.export({ type: 'pkcs8', format: 'der' }).toString('base64')
+		],
+		[
+			'ACE_ENTITLEMENT_PUBLIC_KEY_BASE64',
+			testVerificationKey
+				.export({ type: 'spki', format: 'der' })
+				.subarray(-32)
+				.toString('base64')
+		],
 		['DODO_PAYMENTS_API_KEY', 'dodo-test-key'],
 		['DODO_PAYMENTS_WEBHOOK_SECRET', 'dodo-webhook-secret'],
 		['RESEND_API_KEY', 'resend-test-key'],

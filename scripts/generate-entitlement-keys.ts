@@ -1,31 +1,42 @@
-import { generateKeyPairSync } from 'node:crypto';
-import { existsSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs';
-import { join, resolve, sep } from 'node:path';
+/** CLI: provision development entitlement keys and populate .env without logging secrets. */
+import { chmodSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+	defaultEntitlementKeyDirectory,
+	ensureEntitlementKeyFiles,
+	ensureEntitlementKeysInText
+} from './entitlement-key-setup';
 
-const output = process.argv[2];
-if (!output) throw new Error('Usage: bun scripts/generate-entitlement-keys.ts <secure-output-dir>');
-const repository = resolve(import.meta.dir, '..');
-const dest = resolve(output);
-if (dest === repository || dest.startsWith(repository + sep))
-	throw new Error('Output must be outside the source repository');
-mkdirSync(dest, { recursive: true, mode: 0o700 });
-const actual = realpathSync(dest);
-if (actual === repository || actual.startsWith(repository + sep))
-	throw new Error('Output must resolve outside the repository');
-const privatePath = join(actual, 'server-signing-private.b64');
-const publicPath = join(actual, 'desktop-verification-public.b64');
-if (existsSync(privatePath) || existsSync(publicPath))
-	throw new Error('Refusing to overwrite an existing key pair');
-const { privateKey, publicKey } = generateKeyPairSync('ed25519');
-writeFileSync(privatePath, privateKey.export({ type: 'pkcs8', format: 'der' }).toString('base64'), {
-	flag: 'wx',
-	mode: 0o600
-});
-writeFileSync(
-	publicPath,
-	publicKey.export({ type: 'spki', format: 'der' }).subarray(-32).toString('base64'),
-	{ flag: 'wx', mode: 0o600 }
-);
-console.log(
-	'Key pair created without printing private material. Keep the private file only in the server secret manager.'
-);
+if (import.meta.main) {
+	const args = process.argv.slice(2).filter((arg) => arg !== '--');
+	if (args.length > 1) throw new Error('Usage: bun run gen:entitlement-keys [secure-output-dir]');
+	if (args.length === 1) {
+		// Preserve standalone generation for creating a pair on a trusted machine.
+		const result = ensureEntitlementKeyFiles(args[0]);
+		console.log(
+			'Entitlement key files ' +
+				(result.source === 'generated' ? 'generated' : 'reused') +
+				' outside repository. No secrets printed.'
+		);
+	} else {
+		const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+		const envPath = join(root, '.env');
+		const template = join(root, '.env.example');
+		const current = existsSync(envPath)
+			? readFileSync(envPath, 'utf8')
+			: readFileSync(template, 'utf8');
+		const result = ensureEntitlementKeysInText(
+			current,
+			defaultEntitlementKeyDirectory('development')
+		);
+		if (result.changed || !existsSync(envPath))
+			writeFileSync(envPath, result.content, { mode: 0o600 });
+		if (process.platform !== 'win32') chmodSync(envPath, 0o600);
+		console.log(
+			'Development entitlement keys ' +
+				(result.source === 'generated' ? 'generated' : 'reused') +
+				' and .env configured. No secrets printed.'
+		);
+	}
+}

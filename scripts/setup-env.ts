@@ -1,7 +1,11 @@
 #!/usr/bin/env bun
 
 /** Production .env configuration used by scripts/setup-vps.sh. */
-import { readFile, writeFile } from 'node:fs/promises';
+import { chmod, readFile, writeFile } from 'node:fs/promises';
+import {
+	defaultEntitlementKeyDirectory,
+	ensureEntitlementKeysInMap
+} from './entitlement-key-setup';
 import { randomBytes } from 'node:crypto';
 import * as readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
@@ -82,6 +86,11 @@ export function formatEnv(env: EnvMap): string {
 		['# ── Dodo Payments ──', 'DODO_PAYMENTS_API_KEY', 'DODO_PAYMENTS_WEBHOOK_SECRET'],
 		['# ── Email (Resend) ──', 'RESEND_API_KEY'],
 		['# ── Release intake ──', 'ACE_RELEASE_INGEST_TOKEN'],
+		[
+			'# ── Signed Pro entitlements ──',
+			'ACE_ENTITLEMENT_SIGNING_KEY_BASE64',
+			'ACE_ENTITLEMENT_PUBLIC_KEY_BASE64'
+		],
 		[
 			'# ── BunnyCDN ──',
 			'BUNNY_URL_TOKEN_AUTH_KEY',
@@ -344,6 +353,11 @@ async function main() {
 		env = new Map();
 	}
 	configureProductionEnvironment(env, domain);
+	const entitlement = ensureEntitlementKeysInMap(
+		env,
+		defaultEntitlementKeyDirectory('production')
+	);
+	ok('Entitlement signing keys ' + entitlement.source + '; private key hidden.');
 
 	if (isFullyConfigured(env)) {
 		const invalid = await validateStoredProviderCredentials(env);
@@ -355,7 +369,8 @@ async function main() {
 			);
 			rl.close();
 			if (answer.trim().toLowerCase() !== 'edit') {
-				await writeFile(envFile, formatEnv(env), 'utf-8');
+				await writeFile(envFile, formatEnv(env), { encoding: 'utf-8', mode: 0o600 });
+				await chmod(envFile, 0o600);
 				ok('Production values refreshed without rotating secrets.');
 				return;
 			}
@@ -490,7 +505,8 @@ async function main() {
 		);
 		throw error;
 	}
-	await writeFile(envFile, formatEnv(env), 'utf-8');
+	await writeFile(envFile, formatEnv(env), { encoding: 'utf-8', mode: 0o600 });
+	await chmod(envFile, 0o600);
 	ok(`Environment configured and saved to ${envFile}`);
 }
 

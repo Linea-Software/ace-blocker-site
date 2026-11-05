@@ -8,6 +8,7 @@
 		"build": "vite build",
 		"setup": "bun scripts/setup.ts",
 		"setup-env": "bun scripts/setup-env.ts",
+		"gen:entitlement-keys": "bun scripts/generate-entitlement-keys.ts",
 		"provision-admin": "bun scripts/provision-admin.ts",
 		"preview": "vite preview",
 		"paraglide:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide --strategy url baseLocale",

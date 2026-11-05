@@ -551,7 +551,9 @@ rm -f "$ASKPASS_SH" "$ASKPASS_CREDS"
 # ── 10. Install Dependencies & Run Setup ────────────────────────────────────
 step "10. Dependencies & Setup"
 su - "$USERNAME" -c "cd '${APP_DIR}' && '${BUN}' install --frozen-lockfile"
-su - "$USERNAME" -c "cd '${APP_DIR}' && '${BUN}' run setup"
+# The bootstrap uses development setup only to prepare the local database.
+# Entitlement keys are created separately by production setup-env below.
+su - "$USERNAME" -c "cd '${APP_DIR}' && ACE_VPS_BOOTSTRAP=1 '${BUN}' run setup"
 ok "Dependencies installed, setup complete."
 
 # ── 11. Production Environment Variables ────────────────────────────────────
@@ -564,7 +566,8 @@ ENV_FILE="${APP_DIR}/.env"
 chmod 600 "$ENV_FILE"
 chown "${USERNAME}:${USERNAME}" "$ENV_FILE"
 
-# Delegate .env configuration to Bun (handles prompts, derivation, and validation)
+# Delegate .env configuration to Bun (including production entitlement key
+# provisioning outside the checkout, prompts, derivation, and validation)
 su - "$USERNAME" -c "cd '${APP_DIR}' && '${BUN}' run setup-env -- --domain '${DOMAIN}' --env-file '${ENV_FILE}'"
 chmod 600 "$ENV_FILE"
 
