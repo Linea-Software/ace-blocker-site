@@ -97,7 +97,7 @@
 		"mode-watcher": "^1.1.0",
 		"neverthrow": "^8.2.0",
 		"pino": "^10.4.0",
-		"postgres": "^3.4.9",
+		"postgres": "^4.0.0",
 		"resend": "^6.34.1",
 		"svelte-sonner": "^1.2.2",
 		"uuid": "^14.0.3",
