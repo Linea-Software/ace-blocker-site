@@ -9,9 +9,13 @@ import {
 } from '$lib/server/pro';
 import { db } from '$lib/server/db';
 import { user as userTable, apikey, proStatus, backups, session } from '$lib/server/db/schema';
-import { eq, like } from 'drizzle-orm';
+import { eq, like, and, isNull } from 'drizzle-orm';
 import { createLogger } from '$lib/server/logger';
 import { issueEntitlement, getEntitlementPublicKey } from '$lib/server/entitlements';
+import {
+	findActiveBillingSubscriptions,
+	latestActiveBillingSubscription
+} from '$lib/server/billing-subscription';
 
 const log = createLogger('api:account');
 
@@ -252,26 +256,19 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 			try {
 				const userRow = await db.query.user.findFirst({
 					where: (u, { eq }) => eq(u.id, user.id),
-					columns: { dodoCustomerId: true }
+					columns: { dodoCustomerId: true, email: true, emailVerified: true }
 				});
 
-				if (!userRow?.dodoCustomerId) {
-					return status(400, 'No Dodo Payments customer found');
-				}
+				if (!userRow) return status(401, 'Unauthorized');
+				const { matches } = await findActiveBillingSubscriptions(userRow);
 
-				const subscriptionsPage = await dodoPayments.subscriptions.list({
-					customer_id: userRow.dodoCustomerId
-				});
-
-				const subscriptionItems = subscriptionsPage.items ?? [];
-
-				if (subscriptionItems.length === 0) {
+				if (matches.length === 0) {
 					return status(404, 'No active subscription found');
 				}
 
 				// Cancel all active subscriptions for this customer
-				for (const sub of subscriptionItems) {
-					await dodoPayments.subscriptions.update(sub.subscription_id, {
+				for (const { subscription } of matches) {
+					await dodoPayments.subscriptions.update(subscription.subscription_id, {
 						cancel_at_next_billing_date: true,
 						cancel_reason: 'cancelled_by_customer'
 					});
@@ -317,26 +314,28 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 			try {
 				const userRow = await db.query.user.findFirst({
 					where: (u, { eq }) => eq(u.id, user.id),
-					columns: { dodoCustomerId: true, email: true }
+					columns: { dodoCustomerId: true, email: true, emailVerified: true }
 				});
 
-				if (!userRow?.dodoCustomerId) {
-					return status(400, 'No Dodo Payments customer found');
-				}
-
-				const subscriptionsPage = await dodoPayments.subscriptions.list({
-					customer_id: userRow.dodoCustomerId,
-					status: 'active'
-				});
-
-				const subscriptionItems = subscriptionsPage.items ?? [];
+				if (!userRow) return status(401, 'Unauthorized');
+				const { matches, hasCustomer } = await findActiveBillingSubscriptions(userRow);
 
 				// Check current pro status before updating
 				const currentProStatus = await getProStatus(user.id);
 
-				if (subscriptionItems.length > 0) {
+				const activeMatch = latestActiveBillingSubscription(matches);
+				if (activeMatch) {
 					// User has an active subscription — sync the next billing date
-					const activeSub = subscriptionItems[0];
+					const activeSub = activeMatch.subscription;
+
+					if (!userRow.dodoCustomerId) {
+						await db
+							.update(userTable)
+							.set({ dodoCustomerId: activeMatch.customerId })
+							.where(
+								and(eq(userTable.id, user.id), isNull(userTable.dodoCustomerId))
+							);
+					}
 
 					if (activeSub.next_billing_date) {
 						await updateProExpiration(
@@ -352,6 +351,16 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 						changed: !currentProStatus.isPro,
 						isPro: true,
 						expiration: activeSub.next_billing_date
+					};
+				}
+
+				if (!hasCustomer) {
+					// No billing identity is not a bad request and must not revoke manual Pro access.
+					return {
+						success: true,
+						changed: false,
+						isPro: currentProStatus.isPro,
+						expiration: currentProStatus.expirationDate?.toISOString() ?? null
 					};
 				}
 
@@ -516,27 +525,27 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 			try {
 				const userRow = await db.query.user.findFirst({
 					where: (u, { eq }) => eq(u.id, user.id),
-					columns: { email: true, dodoCustomerId: true }
+					columns: { email: true, dodoCustomerId: true, emailVerified: true }
 				});
 
-				if (!userRow?.dodoCustomerId) {
-					return { isActive: false };
-				}
+				if (!userRow) return { isActive: false };
 
-				const subscriptionsPage = await dodoPayments.subscriptions.list({
-					customer_id: userRow.dodoCustomerId,
-					status: 'active'
-				});
+				const { matches, hasCustomer } = await findActiveBillingSubscriptions(userRow);
+				const activeMatch = latestActiveBillingSubscription(matches);
 
-				const activeSubscriptions = subscriptionsPage.items ?? [];
-
-				if (activeSubscriptions.length === 0) {
+				if (!activeMatch) {
 					// No active subscription — clear any stale cached pro status
-					await clearProExpiration(userRow.email);
+					if (hasCustomer) await clearProExpiration(userRow.email);
 					return { isActive: false };
 				}
 
-				const activeSubscription = activeSubscriptions[0];
+				if (!userRow.dodoCustomerId) {
+					await db
+						.update(userTable)
+						.set({ dodoCustomerId: activeMatch.customerId })
+						.where(and(eq(userTable.id, user.id), isNull(userTable.dodoCustomerId)));
+				}
+				const activeSubscription = activeMatch.subscription;
 				if (activeSubscription.next_billing_date) {
 					await updateProExpiration(
 						userRow.email,
