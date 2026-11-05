@@ -29,9 +29,10 @@ vi.mock('drizzle-orm', async (importOriginal) => {
 	};
 });
 
-const { storedHashes, uploadSitePack } = vi.hoisted(() => ({
+const { storedHashes, uploadSitePack, deleteSitePack } = vi.hoisted(() => ({
 	storedHashes: new Map<string, string>(),
-	uploadSitePack: vi.fn()
+	uploadSitePack: vi.fn(),
+	deleteSitePack: vi.fn()
 }));
 
 vi.mock('$lib/server/db', () => ({
@@ -50,6 +51,7 @@ vi.mock('$lib/server/db', () => ({
 }));
 
 vi.mock('$lib/server/cdn/upload', () => ({ uploadSitePack }));
+vi.mock('$lib/server/cdn/delete', () => ({ deleteSitePack }));
 
 import {
 	ACE_HOSTS_SITE_PACKS,
@@ -87,17 +89,19 @@ describe('ace-hosts site-pack sync', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		storedHashes.clear();
+		deleteSitePack.mockResolvedValue({ isErr: () => false });
 	});
 
-	it('includes all 15 canonical ace-hosts release site packs', () => {
-		expect(ACE_HOSTS_SITE_PACKS).toHaveLength(15);
-		expect(new Set(ACE_HOSTS_SITE_PACKS.map((pack) => pack.id)).size).toBe(15);
+	it('includes all 14 canonical ace-hosts release site packs', () => {
+		expect(ACE_HOSTS_SITE_PACKS).toHaveLength(14);
+		expect(new Set(ACE_HOSTS_SITE_PACKS.map((pack) => pack.id)).size).toBe(14);
 		expect(ACE_HOSTS_SITE_PACKS.map((pack) => pack.assetName)).toContain(
 			'site-pack-dating-pro.zip'
 		);
 		expect(ACE_HOSTS_SITE_PACKS.map((pack) => pack.assetName)).toContain(
-			'site-pack-anime-manga-extended.zip'
+			'site-pack-anime-manga-pro.zip'
 		);
+		expect(ACE_HOSTS_SITE_PACKS.some((pack) => pack.id === 'pack-anime-manga-extended')).toBe(false);
 	});
 
 	it('shares an in-flight sync between startup, monthly and manual triggers', async () => {
@@ -122,7 +126,7 @@ describe('ace-hosts site-pack sync', () => {
 		expect(getAceHostsSitePackSyncStatus()).toMatchObject({
 			running: false,
 			lastError: null,
-			lastResult: { release: 'v2026.09.01', updated: 0, unchanged: 15 }
+			lastResult: { release: 'v2026.09.01', updated: 0, unchanged: 14 }
 		});
 	});
 
@@ -142,8 +146,39 @@ describe('ace-hosts site-pack sync', () => {
 		fetchMock.mockResolvedValue(
 			new Response(JSON.stringify(releaseResponse()), { status: 200 })
 		);
-		await expect(syncAceHostsSitePacks()).resolves.toMatchObject({ updated: 0, unchanged: 15 });
+		await expect(syncAceHostsSitePacks()).resolves.toMatchObject({ updated: 0, unchanged: 14 });
 		expect(getAceHostsSitePackSyncStatus().lastError).toBeNull();
+	});
+
+	it('retires the old anime pack after a consolidated release is synced', async () => {
+		for (const definition of ACE_HOSTS_SITE_PACKS) {
+			storedHashes.set(definition.id, 'a'.repeat(64));
+		}
+		storedHashes.set('pack-anime-manga-extended', 'a'.repeat(64));
+		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+			new Response(JSON.stringify(releaseResponse()), { status: 200 })
+		));
+		await expect(syncAceHostsSitePacks()).resolves.toMatchObject({ unchanged: 14 });
+		expect(deleteSitePack).toHaveBeenCalledExactlyOnceWith('pack-anime-manga-extended');
+	});
+
+	it('does not retire anime Extended while the upstream release still contains it', async () => {
+		for (const definition of ACE_HOSTS_SITE_PACKS) {
+			storedHashes.set(definition.id, 'a'.repeat(64));
+		}
+		storedHashes.set('pack-anime-manga-extended', 'a'.repeat(64));
+		const oldRelease = releaseResponse();
+		oldRelease.assets.push({
+			name: 'site-pack-anime-manga-extended.zip',
+			size: 12,
+			browser_download_url: 'https://example.test/site-pack-anime-manga-extended.zip',
+			digest: 'sha256:' + 'a'.repeat(64)
+		});
+		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+			new Response(JSON.stringify(oldRelease), { status: 200 })
+		));
+		await syncAceHostsSitePacks();
+		expect(deleteSitePack).not.toHaveBeenCalled();
 	});
 
 	it('parses sha256sum manifests', () => {

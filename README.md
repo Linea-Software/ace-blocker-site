@@ -52,11 +52,13 @@ Run `bun scripts/db-baseline.ts --dry-run` to inspect a legacy database without 
 The production site **pulls** the canonical site-pack ZIPs from the latest public
 [`Linea-Software/ace-hosts` GitHub Release](https://github.com/Linea-Software/ace-hosts/releases/latest).
 The `ace-hosts` workflow only builds and publishes GitHub release assets; it
-does **not** push them to the website. The site mirrors the 15 known
+does **not** push them to the website. The site mirrors the 14 known
 `site-pack-*.zip` assets to BunnyCDN using the existing site-pack paths and
 database records. Each ZIP's SHA-256 must match its GitHub release digest or
 `sha256_checksums.txt` entry before any upload. Already-matching hashes are
-skipped, so regular syncs do not rewrite unchanged files.
+skipped, so regular syncs do not rewrite unchanged files. Once the consolidated
+Anime/Manga Pro release is available and synced, the superseded Extended asset
+is removed from BunnyCDN and its database catalog record is deleted.
 
 - **Startup:** the production server runs a sync during `hooks.server.ts:init`.
   Errors are logged without preventing startup; the existing cached records

@@ -3,12 +3,15 @@ import { sitePack } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { createLogger } from '$lib/server/logger';
 import { uploadSitePack } from '$lib/server/cdn/upload';
+import { deleteSitePack } from '$lib/server/cdn/delete';
 import { getArrayBufferChecksum, MAX_SITE_PACK_SIZE } from '$lib/server/cdn/common';
 
 const log = createLogger('ace-hosts-site-packs');
 const ACE_HOSTS_RELEASE_API =
 	'https://api.github.com/repos/Linea-Software/ace-hosts/releases/latest';
 const MAX_TIMER_DELAY_MS = 24 * 24 * 60 * 60 * 1000;
+const RETIRED_ANIME_PACK_ID = 'pack-anime-manga-extended';
+const RETIRED_ANIME_ASSET = 'site-pack-anime-manga-extended.zip';
 
 interface GitHubReleaseAsset {
 	name: string;
@@ -101,13 +104,6 @@ export const ACE_HOSTS_SITE_PACKS: readonly AceHostsSitePackDefinition[] = [
 		name: 'Anime & Manga Websites — Pro',
 		description: 'Blocks anime and manga websites.',
 		assetName: 'site-pack-anime-manga-pro.zip',
-		requiresProSubscription: true
-	},
-	{
-		id: 'pack-anime-manga-extended',
-		name: 'Anime & Manga Websites — Extended',
-		description: 'Extended anime and manga website list.',
-		assetName: 'site-pack-anime-manga-extended.zip',
 		requiresProSubscription: true
 	},
 	{
@@ -299,6 +295,18 @@ async function performAceHostsSitePackSync(): Promise<AceHostsSitePackSyncResult
 			);
 		}
 		updated += 1;
+	}
+
+	// Retire the previous pack only after the merged Pro asset has been mirrored.
+	// A release still containing Extended predates the consolidation; keep it then.
+	if (
+		!release.assets.some((asset) => asset.name === RETIRED_ANIME_ASSET) &&
+		(await getStoredSha256(RETIRED_ANIME_PACK_ID)) !== null
+	) {
+		const removed = await deleteSitePack(RETIRED_ANIME_PACK_ID);
+		if (removed.isErr()) {
+			throw new Error('Failed to retire the superseded Anime/Manga Extended site pack');
+		}
 	}
 
 	log.info(
