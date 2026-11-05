@@ -23,7 +23,7 @@ import {
 import { emailLogoAttachments } from './email-branding';
 import { handleUserCreatedAfter } from './auth-hooks';
 import { updateProExpiration, clearProExpiration } from './pro';
-import { shouldProcessWebhook } from './webhook-events';
+import { processWebhookOnce } from './webhook-events';
 import * as m from './messages';
 import type { Locale } from './messages';
 import { createLogger } from './logger';
@@ -229,7 +229,7 @@ export const auth = betterAuth({
 						log.info({ type: payload.type }, 'DodoPayments webhook received');
 					},
 
-					// Every handler below is gated by shouldProcessWebhook(): Dodo
+					// Every handler below is gated by processWebhookOnce(): Dodo
 					// retries deliveries until 2xx, and the same event must never
 					// be applied twice (see src/lib/server/webhook-events.ts).
 
@@ -237,51 +237,58 @@ export const auth = betterAuth({
 					// Set proExpiration to next_billing_date and bust the cache.
 
 					onSubscriptionActive: async (payload) => {
-						if (!(await shouldProcessWebhook(payload))) return;
-						const email = payload.data.customer.email;
-						if (payload.data.next_billing_date) {
-							await updateProExpiration(email, payload.data.next_billing_date);
-						}
-						await sendPaymentReceiptEmail(email, await getLocaleForEmail(email), {
-							amountMinor: payload.data.recurring_pre_tax_amount,
-							currency: payload.data.currency,
-							processedAt: new Date(payload.timestamp),
-							subscriptionId: payload.data.subscription_id
+						await processWebhookOnce(payload, async () => {
+							const email = payload.data.customer.email;
+							if (payload.data.next_billing_date) {
+								await updateProExpiration(email, payload.data.next_billing_date);
+							}
+							await sendPaymentReceiptEmail(email, await getLocaleForEmail(email), {
+								amountMinor: payload.data.recurring_pre_tax_amount,
+								currency: payload.data.currency,
+								processedAt: new Date(payload.timestamp),
+								subscriptionId: payload.data.subscription_id
+							});
 						});
 					},
 					onSubscriptionRenewed: async (payload) => {
-						if (!(await shouldProcessWebhook(payload))) return;
-						const email = payload.data.customer.email;
-						if (payload.data.next_billing_date) {
-							await updateProExpiration(email, payload.data.next_billing_date);
-						}
-						await sendPaymentReceiptEmail(email, await getLocaleForEmail(email), {
-							amountMinor: payload.data.recurring_pre_tax_amount,
-							currency: payload.data.currency,
-							processedAt: new Date(payload.timestamp),
-							subscriptionId: payload.data.subscription_id
+						await processWebhookOnce(payload, async () => {
+							const email = payload.data.customer.email;
+							if (payload.data.next_billing_date) {
+								await updateProExpiration(email, payload.data.next_billing_date);
+							}
+							await sendPaymentReceiptEmail(email, await getLocaleForEmail(email), {
+								amountMinor: payload.data.recurring_pre_tax_amount,
+								currency: payload.data.currency,
+								processedAt: new Date(payload.timestamp),
+								subscriptionId: payload.data.subscription_id
+							});
 						});
 					},
 					onSubscriptionPlanChanged: async (payload) => {
-						if (!(await shouldProcessWebhook(payload))) return;
-						if (payload.data.next_billing_date) {
-							await updateProExpiration(
-								payload.data.customer.email,
-								payload.data.next_billing_date
-							);
-						}
+						await processWebhookOnce(payload, async () => {
+							if (payload.data.next_billing_date) {
+								await updateProExpiration(
+									payload.data.customer.email,
+									payload.data.next_billing_date
+								);
+							}
+						});
 					},
 					onSubscriptionUpdated: async (payload) => {
-						if (!(await shouldProcessWebhook(payload))) return;
-						// Only activate if still active after the update
-						if (payload.data.status === 'active' && payload.data.next_billing_date) {
-							await updateProExpiration(
-								payload.data.customer.email,
+						await processWebhookOnce(payload, async () => {
+							// Only activate if still active after the update
+							if (
+								payload.data.status === 'active' &&
 								payload.data.next_billing_date
-							);
-						} else {
-							await clearProExpiration(payload.data.customer.email);
-						}
+							) {
+								await updateProExpiration(
+									payload.data.customer.email,
+									payload.data.next_billing_date
+								);
+							} else {
+								await clearProExpiration(payload.data.customer.email);
+							}
+						});
 					},
 
 					// ── Pro deactivation events ───────────────────────────────────────────
@@ -290,46 +297,51 @@ export const auth = betterAuth({
 					// access until the period ends, matching the account page behavior.
 
 					onSubscriptionCancelled: async (payload) => {
-						if (!(await shouldProcessWebhook(payload))) return;
-						const email = payload.data.customer.email;
-						if (
-							payload.data.cancel_at_next_billing_date &&
-							payload.data.next_billing_date
-						) {
-							// Scheduled cancellation: access continues until the
-							// period ends — tell the user it is expiring.
-							await updateProExpiration(email, payload.data.next_billing_date);
-							await sendSubscriptionExpiringEmail(
-								email,
-								payload.data.next_billing_date,
-								await getLocaleForEmail(email)
-							);
-						} else {
-							await clearProExpiration(email);
-							await sendSubscriptionCancelledEmail(
-								email,
-								payload.data.next_billing_date ?? new Date(),
-								await getLocaleForEmail(email)
-							);
-						}
+						await processWebhookOnce(payload, async () => {
+							const email = payload.data.customer.email;
+							if (
+								payload.data.cancel_at_next_billing_date &&
+								payload.data.next_billing_date
+							) {
+								// Scheduled cancellation: access continues until the
+								// period ends — tell the user it is expiring.
+								await updateProExpiration(email, payload.data.next_billing_date);
+								await sendSubscriptionExpiringEmail(
+									email,
+									payload.data.next_billing_date,
+									await getLocaleForEmail(email)
+								);
+							} else {
+								await clearProExpiration(email);
+								await sendSubscriptionCancelledEmail(
+									email,
+									payload.data.next_billing_date ?? new Date(),
+									await getLocaleForEmail(email)
+								);
+							}
+						});
 					},
 					onSubscriptionFailed: async (payload) => {
-						if (!(await shouldProcessWebhook(payload))) return;
-						const email = payload.data.customer.email;
-						await clearProExpiration(email);
-						await sendPaymentFailedEmail(email, await getLocaleForEmail(email));
+						await processWebhookOnce(payload, async () => {
+							const email = payload.data.customer.email;
+							await clearProExpiration(email);
+							await sendPaymentFailedEmail(email, await getLocaleForEmail(email));
+						});
 					},
 					onSubscriptionExpired: async (payload) => {
-						if (!(await shouldProcessWebhook(payload))) return;
-						await clearProExpiration(payload.data.customer.email);
+						await processWebhookOnce(payload, async () => {
+							await clearProExpiration(payload.data.customer.email);
+						});
 					},
 					onSubscriptionOnHold: async (payload) => {
-						if (!(await shouldProcessWebhook(payload))) return;
-						await clearProExpiration(payload.data.customer.email);
+						await processWebhookOnce(payload, async () => {
+							await clearProExpiration(payload.data.customer.email);
+						});
 					},
 					onSubscriptionPaused: async (payload) => {
-						if (!(await shouldProcessWebhook(payload))) return;
-						await clearProExpiration(payload.data.customer.email);
+						await processWebhookOnce(payload, async () => {
+							await clearProExpiration(payload.data.customer.email);
+						});
 					}
 				})
 			]

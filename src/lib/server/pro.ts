@@ -132,6 +132,7 @@ export async function updateProExpiration(email: string, nextBillingDate: Date):
 		}
 	} catch (e) {
 		log.error({ err: e, email }, 'Failed to update pro expiration');
+		throw e;
 	}
 }
 
@@ -153,5 +154,6 @@ export async function clearProExpiration(email: string): Promise<void> {
 		}
 	} catch (e) {
 		log.error({ err: e, email }, 'Failed to clear pro expiration');
+		throw e;
 	}
 }

@@ -299,6 +299,25 @@ describe('dodo webhook → pro lifecycle (signed synthetic deliveries)', () => {
 		});
 	});
 
+	it('releases a webhook claim when the Pro write fails so Dodo can retry', async () => {
+		primeFreshDelivery();
+		vi.mocked(updateProExpiration).mockRejectedValueOnce(new Error('db transaction failed'));
+		const payload = subscriptionPayload({
+			type: 'subscription.active',
+			timestamp: new Date().toISOString(),
+			status: 'active',
+			nextBillingDate: '2027-06-29T08:23:52.809Z'
+		});
+		const response = await postWebhook(payload);
+		expect(response.status).not.toBe(200); // Plugin returns 400 for handler failures; Dodo retries non-2xx.
+		expect(dbDelete).toHaveBeenCalledOnce();
+		// Claim was released. A redelivery may now commit the entitlement.
+		primeFreshDelivery();
+		const retry = await postWebhook(payload);
+		expect(retry.status).toBe(200);
+		expect(updateProExpiration).toHaveBeenCalledTimes(2);
+	});
+
 	it('a retried delivery of the same event is a no-op (idempotency)', async () => {
 		primeFreshDelivery();
 		const payload = subscriptionPayload({

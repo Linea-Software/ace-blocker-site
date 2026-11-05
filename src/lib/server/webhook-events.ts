@@ -27,6 +27,19 @@ interface WebhookEventPayload {
  * older event that arrives late (e.g. a replayed `subscription.active` after
  * a `subscription.cancelled`) is rejected instead of re-activating Pro.
  */
+function webhookEventKey(payload: WebhookEventPayload): string {
+	return crypto
+		.createHash('sha256')
+		.update(
+			JSON.stringify({
+				type: payload.type,
+				timestamp: payload.timestamp.toISOString(),
+				data: payload.data
+			})
+		)
+		.digest('hex');
+}
+
 export async function shouldProcessWebhook(payload: WebhookEventPayload): Promise<boolean> {
 	const eventKey = crypto
 		.createHash('sha256')
@@ -118,4 +131,30 @@ export async function shouldProcessWebhook(payload: WebhookEventPayload): Promis
 	}
 
 	return true;
+}
+
+/** Incomplete webhook processing must not become a permanent duplicate.
+ * The payment provider retries a failed delivery. Release its claim so the
+ * retry can actually apply the entitlement change instead of returning 2xx.
+ */
+export async function processWebhookOnce(
+	payload: WebhookEventPayload,
+	apply: () => Promise<void>
+): Promise<void> {
+	if (!(await shouldProcessWebhook(payload))) return;
+	try {
+		await apply();
+	} catch (error) {
+		try {
+			await db
+				.delete(dodoWebhookEvents)
+				.where(eq(dodoWebhookEvents.eventKey, webhookEventKey(payload)));
+		} catch (cleanupError) {
+			log.error(
+				{ err: cleanupError, type: payload.type },
+				'Could not release failed webhook claim'
+			);
+		}
+		throw error;
+	}
 }
