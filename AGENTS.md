@@ -91,6 +91,12 @@ Do not default to the old generic marketing composition: centered gradient hero,
 
 For visible marketing work, the mandatory design skills are `frontend-design`, `design-taste-frontend`, and `ui-ux-pro-max`. Use `svelte-code-writer`, `svelte-core-bestpractices`, and `svelte-components` for implementation, then `web-design-guidelines` plus real light/dark screenshots for final review. For dense account/admin product UI, treat `frontend-design` + `ui-ux-pro-max` as primary; `design-taste-frontend` must not override product-UI semantics.
 
+## Desktop account activation
+
+- The engine exposes **typed remoc IPC, not a local browser HTTP endpoint**. Website sign-in, checkout completion, and Pro activation pass account keys to the allowlisted `aceblocker://account/api-key` handler, with credentials in the URI fragment rather than the query string.
+- Opening the protocol is only a handoff request; the browser **cannot know** whether the desktop app imported the key or verified Pro. Never show a successful desktop activation without an explicit app-origin acknowledgement. Show a pending state with instructions to verify under Settings → License in Ace Blocker, and let the user retry. Website Pro entitlement may be shown as active independently.
+- Linux development registers the handler in the user session as part of the desktop app's `bun run dev` / `tauri dev`; see `ace-blocker/apps/ace-app/docs/DEV_AUTOMATION.md`.
+
 ## Environment validation at startup
 
 - **Development now fails closed:** Vite's `configureServer` hook validates the presence and nonblank values of every required server environment setting **before the dev server listens**. `hooks.server.ts:init` repeats the check. Missing settings cause a clearly labeled `[ACE ENV ERROR]` with the missing variable names, not secret values. Fill in all required settings before starting development.

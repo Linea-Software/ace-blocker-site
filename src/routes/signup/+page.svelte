@@ -12,26 +12,36 @@
 	import SignUpForm from './_components/SignUpForm.svelte';
 
 	let isSubmitted = $state(false);
+	let linkAttempted = $state(false);
+	let linkPending = $state(false);
+	let linkError = $state(false);
+	let linkPromise: Promise<boolean> | null = null;
 	let submittedEmail = $state('');
 
 	const session = authClient.useSession();
 	const origin = $derived(page.url.searchParams.get('origin'));
 
-	async function linkEngine(): Promise<boolean> {
-		try {
-			const delivered = await deliverApiKeyToEngine();
-			if (delivered) goto(resolve('/'));
-			return true;
-		} catch (err) {
-			console.error(err);
-			return false;
-		}
+	function linkEngine(): Promise<boolean> {
+		if (linkPromise) return linkPromise;
+		linkAttempted = true;
+		linkPromise = (async () => {
+			try {
+				await deliverApiKeyToEngine();
+				linkPending = true;
+				return true;
+			} catch (err) {
+				console.error(err);
+				linkError = true;
+				return false;
+			}
+		})();
+		return linkPromise;
 	}
 
 	$effect(() => {
 		if ($session.data) {
 			if (origin === 'ace-engine' || origin === 'aceblocker') {
-				linkEngine();
+				if (!linkAttempted) void linkEngine();
 			} else {
 				goto(resolve('/'));
 			}
@@ -64,20 +74,41 @@
 		<AuthTopBar backLabel={m.auth_back_home()} />
 
 		<div class="w-full max-w-md">
-			{#if !isSubmitted}
+			{#if linkError}
+				<div role="alert" class="border-l-4 border-danger bg-danger/5 p-6">
+					<h1 class="font-display text-3xl font-semibold">{m.auth_link_error()}</h1>
+					<p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+						{m.pro_activation_error_detail()}
+					</p>
+					<button
+						type="button"
+						class="mt-5 inline-flex min-h-11 items-center rounded-md border border-border px-4 font-medium hover:bg-accent"
+						onclick={() => {
+							linkPromise = null;
+							linkAttempted = false;
+							linkError = false;
+							void linkEngine();
+						}}
+					>
+						{m.checkout_activation_retry()}
+					</button>
+				</div>
+			{:else if !isSubmitted && !linkPending}
 				<SignUpForm {origin} onlinkengine={linkEngine} onsubmitted={handleSubmitted} />
 			{:else}
-				<div class="border-l-4 border-success pl-5">
+				<div class="border-l-4 border-information pl-5">
 					<div
-						class="flex size-11 items-center justify-center rounded-md border border-success/35 bg-success/10 text-success"
+						class="flex size-11 items-center justify-center rounded-md border border-information/35 bg-information/10 text-information"
 					>
 						<Mail class="size-5" aria-hidden="true" />
 					</div>
 					<h1 class="mt-6 font-display text-4xl font-semibold">
-						{m.auth_check_email_title()}
+						{linkPending ? m.auth_link_pending_title() : m.auth_check_email_title()}
 					</h1>
 					<p class="mt-3 leading-relaxed text-muted-foreground">
-						{m.auth_check_email_description({ email: submittedEmail })}
+						{linkPending
+							? m.auth_link_pending_description()
+							: m.auth_check_email_description({ email: submittedEmail })}
 					</p>
 					<a
 						href={resolve('/signin')}

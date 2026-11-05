@@ -6,7 +6,7 @@
 	import MarketingFooter from '$lib/components/marketing/MarketingFooter.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { apiClient } from '$lib/api-client';
-	import { postApiKeyToEngine, buildEngineLinkUrl } from '$lib/utils';
+	import { buildEngineLinkUrl } from '$lib/utils';
 	import * as m from '$lib/paraglide/messages.js';
 
 	let { data } = $props();
@@ -17,7 +17,7 @@
 
 	const isPro = $derived(data.isPro);
 	let verificationInProcess = $state(false);
-	let activationStatus = $state<'idle' | 'activating' | 'success' | 'failed'>('idle');
+	let activationStatus = $state<'idle' | 'activating' | 'pending' | 'failed'>('idle');
 
 	const pageTitle = $derived(
 		isFailed ? m.checkout_page_title_failed() : m.checkout_page_title_success()
@@ -63,28 +63,11 @@
 			if (!keyData) throw new Error('Failed to create API key');
 			const apiKey = keyData.apiKey;
 
-			const callbackUrl = encodeURIComponent(
-				`${window.location.origin}${window.location.pathname}?activated=true`
-			);
-			const localUrl = 'https://ace-engine.local/account/api-key';
-			const protocolUrl = buildEngineLinkUrl(apiKey, callbackUrl);
-
-			try {
-				const delivered = await postApiKeyToEngine(localUrl, apiKey);
-				if (delivered) {
-					activationStatus = 'success';
-				} else {
-					window.location.href = protocolUrl;
-					setTimeout(() => {
-						if (activationStatus === 'activating') activationStatus = 'success';
-					}, 2500);
-				}
-			} catch (err) {
-				window.location.href = protocolUrl;
-				setTimeout(() => {
-					if (activationStatus === 'activating') activationStatus = 'success';
-				}, 2500);
-			}
+			// The desktop engine uses typed IPC, not a browser-accessible HTTP port.
+			// Dispatching a protocol URL only requests delivery; there is no app
+			// acknowledgement available to this page.
+			window.location.href = buildEngineLinkUrl(apiKey);
+			activationStatus = 'pending';
 		} catch (err) {
 			console.error('Activation error:', err);
 			activationStatus = 'failed';
@@ -215,8 +198,8 @@
 								'inline-flex min-h-10 w-fit items-center gap-2 rounded-md border px-3 font-mono text-xs',
 								activationStatus === 'failed'
 									? 'border-danger/35 bg-danger/10 text-danger'
-									: activationStatus === 'success'
-										? 'border-success/35 bg-success/10 text-success'
+									: activationStatus === 'pending'
+										? 'border-information/35 bg-information/10 text-information'
 										: 'border-information/35 bg-information/10 text-information'
 							]}
 							aria-live="polite"
@@ -224,9 +207,9 @@
 							{#if activationStatus === 'activating'}
 								<Loader2 class="size-3.5 animate-spin" aria-hidden="true" />
 								{m.checkout_activation_activating()}
-							{:else if activationStatus === 'success'}
-								<CheckCircle2 class="size-3.5" aria-hidden="true" />
-								{m.checkout_activation_success()}
+							{:else if activationStatus === 'pending'}
+								<CircleAlert class="size-3.5" aria-hidden="true" />
+								{m.checkout_activation_pending()}
 							{:else if activationStatus === 'failed'}
 								<CircleAlert class="size-3.5" aria-hidden="true" />
 								{m.checkout_activation_failed()}
@@ -255,11 +238,19 @@
 					</div>
 				</div>
 
-				{#if activationStatus === 'failed'}
+				{#if activationStatus === 'pending'}
+					<p
+						class="mt-4 max-w-3xl border-l-4 border-information bg-information/5 px-4 py-3 text-sm leading-relaxed text-muted-foreground"
+						role="status"
+					>
+						{m.checkout_activation_pending_detail()}
+					</p>
+				{/if}
+				{#if activationStatus === 'failed' || activationStatus === 'pending'}
 					<button
 						type="button"
 						onclick={activateInApp}
-						class="mt-4 inline-flex min-h-11 items-center gap-2 rounded-md border border-danger/35 px-4 text-sm font-medium text-danger hover:bg-danger/10"
+						class="mt-4 inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium hover:bg-accent"
 					>
 						<RefreshCw class="size-4" aria-hidden="true" />
 						{m.checkout_activation_retry()}

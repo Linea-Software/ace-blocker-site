@@ -3,19 +3,19 @@
 	import MarketingFooter from '$lib/components/marketing/MarketingFooter.svelte';
 	import ResistanceScale from '$lib/components/marketing/ResistanceScale.svelte';
 	import SitePackVisual from '$lib/components/marketing/SitePackVisual.svelte';
-	import { AlertCircle, Check, Loader2 } from '@lucide/svelte';
+
 	import * as m from '$lib/paraglide/messages';
 	import { authClient } from '$lib/auth-client';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { canonicalUrl } from '$lib/seo';
 	import { resolve } from '$app/paths';
-	import { localizeHref } from '$lib/paraglide/runtime';
 	import { linkEngine } from '$lib/utils';
-	import { engineConfig } from '$lib/states/engine.svelte';
+
 	import { apiClient } from '$lib/api-client';
 	import { onMount } from 'svelte';
 	import PricingSection from './_components/PricingSection.svelte';
+	import ProActivationPanel from './_components/ProActivationPanel.svelte';
 
 	let { data } = $props();
 	let billingCycle = $state(
@@ -25,9 +25,11 @@
 	const origin = $derived(page.url.searchParams.get('origin'));
 	const enginePort = $derived(Number(page.url.searchParams.get('engine_port')) || 0);
 	const isPro = $derived(data.isPro || false);
+	let linkStatus = $state<'idle' | 'loading' | 'pending' | 'error'>('idle');
 
 	async function handleLinkEngine() {
-		engineConfig.linkState = 'loading';
+		if (linkStatus === 'loading') return;
+		linkStatus = 'loading';
 		try {
 			const createApiKey = async () => {
 				const { data: apiKeyData, error: apiError } =
@@ -39,25 +41,17 @@
 				return apiKeyData.apiKey;
 			};
 
-			const result = await linkEngine(enginePort, createApiKey);
-
-			if (result.success) {
-				engineConfig.linkState = 'success';
-			} else {
-				console.error('Linking error:', result.error);
-				engineConfig.linkState = 'error';
-			}
+			const result = await linkEngine(createApiKey);
+			linkStatus = result.status;
 		} catch (err) {
 			console.error('Linking error:', err);
-			engineConfig.linkState = 'error';
+			linkStatus = 'error';
 		}
 	}
 
 	onMount(() => {
 		if (isPro && (origin === 'ace-engine' || origin === 'aceblocker')) {
 			handleLinkEngine();
-		} else {
-			console.log(`isPro: ${isPro}; origin: ${origin}`);
 		}
 	});
 
@@ -104,38 +98,6 @@
 <main id="main-content">
 	<section class="border-b border-border">
 		<div class="ace-shell py-12 sm:py-16">
-			{#if engineConfig.linkState === 'error' || engineConfig.linkState === 'loading' || engineConfig.linkState === 'success'}
-				<div
-					class={[
-						'mb-8 flex max-w-3xl items-start gap-3 rounded-md border px-4 py-3 text-sm',
-						engineConfig.linkState === 'error' &&
-							'border-danger/35 bg-danger/10 text-foreground',
-						engineConfig.linkState === 'loading' &&
-							'border-information/35 bg-information/10 text-foreground',
-						engineConfig.linkState === 'success' &&
-							'border-success/35 bg-success/10 text-foreground'
-					]}
-					aria-live="polite"
-				>
-					{#if engineConfig.linkState === 'error'}
-						<AlertCircle
-							class="mt-0.5 size-4 shrink-0 text-danger"
-							aria-hidden="true"
-						/>
-						<span>{m.linking_error()}</span>
-					{:else if engineConfig.linkState === 'loading'}
-						<Loader2
-							class="mt-0.5 size-4 shrink-0 animate-spin text-information"
-							aria-hidden="true"
-						/>
-						<span>{m.linking_loading()}</span>
-					{:else if engineConfig.linkState === 'success'}
-						<Check class="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
-						<span>{m.linking_success()}</span>
-					{/if}
-				</div>
-			{/if}
-
 			{#if !isPro}
 				<div class="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
 					<div>
@@ -153,33 +115,7 @@
 					</p>
 				</div>
 			{:else}
-				<div class="max-w-3xl border-l-4 border-success pl-5 sm:pl-7">
-					<div class="flex items-center gap-2 text-sm font-medium text-success">
-						<Check class="size-4" aria-hidden="true" />
-						{m.plan_pro_name()}
-					</div>
-					<h1 class="mt-4 font-display text-5xl font-semibold">
-						{m.pro_success_title()}
-					</h1>
-					<p class="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-						{m.pro_success_description()}
-					</p>
-					<div class="mt-7 flex flex-col gap-3 sm:flex-row">
-						<a
-							href={resolve(localizeHref('/') as '/')}
-							class="inline-flex min-h-12 items-center justify-center rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90"
-						>
-							{m.pro_success_home()}
-						</a>
-						<button
-							type="button"
-							onclick={handleLinkEngine}
-							class="inline-flex min-h-12 items-center justify-center rounded-md border border-foreground/30 px-5 font-medium hover:bg-accent"
-						>
-							{m.pro_success_open_app()}
-						</button>
-					</div>
-				</div>
+				<ProActivationPanel status={linkStatus} onactivate={handleLinkEngine} />
 			{/if}
 		</div>
 	</section>

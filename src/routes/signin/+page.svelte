@@ -20,6 +20,8 @@
 	let otpCode = $state<string>('');
 	let error = $state<string | null>(null);
 	let loading = $state(false);
+	let linkAttempted = $state(false);
+	let linkPending = $state(false);
 	let step = $state<'credentials' | 'otp'>('credentials');
 	const resetSuccess = $derived(page.url.searchParams.get('reset') === 'success');
 
@@ -35,20 +37,28 @@
 	);
 
 	async function linkEngine() {
+		if (linkAttempted) return;
+		linkAttempted = true;
 		loading = true;
 		error = null;
 		try {
-			const delivered = await deliverApiKeyToEngine();
-			if (delivered) goto(resolve('/'));
+			await deliverApiKeyToEngine();
+			linkPending = true;
 		} catch (err) {
 			console.error(err);
-			loading = false;
 			error = m.auth_link_error();
+		} finally {
+			loading = false;
 		}
 	}
 
 	$effect(() => {
-		if ($session.data && (origin === 'ace-engine' || origin === 'aceblocker') && !loading) {
+		if (
+			$session.data &&
+			(origin === 'ace-engine' || origin === 'aceblocker') &&
+			!linkAttempted &&
+			!loading
+		) {
 			linkEngine();
 		}
 	});
@@ -145,7 +155,17 @@
 		{/if}
 
 		<div class="w-full max-w-md">
-			{#if step === 'credentials'}
+			{#if linkPending}
+				<div class="border-l-4 border-information bg-information/5 p-6" role="status">
+					<CheckCircle2 class="size-6 text-information" aria-hidden="true" />
+					<h1 class="mt-4 font-display text-3xl font-semibold">
+						{m.auth_link_pending_title()}
+					</h1>
+					<p class="mt-3 leading-relaxed text-muted-foreground">
+						{m.auth_link_pending_description()}
+					</p>
+				</div>
+			{:else if step === 'credentials'}
 				<header class="mb-8">
 					<h1 class="font-display text-4xl font-semibold">{m.auth_sign_in_title()}</h1>
 					<p class="mt-2 text-muted-foreground">{m.auth_sign_in_description()}</p>
@@ -160,6 +180,19 @@
 						<Alert.Title>{m.auth_error_title()}</Alert.Title>
 						<Alert.Description>{error}</Alert.Description>
 					</Alert.Root>
+				{/if}
+
+				{#if linkAttempted && error && (origin === 'aceblocker' || origin === 'ace-engine')}
+					<button
+						type="button"
+						class="mb-6 inline-flex min-h-10 items-center rounded-md border border-border px-4 text-sm font-medium hover:bg-accent"
+						onclick={() => {
+							linkAttempted = false;
+							void linkEngine();
+						}}
+					>
+						{m.checkout_activation_retry()}
+					</button>
 				{/if}
 
 				{#if resetSuccess}

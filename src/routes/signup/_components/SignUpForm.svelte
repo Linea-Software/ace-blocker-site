@@ -46,9 +46,13 @@
 				onSuccess: async () => {
 					if (origin === 'ace-engine' || origin === 'aceblocker') {
 						const linked = await onlinkengine();
+						loading = false;
 						if (!linked) {
-							loading = false;
 							error = m.auth_link_error();
+						} else {
+							onsubmitted(email);
+							password = '';
+							confirmPassword = '';
 						}
 					} else {
 						loading = false;
