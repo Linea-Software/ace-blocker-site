@@ -38,11 +38,7 @@
 			pro: m.pricing_included
 		},
 		{ label: m.pricing_curated_packs, basic: m.pricing_three_packs, pro: m.pricing_all_packs },
-		{
-			label: m.pricing_resistance,
-			basic: m.pricing_standard_resistance,
-			pro: m.pricing_full_resistance
-		},
+		{ label: m.pricing_resistance, basic: null, pro: null, available: true },
 		{ label: m.pricing_cloud_backup, basic: null, pro: null, available: true },
 		{ label: m.pricing_custom_packs, basic: null, pro: null, available: true }
 	];

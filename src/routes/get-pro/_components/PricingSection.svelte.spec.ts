@@ -24,5 +24,11 @@ describe('Free and Pro feature comparison', () => {
 
 		await expect.element(row.getByRole('cell').nth(0)).toHaveTextContent('Included');
 		await expect.element(row.getByRole('cell').nth(1)).toHaveTextContent('Included');
+
+		const resistance = page
+			.getByRole('row')
+			.filter({ has: page.getByRole('rowheader', { name: 'Resistance tools' }) });
+		await expect.element(resistance.getByRole('cell').nth(0)).toHaveTextContent('Not included');
+		await expect.element(resistance.getByRole('cell').nth(1)).toHaveTextContent('Included');
 	});
 });
