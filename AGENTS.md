@@ -84,7 +84,7 @@ The site should be the more expressive side of a shared Ace language:
 - actual Ace concepts — policies, schedules, locks, resistance, site packs — used as the visual material;
 - product-UI previews may simplify, but must stay visually faithful to the current desktop app domain components instead of inventing a separate pseudo-app language;
 - theme-dependent brand artwork should follow the CSS `.dark` state rather than hydration-time JavaScript theme guesses, so the correct asset is present on first paint and refresh;
-- the official brand files come from the sibling `ace-blocker-logo` repository: **use only `ace-lockup-{light,dark}-transparent.{svg,png}` for site and email branding** and `ace-icon-*-transparent.svg` for UI favicons. The SVGs must not have a background rectangle and the PNGs must retain alpha. The navbar uses a 48 px-high image on desktop because the 1032×312 lockup contains intrinsic top/bottom whitespace.
+- the official brand files come from the sibling `ace-blocker-logo` repository: **use `ace-lockup-{light,dark}-no-tagline-transparent.svg` for visible site branding**, `ace-lockup-{light,dark}-transparent.png` for email branding, and `ace-icon-*-transparent.svg` for UI favicons. The SVGs must not have a background rectangle and the PNGs must retain alpha. The no-tagline logo is legible in the navbar at 48 px-high on desktop.
 - restrained, explanatory motion.
 
 Do not default to the old generic marketing composition: centered gradient hero, blurred blobs, release pill, three equal feature cards, rounded icon tiles, hover-lift cards, or generic premium glow/crown treatment.
