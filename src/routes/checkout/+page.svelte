@@ -114,7 +114,7 @@
 </a>
 <header class="border-b border-border bg-background">
 	<div class="ace-shell flex min-h-16 items-center justify-between gap-4 py-3">
-		<a href={resolve('/')} class="shrink-0" aria-label={m.about_hero_app()}>
+		<a href={resolve('/')} class="shrink-0" aria-label={m.site_brand_name()}>
 			<BrandLogo alt="" class="h-10 w-auto sm:h-12" />
 		</a>
 		<a
@@ -194,7 +194,7 @@
 		>
 			<h2 class="font-display text-xl font-semibold">{m.inline_checkout_summary()}</h2>
 			<p class="mt-3 text-sm font-medium">
-				{m.about_hero_app()}
+				{m.site_brand_name()}
 				{m.plan_pro_name()}
 				<span class="text-muted-foreground">
 					— {data.cycle === 'yearly'

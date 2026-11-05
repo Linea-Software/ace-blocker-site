@@ -33,7 +33,7 @@
 			class="ace-shell grid gap-12 py-14 lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:py-20"
 		>
 			<div class="max-w-xl">
-				<p class="font-mono text-xs text-muted-foreground">{m.about_hero_app()}</p>
+				<p class="font-mono text-xs text-muted-foreground">{m.site_brand_name()}</p>
 				<h1
 					class="mt-5 font-display text-5xl leading-[0.92] font-semibold tracking-tight sm:text-6xl"
 				>
@@ -140,13 +140,13 @@
 						class="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90"
 					>
 						<Download class="size-4" aria-hidden="true" />
-						{m.hero_download_button()}
+						{m.marketing_download_button()}
 					</a>
 					<a
 						href={resolve(localizeHref('/get-pro') as '/get-pro')}
 						class="inline-flex min-h-12 items-center justify-center rounded-md border border-foreground/30 px-5 font-medium hover:bg-accent"
 					>
-						{m.hero_pro_button()}
+						{m.marketing_pro_button()}
 					</a>
 				</div>
 			</div>

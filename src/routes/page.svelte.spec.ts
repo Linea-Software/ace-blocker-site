@@ -7,7 +7,10 @@ describe('/+page.svelte', () => {
 	it('keeps category-first blocking language in the redesigned homepage', async () => {
 		render(Page, { data: { isPro: false, newRelease: null } });
 
-		const heading = page.getByRole('heading', { level: 1 });
+		const heading = page.getByRole('heading', {
+			level: 1,
+			name: 'Block distracting websites'
+		});
 		await expect.element(heading).toBeInTheDocument();
 		await expect
 			.element(

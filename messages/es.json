@@ -1,6 +1,5 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"hello_world": "Hello, {name} from es!",
 	"inline_checkout_title": "Inicia tu suscripción Pro",
 	"inline_checkout_trial_title": "Empieza tu prueba Pro de {days} días",
 	"inline_checkout_payment_details": "Pago seguro",

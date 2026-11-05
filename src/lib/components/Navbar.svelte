@@ -75,7 +75,7 @@
 				>
 					<Sheet.Header class="border-b border-border px-5 py-5 text-left">
 						<Sheet.Title>
-							<BrandLogo alt={m.about_hero_app()} class="h-10 w-auto" />
+							<BrandLogo alt={m.site_brand_name()} class="h-10 w-auto" />
 						</Sheet.Title>
 						<Sheet.Description class="mt-2 max-w-xs text-sm">
 							{m.nav_menu_description()}
@@ -182,7 +182,7 @@
 			</Sheet.Root>
 
 			<a href={resolve(localizeHref('/') as '/')} class="shrink-0">
-				<BrandLogo alt={m.about_hero_app()} class="h-10 w-auto sm:h-11 md:h-12" />
+				<BrandLogo alt={m.site_brand_name()} class="h-10 w-auto sm:h-11 md:h-12" />
 			</a>
 
 			<nav class="hidden h-16 items-stretch md:flex" aria-label={m.nav_toggle_menu()}>

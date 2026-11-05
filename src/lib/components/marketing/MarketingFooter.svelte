@@ -9,7 +9,7 @@
 	<div class="ace-shell grid gap-8 py-10 sm:grid-cols-[1fr_auto] sm:items-end">
 		<div>
 			<a href={resolve(localizeHref('/') as '/')} class="inline-flex items-center">
-				<BrandLogo alt={m.about_hero_app()} class="h-11 w-auto sm:h-12" />
+				<BrandLogo alt={m.site_brand_name()} class="h-11 w-auto sm:h-12" />
 			</a>
 			<p class="mt-4 max-w-md text-sm text-muted-foreground">{m.footer_identity_line()}</p>
 		</div>

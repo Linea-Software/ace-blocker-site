@@ -140,7 +140,7 @@
 				<div class="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
 					<div>
 						<p class="font-mono text-xs text-muted-foreground">
-							{m.about_hero_app()} / {m.plan_pro_name()}
+							{m.site_brand_name()} / {m.plan_pro_name()}
 						</p>
 						<h1
 							class="mt-4 font-display text-5xl leading-[0.92] font-semibold tracking-tight sm:text-6xl"
@@ -202,7 +202,7 @@
 						{m.about_resistance_title()}
 					</h2>
 					<p class="mt-3 max-w-lg leading-relaxed text-muted-foreground">
-						{m.toolbox_resistance_mode_description()}
+						{m.pricing_resistance_description()}
 					</p>
 					<div class="mt-7">
 						<ResistanceScale />
@@ -211,7 +211,7 @@
 				<div>
 					<h2 class="font-display text-3xl font-semibold">{m.about_packs_title()}</h2>
 					<p class="mt-3 max-w-lg leading-relaxed text-muted-foreground">
-						{m.toolbox_blocklists_description()}
+						{m.pricing_categories_description()}
 					</p>
 					<div class="mt-7">
 						<SitePackVisual />

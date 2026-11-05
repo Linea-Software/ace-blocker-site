@@ -42,12 +42,10 @@
 
 <main id="main-content">
 	<section class="border-b border-border">
-		<div
-			class="ace-shell grid gap-12 py-14 lg:grid-cols-[0.86fr_1.14fr] lg:items-center lg:py-20"
-		>
+		<div class="ace-shell grid gap-12 py-14 lg:grid-cols-[1fr_1fr] lg:items-center lg:py-20">
 			<div class="max-w-xl">
 				<h1
-					class="font-display text-[clamp(3.4rem,7vw,6.1rem)] leading-[0.88] font-semibold tracking-[-0.045em]"
+					class="font-display text-[clamp(2.75rem,6.2vw,4.75rem)] leading-[0.94] font-semibold tracking-[-0.045em] text-balance"
 				>
 					{m.home_title()}
 				</h1>
@@ -61,13 +59,13 @@
 						class="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90"
 					>
 						<Download class="size-4" aria-hidden="true" />
-						{m.hero_download_button()}
+						{m.marketing_download_button()}
 					</a>
 					<a
 						href={resolve(localizeHref('/get-pro') as '/get-pro')}
 						class="inline-flex min-h-12 items-center justify-center rounded-md border border-foreground/30 px-5 font-medium hover:bg-accent"
 					>
-						{m.hero_pro_button()}
+						{m.marketing_pro_button()}
 					</a>
 				</div>
 
@@ -77,9 +75,12 @@
 						class="mt-7 inline-flex items-center gap-3 border-l-2 border-signal pl-3 text-sm hover:underline"
 					>
 						<span class="font-mono text-xs text-muted-foreground"
-							>{m.hero_new_badge()}</span
+							>{m.home_release_badge()}</span
 						>
-						<span>{m.hero_version_available({ version: data.newRelease.version })}</span
+						<span
+							>{m.home_release_version_available({
+								version: data.newRelease.version
+							})}</span
 						>
 					</a>
 				{/if}
@@ -182,7 +183,7 @@
 
 	<section class="border-b border-border">
 		<div class="ace-shell grid gap-8 py-12 md:grid-cols-[0.45fr_1fr] md:items-start">
-			<h2 class="font-display text-2xl font-semibold">{m.feature_privacy_title()}</h2>
+			<h2 class="font-display text-2xl font-semibold">{m.home_privacy_title()}</h2>
 			<p class="max-w-2xl text-base leading-relaxed text-muted-foreground">
 				{m.home_privacy_note()}
 			</p>
@@ -206,7 +207,7 @@
 						href={resolve(localizeHref('/download') as '/download')}
 						class="inline-flex min-h-12 w-full items-center justify-center rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90 sm:w-auto"
 					>
-						{m.hero_download_button()}
+						{m.marketing_download_button()}
 					</a>
 				</div>
 			</div>
