@@ -13,6 +13,12 @@ describe('/+page.svelte', () => {
 		});
 		await expect.element(heading).toBeInTheDocument();
 		await expect
+			.element(page.getByRole('heading', { name: 'Your blocks run automatically' }))
+			.toBeInTheDocument();
+		await expect
+			.element(page.getByRole('heading', { name: 'Make websites less distracting' }))
+			.toBeInTheDocument();
+		await expect
 			.element(
 				page.getByRole('heading', {
 					name: 'Block a category without maintaining a domain list.'

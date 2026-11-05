@@ -34,8 +34,8 @@
 	const comparisonRows = [
 		{
 			label: m.pricing_network_blocks,
-			basic: m.pricing_basic_blocks,
-			pro: m.pricing_pro_blocks
+			basic: m.pricing_included,
+			pro: m.pricing_included
 		},
 		{ label: m.pricing_curated_packs, basic: m.pricing_three_packs, pro: m.pricing_all_packs },
 		{
