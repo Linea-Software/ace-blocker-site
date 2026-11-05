@@ -66,7 +66,7 @@ export const load: PageServerLoad = async ({ request, url }) => {
 				force_language: getLocale(),
 				theme_config: {
 					radius: '5px',
-					font_size: 'md',
+					font_size: 'lg',
 					light: {
 						bg_primary: '#F3F0E8',
 						bg_secondary: '#FFFFFF',

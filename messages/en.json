@@ -1,6 +1,10 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
 	"inline_checkout_title": "Start your Pro subscription",
+	"inline_checkout_eyebrow": "Ace Pro / Checkout",
+	"inline_checkout_secure_note": "Secure payment by Dodo Payments",
+	"inline_checkout_payment_step": "Payment details",
+	"inline_checkout_plan_label": "Your subscription",
 	"inline_checkout_trial_title": "Start your {days}-day Pro trial",
 	"inline_checkout_payment_details": "Secure checkout",
 	"inline_checkout_back": "Back to plans",

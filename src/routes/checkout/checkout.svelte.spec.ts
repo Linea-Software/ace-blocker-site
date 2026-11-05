@@ -47,13 +47,15 @@ describe('Checkout summary display', () => {
 			.element(page.getByRole('link', { name: /Back to plans/ }))
 			.toHaveAttribute('href', '/get-pro?cycle=yearly&currency=EUR');
 		await expect.element(page.getByText('14-day free trial')).toBeInTheDocument();
-		await expect.element(page.getByText('€0,00')).toBeInTheDocument();
-		await expect.element(page.getByText(/€24,99/)).toBeInTheDocument();
+		await expect.element(page.getByText('€0,00').first()).toBeInTheDocument();
+		await expect.element(page.getByText(/€24,99/).first()).toBeInTheDocument();
 		await expect
 			.element(page.getByText('Renews automatically each year unless you cancel.'))
 			.toBeInTheDocument();
 		await page.viewport(375, 812);
-		const mobileSummary = document.querySelector('aside')?.getBoundingClientRect();
+		const mobileSummary = document
+			.querySelector('#checkout-mobile-summary')
+			?.getBoundingClientRect();
 		const mobilePayment = document.querySelector('section')?.getBoundingClientRect();
 		expect(mobileSummary).toBeDefined();
 		expect(mobilePayment).toBeDefined();
@@ -95,7 +97,7 @@ describe('Checkout summary display', () => {
 				.toBeInTheDocument();
 			await expect.element(page.getByText('Riepilogo ordine')).toBeInTheDocument();
 			await expect
-				.element(page.getByText(/Si rinnova automaticamente ogni anno/))
+				.element(page.getByText(/Si rinnova automaticamente ogni anno/).first())
 				.toBeInTheDocument();
 		} finally {
 			window.history.replaceState(window.history.state, '', previousUrl);
