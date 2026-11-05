@@ -12,6 +12,8 @@ function validEnv(): NodeJS.ProcessEnv {
 		ORIGIN: 'https://aceblocker.com',
 		DODO_PAYMENTS_API_KEY: placeholder,
 		DODO_PAYMENTS_WEBHOOK_SECRET: placeholder,
+		ACE_ENTITLEMENT_SIGNING_KEY_BASE64: placeholder.repeat(4),
+		ACE_ENTITLEMENT_PUBLIC_KEY_BASE64: placeholder.repeat(4),
 		RESEND_API_KEY: placeholder,
 		BUNNY_URL_TOKEN_AUTH_KEY: placeholder,
 		BUNNY_STORAGE_ZONE: 'aceblocker-storage',
@@ -37,7 +39,9 @@ describe('production runtime configuration', () => {
 			'BUNNY_URL_TOKEN_AUTH_KEY',
 			'BUNNY_STORAGE_ZONE',
 			'BUNNY_CDN_BASE_URL',
-			'BUNNY_STORAGE_ACCESS_KEY'
+			'BUNNY_STORAGE_ACCESS_KEY',
+			'ACE_ENTITLEMENT_SIGNING_KEY_BASE64',
+			'ACE_ENTITLEMENT_PUBLIC_KEY_BASE64'
 		]) {
 			const environment = validEnv();
 			delete environment[key];

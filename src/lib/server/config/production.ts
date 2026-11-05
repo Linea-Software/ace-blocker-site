@@ -32,6 +32,8 @@ export const productionEnvSchema = z.object({
 	PUBLIC_BETTER_AUTH_URL: httpsUrl,
 	DODO_PAYMENTS_API_KEY: z.string().min(1),
 	DODO_PAYMENTS_WEBHOOK_SECRET: z.string().min(1),
+	ACE_ENTITLEMENT_SIGNING_KEY_BASE64: z.string().min(40),
+	ACE_ENTITLEMENT_PUBLIC_KEY_BASE64: z.string().min(40),
 	RESEND_API_KEY: z.string().min(1),
 	BUNNY_URL_TOKEN_AUTH_KEY: z.string().min(1),
 	BUNNY_STORAGE_ZONE: z.string().min(1),
