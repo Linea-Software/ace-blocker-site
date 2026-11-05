@@ -1,6 +1,30 @@
 import crypto from 'node:crypto';
 import { getProStatus } from './pro';
 
+/** Public verification key distributed over the authenticated entitlement endpoint.
+ * Private signing bytes never leave the server. */
+export function getEntitlementPublicKey(
+	privateKeyBase64 = process.env.ACE_ENTITLEMENT_SIGNING_KEY_BASE64
+): string {
+	if (!privateKeyBase64) throw new Error('Entitlement signing key is not configured');
+	const privateKey = crypto.createPrivateKey({
+		key: Buffer.from(privateKeyBase64, 'base64'),
+		format: 'der',
+		type: 'pkcs8'
+	});
+	const actual = crypto.createPublicKey(privateKey)
+		.export({ format: 'der', type: 'spki' })
+		.subarray(-32);
+	const configured = process.env.ACE_ENTITLEMENT_PUBLIC_KEY_BASE64;
+	if (configured) {
+		const expected = Buffer.from(configured, 'base64');
+		if (expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) {
+			throw new Error('Entitlement key pair mismatch');
+		}
+	}
+	return actual.toString('base64');
+}
+
 /** Signed Pro lease bound to the API key (not to any particular device). */
 export const LEASE_SECONDS = 24 * 60 * 60;
 export const OFFLINE_GRACE_SECONDS = 72 * 60 * 60;
@@ -24,15 +48,8 @@ export async function issueEntitlement(
 		format: 'der',
 		type: 'pkcs8'
 	});
-	const publicKey = crypto.createPublicKey(privateKey).export({ format: 'der', type: 'spki' });
-	const configuredPublic = process.env.ACE_ENTITLEMENT_PUBLIC_KEY_BASE64;
-	if (configuredPublic) {
-		const expected = Buffer.from(configuredPublic, 'base64');
-		const actual = publicKey.subarray(-32);
-		if (expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) {
-			throw new Error('Entitlement key pair mismatch');
-		}
-	}
+	// Enforce that the configured verification key matches the signer.
+	getEntitlementPublicKey(privateKeyBase64);
 	const now = Math.floor(Date.now() / 1000);
 	const expires = Math.min(now + LEASE_SECONDS, Math.floor(pro.expirationDate.getTime() / 1000));
 	const payload = {

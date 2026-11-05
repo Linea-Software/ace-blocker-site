@@ -11,7 +11,7 @@ import { db } from '$lib/server/db';
 import { user as userTable, apikey, proStatus, backups, session } from '$lib/server/db/schema';
 import { eq, like } from 'drizzle-orm';
 import { createLogger } from '$lib/server/logger';
-import { issueEntitlement } from '$lib/server/entitlements';
+import { issueEntitlement, getEntitlementPublicKey } from '$lib/server/entitlements';
 
 const log = createLogger('api:account');
 
@@ -225,14 +225,20 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 				headers: new Headers({ 'x-api-key': key })
 			});
 			if (!keySession?.user) return status(401, 'Unauthorized API key');
-			return { token: await issueEntitlement(keySession.user.id, key) };
+			return {
+				token: await issueEntitlement(keySession.user.id, key),
+				publicKey: getEntitlementPublicKey()
+			};
 		},
 		{
 			detail: {
 				operationId: 'getSignedEntitlement',
 				summary: 'Issue a short-lived signed Pro entitlement'
 			},
-			response: { 200: t.Object({ token: t.Nullable(t.String()) }), 401: t.String() }
+			response: {
+				200: t.Object({ token: t.Nullable(t.String()), publicKey: t.String() }),
+				401: t.String()
+			}
 		}
 	)
 	// ── Cancel Subscription ─────────────────────────────────────────────────

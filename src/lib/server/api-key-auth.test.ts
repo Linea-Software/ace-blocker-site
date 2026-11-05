@@ -175,7 +175,10 @@ describe('API-key auth compatibility', () => {
 
 		const res = await apiRequest('/api/v1/account/entitlement', { 'x-api-key': apiKey });
 		expect(res.status).toBe(200);
-		const body = (await res.json()) as { token: string };
+		const body = (await res.json()) as { token: string; publicKey: string };
+		expect(body.publicKey).toBe(
+			publicKey.export({ type: 'spki', format: 'der' }).subarray(-32).toString('base64')
+		);
 		expect(body.token.split('.')).toHaveLength(3);
 		const [header, payload, signature] = body.token.split('.');
 		expect(

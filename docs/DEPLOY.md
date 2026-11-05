@@ -921,10 +921,12 @@ encoded in base64. Put its **contents** into the backend secret
 
 The `desktop-verification-public.b64` file contains the raw 32-byte public key
 encoded in base64. Put its **contents** into the backend variable
-`ACE_ENTITLEMENT_PUBLIC_KEY_BASE64` to check the key pair, and into the
-`ace-blocker` GitHub Actions repository variable of the same name. Release
-binaries pin this public key at compile time. Key rotation requires coordinated
-server deployment and rebuilding the desktop engine.
+`ACE_ENTITLEMENT_PUBLIC_KEY_BASE64` to check the key pair on the backend.
+The engine obtains this public key from the authenticated
+`GET /api/v1/account/entitlement` response at runtime and saves it with the
+signed lease for offline verification. Neither development nor release builds
+need the key in Cargo or CI variables. Production must use HTTPS; key rotation
+takes effect on the next authenticated license refresh without a desktop rebuild.
 
 A lease lasts up to 24 hours; existing paid capabilities can continue offline
 for up to another 72 hours when the server cannot be contacted. Already active
