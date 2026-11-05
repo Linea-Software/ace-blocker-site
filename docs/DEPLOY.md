@@ -904,3 +904,32 @@ sudo mkswap /swapfile
 sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
+
+## Signed Pro entitlements
+
+The desktop engine accepts only signed, API-key-bound Ed25519 leases. Create a
+key pair on a trusted machine **outside the repository**:
+
+```bash
+bun scripts/generate-entitlement-keys.ts "$HOME/.config/ace-blocker/entitlement-keys"
+```
+
+The resulting `server-signing-private.b64` contains the PKCS#8 DER private key
+encoded in base64. Put its **contents** into the backend secret
+`ACE_ENTITLEMENT_SIGNING_KEY_BASE64`. Never commit or print this private key.
+
+The `desktop-verification-public.b64` file contains the raw 32-byte public key
+encoded in base64. Put its **contents** into the backend variable
+`ACE_ENTITLEMENT_PUBLIC_KEY_BASE64` to check the key pair, and into the
+`ace-blocker` GitHub Actions repository variable of the same name. Release
+binaries pin this public key at compile time. Key rotation requires coordinated
+server deployment and rebuilding the desktop engine.
+
+A lease lasts up to 24 hours; existing paid capabilities can continue offline
+for up to another 72 hours when the server cannot be contacted. Already active
+blocking protections stay enforced after downgrade, but enabling new Pro
+capabilities is not allowed after expiration. No device limit is enforced.
+
+**Pre-release billing policy:** DodoPayments stays in `test_mode` even with
+`NODE_ENV=production`. Use test-mode Dodo credentials until the product explicitly
+changes this policy.
