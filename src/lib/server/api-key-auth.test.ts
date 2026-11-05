@@ -157,6 +157,46 @@ describe('API-key auth compatibility', () => {
 		expect(body.isPro).toBe(true);
 	});
 
+	it('issues a signed entitlement exclusively to the authenticated API-key owner', async () => {
+		const { privateKey, publicKey } = crypto.generateKeyPairSync('ed25519');
+		process.env.ACE_ENTITLEMENT_SIGNING_KEY_BASE64 = privateKey
+			.export({
+				type: 'pkcs8',
+				format: 'der'
+			})
+			.toString('base64');
+		process.env.ACE_ENTITLEMENT_PUBLIC_KEY_BASE64 = publicKey
+			.export({
+				type: 'spki',
+				format: 'der'
+			})
+			.subarray(-32)
+			.toString('base64');
+
+		const res = await apiRequest('/api/v1/account/entitlement', { 'x-api-key': apiKey });
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as { token: string };
+		expect(body.token.split('.')).toHaveLength(3);
+		const [header, payload, signature] = body.token.split('.');
+		expect(
+			crypto.verify(
+				null,
+				Buffer.from(`${header}.${payload}`),
+				publicKey,
+				Buffer.from(signature, 'base64url')
+			)
+		).toBe(true);
+		const claims = JSON.parse(Buffer.from(payload, 'base64url').toString()) as {
+			key_sha256: string;
+			sub: string;
+		};
+		expect(claims.key_sha256).toBe(crypto.createHash('sha256').update(apiKey).digest('hex'));
+		expect(claims.sub).toBeTruthy();
+
+		const unauthorized = await apiRequest('/api/v1/account/entitlement');
+		expect(unauthorized.status).toBe(401);
+	});
+
 	it('Authorization: Bearer <api-key> also authorizes (generated engine client)', async () => {
 		const res = await apiRequest('/api/v1/account/pro', {
 			authorization: `Bearer ${apiKey}`

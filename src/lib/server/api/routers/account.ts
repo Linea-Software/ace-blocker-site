@@ -212,21 +212,29 @@ export const accountRouter = new Elysia({ prefix: '/account' })
 			}
 		}
 	)
-	.post('/entitlement', async ({ request, status }) => {
-		const key = apiKeyGetter({ headers: request.headers });
-		if (!key) return status(401, 'Desktop API key required');
-		// IMPORTANT: a browser cookie for Pro user A may accompany an API key
-		// belonging to Free user B. Authenticate the KEY ALONE to prevent
-		// minting a Pro lease for another user's credential.
-		const keySession = await auth.api.getSession({
-			headers: new Headers({ 'x-api-key': key })
-		});
-		if (!keySession?.user) return status(401, 'Unauthorized API key');
-		return { token: await issueEntitlement(keySession.user.id, key) };
-	}, {
-		detail: { operationId: 'getSignedEntitlement', summary: 'Issue a short-lived signed Pro entitlement' },
-		response: { 200: t.Object({ token: t.Nullable(t.String()) }), 401: t.String() }
-	})
+	.get(
+		'/entitlement',
+		async ({ request, status, set }) => {
+			set.headers['cache-control'] = 'no-store';
+			const key = apiKeyGetter({ headers: request.headers });
+			if (!key) return status(401, 'Desktop API key required');
+			// IMPORTANT: a browser cookie for Pro user A may accompany an API key
+			// belonging to Free user B. Authenticate the KEY ALONE to prevent
+			// minting a Pro lease for another user's credential.
+			const keySession = await auth.api.getSession({
+				headers: new Headers({ 'x-api-key': key })
+			});
+			if (!keySession?.user) return status(401, 'Unauthorized API key');
+			return { token: await issueEntitlement(keySession.user.id, key) };
+		},
+		{
+			detail: {
+				operationId: 'getSignedEntitlement',
+				summary: 'Issue a short-lived signed Pro entitlement'
+			},
+			response: { 200: t.Object({ token: t.Nullable(t.String()) }), 401: t.String() }
+		}
+	)
 	// ── Cancel Subscription ─────────────────────────────────────────────────
 	.post(
 		'/cancel-subscription',
