@@ -104,6 +104,9 @@ export async function updateProExpiration(email: string, nextBillingDate: Date):
 			columns: { id: true }
 		});
 
+		if (!userRow) {
+			throw new Error('Paid customer email not linked to an ACE account');
+		}
 		if (userRow) {
 			const proData = {
 				id: crypto.randomUUID(),
@@ -143,6 +146,9 @@ export async function clearProExpiration(email: string): Promise<void> {
 			columns: { id: true }
 		});
 
+		if (!userRow) {
+			throw new Error('Subscription customer email not linked to an ACE account');
+		}
 		if (userRow) {
 			await db
 				.update(proStatus)

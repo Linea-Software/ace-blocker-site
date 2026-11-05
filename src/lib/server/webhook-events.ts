@@ -41,16 +41,7 @@ function webhookEventKey(payload: WebhookEventPayload): string {
 }
 
 export async function shouldProcessWebhook(payload: WebhookEventPayload): Promise<boolean> {
-	const eventKey = crypto
-		.createHash('sha256')
-		.update(
-			JSON.stringify({
-				type: payload.type,
-				timestamp: payload.timestamp.toISOString(),
-				data: payload.data
-			})
-		)
-		.digest('hex');
+	const eventKey = webhookEventKey(payload);
 
 	const subscriptionId =
 		typeof payload.data?.subscription_id === 'string' ? payload.data.subscription_id : null;
