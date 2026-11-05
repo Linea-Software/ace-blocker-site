@@ -33,7 +33,7 @@ import { shouldCreateDodoCustomerOnSignUp } from './config/dodo';
 
 export const dodoPayments = new DodoPayments({
 	bearerToken: process.env.DODO_PAYMENTS_API_KEY ?? '',
-	environment: process.env.NODE_ENV === 'production' ? 'live_mode' : 'test_mode'
+	environment: 'test_mode' // we're still in early dev phase, so we won't risk charging any user
 });
 
 /**
