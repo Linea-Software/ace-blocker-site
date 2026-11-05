@@ -14,6 +14,8 @@
 	} from '@tabler/icons-svelte';
 	import Loader2 from '@lucide/svelte/icons/loader-2';
 	import { onMount } from 'svelte';
+	import { installerArch } from './_components/installer-command';
+	import InstallCommands from './_components/InstallCommands.svelte';
 	import PlatformGrid from './_components/PlatformGrid.svelte';
 	import ChecksumCard from './_components/ChecksumCard.svelte';
 
@@ -28,12 +30,6 @@
 	}
 
 	type PlatformId = 'windows' | 'macos' | 'linux';
-
-	const ARCH_IDS: Record<PlatformId, string> = {
-		windows: 'windows_x64',
-		macos: 'macos_universal',
-		linux: 'linux_x64'
-	};
 
 	const REQUESTED_PLATFORM: PlatformId | null = (() => {
 		const arch = page.url.searchParams.get('arch');
@@ -56,7 +52,6 @@
 	);
 
 	let detectedPlatform = $state<PlatformId | null>(null);
-	let downloadStarting = $state(false);
 	let isManualLoading = $state(false);
 
 	const preferredPlatform = $derived.by<PlatformId | null>(() => {
@@ -80,24 +75,8 @@
 		return null;
 	}
 
-	function rowFor(platform: PlatformId) {
-		return platformRows[platform];
-	}
-
 	onMount(() => {
 		detectedPlatform = detectPlatform();
-
-		const requested =
-			REQUESTED_PLATFORM && rowFor(REQUESTED_PLATFORM) ? REQUESTED_PLATFORM : null;
-		const detected = detectedPlatform && rowFor(detectedPlatform) ? detectedPlatform : null;
-		const autoTarget = requested ?? detected;
-		if (!downloadStarting && autoTarget) {
-			downloadStarting = true;
-			const target = ARCH_IDS[autoTarget];
-			setTimeout(() => {
-				window.location.href = `/download/${target}`;
-			}, 2000);
-		}
 	});
 
 	const selectedMeta = $derived<PlatformMeta | null>(
@@ -111,7 +90,7 @@
 	const platformOptions = $derived([
 		{
 			id: 'windows',
-			routeArch: ARCH_IDS.windows,
+			routeArch: installerArch('windows', platformRows.windows?.architecture ?? 'x64'),
 			name: m.download_platform_windows(),
 			icon: IconBrandWindows,
 			size: formatSize(platformRows.windows),
@@ -122,7 +101,7 @@
 		},
 		{
 			id: 'macos',
-			routeArch: ARCH_IDS.macos,
+			routeArch: installerArch('macos', platformRows.macos?.architecture ?? 'x64'),
 			name: m.download_platform_macos(),
 			icon: IconBrandApple,
 			size: formatSize(platformRows.macos),
@@ -133,7 +112,7 @@
 		},
 		{
 			id: 'linux',
-			routeArch: ARCH_IDS.linux,
+			routeArch: installerArch('linux', platformRows.linux?.architecture ?? 'x64'),
 			name: m.download_platform_linux(),
 			icon: IconBrandUbuntu,
 			size: formatSize(platformRows.linux),
@@ -147,7 +126,7 @@
 	function handleManualDownload() {
 		if (!effectivePlatform) return;
 		isManualLoading = true;
-		window.location.href = `/download/${ARCH_IDS[effectivePlatform]}`;
+		window.location.href = `/download/${installerArch(effectivePlatform, selectedMeta?.architecture ?? 'x64')}`;
 		setTimeout(() => {
 			isManualLoading = false;
 		}, 2000);
@@ -201,19 +180,9 @@
 								</p>
 							</div>
 
-							{#if downloadStarting}
-								<p
-									class="mt-4 flex items-center gap-2 text-sm text-information"
-									aria-live="polite"
-								>
-									<Loader2 class="size-4 animate-spin" aria-hidden="true" />
-									{m.download_starting_status()}
-								</p>
-							{:else}
-								<p class="mt-4 text-sm text-muted-foreground">
-									{m.download_description()}
-								</p>
-							{/if}
+							<p class="mt-4 text-sm text-muted-foreground">
+								{m.download_description()}
+							</p>
 
 							<a
 								href="https://github.com/aintDatCap/ace-blocker/releases"
@@ -258,10 +227,20 @@
 		<div class="ace-shell">
 			<PlatformGrid
 				platforms={platformOptions}
-				detectedArch={effectivePlatform ? ARCH_IDS[effectivePlatform] : null}
+				detectedArch={effectivePlatform
+					? installerArch(effectivePlatform, selectedMeta?.architecture ?? 'x64')
+					: null}
 			/>
 		</div>
 	</section>
+
+	<InstallCommands
+		platforms={[
+			{ id: 'windows', architecture: platformRows.windows?.architecture ?? null },
+			{ id: 'macos', architecture: platformRows.macos?.architecture ?? null },
+			{ id: 'linux', architecture: platformRows.linux?.architecture ?? null }
+		] satisfies { id: PlatformId; architecture: string | null }[]}
+	/>
 
 	{#if selectedMeta?.hash}
 		<section class="py-12 sm:py-16">
