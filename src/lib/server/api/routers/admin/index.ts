@@ -3,6 +3,7 @@ import { auth } from '$lib/server/auth';
 import { usersRouter } from './users';
 import { sitePacksRouter } from './site-packs';
 import { installersRouter } from './installers';
+import { desktopAdminRouter } from './desktop';
 import { resistanceRouter } from './resistance';
 
 export const adminRouter = new Elysia({ prefix: '/admin' })
@@ -32,4 +33,5 @@ export const adminRouter = new Elysia({ prefix: '/admin' })
 	.use(usersRouter)
 	.use(sitePacksRouter)
 	.use(installersRouter)
+	.use(desktopAdminRouter)
 	.use(resistanceRouter);

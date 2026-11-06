@@ -333,3 +333,23 @@ You MUST use this tool whenever writing Svelte code before sending it to the use
 
 Generates a Svelte Playground link with the provided code.
 After completing the code, ask the user if they want a playground link. Only call this tool after user confirmation and NEVER if code was written to files in their project.
+
+## Signed desktop MSI updates (server, gated)
+
+- See `docs/DESKTOP_UPDATES.md` for the immutable, signed Ed25519
+  desktop feed contract and private Bunny staging/approval procedure.
+- `src/lib/server/desktop-update-security.ts` verifies the exact Rust
+  `ace-update-security` v1 envelope with Node crypto. There is **no**
+  release signing private key on this server.
+- `src/lib/server/desktop-update-storage.ts` verifies private Bunny bytes
+  using a bounded stream; public MSI delivery bypasses the VPS.
+  `src/lib/server/desktop-update-service.ts` enforces staged/publishing/
+  published/withdrawn state, audit and explicit admin review.
+- `GET /api/v1/releases/desktop/latest` is anonymous, account-independent
+  and default-disabled; it is **not** the legacy `/releases/latest` content feed.
+  `ACE_DESKTOP_UPDATES_ENABLED` must remain unset until production signing
+  and pinned Windows client checks are ready.
+- Only `POST /api/v1/releases/ingest/desktop` takes a CI bearer token;
+  `POST /api/v1/admin/installers/{publish-desktop,withdraw-desktop}` require
+  Better Auth administrator sessions. The legacy
+  `set-downloadable` route cannot promote signed desktop releases.

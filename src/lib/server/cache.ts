@@ -1,6 +1,13 @@
 import { db } from '$lib/server/db';
 import { aceBlockerInstaller, resistanceModeScripts, sitePack } from '$lib/server/db/schema';
-import { desc, eq, sql } from 'drizzle-orm';
+import { desc, eq, inArray, sql } from 'drizzle-orm';
+import { installersBasePath } from '$lib/server/cdn/common';
+import {
+	compareStableVersions,
+	verifyDesktopEnvelope,
+	updatesEnabled,
+	type SignedEnvelope
+} from '$lib/server/desktop-update-security';
 import { createLogger } from '$lib/server/logger';
 
 const log = createLogger('cache');
@@ -11,6 +18,7 @@ let latestInstaller: typeof aceBlockerInstaller.$inferSelect | null = null;
 // route picks the newest row for the requested platform instead of whatever
 // was uploaded last.
 let latestInstallersByTarget: Map<string, typeof aceBlockerInstaller.$inferSelect> = new Map();
+let signedDesktopLatest: SignedEnvelope | null = null;
 let latestResistanceScript: typeof resistanceModeScripts.$inferSelect | null = null;
 let latestSitePacks: Map<string, typeof sitePack.$inferSelect> = new Map();
 
@@ -53,6 +61,58 @@ export function getInstallerFor(
 	architecture: 'x64' | 'arm64'
 ): typeof aceBlockerInstaller.$inferSelect | null {
 	return latestInstallersByTarget.get(installerKey(os, architecture)) ?? null;
+}
+
+// Signed full-product updates are entirely separate from legacy installer hints.
+// A withdrawal of the highest ever published version blocks fallback to older
+// releases. Staged candidates do not suppress the most recent approved release.
+export async function invalidateDesktopReleaseCache(): Promise<void> {
+	signedDesktopLatest = null; // fail closed while reloading, including on DB error
+	if (!updatesEnabled()) return;
+	const rows = await db
+		.select()
+		.from(aceBlockerInstaller)
+		.where(inArray(aceBlockerInstaller.updateState, ['published', 'withdrawn']));
+	const eligible = rows.filter(
+		(row) =>
+			row.updateChannel === 'stable' && row.os === 'windows' && row.architecture === 'x64'
+	);
+	let latest: (typeof eligible)[number] | undefined;
+	for (const row of eligible) {
+		if (!latest || compareStableVersions(row.version, latest.version) > 0) latest = row;
+	}
+	if (
+		!latest ||
+		latest.updateState !== 'published' ||
+		!latest.canBeDownloaded ||
+		!latest.signedEnvelope
+	)
+		return;
+	try {
+		const envelope = JSON.parse(latest.signedEnvelope) as SignedEnvelope;
+		const metadata = verifyDesktopEnvelope(envelope, installersBasePath);
+		if (
+			metadata.version !== latest.version ||
+			metadata.sha256 !== latest.sha256 ||
+			metadata.packageUrl !== latest.downloadUrl ||
+			latest.manifestKeyId !== envelope.key_id
+		)
+			return;
+		signedDesktopLatest = envelope;
+	} catch (error) {
+		log.error(
+			{ err: error, id: latest.id },
+			'Signed desktop release failed cached verification'
+		);
+	}
+}
+
+export function getLatestDesktopEnvelope(): SignedEnvelope | null {
+	return updatesEnabled() &&
+		process.env.ACE_DESKTOP_UPDATE_PUBLIC_KEYS &&
+		process.env.ACE_DESKTOP_PUBLISHER_CERT_SHA256
+		? signedDesktopLatest
+		: null;
 }
 
 // ============ RESISTANCE SCRIPTS ============
@@ -112,7 +172,12 @@ export async function invalidateSitePacksCache(): Promise<
 // ============ INITIALIZE ALL CACHES ============
 
 export async function initializeCache(): Promise<void> {
-	await Promise.all([loadLatestInstaller(), loadLatestResistanceScript(), loadLatestSitePacks()]);
+	await Promise.all([
+		loadLatestInstaller(),
+		loadLatestResistanceScript(),
+		loadLatestSitePacks(),
+		invalidateDesktopReleaseCache()
+	]);
 }
 
 // ============ DOWNLOAD COUNT INCREMENT ============

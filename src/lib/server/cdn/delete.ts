@@ -103,7 +103,8 @@ export async function deleteInstaller(id: string): Promise<Result<void, CDNError
 		where: eq(aceBlockerInstaller.id, id)
 	});
 
-	if (!release) {
+	if (!release || (release.updateState && release.updateState !== 'legacy')) {
+		// Preserve signed release history, withdrawal floor and audit trail.
 		return err(CDNErrorType.DeleteFailed);
 	}
 

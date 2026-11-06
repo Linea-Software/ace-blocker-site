@@ -148,6 +148,16 @@ export const installersRouter = new Elysia({ prefix: '/installers' })
 				return { error: true, message: 'Release not found' };
 			}
 
+			// Legacy manual download toggle is NOT a signed-update approval.
+			// Signed releases must go through the audited publish/withdraw transitions.
+			if (existing.updateState && existing.updateState !== 'legacy') {
+				set.status = 409;
+				return {
+					error: true,
+					message: 'Use the signed desktop release publication workflow'
+				};
+			}
+
 			await db
 				.update(aceBlockerInstaller)
 				.set({ canBeDownloaded })
@@ -178,6 +188,7 @@ export const installersRouter = new Elysia({ prefix: '/installers' })
 					message: t.String()
 				}),
 				403: t.String(),
+				409: t.Object({ error: t.Boolean(), message: t.String() }),
 				404: t.Object({
 					error: t.Boolean(),
 					message: t.String()

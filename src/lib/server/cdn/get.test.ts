@@ -96,6 +96,26 @@ describe('getInstallerURL', () => {
 		expect(url.search).toBe('');
 	});
 
+	it('keeps the legacy manual download working after publishing a signed MSI', () => {
+		const sha = 'a'.repeat(64);
+		installerFor.mockReturnValue({
+			id: 'signed',
+			version: '1.10.0',
+			os: 'windows',
+			architecture: 'x64',
+			fileName: `${sha}.msi`,
+			sha256: sha,
+			size: 100,
+			updateChannel: 'stable',
+			updateState: 'published',
+			canBeDownloaded: true
+		});
+		const url = getInstallerURL('windows', 'x64')._unsafeUnwrap().url;
+		expect(url.pathname).toBe(
+			`/dev/ace-blocker-installer/signed/windows/x64/1.10.0/${sha}.msi`
+		);
+		expect(url.search).toBe('');
+	});
 	it('does not fall through to another platform row when the target is missing', () => {
 		installerFor.mockReturnValue(null as never);
 		const result = getInstallerURL('linux', 'x64');

@@ -1,35 +1,88 @@
-import { pgTable, text, timestamp, pgEnum, uuid, boolean, integer } from 'drizzle-orm/pg-core';
+import {
+	pgTable,
+	text,
+	timestamp,
+	pgEnum,
+	boolean,
+	integer,
+	uniqueIndex,
+	index,
+	check
+} from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export const osEnum = pgEnum('os', ['windows', 'linux', 'macos']);
 export const architectureEnum = pgEnum('architecture', ['x64', 'arm64']);
 
 // will stay in
 // CDN -> /ace-blocker-installer/<version>/<filename>
-export const aceBlockerInstaller = pgTable('ace_blocker_installer', {
+export const aceBlockerInstaller = pgTable(
+	'ace_blocker_installer',
+	{
+		id: text('id').primaryKey(),
+		fileName: text('file_name').notNull(),
+		version: text('version').notNull(),
+		os: osEnum('os').notNull(),
+		architecture: architectureEnum('architecture').notNull(),
+		// to be set by the program
+		downloadUrl: text('download_url').notNull(),
+		// to be set by the program
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		// to be set by the program
+		sha256: text('sha256').notNull(),
+		// Optional CI provenance. Manual/legacy uploads leave these null.
+		sourceRepository: text('source_repository'),
+		sourceCommit: text('source_commit'),
+		sourceRunId: text('source_run_id'),
+		sourceRunUrl: text('source_run_url'),
+		engineCommit: text('engine_commit'),
+		appCommit: text('app_commit'),
+		// to be set by the program
+		size: integer('size').notNull(),
+		// to be set by the admins/program: if there's a new version, this will be set to false
+		canBeDownloaded: boolean('can_be_downloaded').default(true).notNull(),
+		// to be set by the program
+		downloadCount: integer('download_count').default(0).notNull(),
+		// Signed desktop releases are opt-in, isolated from legacy manual downloads.
+		updateChannel: text('update_channel'),
+		updateState: text('update_state')
+			.$type<'legacy' | 'staged' | 'publishing' | 'published' | 'withdrawn'>()
+			.default('legacy')
+			.notNull(),
+		signedEnvelope: text('signed_envelope'),
+		manifestKeyId: text('manifest_key_id'),
+		stagingKey: text('staging_key'),
+		publishedAt: timestamp('published_at', { withTimezone: true })
+	},
+	(table) => [
+		uniqueIndex('desktop_release_target_version_unique')
+			.on(table.version, table.os, table.architecture, table.updateChannel)
+			.where(sql`${table.updateState} <> 'legacy'`),
+		uniqueIndex('desktop_release_single_publisher_unique')
+			.on(table.os, table.architecture, table.updateChannel)
+			.where(sql`${table.updateState} = 'publishing'`),
+		index('desktop_release_feed_idx').on(
+			table.updateState,
+			table.os,
+			table.architecture,
+			table.updateChannel
+		),
+		check(
+			'desktop_release_signature_required',
+			sql`${table.updateState} = 'legacy' OR
+		(${table.updateChannel} = 'stable' AND ${table.signedEnvelope} IS NOT NULL AND
+		${table.manifestKeyId} IS NOT NULL AND ${table.stagingKey} IS NOT NULL)`
+		)
+	]
+);
+
+export const desktopReleaseAudit = pgTable('desktop_release_audit', {
 	id: text('id').primaryKey(),
-	fileName: text('file_name').notNull(),
-	version: text('version').notNull(),
-	os: osEnum('os').notNull(),
-	architecture: architectureEnum('architecture').notNull(),
-	// to be set by the program
-	downloadUrl: text('download_url').notNull(),
-	// to be set by the program
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	// to be set by the program
-	sha256: text('sha256').notNull(),
-	// Optional CI provenance. Manual/legacy uploads leave these null.
-	sourceRepository: text('source_repository'),
-	sourceCommit: text('source_commit'),
-	sourceRunId: text('source_run_id'),
-	sourceRunUrl: text('source_run_url'),
-	engineCommit: text('engine_commit'),
-	appCommit: text('app_commit'),
-	// to be set by the program
-	size: integer('size').notNull(),
-	// to be set by the admins/program: if there's a new version, this will be set to false
-	canBeDownloaded: boolean('can_be_downloaded').default(true).notNull(),
-	// to be set by the program
-	downloadCount: integer('download_count').default(0).notNull()
+	installerId: text('installer_id').notNull(),
+	actor: text('actor').notNull(),
+	action: text('action').notNull(),
+	result: text('result').notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
 });
 
 // will stay in

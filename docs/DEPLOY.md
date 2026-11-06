@@ -936,3 +936,28 @@ capabilities is not allowed after expiration. No device limit is enforced.
 **Pre-release billing policy:** DodoPayments stays in `test_mode` even with
 `NODE_ENV=production`. Use test-mode Dodo credentials until the product explicitly
 changes this policy.
+
+### Signed desktop MSI updates (disabled until configured)
+
+The server-side authenticated release workflow is documented in
+[DESKTOP_UPDATES.md](DESKTOP_UPDATES.md). It is **off by default** and does
+not use Better Auth, Pro licenses, payment status or tokenized CDN URLs for
+public update discovery/download. The admin approval and private staging
+Bunny zones are separate from legacy installer downloads.
+
+For a production cutover, provision only **public** Ed25519 verification
+keys on the VPS, keep the signing private key off-box, configure a distinct
+private Bunny staging storage zone, and test direct anonymous HTTPS MSI
+downloads from the public CDN. Apply the Drizzle migration with
+`bun run db:migrate` using the site's existing migration process and
+validate the schema before enabling `ACE_DESKTOP_UPDATES_ENABLED=true`.
+Keep the legacy content updater untouched.
+
+The CI ingest endpoint `POST /api/v1/releases/ingest/desktop` accepts
+**only small JSON**, not MSI bytes. Configure Nginx/Cloudflare to cap its
+request body to 16 KiB (e.g., an exact-match Nginx `location` with
+`client_max_body_size 16k`) and to rate-limit authenticated ingest attempts.
+Large MSI transfers must go directly from protected CI to private Bunny
+storage. The server streams and verifies the remote object only at ingest
+and promotion, never on user download. Refer to the linked document for
+known v1 client compatibility and revocation limitations.

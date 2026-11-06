@@ -1,5 +1,6 @@
 import { err, ok, Result } from 'neverthrow';
 import { getLatestSitePacks, getLatestResistanceScript, getInstallerFor } from '$lib/server/cache';
+import { expectedDesktopUrl } from '$lib/server/desktop-update-security';
 import {
 	CDNErrorType,
 	sitePacksBasePath,
@@ -86,10 +87,21 @@ export function getInstallerURL(
 		return err(CDNErrorType.NoReleaseAvailable);
 	}
 
-	const installerPath = new URL(
-		`${latestRecord.version}/${latestRecord.os}/${latestRecord.architecture}/${latestRecord.fileName}`,
-		installersBasePath
-	);
+	// A published signed MSI uses its separate immutable, content-addressed CDN path.
+	// Legacy installers keep the historical path (their stored downloadUrl is a storage API URL).
+	const installerPath =
+		latestRecord.updateState === 'published' && latestRecord.updateChannel === 'stable'
+			? new URL(
+					expectedDesktopUrl(
+						latestRecord.version,
+						latestRecord.sha256,
+						installersBasePath
+					)
+				)
+			: new URL(
+					`${latestRecord.version}/${latestRecord.os}/${latestRecord.architecture}/${latestRecord.fileName}`,
+					installersBasePath
+				);
 
 	// No auth token needed for installers (publicly accessible)
 

@@ -52,6 +52,28 @@ describe('Elysia API', () => {
 	const handle = (path: string, method = 'GET') =>
 		app.handle(new Request(`http://localhost${path}`, { method }));
 
+	it('GET /api/v1/releases/desktop/latest is mounted publicly and disabled by default', async () => {
+		const previous = process.env.ACE_DESKTOP_UPDATES_ENABLED;
+		process.env.ACE_DESKTOP_UPDATES_ENABLED = 'false';
+		try {
+			const res = await handle(
+				'/api/v1/releases/desktop/latest?os=windows&architecture=x64&channel=stable'
+			);
+			expect(res.status).toBe(503);
+		} finally {
+			if (previous === undefined) delete process.env.ACE_DESKTOP_UPDATES_ENABLED;
+			else process.env.ACE_DESKTOP_UPDATES_ENABLED = previous;
+		}
+	});
+	it('GET /api/v1/releases/latest retains its legacy public content contract', async () => {
+		const res = await handle('/api/v1/releases/latest');
+		expect(res.status).toBe(200);
+		expect(await res.json()).toMatchObject({
+			installer: null,
+			resistance: null,
+			sitePacks: []
+		});
+	});
 	it('GET /api/v1/scripts/resistance-mode requires an authenticated session', async () => {
 		const res = await handle('/api/v1/scripts/resistance-mode');
 		expect(res.status).toBe(401);
