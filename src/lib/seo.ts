@@ -14,11 +14,11 @@ export const INDEXABLE_PATHS = [
 ] as const;
 
 // FAQ is translated in all four locales. The other public pages are fully
-// translated only in Italian; Spanish and German still fall back to English.
+// translated in English, Italian and German; Spanish still falls back to English.
 export function localesForPath(pathname: string): readonly SeoLocale[] {
 	const path = basePath(pathname);
 	if (path === '/faq') return SEO_LOCALES;
-	return (INDEXABLE_PATHS as readonly string[]).includes(path) ? ['en', 'it'] : ['en'];
+	return (INDEXABLE_PATHS as readonly string[]).includes(path) ? ['en', 'it', 'de'] : ['en'];
 }
 
 export function basePath(pathname: string): string {

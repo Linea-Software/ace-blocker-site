@@ -10,11 +10,12 @@ describe('sitemap', () => {
 		expect(xml).toContain('<loc>https://aceblocker.com/download</loc>');
 		expect(xml).toContain('<loc>https://aceblocker.com/it/download</loc>');
 		expect(xml).toContain('<loc>https://aceblocker.com/it/privacy</loc>');
-		expect(xml).not.toContain('<loc>https://aceblocker.com/de/download</loc>');
+		expect(xml).toContain('<loc>https://aceblocker.com/de/download</loc>');
+		expect(xml).toContain('<loc>https://aceblocker.com/de/terms</loc>');
 		expect(xml).toContain('hreflang="x-default" href="https://aceblocker.com/faq"');
 		expect(xml).not.toContain('/checkout');
 		expect(xml).not.toContain('/admin');
 		expect(xml).not.toContain('/signin');
-		expect((xml.match(/<url>/g) ?? []).length).toBe(16);
+		expect((xml.match(/<url>/g) ?? []).length).toBe(22);
 	});
 });

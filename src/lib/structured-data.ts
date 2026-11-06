@@ -23,7 +23,7 @@ export function organizationAndWebsiteData() {
 	};
 }
 
-export function softwareData(description: string) {
+export function softwareData(description: string, freeOfferDescription: string) {
 	return {
 		'@context': 'https://schema.org',
 		'@type': 'SoftwareApplication',
@@ -37,7 +37,7 @@ export function softwareData(description: string) {
 			'@type': 'Offer',
 			price: '0',
 			priceCurrency: 'USD',
-			description: 'Free version'
+			description: freeOfferDescription
 		},
 		publisher: { '@id': `${SITE_URL}/#organization` }
 	};
