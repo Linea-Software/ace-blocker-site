@@ -56,6 +56,7 @@ Before performing ANY task related to the technologies below, you MUST use `read
 
 ## Localization (Paraglide JS)
 
+- **LLM translation and editorial QA:** Read [`docs/LLM_LOCALIZATION_WORKFLOW.md`](docs/LLM_LOCALIZATION_WORKFLOW.md) before producing or reviewing target-locale content; it covers both the website and desktop app, product terminology, natural writing, independent QA and SEO/localized-page gates.
 - **CRITICAL**: All user-facing text **MUST** be localized using Paraglide. Hardcoded strings are **FORBIDDEN** in UI components.
 - **Workflow**:
     1. Add the string key to `messages/en.json` (format: `"snake_case_key": "Text content"`).
