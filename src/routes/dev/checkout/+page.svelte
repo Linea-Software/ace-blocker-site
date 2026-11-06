@@ -1,4 +1,5 @@
 <script lang="ts">
+	import * as m from '$lib/paraglide/messages';
 	import { authClient } from '$lib/auth-client';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -23,7 +24,7 @@
 			});
 
 			if (err) {
-				error = err.message || 'An error occurred';
+				error = err.message || m.dev_checkout_error();
 				return;
 			}
 
@@ -39,25 +40,24 @@
 </script>
 
 <svelte:head>
-	<title>Checkout — Ace Blocker</title>
+	<title>{m.dev_checkout_page_title()}</title>
 </svelte:head>
 
 <div class="flex min-h-screen items-center justify-center bg-muted/40 p-4">
 	<Card.Root class="w-full max-w-md shadow-lg">
 		<Card.Header>
-			<Card.Title class="text-2xl font-bold tracking-tight">Checkout Test</Card.Title>
-			<Card.Description>Only available in development mode.</Card.Description>
+			<Card.Title class="text-2xl font-bold tracking-tight">{m.dev_checkout_title()}</Card.Title>
+			<Card.Description>{m.dev_checkout_description()}</Card.Description>
 		</Card.Header>
 		<Card.Content class="space-y-4">
 			<p class="text-sm text-muted-foreground">
-				Testing Dodo Payments integration with Better Auth. Clicking the button below will
-				generate a checkout session and open it in a new tab.
+				{m.dev_checkout_body()}
 			</p>
 
 			{#if error}
 				<Alert.Root variant="destructive">
 					<AlertCircle class="h-4 w-4" />
-					<Alert.Title>Error</Alert.Title>
+					<Alert.Title>{m.auth_error_generic()}</Alert.Title>
 					<Alert.Description>{error}</Alert.Description>
 				</Alert.Root>
 			{/if}
@@ -66,10 +66,10 @@
 			<Button onclick={handleCheckout} disabled={loading} class="w-full">
 				{#if loading}
 					<Loader2 class="mr-2 h-4 w-4 animate-spin" />
-					Generating Session...
+					{m.dev_checkout_generating()}
 				{:else}
 					<ExternalLink class="mr-2 h-4 w-4" />
-					Open Checkout
+					{m.dev_checkout_open()}
 				{/if}
 			</Button>
 		</Card.Footer>

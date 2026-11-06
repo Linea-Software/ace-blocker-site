@@ -110,7 +110,7 @@ For visible marketing work, the mandatory design skills are `frontend-design`, `
 
 - Canonical production origin: `https://aceblocker.com`. Use `src/lib/seo.ts` to manage indexable public routes, canonical URLs, and language alternatives. Do not add private routes to the sitemap.
 - Paraglide compilation must use URL-first locale detection in **both** `vite.config.ts` and the `paraglide:compile` script. Use `localizeHref` on public navigation links so the selected locale survives navigation.
-- Only the `/faq` page currently has fully localized main content across EN, IT, ES and DE; other locales for marketing pages still contain English fallback and must not be indexed or advertised as fully translated until real translations are supplied. `localesForPath` controls this.
+- The `/faq` page has fully localized main content across EN, IT, ES and DE. Other indexable public pages are available in English and Italian, including the legal page bodies. Spanish and German still fall back to English on those pages and must not be advertised or indexed as fully translated. `localesForPath` is the SEO gate. `localesForPath` controls this.
 - Visible FAQ answers and JSON-LD must stay in sync; never invent reviews, prices, feature claims or availability. See `docs/SEO.md` for the Search Console/Bing manual setup and post-deploy `bun run seo:audit` read-only smoke checks.
 
 ## Project Structure

@@ -13,13 +13,13 @@ export const INDEXABLE_PATHS = [
 	'/terms'
 ] as const;
 
-// Only the FAQ currently has fully translated main content in all four languages.
-// Most other marketing pages fall back to English. Avoid false hreflang signals.
-const FULLY_LOCALIZED_PAGES = ['/faq'] as const;
-
+// FAQ is translated in all four locales. The other public pages are fully
+// translated only in Italian; Spanish and German still fall back to English.
 export function localesForPath(pathname: string): readonly SeoLocale[] {
-	return (FULLY_LOCALIZED_PAGES as readonly string[]).includes(basePath(pathname))
-		? SEO_LOCALES
+	const path = basePath(pathname);
+	if (path === '/faq') return SEO_LOCALES;
+	return (INDEXABLE_PATHS as readonly string[]).includes(path)
+		? ['en', 'it']
 		: ['en'];
 }
 

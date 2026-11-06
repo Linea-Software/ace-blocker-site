@@ -22,143 +22,133 @@
 
 <main id="main-content" class="min-h-[calc(100vh-4rem)] bg-background text-foreground">
 	<article class="ace-shell max-w-3xl py-14 sm:py-20">
-		<h1 class="mb-2 font-display text-5xl font-semibold tracking-tight">Privacy Policy</h1>
-		<p class="mb-12 text-muted-foreground">Last updated: June 2026</p>
+		<h1 class="mb-2 font-display text-5xl font-semibold tracking-tight">{m.privacy_heading()}</h1>
+		<p class="mb-12 text-muted-foreground">{m.legal_last_updated()}</p>
 
 		<div class="space-y-8">
 			<section>
-				<h2 class="mb-3 font-display text-2xl font-semibold">1. Information We Collect</h2>
+				<h2 class="mb-3 font-display text-2xl font-semibold">{m.privacy_s1_title()}</h2>
 				<p class="leading-relaxed text-muted-foreground">
-					Ace Blocker is designed with privacy as a core principle. We collect minimal
-					information necessary to provide the service:
+					{m.privacy_s1_intro()}
 				</p>
 				<div class="mt-4 space-y-3">
 					<div>
-						<h3 class="font-semibold">Account Information</h3>
+						<h3 class="font-semibold">{m.privacy_account_title()}</h3>
 						<ul class="mt-1 list-disc space-y-1 pl-6 text-muted-foreground">
-							<li>Email address (for account creation and communication)</li>
-							<li>Account preferences and settings</li>
+							<li>{m.privacy_account_email()}</li>
+							<li>{m.privacy_account_preferences()}</li>
 						</ul>
 					</div>
 					<div>
-						<h3 class="font-semibold">Usage Data (Pro Users Only)</h3>
+						<h3 class="font-semibold">{m.privacy_usage_title()}</h3>
 						<ul class="mt-1 list-disc space-y-1 pl-6 text-muted-foreground">
-							<li>Resistance mode interaction metrics</li>
-							<li>Backup data (stored encrypted)</li>
+							<li>{m.privacy_usage_metrics()}</li>
+							<li>{m.privacy_usage_backup()}</li>
 						</ul>
 					</div>
 					<div>
-						<h3 class="font-semibold">Technical Data</h3>
+						<h3 class="font-semibold">{m.privacy_technical_title()}</h3>
 						<ul class="mt-1 list-disc space-y-1 pl-6 text-muted-foreground">
-							<li>Software version and platform information</li>
-							<li>Error and crash reports (opt-in)</li>
+							<li>{m.privacy_technical_version()}</li>
+							<li>{m.privacy_technical_errors()}</li>
 						</ul>
 					</div>
 				</div>
 			</section>
 
 			<section>
-				<h2 class="mb-3 font-display text-2xl font-semibold">2. What We Do Not Collect</h2>
+				<h2 class="mb-3 font-display text-2xl font-semibold">{m.privacy_s2_title()}</h2>
 				<ul class="list-disc space-y-1 pl-6 text-muted-foreground">
-					<li>Log your browsing history</li>
-					<li>Track individual website visits</li>
-					<li>Collect personal browsing patterns</li>
+					<li>{m.privacy_s2_history()}</li>
+					<li>{m.privacy_s2_visits()}</li>
+					<li>{m.privacy_s2_patterns()}</li>
 					<li>
-						Blocking statistics — they are computed locally on your device and never
-						sent to us
+						{m.privacy_s2_stats()}
 					</li>
-					<li>Sell your data to third parties</li>
-					<li>Use your data for advertising purposes</li>
+					<li>{m.privacy_s2_sale()}</li>
+					<li>{m.privacy_s2_ads()}</li>
 				</ul>
 			</section>
 
 			<section>
 				<h2 class="mb-3 font-display text-2xl font-semibold">
-					3. How We Use Your Information
+					{m.privacy_s3_title()}
 				</h2>
 				<p class="leading-relaxed text-muted-foreground">
-					Your information is used exclusively to:
+					{m.privacy_s3_intro()}
 				</p>
 				<ul class="mt-2 list-disc space-y-1 pl-6 text-muted-foreground">
-					<li>Provide and maintain the Software</li>
-					<li>Process your subscription payments (via Dodo Payments)</li>
-					<li>Sync your settings across devices (cloud backup)</li>
-					<li>Improve the Software through opt-in error and crash reports</li>
-					<li>Communicate important service updates</li>
+					<li>{m.privacy_s3_software()}</li>
+					<li>{m.privacy_s3_payments()}</li>
+					<li>{m.privacy_s3_sync()}</li>
+					<li>{m.privacy_s3_errors()}</li>
+					<li>{m.privacy_s3_updates()}</li>
 				</ul>
 			</section>
 
 			<section>
 				<h2 class="mb-3 font-display text-2xl font-semibold">
-					4. Data Storage and Security
+					{m.privacy_s4_title()}
 				</h2>
 				<p class="leading-relaxed text-muted-foreground">
-					Account data is stored on secure servers with encryption at rest and in transit.
-					Your block lists, schedules, and settings are stored locally on your device.
-					Cloud backups are encrypted before transmission and storage.
+					{m.privacy_s4_body()}
 				</p>
 			</section>
 
 			<section>
-				<h2 class="mb-3 font-display text-2xl font-semibold">5. Third-Party Services</h2>
+				<h2 class="mb-3 font-display text-2xl font-semibold">{m.privacy_s5_title()}</h2>
 				<p class="leading-relaxed text-muted-foreground">
-					We use the following third-party services:
+					{m.privacy_s5_intro()}
 				</p>
 				<ul class="mt-2 list-disc space-y-1 pl-6 text-muted-foreground">
 					<li>
-						<strong>Dodo Payments</strong>: Processes subscription payments. Their
-						privacy policy applies to payment data.
+						<strong>Dodo Payments</strong>: {m.privacy_s5_dodo()}
 					</li>
 					<li>
-						<strong>BunnyCDN</strong>: Hosts downloadable category data and Resistance
-						Mode scripts. No personal data is shared.
+						<strong>BunnyCDN</strong>: {m.privacy_s5_bunny()}
 					</li>
 				</ul>
 			</section>
 
 			<section>
-				<h2 class="mb-3 font-display text-2xl font-semibold">6. Data Retention</h2>
+				<h2 class="mb-3 font-display text-2xl font-semibold">{m.privacy_s6_title()}</h2>
 				<p class="leading-relaxed text-muted-foreground">
-					Account data is retained for the duration of your account. You may request
-					deletion of your account and associated data at any time through the account
-					settings page. Deletion is permanent and irreversible.
+					{m.privacy_s6_body()}
 				</p>
 			</section>
 
 			<section>
-				<h2 class="mb-3 font-display text-2xl font-semibold">7. Your Rights</h2>
+				<h2 class="mb-3 font-display text-2xl font-semibold">{m.privacy_s7_title()}</h2>
 				<p class="leading-relaxed text-muted-foreground">
-					Depending on your jurisdiction, you may have rights to:
+					{m.privacy_s7_intro()}
 				</p>
 				<ul class="mt-2 list-disc space-y-1 pl-6 text-muted-foreground">
-					<li>Access your personal data</li>
-					<li>Correct inaccurate data</li>
-					<li>Delete your data</li>
-					<li>Export your data in a portable format</li>
-					<li>Object to or restrict processing</li>
+					<li>{m.privacy_s7_access()}</li>
+					<li>{m.privacy_s7_correct()}</li>
+					<li>{m.privacy_s7_delete()}</li>
+					<li>{m.privacy_s7_export()}</li>
+					<li>{m.privacy_s7_object()}</li>
 				</ul>
 			</section>
 
 			<section>
-				<h2 class="mb-3 font-display text-2xl font-semibold">8. Children's Privacy</h2>
+				<h2 class="mb-3 font-display text-2xl font-semibold">{m.privacy_s8_title()}</h2>
 				<p class="leading-relaxed text-muted-foreground">
-					The Software is not intended for use by individuals under the age of 13. We do
-					not knowingly collect data from children.
+					{m.privacy_s8_body()}
 				</p>
 			</section>
 
 			<section>
-				<h2 class="mb-3 font-display text-2xl font-semibold">9. Changes to This Policy</h2>
+				<h2 class="mb-3 font-display text-2xl font-semibold">{m.privacy_s9_title()}</h2>
 				<p class="leading-relaxed text-muted-foreground">
-					We will notify you of material changes to this policy via email or through the
-					Software. Continued use after changes constitutes acceptance.
+					{m.privacy_s9_body()}
 				</p>
 			</section>
 
 			<section>
-				<h2 class="mb-3 font-display text-2xl font-semibold">10. Contact</h2>
+				<h2 class="mb-3 font-display text-2xl font-semibold">{m.privacy_s10_title()}</h2>
 				<p class="leading-relaxed text-muted-foreground">
-					For privacy-related inquiries, contact us at:
+					{m.privacy_s10_body()}
 				</p>
 				<p class="mt-2 font-semibold text-foreground">support@aceblocker.com</p>
 			</section>
