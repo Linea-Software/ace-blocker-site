@@ -1,6 +1,6 @@
 import { localizeHref } from '$lib/paraglide/runtime';
 
-export type AvailableSiteLocale = 'en' | 'it';
+export type AvailableSiteLocale = 'en' | 'it' | 'de';
 
 /** Reuse Paraglide's URL strategy and preserve query and fragment. */
 export function languageSwitchHref(

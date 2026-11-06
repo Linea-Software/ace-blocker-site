@@ -18,4 +18,13 @@ describe('website locale switching', () => {
 			languageSwitchHref(new URL('https://aceblocker.com/it/checkout/completed'), 'en')
 		).toBe('/checkout/completed');
 	});
+	it('switches to German on public and account pages without dropping parameters', () => {
+		expect(
+			languageSwitchHref(new URL('https://aceblocker.com/it/get-pro?cycle=yearly#plans'), 'de')
+		).toBe('/de/get-pro?cycle=yearly#plans');
+		expect(languageSwitchHref(new URL('https://aceblocker.com/de/about'), 'en')).toBe('/about');
+		expect(
+			languageSwitchHref(new URL('https://aceblocker.com/de/checkout/completed?status=ok'), 'it')
+		).toBe('/it/checkout/completed?status=ok');
+	});
 });

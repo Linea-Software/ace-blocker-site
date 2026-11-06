@@ -5,10 +5,10 @@
 	import { languageSwitchHref } from '$lib/components/language-switch';
 
 	let { mobile = false }: { mobile?: boolean } = $props();
-	const activeLocale = $derived(page.url.pathname.match(/^\/it(?:\/|$)/) ? 'it' : 'en');
+	const activeLocale = $derived(page.url.pathname.match(/^\/(it|de)(?:\/|$)/)?.[1] ?? 'en');
 
 	function selectLanguage(value: string) {
-		if ((value !== 'it' && value !== 'en') || value === activeLocale) return;
+		if ((value !== 'it' && value !== 'en' && value !== 'de') || value === activeLocale) return;
 		const destination = languageSwitchHref(page.url, value);
 		// Full navigation allows Paraglide's URL-first SSR and metadata to
 		// select the new locale, while preserving path, query and fragment.
@@ -39,5 +39,6 @@
 	>
 		<option value="en">English</option>
 		<option value="it">Italiano</option>
+		<option value="de">Deutsch</option>
 	</select>
 </div>
