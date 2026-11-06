@@ -23,7 +23,9 @@ import { load } from './+page.server';
 function request(url: string) {
 	return {
 		url: new URL(url),
-		request: new Request(url, { headers: { 'accept-language': 'en-US', 'cf-ipcountry': 'GB' } })
+		request: new Request(url, {
+			headers: { 'accept-language': 'en-US', 'x-ace-visitor-country': 'GB' }
+		})
 	} as Parameters<typeof load>[0];
 }
 
@@ -133,7 +135,7 @@ describe('inline checkout server loader', () => {
 		const event = {
 			url: new URL(url),
 			request: new Request(url, {
-				headers: { 'accept-language': 'en-US', 'cf-ipcountry': 'IT' }
+				headers: { 'accept-language': 'en-US', 'x-ace-visitor-country': 'IT' }
 			})
 		} as Parameters<typeof load>[0];
 		previewSession.mockResolvedValueOnce({
@@ -205,7 +207,7 @@ describe('inline checkout server loader', () => {
 		const event = {
 			url: new URL(url),
 			request: new Request(url, {
-				headers: { 'cf-ipcountry': 'IT', 'accept-language': 'it-IT' }
+				headers: { 'x-ace-visitor-country': 'IT', 'accept-language': 'it-IT' }
 			})
 		} as Parameters<typeof load>[0];
 		await load(event);

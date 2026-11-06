@@ -33,11 +33,23 @@ map $http_upgrade $connection_upgrade {
     default upgrade;
     '' close;
 }
+# Trust BunnyCDN country codes only from Bunny's official edge IP list.
+geo $ace_from_bunny {
+    default 0;
+    include /etc/nginx/ace-bunny-edges.geo;
+}
 # realip_remote_addr exists only when a trusted Cloudflare edge replaced the IP.
-# Drop any country header supplied directly to the origin.
 map $realip_remote_addr $ace_cf_country {
     default $http_cf_ipcountry;
     "" "";
+}
+map $ace_from_bunny $ace_bunny_country {
+    1 $http_cdn_requestcountrycode;
+    default "";
+}
+map $ace_bunny_country $ace_visitor_country {
+    default $ace_bunny_country;
+    "" $ace_cf_country;
 }
 server_tokens off;
 EOF
@@ -100,7 +112,9 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$remote_addr;
         proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header CF-IPCountry \$ace_cf_country;
+        proxy_set_header X-Ace-Visitor-Country \$ace_visitor_country;
+        proxy_set_header CF-IPCountry "";
+        proxy_set_header CDN-RequestCountryCode "";
         proxy_cache_bypass \$http_upgrade;
     }
 }
@@ -122,7 +136,9 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$remote_addr;
         proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header CF-IPCountry \$ace_cf_country;
+        proxy_set_header X-Ace-Visitor-Country \$ace_visitor_country;
+        proxy_set_header CF-IPCountry "";
+        proxy_set_header CDN-RequestCountryCode "";
     }
 }
 EOF
@@ -138,6 +154,12 @@ EOF
 setup_nginx_and_tls() {
     step '12. Nginx, Cloudflare real IP and TLS'
     write_cloudflare_real_ip_config
+    install -m 0755 "${APP_DIR}/scripts/vps/refresh-bunny-edges.sh" /usr/local/sbin/ace-refresh-bunny-edges
+    /usr/local/sbin/ace-refresh-bunny-edges --prepare
+    cat > /etc/cron.d/ace-bunny-geo <<'CRON'
+17 3 * * * root /usr/local/sbin/ace-refresh-bunny-edges >/dev/null 2>&1
+CRON
+    chmod 0644 /etc/cron.d/ace-bunny-geo
     install -d -m 755 /var/www/html
 
     if [[ -d "/etc/letsencrypt/live/${DOMAIN}" ]]; then

@@ -15,7 +15,7 @@ function request(currency?: string, country?: string, language = 'en-US') {
 		request: new Request(url, {
 			headers: {
 				'accept-language': language,
-				...(country ? { 'cf-ipcountry': country } : {})
+				...(country ? { 'x-ace-visitor-country': country } : {})
 			}
 		})
 	} as Parameters<typeof load>[0];
@@ -91,6 +91,27 @@ describe('Get Pro pricing', () => {
 			pricing: { currency: string };
 		};
 		expect(result.pricing.currency).toBe('USD');
+	});
+
+	it('ignores untrusted CDN country headers and malformed proxy country data', async () => {
+		getProduct.mockReturnValue({ productId: 'test', priceMinor: 2499, trialDays: 14 });
+		const url = new URL('https://aceblocker.com/get-pro');
+		const event = {
+			url,
+			request: new Request(url, {
+				headers: { 'cdn-requestcountrycode': 'IT', 'cf-ipcountry': 'GB' }
+			})
+		} as Parameters<typeof load>[0];
+		const unverified = (await load(event)) as { pricing: { currency: string } };
+		expect(unverified.pricing.currency).toBe('USD');
+
+		const malformed = (await load({
+			url,
+			request: new Request(url, {
+				headers: { 'x-ace-visitor-country': 'IT,GB' }
+			})
+		} as Parameters<typeof load>[0])) as { pricing: { currency: string } };
+		expect(malformed.pricing.currency).toBe('USD');
 	});
 
 	it('does not advertise a fictional price if a Dodo product is unavailable', async () => {

@@ -765,6 +765,15 @@ else
 fi
 rm -f "$CF_V4" "$CF_V6"
 
+# Trust the visitor country reported by BunnyCDN only from its published edge
+# addresses. Refresh daily so newly added edge servers continue to match.
+install -m 0755 "${APP_DIR}/scripts/vps/refresh-bunny-edges.sh" /usr/local/sbin/ace-refresh-bunny-edges
+/usr/local/sbin/ace-refresh-bunny-edges --prepare
+cat > /etc/cron.d/ace-bunny-geo <<'CRON'
+17 3 * * * root /usr/local/sbin/ace-refresh-bunny-edges >/dev/null 2>&1
+CRON
+chmod 0644 /etc/cron.d/ace-bunny-geo
+
 # ── WebSocket upgrade map (http context) ──
 # 'Connection: upgrade' must only be sent when the client actually asked to
 # upgrade; sending it unconditionally breaks keep-alive to the upstream.
@@ -772,6 +781,23 @@ cat > /etc/nginx/conf.d/ace-upgrade.conf << 'UPGRADE'
 map $http_upgrade $connection_upgrade {
     default upgrade;
     ""      close;
+}
+# Evaluate the original peer address, not user-supplied request headers.
+geo $ace_from_bunny {
+    default 0;
+    include /etc/nginx/ace-bunny-edges.geo;
+}
+map $realip_remote_addr $ace_cf_country {
+    default $http_cf_ipcountry;
+    "" "";
+}
+map $ace_from_bunny $ace_bunny_country {
+    1 $http_cdn_requestcountrycode;
+    default "";
+}
+map $ace_bunny_country $ace_visitor_country {
+    default $ace_bunny_country;
+    "" $ace_cf_country;
 }
 server_tokens off;
 UPGRADE
@@ -877,6 +903,10 @@ PLAIN
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$remote_addr;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Ace-Visitor-Country \$ace_visitor_country;
+        # Do not forward unverified geographical headers to the application.
+        proxy_set_header CF-IPCountry "";
+        proxy_set_header CDN-RequestCountryCode "";
         proxy_cache_bypass \$http_upgrade;
     }
 }

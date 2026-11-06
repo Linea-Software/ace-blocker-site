@@ -1,6 +1,6 @@
 /**
  * Currency selection and formatting for Ace Blocker subscriptions.
- * Use the verified Cloudflare country signal for public prices, not language.
+ * Use the verified reverse-proxy country signal for public prices, not language.
  */
 import type { Currency } from 'dodopayments/resources';
 
@@ -47,11 +47,12 @@ export function countryToCurrency(country?: string | null): SupportedCurrency {
 }
 
 /**
- * CF-IPCountry is authoritative only when forwarded by the configured trusted
- * Cloudflare/Nginx proxy. Missing or invalid geolocation defaults to USD.
+ * Nginx sets X-Ace-Visitor-Country from BunnyCDN or Cloudflare only when the
+ * connecting edge IP is trusted. Never read raw CDN headers supplied by clients.
+ * Missing or invalid geolocation defaults to USD.
  */
 export function requestCurrency(headers: Headers): SupportedCurrency {
-	const country = headers.get('cf-ipcountry');
+	const country = headers.get('x-ace-visitor-country');
 	return country && /^[A-Z]{2}$/i.test(country) ? countryToCurrency(country) : 'USD';
 }
 

@@ -172,6 +172,8 @@ The project uses **Elysia** to handle all API requests under the `/api` prefix.
 
 ## Payments (DodoPayments)
 
+- **Country-based currency:** `/get-pro` and `/checkout` read only `X-Ace-Visitor-Country` from Nginx, never raw client-controlled `CDN-RequestCountryCode` or `CF-IPCountry`. The VPS Nginx configuration trusts BunnyCDN country data only from IPs in `/etc/nginx/ace-bunny-edges.geo` (generated from Bunny's published edge feeds), or Cloudflare data from a trusted Cloudflare peer. `scripts/vps/refresh-bunny-edges.sh` installs/refreshes this allowlist and the VPS setup installs a daily cron job. Country mapping supports USD/EUR/GBP/INR; unknown locations fall back to USD. Deploy the updated Nginx config as well as the app whenever changing this path.
+
 Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })` in `src/lib/server/auth.ts`.
 
 - **Signup/customer creation:** The Dodo Better Auth plugin auto-creates billing customers only in production (`shouldCreateDodoCustomerOnSignUp` in `src/lib/server/config/dodo.ts`). Local signup must never contact Dodo, even with a configured but rejected test-mode API key; in production, the API key remains required and customer synchronization remains enabled.

@@ -649,6 +649,14 @@ sudo systemctl status certbot.timer
 
 ---
 
+### Regional subscription currency (BunnyCDN / Cloudflare)
+
+BunnyCDN forwards the visitor's two-letter country to the origin in `CDN-RequestCountryCode`. The live site uses BunnyCDN, not Cloudflare, for its public requests. **Do not trust that request header directly in SvelteKit**, because origin traffic may bypass the CDN or supply forged values.
+
+The `scripts/setup-vps.sh` Nginx configuration (and `scripts/vps/nginx.sh`) maps country headers from verified BunnyCDN source IPs, with Cloudflare as an alternative. Nginx overwrites `X-Ace-Visitor-Country` and strips raw CDN country headers before proxying to the app. Pricing and checkout use that trusted header to select the matching Dodo subscription currency. The helper `scripts/vps/refresh-bunny-edges.sh` retrieves Bunny's official IPv4/IPv6 edge lists and is installed as `/usr/local/sbin/ace-refresh-bunny-edges`, with a daily refresh in `/etc/cron.d/ace-bunny-geo`. A failed update does not replace a previously working list.
+
+To activate this after a code update, deploy the **Nginx configuration as well as the SvelteKit build**. Simply redeploying the app without updating the reverse proxy will continue to default to USD. For manual deployments, reproduce the trusted edge-IP validation and header mapping from the setup script rather than forwarding the public request header blindly. Test an Italian visitor with `/get-pro` (expect EUR) and a matching `/checkout` session.
+
 ## 🚀 8. CDN Configuration (Optional - BunnyCDN)
 
 If you are using a CDN like BunnyCDN to serve your site, follow these critical steps to avoid connection errors:
