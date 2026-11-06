@@ -12,6 +12,7 @@
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
 	import * as m from '$lib/paraglide/messages';
+	import { countMessage } from '$lib/utils/count-message';
 	import { cn } from '$lib/utils';
 	import {
 		Gauge,
@@ -182,8 +183,18 @@
 			<Card.Title>{m.admin_users_directory_title()}</Card.Title>
 			<Card.Description>
 				{page.url.searchParams.get('search')
-					? m.admin_users_search_results({ count: data.users.length })
-					: m.admin_users_directory_description({ count: data.users.length })}
+					? countMessage(
+							data.users.length,
+							m.admin_users_search_results_zero,
+							m.admin_users_search_results_one,
+							() => m.admin_users_search_results({ count: data.users.length })
+						)
+					: countMessage(
+							data.users.length,
+							m.admin_users_directory_description_zero,
+							m.admin_users_directory_description_one,
+							() => m.admin_users_directory_description({ count: data.users.length })
+						)}
 			</Card.Description>
 		</Card.Header>
 		<Card.Content class="p-0">

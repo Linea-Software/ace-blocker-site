@@ -21,6 +21,7 @@
 		Users
 	} from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
+	import { countMessage } from '$lib/utils/count-message';
 
 	let { data } = $props();
 
@@ -40,7 +41,12 @@
 		{
 			label: m.admin_metrics_total_users(),
 			value: formatNumber(data.summary.totalUsers),
-			detail: m.admin_metrics_weekly_signups({ count: data.summary.weeklySignups }),
+			detail: countMessage(
+				data.summary.weeklySignups,
+				m.admin_metrics_weekly_signups_zero,
+				m.admin_metrics_weekly_signups_one,
+				() => m.admin_metrics_weekly_signups({ count: data.summary.weeklySignups })
+			),
 			icon: Users
 		},
 		{
@@ -52,13 +58,23 @@
 		{
 			label: m.admin_metrics_monthly_visits(),
 			value: formatNumber(data.summary.monthlyVisits),
-			detail: m.admin_metrics_weekly_visits({ count: data.summary.weeklyVisits }),
+			detail: countMessage(
+				data.summary.weeklyVisits,
+				m.admin_metrics_weekly_visits_zero,
+				m.admin_metrics_weekly_visits_one,
+				() => m.admin_metrics_weekly_visits({ count: data.summary.weeklyVisits })
+			),
 			icon: Activity
 		},
 		{
 			label: m.admin_metrics_monthly_signups(),
 			value: formatNumber(data.summary.monthlySignups),
-			detail: m.admin_metrics_total_visits({ count: data.summary.totalVisits }),
+			detail: countMessage(
+				data.summary.totalVisits,
+				m.admin_metrics_total_visits_zero,
+				m.admin_metrics_total_visits_one,
+				() => m.admin_metrics_total_visits({ count: data.summary.totalVisits })
+			),
 			icon: UserPlus
 		}
 	]);

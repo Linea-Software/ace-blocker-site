@@ -29,7 +29,9 @@
 	const hasTrial = $derived(data.trialDays > 0);
 	const checkoutTitle = $derived(
 		hasTrial
-			? m.inline_checkout_trial_title({ days: data.trialDays })
+			? data.trialDays === 1
+				? m.inline_checkout_trial_title_one()
+				: m.inline_checkout_trial_title({ days: data.trialDays })
 			: m.inline_checkout_title()
 	);
 	const currencyMismatch = $derived(
@@ -183,7 +185,9 @@
 			<div>
 				<p class="text-xs text-muted-foreground">
 					{hasTrial
-						? m.inline_checkout_after_trial({ days: data.trialDays })
+						? data.trialDays === 1
+							? m.inline_checkout_after_trial_one()
+							: m.inline_checkout_after_trial({ days: data.trialDays })
 						: m.inline_checkout_recurring_price()}
 				</p>
 				<p class="mt-1 font-display text-2xl font-semibold tabular-nums">
@@ -292,7 +296,9 @@
 					<p
 						class="mt-3 inline-flex border border-signal/30 bg-signal/10 px-2.5 py-1 font-mono text-xs font-semibold text-[#946000] dark:text-signal"
 					>
-						{m.inline_checkout_trial_badge({ days: data.trialDays })}
+						{data.trialDays === 1
+							? m.inline_checkout_trial_badge_one()
+							: m.inline_checkout_trial_badge({ days: data.trialDays })}
 					</p>
 				{/if}
 			</div>
@@ -309,7 +315,9 @@
 				<div class="min-w-0 px-4 py-5 sm:px-6">
 					<dt class="text-xs text-muted-foreground">
 						{hasTrial
-							? m.inline_checkout_after_trial({ days: data.trialDays })
+							? data.trialDays === 1
+								? m.inline_checkout_after_trial_one()
+								: m.inline_checkout_after_trial({ days: data.trialDays })
 							: m.inline_checkout_recurring_price()}
 					</dt>
 					<dd

@@ -102,6 +102,9 @@ by their existing URLs but are not offered here before full translation.
 The Italian message catalog covers public, account/admin, and email strings;
 Privacy and Terms page bodies use Paraglide message keys. Localized legal
 language still requires independent professional review before publication.
+See `docs/ITALIAN_TERMINOLOGY.md` for the shared IT glossary, unresolved
+English-source ambiguities and the `src/lib/utils/count-message.ts` pattern
+for zero/singular/plural agreement.
 
 ## Desktop account activation
 
