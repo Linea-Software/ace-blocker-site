@@ -606,9 +606,9 @@
 	"site_pack_plan_free": "Free",
 	"site_pack_plan_pro": "Pro",
 	"site_pack_domains_label": "Domini",
-	"site_pack_domains_curated": "Selezionati",
+	"site_pack_domains_curated": "Curati",
 	"site_pack_updated_label": "Aggiornata",
-	"site_pack_updated_auto": "Automaticamente",
+	"site_pack_updated_auto": "Auto",
 	"site_pack_state_downloaded": "Scaricata",
 	"site_pack_state_available": "Disponibile",
 	"site_pack_state_locked": "Protetta",
@@ -802,5 +802,6 @@
 	"dev_checkout_body": "Prova dell’integrazione tra Dodo Payments e Better Auth. Il pulsante qui sotto genera una sessione di pagamento e la apre in una nuova scheda.",
 	"dev_checkout_generating": "Creazione della sessione…",
 	"dev_checkout_open": "Apri pagamento",
-	"dev_checkout_error": "Si è verificato un errore"
+	"dev_checkout_error": "Si è verificato un errore",
+	"nav_language_label": "Lingua"
 }

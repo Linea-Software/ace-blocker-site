@@ -46,7 +46,9 @@
 <div class="flex min-h-screen items-center justify-center bg-muted/40 p-4">
 	<Card.Root class="w-full max-w-md shadow-lg">
 		<Card.Header>
-			<Card.Title class="text-2xl font-bold tracking-tight">{m.dev_checkout_title()}</Card.Title>
+			<Card.Title class="text-2xl font-bold tracking-tight"
+				>{m.dev_checkout_title()}</Card.Title
+			>
 			<Card.Description>{m.dev_checkout_description()}</Card.Description>
 		</Card.Header>
 		<Card.Content class="space-y-4">

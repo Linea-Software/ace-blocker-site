@@ -15,6 +15,15 @@ Pubblicare testi che sembrino scritti originariamente nella lingua di destinazio
 
 I conteggi riguardano le chiavi e **non** equivalgono a copertura effettiva di pagine o UI. Entrambi i progetti usano Paraglide/inlang, ma i relativi file `project.inlang/settings.json` non sono identici. Non cambiare versione o sintassi del message format solo per tradurre.
 
+## Stato successivo alla prima implementazione (2026-11-06)
+
+I conteggi sopra documentano **il punto di partenza**. Dopo la localizzazione
+EN/IT, il catalogo desktop conta 731 chiavi per lingua e quello del sito 805. I corpi di Privacy e Terms ora usano Paraglide, e il sito pubblica
+le pagine italiane tramite il gate SEO; gli altri locali non sono stati
+dichiarati completi. I controlli tecnici superati non equivalgono a una
+revisione madrelingua/legale: la pubblicazione richiede soprattutto un
+controllo competente dei testi su lock, pagamenti, privacy, termini e dati.
+
 ## Fonti e precedenze
 
 1. Verità di prodotto: codice e contenuti correnti, documentazione su blocchi, lock, schedule, resistance, pagamenti e privacy. Se un testo è ambiguo o sembra falso, **segnalarlo**, non correggerlo in modo creativo.
@@ -86,7 +95,7 @@ Prompt secondo passaggio:
 
 **App desktop — `ace-blocker/apps/ace-app`**
 
-- Fonte EN: `messages/en.json`; destinazioni: `messages/{locale}.json`. La configurazione supporta en, de, it, es, fr, pt, pt-BR ma attualmente ha traduzioni quasi assenti.
+- Fonte EN: `messages/en.json`; destinazioni: `messages/{locale}.json`. La configurazione supporta en, de, it, es, fr, pt, pt-BR; solo en e it sono completi. Il controllo in-app mostra Sistema/English/Italiano.
 - Da questa cartella eseguire: `bun run i18n:audit` (integrità _delle chiavi EN referenziate_, non copertura target); `bun run check`; se si modificano viste o formati, test/screenshot appropriati.
 - Esaminare in modo speciale: differenza Network Block/Lock; regole attive vs semplicemente scaricate; schedule, date/ore, contatore tentativi locali; vincoli anti-manomissione, stati di update e azioni irreversibili.
 - Vedere `docs/ui-identity.md` dell'app (chiarezza prima di personalità del marchio).
@@ -94,8 +103,8 @@ Prompt secondo passaggio:
 **Sito — `ace-blocker-site`**
 
 - Fonte EN: `messages/en.json`; destinazioni: `messages/{locale}.json`; in codice usare `m.chiave()` e link che conservano la lingua (`localizeHref`).
-- Da questa cartella eseguire `bun run check` e test pertinenti. Per SEO, verificare `src/lib/seo.ts`: `localesForPath` attualmente espone tutte le lingue **solo** per `/faq`; non espandere `FULLY_LOCALIZED_PAGES` finché **tutto** il contenuto utile della pagina, metadata e navigazione non sia davvero localizzato. Poi eseguire `bun run seo:audit` in ambiente disponibile.
-- La FAQ usa gli stessi messaggi per il testo visibile e JSON-LD: preservare corrispondenza. Privacy e Terms hanno grandi sezioni inglesi hardcoded nei componenti `src/routes/privacy/+page.svelte` e `src/routes/terms/+page.svelte`, non risolte traducendo i JSON: serve un progetto separato con revisione legale.
+- Da questa cartella eseguire `bun run check` e test pertinenti. Per SEO, verificare `src/lib/seo.ts`: `localesForPath` espone EN/ES/IT/DE solo per `/faq`, EN/IT per le altre pagine pubbliche; non dichiarare ES/DE completi altrove prima di tradurre **tutto** il contenuto utile e i metadati. Poi eseguire `bun run seo:audit` in ambiente disponibile.
+- La FAQ usa gli stessi messaggi per il testo visibile e JSON-LD: preservare corrispondenza. Privacy e Terms ora usano chiavi Paraglide anche nel corpo dei componenti; restano obbligatori la revisione legale e il controllo dei claim sulla privacy prima della pubblicazione.
 - Controllo umano obbligatorio per checkout, prova gratuita, importi, rinnovo, disdetta, policy di trattamento dati e claim sul prodotto. Sito e app devono usare lo stesso glossario ma il registro dei testi può differire.
 
 ## Criteri di accettazione e manutenzione

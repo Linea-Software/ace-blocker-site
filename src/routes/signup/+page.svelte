@@ -4,6 +4,7 @@
 	import { Mail } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
+	import { localizeHref } from '$lib/paraglide/runtime';
 	import * as m from '$lib/paraglide/messages.js';
 	import AuthBrandedPanel from '$lib/components/AuthBrandedPanel.svelte';
 	import AuthMobileHeader from '$lib/components/AuthMobileHeader.svelte';
@@ -43,7 +44,7 @@
 			if (origin === 'ace-engine' || origin === 'aceblocker') {
 				if (!linkAttempted) void linkEngine();
 			} else {
-				goto(resolve('/'));
+				goto(resolve(localizeHref('/') as '/'));
 			}
 		}
 	});

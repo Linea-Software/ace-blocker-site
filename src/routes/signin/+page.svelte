@@ -8,6 +8,7 @@
 	import { Loader2, AlertCircle, CheckCircle2 } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
+	import { localizeHref } from '$lib/paraglide/runtime';
 	import * as m from '$lib/paraglide/messages.js';
 	import AuthBrandedPanel from '$lib/components/AuthBrandedPanel.svelte';
 	import AuthMobileHeader from '$lib/components/AuthMobileHeader.svelte';
@@ -86,7 +87,7 @@
 						await linkEngine();
 					} else {
 						loading = false;
-						goto(resolve('/'));
+						goto(resolve(localizeHref('/') as '/'));
 					}
 				},
 				onError: (ctx) => {
@@ -114,7 +115,7 @@
 						await linkEngine();
 					} else {
 						loading = false;
-						goto(resolve('/'));
+						goto(resolve(localizeHref('/') as '/'));
 					}
 				},
 				onError: (ctx) => {

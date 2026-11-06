@@ -802,5 +802,6 @@
 	"dev_checkout_body": "Testing Dodo Payments integration with Better Auth. Clicking the button below will generate a checkout session and open it in a new tab.",
 	"dev_checkout_generating": "Generating Session...",
 	"dev_checkout_open": "Open Checkout",
-	"dev_checkout_error": "An error occurred"
+	"dev_checkout_error": "An error occurred",
+	"nav_language_label": "Language"
 }

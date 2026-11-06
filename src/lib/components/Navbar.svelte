@@ -16,11 +16,13 @@
 		UserPlus
 	} from '@lucide/svelte';
 	import BrandLogo from '$lib/components/BrandLogo.svelte';
+	import LanguageSelector from '$lib/components/LanguageSelector.svelte';
 	import { authClient } from '$lib/auth-client';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { localizeHref } from '$lib/paraglide/runtime';
+	import { basePath } from '$lib/seo';
 	import { toggleMode, mode } from 'mode-watcher';
 	import * as m from '$lib/paraglide/messages';
 
@@ -43,7 +45,7 @@
 	const userDisplayEmail = $derived($session.data?.user?.email ?? '');
 
 	function isActive(href: string) {
-		return page.url.pathname === href;
+		return basePath(page.url.pathname) === href;
 	}
 
 	async function handleSignOut() {
@@ -113,6 +115,7 @@
 						</a>
 
 						<div class="mt-auto border-t border-border">
+							<LanguageSelector mobile />
 							{#if $session.data}
 								<a
 									href={resolve(localizeHref('/account') as '/account')}
@@ -201,6 +204,7 @@
 		</div>
 
 		<div class="flex shrink-0 items-center gap-1.5 sm:gap-2">
+			<LanguageSelector />
 			<a
 				href={resolve(localizeHref('/get-pro') as '/get-pro')}
 				class={[
@@ -257,7 +261,7 @@
 						<DropdownMenu.Separator />
 						<DropdownMenu.Item
 							class="cursor-pointer"
-							onclick={() => goto(resolve('/account'))}
+							onclick={() => goto(resolve(localizeHref('/account') as '/account'))}
 						>
 							<User class="mr-2 size-4" aria-hidden="true" />
 							{m.account_settings()}

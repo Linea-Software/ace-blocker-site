@@ -18,9 +18,7 @@ export const INDEXABLE_PATHS = [
 export function localesForPath(pathname: string): readonly SeoLocale[] {
 	const path = basePath(pathname);
 	if (path === '/faq') return SEO_LOCALES;
-	return (INDEXABLE_PATHS as readonly string[]).includes(path)
-		? ['en', 'it']
-		: ['en'];
+	return (INDEXABLE_PATHS as readonly string[]).includes(path) ? ['en', 'it'] : ['en'];
 }
 
 export function basePath(pathname: string): string {

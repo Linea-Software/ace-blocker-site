@@ -22,7 +22,9 @@
 
 <main id="main-content" class="min-h-[calc(100vh-4rem)] bg-background text-foreground">
 	<article class="ace-shell max-w-3xl py-14 sm:py-20">
-		<h1 class="mb-2 font-display text-5xl font-semibold tracking-tight">{m.privacy_heading()}</h1>
+		<h1 class="mb-2 font-display text-5xl font-semibold tracking-tight">
+			{m.privacy_heading()}
+		</h1>
 		<p class="mb-12 text-muted-foreground">{m.legal_last_updated()}</p>
 
 		<div class="space-y-8">

@@ -92,6 +92,17 @@ Do not default to the old generic marketing composition: centered gradient hero,
 
 For visible marketing work, the mandatory design skills are `frontend-design`, `design-taste-frontend`, and `ui-ux-pro-max`. Use `svelte-code-writer`, `svelte-core-bestpractices`, and `svelte-components` for implementation, then `web-design-guidelines` plus real light/dark screenshots for final review. For dense account/admin product UI, treat `frontend-design` + `ui-ux-pro-max` as primary; `design-taste-frontend` must not override product-UI semantics.
 
+## Public language selection (2026-11-06)
+
+The navbar includes a two-language selector (English / Italiano) on desktop
+and in the mobile menu. It uses Paraglide's URL-first strategy, keeps the
+current pathname, query, and fragment, and changes document location so SSR,
+metadata, and headings all agree. Other configured languages remain supported
+by their existing URLs but are not offered here before full translation.
+The Italian message catalog covers public, account/admin, and email strings;
+Privacy and Terms page bodies use Paraglide message keys. Localized legal
+language still requires independent professional review before publication.
+
 ## Desktop account activation
 
 - The engine exposes **typed remoc IPC, not a local browser HTTP endpoint**. Website sign-in, checkout completion, and Pro activation pass account keys to the allowlisted `aceblocker://account/api-key` handler, with credentials in the URI fragment rather than the query string.
@@ -110,7 +121,7 @@ For visible marketing work, the mandatory design skills are `frontend-design`, `
 
 - Canonical production origin: `https://aceblocker.com`. Use `src/lib/seo.ts` to manage indexable public routes, canonical URLs, and language alternatives. Do not add private routes to the sitemap.
 - Paraglide compilation must use URL-first locale detection in **both** `vite.config.ts` and the `paraglide:compile` script. Use `localizeHref` on public navigation links so the selected locale survives navigation.
-- The `/faq` page has fully localized main content across EN, IT, ES and DE. Other indexable public pages are available in English and Italian, including the legal page bodies. Spanish and German still fall back to English on those pages and must not be advertised or indexed as fully translated. `localesForPath` is the SEO gate. `localesForPath` controls this.
+- The `/faq` page has fully localized main content across EN, IT, ES and DE. Other indexable public pages are available in English and Italian, including the legal page bodies. Spanish and German still fall back to English on those pages and must not be advertised or indexed as fully translated. `localesForPath` is the SEO gate.
 - Visible FAQ answers and JSON-LD must stay in sync; never invent reviews, prices, feature claims or availability. See `docs/SEO.md` for the Search Console/Bing manual setup and post-deploy `bun run seo:audit` read-only smoke checks.
 
 ## Project Structure
