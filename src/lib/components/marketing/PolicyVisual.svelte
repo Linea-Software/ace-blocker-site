@@ -50,7 +50,7 @@
 					</span>
 					<div class="object-copy">
 						<h3>{m.policy_name()}</h3>
-						<p class="schedule-copy">{m.policy_schedule_summary()}</p>
+						<p class="schedule-copy">{'24/7'}</p>
 					</div>
 				</div>
 			</div>
@@ -76,7 +76,7 @@
 						<div class="day-row">
 							<span class="day">{day()}</span>
 							<span class="track">
-								{#if index < 5}
+								{#if index < 7}
 									<span class="window"></span>
 								{/if}
 							</span>
@@ -339,8 +339,8 @@
 	.window {
 		position: absolute;
 		inset-block: 0;
-		left: 37.5%;
-		width: 33.333%;
+		left: 0;
+		width: 100%;
 		background: var(--signal);
 	}
 

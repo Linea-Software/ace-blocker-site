@@ -1,6 +1,8 @@
 <script lang="ts">
 	import * as m from '$lib/paraglide/messages';
 
+	let mode = $state<'always' | 'scheduled'>('always');
+
 	const days = [
 		m.week_mon_short,
 		m.week_tue_short,
@@ -14,11 +16,30 @@
 
 <div class="schedule-card" aria-label={m.schedule_visual_label()}>
 	<div class="schedule-header">
-		<p>{m.schedule_title()}</p>
+		<p>{m.policy_schedule_label()}</p>
 		<span>{m.schedule_timezone()}</span>
 	</div>
 
-	<div class="timeline" role="img" aria-label={m.policy_schedule_summary()}>
+	<div class="activation-choice" role="group" aria-label={m.policy_schedule_label()}>
+		<button
+			type="button"
+			class:selected={mode === 'always'}
+			aria-pressed={mode === 'always'}
+			onclick={() => (mode = 'always')}>24/7</button
+		>
+		<button
+			type="button"
+			class:selected={mode === 'scheduled'}
+			aria-pressed={mode === 'scheduled'}
+			onclick={() => (mode = 'scheduled')}>{m.policy_schedule_summary()}</button
+		>
+	</div>
+
+	<div
+		class="timeline"
+		role="img"
+		aria-label={mode === 'always' ? '24/7' : m.policy_schedule_summary()}
+	>
 		<div class="scale" aria-hidden="true">
 			<span>00</span>
 			<span>06</span>
@@ -32,8 +53,8 @@
 				<div class="day-row">
 					<span class="day">{day()}</span>
 					<span class="track">
-						{#if index < 5}
-							<span class="window"></span>
+						{#if mode === 'always' || index < 5}
+							<span class="window" class:all-day={mode === 'always'}></span>
 						{/if}
 					</span>
 				</div>
@@ -43,6 +64,40 @@
 </div>
 
 <style>
+	.activation-choice {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+		gap: 8px;
+		padding: 12px 14px 0;
+	}
+
+	.activation-choice button {
+		min-width: 0;
+		min-height: 42px;
+		padding: 8px;
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		font-family: 'IBM Plex Mono', monospace;
+		font-size: 11px;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.activation-choice button.selected {
+		border-color: var(--signal-deep);
+		box-shadow: inset 0 3px var(--signal);
+	}
+
+	.activation-choice button:focus-visible {
+		outline: 2px solid var(--foreground);
+		outline-offset: 2px;
+	}
+
+	.window.all-day {
+		left: 0;
+		width: 100%;
+	}
+
 	.schedule-card {
 		overflow: hidden;
 		border: 1px solid var(--border);
