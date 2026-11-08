@@ -23,6 +23,7 @@
 	import { resolve } from '$app/paths';
 	import { toast, Toaster } from 'svelte-sonner';
 	import * as m from '$lib/paraglide/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
 	import ChangePasswordDialog from './_components/ChangePasswordDialog.svelte';
 	import CancelSubscriptionDialog from './_components/CancelSubscriptionDialog.svelte';
 	import Disable2FADialog from './_components/Disable2FADialog.svelte';
@@ -88,7 +89,7 @@
 
 	function formatDate(iso: string | Date | null): string {
 		if (!iso) return '';
-		return new Date(iso).toLocaleDateString(undefined, {
+		return new Date(iso).toLocaleDateString(getLocale(), {
 			year: 'numeric',
 			month: 'long',
 			day: 'numeric'

@@ -20,11 +20,23 @@ describe('website locale switching', () => {
 	});
 	it('switches to German on public and account pages without dropping parameters', () => {
 		expect(
-			languageSwitchHref(new URL('https://aceblocker.com/it/get-pro?cycle=yearly#plans'), 'de')
+			languageSwitchHref(
+				new URL('https://aceblocker.com/it/get-pro?cycle=yearly#plans'),
+				'de'
+			)
 		).toBe('/de/get-pro?cycle=yearly#plans');
 		expect(languageSwitchHref(new URL('https://aceblocker.com/de/about'), 'en')).toBe('/about');
+		expect(languageSwitchHref(new URL('https://aceblocker.com/de/about?q=1#top'), 'es')).toBe(
+			'/es/about?q=1#top'
+		);
 		expect(
-			languageSwitchHref(new URL('https://aceblocker.com/de/checkout/completed?status=ok'), 'it')
+			languageSwitchHref(new URL('https://aceblocker.com/es/get-pro?cycle=yearly'), 'it')
+		).toBe('/it/get-pro?cycle=yearly');
+		expect(
+			languageSwitchHref(
+				new URL('https://aceblocker.com/de/checkout/completed?status=ok'),
+				'it'
+			)
 		).toBe('/it/checkout/completed?status=ok');
 	});
 });

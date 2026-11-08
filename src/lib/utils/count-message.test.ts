@@ -51,3 +51,33 @@ it('handles zero and one visits and one-day trials', () => {
 	);
 	expect(m.inline_checkout_after_trial_one({}, { locale: 'en' })).toBe('After 1 day');
 });
+
+it('renders Spanish account counts and trial days for zero, one and many', () => {
+	const values = [
+		'No hay cuentas que coincidan con esta búsqueda.',
+		'1 cuenta coincide con esta búsqueda.',
+		'3 cuentas coinciden con esta búsqueda.'
+	];
+	for (const [index, count] of [0, 1, 3].entries()) {
+		expect(
+			countMessage(
+				count,
+				() => m.admin_users_search_results_zero({}, { locale: 'es' }),
+				() => m.admin_users_search_results_one({}, { locale: 'es' }),
+				() => m.admin_users_search_results({ count }, { locale: 'es' })
+			)
+		).toBe(values[index]);
+	}
+	expect(m.inline_checkout_trial_badge_one({}, { locale: 'es' })).toBe(
+		'Prueba gratuita de 1 día'
+	);
+	expect(m.inline_checkout_trial_badge({ days: 14 }, { locale: 'es' })).toBe(
+		'Prueba gratuita de 14 días'
+	);
+	expect(m.admin_metrics_weekly_visits_one({}, { locale: 'es' })).toBe(
+		'1 visita en los últimos 7 días'
+	);
+	expect(m.admin_metrics_weekly_visits({ count: 2 }, { locale: 'es' })).toBe(
+		'2 visitas en los últimos 7 días'
+	);
+});

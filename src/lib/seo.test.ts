@@ -9,13 +9,20 @@ describe('SEO URL helpers', () => {
 	it('localizes paths consistently with reciprocal alternates', () => {
 		expect(basePath('/de/download/')).toBe('/download');
 		expect(localizedPath('/it/about', 'es')).toBe('/es/about');
-		expect(alternateUrls('/about').map(({ locale }) => locale)).toEqual(['en', 'it', 'de']);
+		expect(alternateUrls('/about').map(({ locale }) => locale)).toEqual([
+			'en',
+			'es',
+			'it',
+			'de'
+		]);
 		expect(alternateUrls('/faq').map(({ locale }) => locale)).toEqual(['en', 'es', 'it', 'de']);
 	});
 	it('does not index private or unknown routes', () => {
 		expect(isIndexablePage('/de/download')).toBe(true);
 		expect(isIndexablePage('/de/privacy')).toBe(true);
-		expect(isIndexablePage('/es/download')).toBe(false);
+		expect(isIndexablePage('/es/download')).toBe(true);
+		expect(isIndexablePage('/es/privacy')).toBe(true);
+		expect(isIndexablePage('/es/terms')).toBe(true);
 		expect(isIndexablePage('/it/download')).toBe(true);
 		expect(isIndexablePage('/it/privacy')).toBe(true);
 		expect(isIndexablePage('/de/faq')).toBe(true);
