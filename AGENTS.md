@@ -370,3 +370,13 @@ After completing the code, ask the user if they want a playground link. Only cal
   `POST /api/v1/admin/installers/{publish-desktop,withdraw-desktop}` require
   Better Auth administrator sessions. The legacy
   `set-downloadable` route cannot promote signed desktop releases.
+
+
+## Curated Free starter categories (2026-11-08)
+
+The server catalog in `src/lib/server/ace-hosts-site-packs.ts` includes
+`pack-gambling-free` and `pack-streaming-free`, in addition to their
+separate broader Pro lists. The source-of-truth builder in sibling `ace-hosts`
+publishes these as `site-pack-*-free.zip`; a release must be published
+before the catalog can actually sync from GitHub. Do not claim availability
+from catalog registration alone.

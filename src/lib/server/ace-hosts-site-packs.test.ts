@@ -92,9 +92,9 @@ describe('ace-hosts site-pack sync', () => {
 		deleteSitePack.mockResolvedValue({ isErr: () => false });
 	});
 
-	it('includes all 14 canonical ace-hosts release site packs', () => {
-		expect(ACE_HOSTS_SITE_PACKS).toHaveLength(14);
-		expect(new Set(ACE_HOSTS_SITE_PACKS.map((pack) => pack.id)).size).toBe(14);
+	it('includes all 16 canonical ace-hosts release site packs', () => {
+		expect(ACE_HOSTS_SITE_PACKS).toHaveLength(16);
+		expect(new Set(ACE_HOSTS_SITE_PACKS.map((pack) => pack.id)).size).toBe(16);
 		expect(ACE_HOSTS_SITE_PACKS.map((pack) => pack.assetName)).toContain(
 			'site-pack-dating-pro.zip'
 		);
@@ -102,6 +102,11 @@ describe('ace-hosts site-pack sync', () => {
 			'site-pack-anime-manga-pro.zip'
 		);
 		expect(ACE_HOSTS_SITE_PACKS.some((pack) => pack.id === 'pack-anime-manga-extended')).toBe(false);
+		for (const id of ['pack-gambling-free', 'pack-streaming-free']) {
+			const pack = ACE_HOSTS_SITE_PACKS.find((item) => item.id === id);
+			expect(pack?.requiresProSubscription).toBe(false);
+		}
+
 	});
 
 	it('shares an in-flight sync between startup, monthly and manual triggers', async () => {
@@ -126,7 +131,7 @@ describe('ace-hosts site-pack sync', () => {
 		expect(getAceHostsSitePackSyncStatus()).toMatchObject({
 			running: false,
 			lastError: null,
-			lastResult: { release: 'v2026.09.01', updated: 0, unchanged: 14 }
+			lastResult: { release: 'v2026.09.01', updated: 0, unchanged: 16 }
 		});
 	});
 
@@ -146,7 +151,7 @@ describe('ace-hosts site-pack sync', () => {
 		fetchMock.mockResolvedValue(
 			new Response(JSON.stringify(releaseResponse()), { status: 200 })
 		);
-		await expect(syncAceHostsSitePacks()).resolves.toMatchObject({ updated: 0, unchanged: 14 });
+		await expect(syncAceHostsSitePacks()).resolves.toMatchObject({ updated: 0, unchanged: 16 });
 		expect(getAceHostsSitePackSyncStatus().lastError).toBeNull();
 	});
 
@@ -158,7 +163,7 @@ describe('ace-hosts site-pack sync', () => {
 		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
 			new Response(JSON.stringify(releaseResponse()), { status: 200 })
 		));
-		await expect(syncAceHostsSitePacks()).resolves.toMatchObject({ unchanged: 14 });
+		await expect(syncAceHostsSitePacks()).resolves.toMatchObject({ unchanged: 16 });
 		expect(deleteSitePack).toHaveBeenCalledExactlyOnceWith('pack-anime-manga-extended');
 	});
 

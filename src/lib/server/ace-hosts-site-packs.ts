@@ -79,6 +79,20 @@ export const ACE_HOSTS_SITE_PACKS: readonly AceHostsSitePackDefinition[] = [
 		requiresProSubscription: false
 	},
 	{
+		id: 'pack-gambling-free',
+		name: 'Gambling Websites — Free',
+		description: 'Blocks popular gambling and betting sites.',
+		assetName: 'site-pack-gambling-free.zip',
+		requiresProSubscription: false
+	},
+	{
+		id: 'pack-streaming-free',
+		name: 'Streaming Websites — Free',
+		description: 'Blocks popular video services.',
+		assetName: 'site-pack-streaming-free.zip',
+		requiresProSubscription: false
+	},
+	{
 		id: 'pack-gambling-pro',
 		name: 'Gambling Websites — Pro',
 		description: 'Blocks online gambling sites.',
