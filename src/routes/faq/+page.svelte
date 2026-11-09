@@ -78,6 +78,22 @@
 		</div>
 	</section>
 
+	<section class="border-t border-border py-8">
+		<div class="ace-shell flex max-w-4xl flex-wrap gap-5">
+			<a
+				class="text-sm font-semibold underline underline-offset-4"
+				href={resolve(
+					localizeHref('/features/network-blocks') as '/features/network-blocks'
+				)}>{m.feature_explore_blocks()}</a
+			>
+			<a
+				class="text-sm font-semibold underline underline-offset-4"
+				href={resolve(localizeHref('/features/resistance') as '/features/resistance')}
+				>{m.feature_explore_resistance()}</a
+			>
+		</div>
+	</section>
+
 	<section class="border-t border-border bg-card py-12 sm:py-16">
 		<div
 			class="ace-shell flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center"
