@@ -8,12 +8,15 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
 	import * as m from '$lib/paraglide/messages';
+	import { expectedInstallerFile } from '$lib/installer-release-policy';
 	import {
 		Calendar,
 		Cpu,
 		Eye,
 		EyeOff,
 		HardDrive,
+		FileArchive,
+		ShieldCheck,
 		Layers,
 		Trash2,
 		UploadCloud
@@ -23,11 +26,12 @@
 	let { data }: { data: any } = $props();
 	let uploadVersion = $state('');
 	let uploadOs = $state('windows');
-	let uploadArchitecture = $state('x64');
+	const expectedName = $derived(expectedInstallerFile(uploadOs, uploadVersion || '0.1.0'));
 
 	const liveBuilds = $derived(
 		data.installers.filter(
-			(installer: { canBeDownloaded: boolean }) => installer.canBeDownloaded
+			(installer: { canBeDownloaded: boolean; artifactValidatedAt: string | Date | null }) =>
+				installer.canBeDownloaded && !!installer.artifactValidatedAt
 		).length
 	);
 
@@ -42,7 +46,6 @@
 	function resetUploadForm() {
 		uploadVersion = '';
 		uploadOs = 'windows';
-		uploadArchitecture = 'x64';
 	}
 
 	function errorMessage(response: any, fallback: string): string {
@@ -59,15 +62,20 @@
 	function validateUpload(formData: FormData): string | null {
 		const file = formData.get('file') as File;
 		const version = formData.get('version') as string;
-		return !file?.size || !version ? m.admin_releases_missing_file_version() : null;
+		if (!file?.size || !version) return m.admin_releases_missing_file_version();
+		if (!/^\d+\.\d+\.\d+$/.test(version)) return m.admin_releases_expected_version();
+		const expected = expectedInstallerFile(uploadOs, version);
+		return file.name !== expected
+			? m.admin_releases_expected_filename({ filename: expected ?? '' })
+			: null;
 	}
 
 	async function submitUpload(formData: FormData): Promise<string | null> {
 		const response = await apiClient.v1.admin.installers.upload.post({
 			file: formData.get('file') as File,
 			version: formData.get('version') as string,
-			os: formData.get('os') as string,
-			architecture: formData.get('architecture') as string
+			os: formData.get('os') as 'windows' | 'linux',
+			architecture: 'x64'
 		});
 
 		return response.error ? errorMessage(response, m.admin_releases_upload_fallback()) : null;
@@ -79,6 +87,18 @@
 	}
 
 	async function toggleDownloadable(item: any) {
+		if (item.updateState && item.updateState !== 'legacy') {
+			const response =
+				item.updateState === 'staged'
+					? await apiClient.v1.admin.installers['publish-desktop'].post({ id: item.id })
+					: await apiClient.v1.admin.installers['withdraw-desktop'].post({ id: item.id });
+			if (response.error) {
+				alert(errorMessage(response, m.admin_releases_availability_fallback()));
+				return;
+			}
+			await invalidateAll();
+			return;
+		}
 		const response = await apiClient.v1.admin.installers['set-downloadable'].post({
 			id: item.id,
 			canBeDownloaded: !item.canBeDownloaded
@@ -136,16 +156,29 @@
 					><Cpu class="size-3" aria-hidden="true" />{release.architecture}</span
 				>
 			</div>
+			<div class="flex items-center gap-1 text-xs text-muted-foreground">
+				{#if release.artifactValidatedAt}
+					<ShieldCheck
+						class="size-3.5 text-emerald-600 dark:text-emerald-400"
+						aria-hidden="true"
+					/>
+					{m.admin_releases_file_validated()}
+				{:else}
+					{m.admin_releases_file_unverified()}
+				{/if}
+			</div>
 		</div>
 	</td>
 	<td class="px-5 py-4 text-center">
-		{#if release.canBeDownloaded}
+		{#if release.canBeDownloaded && release.artifactValidatedAt}
 			<Badge variant="secondary"
 				><Eye aria-hidden="true" />{m.admin_releases_status_live()}</Badge
 			>
 		{:else}
 			<Badge variant="outline"
-				><EyeOff aria-hidden="true" />{m.admin_releases_status_staged()}</Badge
+				><EyeOff aria-hidden="true" />{release.updateState === 'withdrawn'
+					? m.admin_releases_signed_withdrawn()
+					: m.admin_releases_status_staged()}</Badge
 			>
 		{/if}
 	</td>
@@ -162,6 +195,17 @@
 			<Button
 				variant={release.canBeDownloaded ? 'outline' : 'default'}
 				size="sm"
+				disabled={(!release.canBeDownloaded &&
+					(release.updateState === 'legacy' ||
+						!release.artifactValidatedAt ||
+						release.updateState === 'withdrawn')) ||
+					(release.os === 'linux' &&
+						data.installers.some(
+							(other: { os: string; version: string; updateState: string }) =>
+								other.os === 'windows' &&
+								other.version === release.version &&
+								other.updateState === 'published'
+						))}
 				onclick={() => toggleDownloadable(release)}
 				title={release.canBeDownloaded
 					? m.admin_releases_withdraw_installer_tooltip()
@@ -175,6 +219,7 @@
 				variant="ghost"
 				size="icon-sm"
 				onclick={() => actions.confirmDelete(release)}
+				disabled={release.updateState && release.updateState !== 'legacy'}
 				title={m.admin_releases_delete_record()}
 			>
 				<Trash2 aria-hidden="true" />
@@ -202,7 +247,7 @@
 			id="installer-version"
 			name="version"
 			bind:value={uploadVersion}
-			placeholder={m.admin_releases_version_placeholder()}
+			placeholder={m.admin_releases_expected_version_placeholder()}
 			required
 		/>
 	</div>
@@ -212,33 +257,40 @@
 			<Label for="installer-os">{m.admin_releases_modal_os()}</Label>
 			<Select.Root type="single" name="os" bind:value={uploadOs}>
 				<Select.Trigger id="installer-os"
-					>{uploadOs === 'macos'
-						? 'macOS'
-						: uploadOs === 'linux'
-							? 'Linux'
-							: 'Windows'}</Select.Trigger
+					>{uploadOs === 'linux' ? 'Linux' : 'Windows'}</Select.Trigger
 				>
 				<Select.Content>
 					<Select.Group>
 						<Select.Item value="windows" label="Windows">Windows</Select.Item>
 						<Select.Item value="linux" label="Linux">Linux</Select.Item>
-						<Select.Item value="macos" label="macOS">macOS</Select.Item>
 					</Select.Group>
 				</Select.Content>
 			</Select.Root>
 		</div>
 		<div class="flex flex-col gap-2">
-			<Label for="installer-architecture">{m.admin_releases_modal_arch()}</Label>
-			<Select.Root type="single" name="architecture" bind:value={uploadArchitecture}>
-				<Select.Trigger id="installer-architecture">{uploadArchitecture}</Select.Trigger>
-				<Select.Content>
-					<Select.Group>
-						<Select.Item value="x64" label="x64">x64</Select.Item>
-						<Select.Item value="arm64" label="arm64">arm64</Select.Item>
-					</Select.Group>
-				</Select.Content>
-			</Select.Root>
+			<Label>{m.admin_releases_modal_arch()}</Label>
+			<div
+				class="flex min-h-9 items-center rounded-md border bg-muted/30 px-3 font-mono text-sm"
+			>
+				x64
+			</div>
+			<input type="hidden" name="architecture" value="x64" />
 		</div>
+	</div>
+	<div
+		class="border-l-2 border-amber-500 bg-muted/40 px-4 py-3"
+		aria-label={m.admin_releases_expected_artifact()}
+	>
+		<div class="flex items-center gap-2 text-sm font-medium">
+			<FileArchive class="size-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+			{m.admin_releases_expected_artifact()}
+		</div>
+		<code class="mt-2 block font-mono text-xs font-medium break-all">{expectedName}</code>
+		<p class="mt-2 text-xs leading-relaxed text-muted-foreground">
+			{uploadOs === 'windows'
+				? m.admin_releases_windows_upload_help()
+				: m.admin_releases_linux_upload_help()}
+		</p>
 	</div>
 {/snippet}
 
@@ -266,6 +318,7 @@
 	uploadSubtitle={m.admin_releases_upload_installer_description()}
 	fileFieldLabel={m.admin_releases_installer_file_label()}
 	fileInputId="installer-file"
+	fileAccept={uploadOs === 'windows' ? '.msi' : '.tar.gz,application/gzip'}
 	{uploadFields}
 	{validateUpload}
 	{submitUpload}

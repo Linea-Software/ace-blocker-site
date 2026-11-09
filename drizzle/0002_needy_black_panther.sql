@@ -1,0 +1,1 @@
+ALTER TABLE "ace_blocker_installer" ADD COLUMN "artifact_validated_at" timestamp with time zone;

@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { aceBlockerInstaller, desktopReleaseAudit } from '$lib/server/db/schema';
 import { installersBasePath } from '$lib/server/cdn/common';
 import { invalidateDesktopReleaseCache, invalidateInstallerCache } from '$lib/server/cache';
 import { createLogger } from '$lib/server/logger';
+import { verifyLegacyInstallerObject } from './installer-release-publication';
 import {
 	DesktopReleaseError,
 	MAX_DESKTOP_MSI,
@@ -50,7 +51,8 @@ function validateRow(
 		row.stagingKey !== desktopStageKey(metadata.version, metadata.sha256) ||
 		row.size <= 0 ||
 		row.size > MAX_DESKTOP_MSI ||
-		row.fileName !== metadata.sha256 + '.msi'
+		row.fileName !== metadata.sha256 + '.msi' ||
+		!row.artifactValidatedAt
 	)
 		throw new DesktopReleaseError(
 			'invalid',
@@ -101,6 +103,7 @@ export async function stageDesktopRelease(input: DesktopIngest): Promise<string>
 				downloadUrl: publishedUrl(metadata.version, metadata.sha256),
 				sha256: metadata.sha256,
 				size: input.size,
+				artifactValidatedAt: new Date(),
 				canBeDownloaded: false,
 				downloadCount: 0,
 				sourceRepository: input.sourceRepository,
@@ -184,6 +187,30 @@ export async function publishDesktopRelease(id: string, adminId: string): Promis
 				'A newer or equal release has already been published'
 			);
 
+		// Both platform artifacts must be present and verified before publication.
+		const linuxCandidates = await db
+			.select()
+			.from(aceBlockerInstaller)
+			.where(
+				and(
+					eq(aceBlockerInstaller.version, metadata.version),
+					eq(aceBlockerInstaller.os, 'linux'),
+					eq(aceBlockerInstaller.architecture, 'x64'),
+					eq(aceBlockerInstaller.updateState, 'legacy'),
+					isNotNull(aceBlockerInstaller.artifactValidatedAt)
+				)
+			);
+		if (linuxCandidates.length !== 1) {
+			throw new DesktopReleaseError(
+				'invalid',
+				'Exactly one validated Linux x64 tar.gz is required for this version'
+			);
+		}
+		const linux = linuxCandidates[0];
+		if (row.sourceCommit && linux.sourceCommit && row.sourceCommit !== linux.sourceCommit) {
+			throw new DesktopReleaseError('invalid', 'Windows/Linux source commits do not match');
+		}
+		await verifyLegacyInstallerObject(linux);
 		await promoteDesktopObject(metadata.version, metadata.sha256, row.size);
 		promoted = true;
 		promotedVersion = metadata.version;
@@ -202,6 +229,22 @@ export async function publishDesktopRelease(id: string, adminId: string): Promis
 				.returning({ id: aceBlockerInstaller.id });
 			if (!updated.length)
 				throw new DesktopReleaseError('conflict', 'Release publication claim was lost');
+			const linuxPublished = await tx
+				.update(aceBlockerInstaller)
+				.set({ canBeDownloaded: true })
+				.where(
+					and(
+						eq(aceBlockerInstaller.id, linux.id),
+						eq(aceBlockerInstaller.updateState, 'legacy'),
+						isNotNull(aceBlockerInstaller.artifactValidatedAt)
+					)
+				)
+				.returning({ id: aceBlockerInstaller.id });
+			if (linuxPublished.length !== 1)
+				throw new DesktopReleaseError(
+					'conflict',
+					'Linux companion changed before publication'
+				);
 			await tx
 				.insert(desktopReleaseAudit)
 				.values(auditEntry(id, adminId, 'publish', 'success'));
@@ -260,6 +303,22 @@ export async function withdrawDesktopRelease(id: string, adminId: string): Promi
 			.returning({ id: aceBlockerInstaller.id });
 		if (!updated.length)
 			throw new DesktopReleaseError('conflict', 'Only a published release may be withdrawn');
+		const released = await tx
+			.select({ version: aceBlockerInstaller.version })
+			.from(aceBlockerInstaller)
+			.where(eq(aceBlockerInstaller.id, id));
+		if (released[0]) {
+			await tx
+				.update(aceBlockerInstaller)
+				.set({ canBeDownloaded: false })
+				.where(
+					and(
+						eq(aceBlockerInstaller.version, released[0].version),
+						eq(aceBlockerInstaller.os, 'linux'),
+						eq(aceBlockerInstaller.architecture, 'x64')
+					)
+				);
+		}
 		await tx.insert(desktopReleaseAudit).values(auditEntry(id, adminId, 'withdraw', 'success'));
 	});
 	await Promise.all([invalidateDesktopReleaseCache(), invalidateInstallerCache()]);

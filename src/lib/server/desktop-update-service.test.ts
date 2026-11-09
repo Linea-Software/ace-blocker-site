@@ -3,6 +3,8 @@ import { createPrivateKey, createPublicKey, sign } from 'node:crypto';
 
 const state = vi.hoisted(() => ({
 	rows: [] as Record<string, unknown>[],
+	linuxCandidate: null as Record<string, unknown> | null,
+	verifyLegacyInstallerObject: vi.fn(),
 	audits: [] as Record<string, unknown>[],
 	failPublishCommit: false,
 	removePublishedDesktopObject: vi.fn(),
@@ -31,6 +33,7 @@ vi.mock('$lib/server/db', () => {
 				)
 					throw new Error('unique constraint');
 				state.rows.push(value);
+				if (state.linuxCandidate) state.linuxCandidate.version = value.version;
 			}
 		}),
 		update: () => ({
@@ -39,6 +42,11 @@ vi.mock('$lib/server/db', () => {
 					returning: async () => {
 						if (state.failPublishCommit && values.updateState === 'published')
 							throw new Error('DB commit failed');
+						if ('canBeDownloaded' in values && !('updateState' in values)) {
+							if (!state.linuxCandidate) return [];
+							Object.assign(state.linuxCandidate, values);
+							return [{ ...state.linuxCandidate }];
+						}
 						const requiredState =
 							values.updateState === 'publishing'
 								? 'staged'
@@ -55,14 +63,18 @@ vi.mock('$lib/server/db', () => {
 				})
 			})
 		}),
-		select: () => ({
+		select: (selected?: unknown) => ({
 			from: () => ({
 				where: async () =>
-					state.rows
-						.filter((row) =>
-							['published', 'withdrawn'].includes(String(row.updateState))
-						)
-						.map((row) => ({ version: row.version }))
+					selected === undefined
+						? state.linuxCandidate
+							? [state.linuxCandidate]
+							: []
+						: state.rows
+								.filter((row) =>
+									['published', 'withdrawn'].includes(String(row.updateState))
+								)
+								.map((row) => ({ version: row.version }))
 			})
 		})
 	};
@@ -88,6 +100,9 @@ vi.mock('$lib/server/cdn/common', () => ({
 vi.mock('$lib/server/cache', () => ({
 	invalidateDesktopReleaseCache: state.invalidateDesktopReleaseCache,
 	invalidateInstallerCache: state.invalidateInstallerCache
+}));
+vi.mock('./installer-release-publication', () => ({
+	verifyLegacyInstallerObject: state.verifyLegacyInstallerObject
 }));
 vi.mock('./desktop-update-storage', () => ({
 	desktopStageKey: (version: string, sha: string) => `desktop-updates/${version}/${sha}.msi`,
@@ -153,10 +168,21 @@ const previous = {
 describe('signed desktop release ingest/publication lifecycle', () => {
 	beforeEach(() => {
 		state.rows.length = 0;
+		state.linuxCandidate = {
+			id: 'linux-1',
+			version: '1.10.0',
+			os: 'linux',
+			architecture: 'x64',
+			updateState: 'legacy',
+			artifactValidatedAt: new Date(),
+			canBeDownloaded: false,
+			sha256: 'c'.repeat(64)
+		};
 		state.audits.length = 0;
 		state.failPublishCommit = false;
 		vi.clearAllMocks();
 		state.verifyStoredObject.mockResolvedValue(undefined);
+		state.verifyLegacyInstallerObject.mockResolvedValue(undefined);
 		state.promoteDesktopObject.mockResolvedValue(undefined);
 		state.removePublishedDesktopObject.mockResolvedValue(undefined);
 		state.invalidateDesktopReleaseCache.mockResolvedValue(undefined);
@@ -229,6 +255,21 @@ describe('signed desktop release ingest/publication lifecycle', () => {
 		expect(state.audits).toContainEqual(
 			expect.objectContaining({ action: 'publish', result: 'failure' })
 		);
+	});
+	it('refuses to publish without a validated Linux companion', async () => {
+		const id = await stageDesktopRelease(input());
+		state.linuxCandidate = null;
+		await expect(publishDesktopRelease(id, 'admin-123')).rejects.toThrow(/Linux x64 tar.gz/);
+		expect(state.rows[0].updateState).toBe('staged');
+		expect(state.promoteDesktopObject).not.toHaveBeenCalled();
+	});
+	it('rejects a Linux companion that changes in storage before publication', async () => {
+		const id = await stageDesktopRelease(input());
+		state.verifyLegacyInstallerObject.mockRejectedValueOnce(new Error('stored hash mismatch'));
+		await expect(publishDesktopRelease(id, 'admin-123')).rejects.toThrow(
+			/stored hash mismatch/
+		);
+		expect(state.rows[0].updateState).toBe('staged');
 	});
 	it('rejects CDN outage and preserves staged state', async () => {
 		const id = await stageDesktopRelease(input());

@@ -188,6 +188,40 @@ in-memory installer uploader: it must not be used for the secure signed
 release path. MSI size is currently bounded by PostgreSQL's 32-bit
 `size` column (`2147483647` bytes, or just under 2 GiB).
 
+## Required installer artifacts and publication readiness
+
+The admin upload supports **Windows x64 MSI** (`AceBlocker-<version>.msi`)
+and **Linux x64 tar.gz** (`AceBlocker-<version>-linux-x64.tar.gz`) only.
+The GitHub Actions artifact download is a ZIP wrapper containing the actual
+platform file; do not upload that wrapper. Other architectures and macOS are
+not enabled in this workflow.
+
+New uploads receive `artifact_validated_at` only after the server inspects
+the file. Windows validation checks the MSI compound-file header; Linux
+validation safely parses the gzip/tar archive without extraction, rejects
+links, traversal, duplicates and unsupported entries, checks the required
+payload files and x64 ELF headers, and bounds expanded bytes. A file's
+name or MIME type alone is insufficient. Uploads are capped at 100 MiB.
+Previous rows remain **unverified** (NULL), not automatically grandfathered in.
+
+Before approving a signed Windows desktop release, the server requires
+**exactly one** server-validated Linux tarball of the same version, verifies
+the Linux storage bytes again against recorded SHA-256/size/structure,
+and rejects mismatched non-null CI source commits. The signed Windows
+publication and Linux public-download flag are committed together in one
+database transaction. Withdrawal disables both. Published Linux packages
+are *structurally* checked, not separately cryptographically signed by
+a v1 Linux manifest; do not call them authenticated Linux updates.
+
+Old legacy Windows MSI rows can no longer be made publicly downloadable
+through the simple `set-downloadable` toggle. Signed Windows release
+publication must use `publish-desktop` after a trusted external signing
+and an approved signed envelope. The website validates signed metadata and
+the MSI stored bytes, but **does not independently run Windows Authenticode
+verification on the Linux server**. The trusted Windows signing stage must
+run the pinned Authenticode verifier before ingest; production signing and
+automatic installation remain separate, gated deliverables.
+
 ## Manual publication, withdrawal, audits
 
 - An actual Better Auth `admin` session is required by the admin router

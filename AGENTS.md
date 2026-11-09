@@ -118,6 +118,29 @@ See `docs/ITALIAN_TERMINOLOGY.md` for the shared IT glossary, unresolved
 English-source ambiguities and the `src/lib/utils/count-message.ts` pattern
 for zero/singular/plural agreement.
 
+## Installer-release artifact policy (2026-11-10)
+
+- Admin installer uploads accept only `AceBlocker-VERSION.msi` (Windows x64)
+  or `AceBlocker-VERSION-linux-x64.tar.gz` (Linux x64). GitHub Actions artifacts
+  download as ZIP wrappers; upload the inner platform package, not the ZIP.
+- Authoritative target names are in `src/lib/installer-release-policy.ts`.
+  Server-side structural checks (MSI header, bounded safe tar/gzip with x64
+  ELF binaries and mandatory files) live in
+  `src/lib/server/installer-artifact-validation.ts`. Never trust MIME or
+  filename alone.
+- Successful validation records `ace_blocker_installer.artifact_validated_at`.
+  Old rows remain NULL/unverified. `src/lib/server/installer-release-publication.ts`
+  re-fetches staged legacy installer bytes from storage and verifies file
+  content, size and SHA-256 before publication.
+- Signed Windows publication requires a validated Linux companion of the
+  same version; one database transaction publishes both download flags.
+  Withdrawal disables both. Only the signed desktop publication endpoint may
+  approve Windows; the generic legacy toggle cannot.
+- Authenticode is **not** verified by the Linux website itself. The trusted
+  native Windows signing/verifier stage and offline Ed25519 release signature
+  remain separate required gates. Do not claim signed Linux manifests or
+  unattended MSI installation exist. See `docs/DESKTOP_UPDATES.md`.
+
 ## Desktop account activation
 
 - The engine exposes **typed remoc IPC, not a local browser HTTP endpoint**. Website sign-in, checkout completion, and Pro activation pass account keys to the allowlisted `aceblocker://account/api-key` handler, with credentials in the URI fragment rather than the query string.

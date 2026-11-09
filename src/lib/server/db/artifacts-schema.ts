@@ -30,6 +30,8 @@ export const aceBlockerInstaller = pgTable(
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 		// to be set by the program
 		sha256: text('sha256').notNull(),
+		// Set only after the server validates file structure and type. Existing legacy rows stay unverified.
+		artifactValidatedAt: timestamp('artifact_validated_at', { withTimezone: true }),
 		// Optional CI provenance. Manual/legacy uploads leave these null.
 		sourceRepository: text('source_repository'),
 		sourceCommit: text('source_commit'),

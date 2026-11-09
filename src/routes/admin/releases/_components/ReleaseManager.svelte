@@ -40,6 +40,7 @@
 		deployingLabel = m.admin_releases_deploying(),
 		fileFieldLabel = m.admin_releases_modal_file(),
 		fileInputId = 'release-file',
+		fileAccept,
 		DropzoneIcon = UploadCloud,
 		uploadFields,
 		validateUpload,
@@ -66,6 +67,7 @@
 		deployingLabel?: string;
 		fileFieldLabel?: string;
 		fileInputId?: string;
+		fileAccept?: string;
 		DropzoneIcon?: Component;
 		uploadFields: Snippet;
 		validateUpload: (formData: FormData) => string | null;
@@ -300,6 +302,7 @@
 						id={fileInputId}
 						type="file"
 						name="file"
+						accept={fileAccept}
 						class="absolute inset-0 size-full cursor-pointer opacity-0"
 						onchange={(event) => (uploadFile = event.currentTarget.files?.[0] ?? null)}
 						ondragover={handleDragOver}

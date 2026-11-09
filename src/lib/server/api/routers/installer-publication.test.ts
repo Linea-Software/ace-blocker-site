@@ -17,11 +17,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 //   2. after the admin marks it downloadable (the correction), both surfaces
 //      serve it.
 
-const validExe = new File(
-	[new Uint8Array([0x4d, 0x5a, 0x90, 0x00, 0, 0, 0, 0])],
-	'ace-blocker-installer.exe',
-	{ type: 'application/octet-stream' }
-);
+const msiHeader = new Uint8Array(512);
+msiHeader.set([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+msiHeader[28] = 0xfe;
+msiHeader[29] = 0xff;
+msiHeader[30] = 9;
+const validMsi = new File([msiHeader], 'AceBlocker-1.0.0.msi');
 
 vi.mock('$lib/server/logger', () => ({
 	createLogger: () => ({
@@ -82,6 +83,7 @@ interface InstallerRow {
 	createdAt: Date;
 	sha256: string;
 	size: number;
+	artifactValidatedAt?: Date | null;
 	canBeDownloaded: boolean;
 	downloadCount: number;
 }
@@ -89,7 +91,7 @@ interface InstallerRow {
 let rows: InstallerRow[] = [];
 
 function selectAll() {
-	return Promise.resolve(rows.filter((row) => row.canBeDownloaded));
+	return Promise.resolve(rows.filter((row) => row.canBeDownloaded && row.artifactValidatedAt));
 }
 
 vi.mock('$lib/server/db', () => ({
@@ -146,13 +148,13 @@ import { load } from '../../../../routes/download/+page.server';
 import { invalidateInstallerCache, loadLatestInstaller } from '$lib/server/cache';
 
 const WINDOWS_URL = new URL(
-	'https://cdn.aceblocker.test/dev/ace-blocker-installer/1.0.0/windows/x64/Ace%20Blocker%20Installer.exe'
+	'https://cdn.aceblocker.test/dev/ace-blocker-installer/1.0.0/windows/x64/AceBlocker-1.0.0.msi'
 );
 
 function windowsRow(overrides: Partial<InstallerRow> = {}): InstallerRow {
 	return {
 		id: 'w1',
-		fileName: 'Ace Blocker Installer.exe',
+		fileName: 'AceBlocker-1.0.0.msi',
 		version: '1.0.0',
 		os: 'windows',
 		architecture: 'x64',
@@ -160,6 +162,7 @@ function windowsRow(overrides: Partial<InstallerRow> = {}): InstallerRow {
 		createdAt: new Date('2026-09-01T00:00:00Z'),
 		sha256: 'a'.repeat(64),
 		size: 123456,
+		artifactValidatedAt: null,
 		canBeDownloaded: false,
 		downloadCount: 0,
 		...overrides
@@ -196,7 +199,7 @@ describe('installer publication lifecycle (regression: upload visible on /downlo
 
 		const res = await adminHandle('/admin/installers/upload', {
 			method: 'POST',
-			body: uploadBody(validExe, { version: '1.0.0', os: 'windows', architecture: 'x64' })
+			body: uploadBody(validMsi, { version: '1.0.0', os: 'windows', architecture: 'x64' })
 		});
 		expect(res.status).toBe(200);
 		expect(uploadInstaller).toHaveBeenCalledWith(
@@ -225,38 +228,20 @@ describe('installer publication lifecycle (regression: upload visible on /downlo
 		expect(data.platforms.linux).toBeNull();
 	});
 
-	it('FIXES the bug: marking the release downloadable makes /download serve it', async () => {
-		rows = [windowsRow()];
-
-		// Admin publishes the staged release.
+	it('rejects manual publication of a legacy Windows upload', async () => {
+		rows = [windowsRow({ artifactValidatedAt: new Date() })];
 		const res = await adminHandle('/admin/installers/set-downloadable', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ id: 'w1', canBeDownloaded: true })
 		});
-		expect(res.status).toBe(200);
-		// set-downloadable invalidates the cache in the same process.
+		expect(res.status).toBe(409);
 		await loadLatestInstaller();
-
-		// [arch] download route now redirects to the public CDN URL.
-		await expect(GET(routeEvent('windows_x64'))).rejects.toMatchObject({
-			status: 302,
-			location: WINDOWS_URL.href
-		});
-
-		// Page metadata now reports the Windows installer.
-		const data = (await load({ url: new URL('http://localhost/download') } as never)) as {
-			platforms: {
-				windows: { version: string; hash: string } | null;
-				macos: unknown;
-				linux: unknown;
-			};
-		};
-		expect(data.platforms.windows).toMatchObject({ version: '1.0.0', hash: 'a'.repeat(64) });
+		await expect(GET(routeEvent('windows_x64'))).rejects.toMatchObject({ status: 404 });
 	});
 
 	it('withdrawing a release removes it from /download again', async () => {
-		rows = [windowsRow({ canBeDownloaded: true })];
+		rows = [windowsRow({ canBeDownloaded: true, artifactValidatedAt: new Date() })];
 		await invalidateInstallerCache();
 
 		await expect(GET(routeEvent('windows_x64'))).rejects.toMatchObject({ status: 302 });

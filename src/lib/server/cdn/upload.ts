@@ -26,6 +26,8 @@ import {
 } from './common';
 import { deleteFileFromBunnyCDN } from './delete';
 import { createLogger } from '$lib/server/logger';
+import { validateInstallerArtifact } from '$lib/server/installer-artifact-validation';
+import { expectedInstallerFile } from '$lib/installer-release-policy';
 
 const log = createLogger('cdn:upload');
 
@@ -257,17 +259,16 @@ export async function uploadInstaller(
 	version: string,
 	os: 'windows' | 'linux' | 'macos',
 	architecture: 'x64' | 'arm64',
-	canBeDownloaded: boolean = true,
+	canBeDownloaded: boolean = false,
 	provenance?: InstallerProvenance
 ): Promise<Result<{ downloadUrl: string; hash: string }, CDNErrorType>> {
-	const validationError = await validateArtifact(file, version, 'installer', { zip: false });
+	const validationError = await validateInstallerArtifact(file, version, os, architecture);
 	if (validationError) {
 		log.warn({ version }, `Rejected installer upload: ${validationError}`);
 		return err(CDNErrorType.InvalidArtifact);
 	}
 
-	const fileExt = file.name.split('.').pop();
-	const installerFileName = `Ace Blocker Installer.${fileExt}`;
+	const installerFileName = expectedInstallerFile(os, version)!;
 	const endpointUrl = new URL(
 		`${version}/${os}/${architecture}/${installerFileName}`,
 		installersUploadBase
@@ -297,6 +298,7 @@ export async function uploadInstaller(
 			engineCommit: provenance?.engineCommit,
 			appCommit: provenance?.appCommit,
 			size: file.size,
+			artifactValidatedAt: new Date(),
 			canBeDownloaded: canBeDownloaded,
 			downloadCount: 0
 		});

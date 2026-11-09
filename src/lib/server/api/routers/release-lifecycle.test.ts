@@ -15,6 +15,13 @@ const validZip = new File(
 	{ type: 'application/zip' }
 );
 
+const msiHeader = new Uint8Array(512);
+msiHeader.set([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+msiHeader[28] = 0xfe;
+msiHeader[29] = 0xff;
+msiHeader[30] = 9;
+const validMsi = new File([msiHeader], 'AceBlocker-1.0.0.msi');
+
 vi.mock('$lib/server/auth', () => ({
 	dodoPayments: {
 		licenses: { validate: vi.fn() },
@@ -173,7 +180,7 @@ describe('admin release uploads', () => {
 
 		const res = await adminHandle('/admin/installers/upload', {
 			method: 'POST',
-			body: uploadBody(validZip, {
+			body: uploadBody(validMsi, {
 				version: '1.0.0',
 				os: 'windows',
 				architecture: 'x64'
@@ -261,7 +268,7 @@ describe('admin set-downloadable lifecycle', () => {
 		).toBe(422);
 	});
 
-	it('marks an installer release downloadable', async () => {
+	it('refuses to publish an unverified legacy Windows installer', async () => {
 		const { db } = await import('$lib/server/db');
 		vi.mocked(db.query.aceBlockerInstaller.findFirst).mockResolvedValue({
 			id: 'w1'
@@ -269,8 +276,42 @@ describe('admin set-downloadable lifecycle', () => {
 		vi.mocked(db.update).mockReturnValue(updateChain() as never);
 
 		const res = await markDownloadable('/admin/installers/set-downloadable', 'w1', true);
-		expect(res.status).toBe(200);
-		expect(db.update).toHaveBeenCalled();
+		expect(res.status).toBe(409);
+		expect(db.update).not.toHaveBeenCalled();
+	});
+
+	it('never enables an unsigned Linux candidate directly', async () => {
+		const { db } = await import('$lib/server/db');
+		vi.mocked(db.query.aceBlockerInstaller.findFirst).mockResolvedValue({
+			id: 'linux-1',
+			version: '1.0.0',
+			os: 'linux',
+			updateState: 'legacy',
+			artifactValidatedAt: new Date()
+		} as never);
+		const res = await markDownloadable('/admin/installers/set-downloadable', 'linux-1', true);
+		expect(res.status).toBe(409);
+		expect(db.update).not.toHaveBeenCalled();
+	});
+
+	it('rejects withdrawing Linux separately from a published signed Windows release', async () => {
+		const { db } = await import('$lib/server/db');
+		vi.mocked(db.query.aceBlockerInstaller.findFirst)
+			.mockResolvedValueOnce({
+				id: 'linux-1',
+				version: '1.0.0',
+				os: 'linux',
+				updateState: 'legacy'
+			} as never)
+			.mockResolvedValueOnce({
+				id: 'windows-1',
+				version: '1.0.0',
+				os: 'windows',
+				updateState: 'published'
+			} as never);
+		const res = await markDownloadable('/admin/installers/set-downloadable', 'linux-1', false);
+		expect(res.status).toBe(409);
+		expect(db.update).not.toHaveBeenCalled();
 	});
 
 	it('installer set-downloadable 404s for an unknown release', async () => {

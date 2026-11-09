@@ -6,6 +6,7 @@ import { uploadInstaller, deleteInstaller, CDNErrorType } from '$lib/server/cdn'
 import { invalidateInstallerCache } from '$lib/server/cache';
 import crypto from 'crypto';
 import { createLogger } from '$lib/server/logger';
+import { validateInstallerArtifact } from '$lib/server/installer-artifact-validation';
 
 const log = createLogger('api:admin:installers');
 
@@ -69,6 +70,12 @@ export const installersRouter = new Elysia({ prefix: '/installers' })
 				};
 			}
 
+			const invalid = await validateInstallerArtifact(file, version, os, architecture);
+			if (invalid) {
+				set.status = 400;
+				return { error: true, message: invalid };
+			}
+
 			const result = await uploadInstaller(
 				file,
 				version,
@@ -87,6 +94,9 @@ export const installersRouter = new Elysia({ prefix: '/installers' })
 				} else if (errorType === CDNErrorType.NetworkFailure) {
 					message = 'Network failure during upload';
 					set.status = 500;
+				} else if (errorType === CDNErrorType.InvalidArtifact) {
+					message = 'File type or contents did not pass validation';
+					set.status = 400;
 				} else {
 					set.status = 500;
 				}
@@ -99,9 +109,9 @@ export const installersRouter = new Elysia({ prefix: '/installers' })
 		{
 			body: t.Object({
 				file: t.File(),
-				version: t.String(),
-				os: t.String(),
-				architecture: t.String()
+				version: t.String({ pattern: '^\\d+\\.\\d+\\.\\d+$' }),
+				os: t.Union([t.Literal('windows'), t.Literal('linux')]),
+				architecture: t.Literal('x64')
 			}),
 			detail: {
 				operationId: 'uploadInstaller',
@@ -156,6 +166,35 @@ export const installersRouter = new Elysia({ prefix: '/installers' })
 					error: true,
 					message: 'Use the signed desktop release publication workflow'
 				};
+			}
+
+			// The legacy toggle can withdraw old releases, but cannot authorize a
+			// new public release. The signed Windows publish/withdraw transaction
+			// is the only authority for the complete Windows + Linux pair.
+			if (canBeDownloaded) {
+				set.status = 409;
+				return {
+					error: true,
+					message: 'Publish a signed Windows release with a verified Linux companion'
+				};
+			}
+			if (existing.os === 'linux') {
+				const publishedWindows = await db.query.aceBlockerInstaller.findFirst({
+					where: (installer, { and, eq }) =>
+						and(
+							eq(installer.version, existing.version),
+							eq(installer.os, 'windows'),
+							eq(installer.architecture, 'x64'),
+							eq(installer.updateState, 'published')
+						)
+				});
+				if (publishedWindows) {
+					set.status = 409;
+					return {
+						error: true,
+						message: 'Withdraw the signed Windows release to withdraw both platforms'
+					};
+				}
 			}
 
 			await db

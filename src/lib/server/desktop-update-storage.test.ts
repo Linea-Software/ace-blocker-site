@@ -7,7 +7,10 @@ vi.mock('$lib/server/cdn/common', () => ({
 }));
 import { promoteDesktopObject, verifyStoredObject } from './desktop-update-storage';
 
-const contents = Buffer.from('d0cf11e0a1b11ae10102030405060708', 'hex');
+const contents = Buffer.alloc(512);
+Buffer.from('d0cf11e0a1b11ae1', 'hex').copy(contents);
+contents.writeUInt16LE(0xfffe, 28);
+contents.writeUInt16LE(9, 30);
 const digest = createHash('sha256').update(contents).digest('hex');
 const version = '1.10.0';
 const previous = {

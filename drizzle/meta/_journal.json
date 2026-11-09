@@ -15,6 +15,13 @@
       "when": 1793935937907,
       "tag": "0001_perpetual_mole_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794266238705,
+      "tag": "0002_needy_black_panther",
+      "breakpoints": true
     }
   ]
 }

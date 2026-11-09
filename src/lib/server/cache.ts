@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { aceBlockerInstaller, resistanceModeScripts, sitePack } from '$lib/server/db/schema';
-import { desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm';
 import { installersBasePath } from '$lib/server/cdn/common';
 import {
 	compareStableVersions,
@@ -34,7 +34,12 @@ export async function loadLatestInstaller(): Promise<
 	const results = await db
 		.select()
 		.from(aceBlockerInstaller)
-		.where(eq(aceBlockerInstaller.canBeDownloaded, true))
+		.where(
+			and(
+				eq(aceBlockerInstaller.canBeDownloaded, true),
+				isNotNull(aceBlockerInstaller.artifactValidatedAt)
+			)
+		)
 		.orderBy(desc(aceBlockerInstaller.createdAt));
 
 	latestInstaller = results[0] || null;
@@ -85,6 +90,7 @@ export async function invalidateDesktopReleaseCache(): Promise<void> {
 		!latest ||
 		latest.updateState !== 'published' ||
 		!latest.canBeDownloaded ||
+		!latest.artifactValidatedAt ||
 		!latest.signedEnvelope
 	)
 		return;

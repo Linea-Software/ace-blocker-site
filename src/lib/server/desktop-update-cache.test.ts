@@ -62,6 +62,7 @@ function release(
 		updateChannel: 'stable',
 		updateState: state,
 		canBeDownloaded: state === 'published',
+		artifactValidatedAt: new Date('2026-11-10T00:00:00Z'),
 		signedEnvelope: JSON.stringify(envelope),
 		sha256: sha,
 		downloadUrl: url,

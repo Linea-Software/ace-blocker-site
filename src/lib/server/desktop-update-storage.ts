@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { hasValidMsiHeader } from './installer-artifact-validation';
 import { installersBasePath, installersUploadBase } from '$lib/server/cdn/common';
 import {
 	MAX_DESKTOP_MSI,
@@ -89,7 +90,6 @@ export async function verifyStoredObject(
 
 	if (!response.body) throw new DesktopReleaseError('unavailable', 'Storage returned no body');
 	const hasher = createHash('sha256');
-	const msiMagic = Buffer.from('d0cf11e0a1b11ae1', 'hex');
 	let firstBytes = Buffer.alloc(0);
 	let size = 0;
 	try {
@@ -97,10 +97,10 @@ export async function verifyStoredObject(
 			size += chunk.byteLength;
 			if (size > MAX_DESKTOP_MSI || size > expectedSize)
 				throw new DesktopReleaseError('invalid', 'Stored MSI exceeds the declared size');
-			if (firstBytes.length < msiMagic.length)
+			if (firstBytes.length < 512)
 				firstBytes = Buffer.concat([
 					firstBytes,
-					chunk.subarray(0, msiMagic.length - firstBytes.length)
+					chunk.subarray(0, 512 - firstBytes.length)
 				]);
 			hasher.update(chunk);
 		}
@@ -108,7 +108,7 @@ export async function verifyStoredObject(
 		if (error instanceof DesktopReleaseError) throw error;
 		throw new DesktopReleaseError('unavailable', 'Failed to read Bunny storage object');
 	}
-	if (!firstBytes.equals(msiMagic))
+	if (!hasValidMsiHeader(firstBytes))
 		throw new DesktopReleaseError('invalid', 'Storage object is not an MSI compound file');
 	if (size !== expectedSize || hasher.digest('hex') !== sha256)
 		throw new DesktopReleaseError('invalid', 'Stored MSI integrity check failed');
