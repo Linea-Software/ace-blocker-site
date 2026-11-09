@@ -82,6 +82,7 @@
 		class:pressed
 		aria-hidden="true"
 		data-demo-pointer-phase={phase}
+		data-demo-pointer-target={target}
 		style:--cursor-x={x + 'px'}
 		style:--cursor-y={y + 'px'}
 		style:--cursor-travel={travelMs + 'ms'}

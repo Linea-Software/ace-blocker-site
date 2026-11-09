@@ -14,6 +14,7 @@
 	import { DemoPlayback } from './DemoPlayback.svelte';
 	import WalkthroughControls from './WalkthroughControls.svelte';
 	import DemoPointer from './DemoPointer.svelte';
+	import ResistanceSiteScene from './ResistanceSiteScene.svelte';
 
 	let { compact = false }: { compact?: boolean } = $props();
 	type Kind = 'feeds' | 'video' | 'visual' | 'interruptions' | 'captcha';
@@ -86,6 +87,12 @@
 		'youtube_shorts_remove',
 		'netflix_disable_autoplay_previews'
 	];
+	const guidedDefaults = defaults.filter(
+		(id) =>
+			!sections
+				.find((section) => section.kind === 'video')
+				?.scripts.some((script) => script.id === id)
+	);
 	let selected = $state<string[]>([...defaults]);
 	let openKind = $state<Kind | null>(null);
 	let openSite = $state<string | null>(null);
@@ -97,7 +104,6 @@
 	type PreviewSite = 'reddit.com' | 'youtube.com' | 'x.com' | 'netflix.com';
 	let previewSite = $state<PreviewSite>('reddit.com');
 	let previewView = $state<'before' | 'after'>('after');
-	const isActive = (id: string) => selected.includes(id);
 	function showSite(site: string) {
 		if (
 			site === 'reddit.com' ||
@@ -110,14 +116,14 @@
 		}
 	}
 	function applyScript(step: number) {
-		// Start from the real catalog defaults; each animated step adds
-		// a new opt-in intervention and shows the matching site preview.
+		// Switching the preview website is its own pointer cue, before any
+		// YouTube intervention is applied. This keeps the walkthrough legible.
 		selected = [
-			...defaults,
+			...(step >= 2 ? defaults : guidedDefaults),
 			...(step >= 0 ? ['reddit_grayscale'] : []),
-			...(step >= 1 ? ['youtube_low_quality'] : []),
-			...(step >= 2 ? ['youtube_audio_delay'] : []),
-			...(step >= 3 ? ['youtube_random_captcha'] : [])
+			...(step >= 2 ? ['youtube_low_quality'] : []),
+			...(step >= 3 ? ['youtube_audio_delay'] : []),
+			...(step >= 4 ? ['youtube_random_captcha'] : [])
 		];
 		showSite(step >= 1 ? 'youtube.com' : 'reddit.com');
 		openKind = null;
@@ -126,11 +132,20 @@
 	const playback = new DemoPlayback(
 		[
 			{ target: 'visual', travelMs: 700 },
-			{ target: 'video', travelMs: 650 },
+			{ target: 'preview-site', travelMs: 900, hoverMs: 300, pressMs: 180, settleMs: 800 },
+			{ target: 'video', travelMs: 700 },
 			{ target: 'interruptions', travelMs: 670 },
-			{ target: 'captcha', travelMs: 680, settleMs: 850 }
+			{ target: 'captcha', travelMs: 680, settleMs: 760 },
+			{
+				target: 'captcha-checkbox',
+				travelMs: 780,
+				hoverMs: 330,
+				pressMs: 200,
+				settleMs: 3600
+			}
 		],
-		applyScript
+		applyScript,
+		() => applyScript(-1)
 	);
 	const pointerTarget = $derived(playback.pointerTarget);
 	onDestroy(() => playback.dispose());
@@ -288,6 +303,10 @@
 				<span>{m.demo_preview_site()}</span>
 				<select
 					data-testid="resistance-preview-site"
+					data-demo-target="preview-site"
+					class:guide-active={(playback.phase === 'hover' ||
+						playback.phase === 'press') &&
+						pointerTarget === 'preview-site'}
 					value={previewSite}
 					onchange={(event) => {
 						playback.manual();
@@ -321,114 +340,34 @@
 					}}>{m.demo_after()}</button
 				>
 			</div>
-			{#snippet mockContent(after: boolean)}
-				<div class="mock-body">
-					{#if previewSite === 'youtube.com'}
-						<div class="mock-title">{m.demo_preview_video()}</div>
-						<div
-							class="mock-media"
-							class:low-quality={after && isActive('youtube_low_quality')}
-						>
-							<span class="play-symbol" aria-hidden="true">▶</span>
-						</div>
-						{#if after && isActive('youtube_low_quality')}
-							<div class="state-note">{m.demo_preview_quality_applied()}</div>
-						{/if}
-						<div class="mock-line"></div>
-						<div class="mock-line narrow"></div>
-						<div class="recommendations">
-							{#if after && isActive('youtube_shorts_remove')}
-								<div class="removed" role="status">{m.demo_shorts_action()}</div>
-							{:else}
-								<strong>{m.demo_preview_shorts()}</strong>
-								<div class="short-thumbnails" aria-hidden="true">
-									<i></i><i></i><i></i>
-								</div>
-							{/if}
-						</div>
-						{#if after && isActive('youtube_audio_delay')}
-							<div class="simulation-banner">{m.demo_preview_audio_applied()}</div>
-						{/if}
-					{:else if previewSite === 'netflix.com'}
-						<div class="mock-title">{m.demo_preview_browse()}</div>
-						<div
-							class="mock-media trailer"
-							class:paused={after && isActive('netflix_disable_autoplay_previews')}
-						>
-							<span class="play-symbol" aria-hidden="true"
-								>{after && isActive('netflix_disable_autoplay_previews')
-									? 'Ⅱ'
-									: '▶'}</span
-							>
-						</div>
-						<div class="mock-line"></div>
-						<div class="mock-line narrow"></div>
-						{#if after && isActive('netflix_disable_autoplay_previews')}
-							<div class="simulation-banner">{m.demo_preview_autoplay_paused()}</div>
-						{/if}
-					{:else}
-						<div class="mock-title">{m.demo_example_feed()}</div>
-						<div
-							class="post-feed"
-							class:desaturated={after &&
-								previewSite === 'reddit.com' &&
-								isActive('reddit_grayscale')}
-							aria-hidden="true"
-						>
-							<span class="post-avatar"></span>
-							<div>
-								<div class="mock-line"></div>
-								<div class="mock-line narrow"></div>
-							</div>
-							<span class="post-media"></span>
-						</div>
-						{#if after && previewSite === 'reddit.com' && isActive('reddit_grayscale')}
-							<div class="state-note">{m.demo_grayscale_action()}</div>
-						{/if}
-						<div class="recommendations">
-							{#if after && previewSite === 'reddit.com' && isActive('reddit_block_recomandations')}
-								<div class="removed" role="status">
-									{m.demo_suggestions_hidden()}
-								</div>
-							{:else if after && previewSite === 'x.com' && isActive('x_hide_trends')}
-								<div class="removed" role="status">
-									{m.demo_preview_trends_hidden()}
-								</div>
-							{:else}
-								<strong
-									>{previewSite === 'x.com'
-										? m.demo_preview_trends()
-										: m.demo_suggestions()}</strong
-								>
-								<div class="mock-line"></div>
-								<div class="mock-line narrow"></div>
-							{/if}
-						</div>
-						{#if after && previewSite === 'reddit.com' && isActive('reddit_limit_scrolling')}
-							<div class="simulation-banner">{m.demo_preview_scroll_applied()}</div>
-						{/if}
-					{/if}
-					{#if after && ((previewSite === 'reddit.com' && isActive('reddit_random_captcha')) || (previewSite === 'youtube.com' && isActive('youtube_random_captcha')))}
-						<div class="mock-verification" role="status">
-							<ShieldQuestionMark size={18} aria-hidden="true" />
-							<span>{m.demo_verification_preview()}</span>
-						</div>
-					{/if}
-				</div>
-			{/snippet}
-			<div class="preview-grid">
+			<div
+				class="preview-grid"
+				class:scene-switched={playback.phase === 'settle' &&
+					pointerTarget === 'preview-site'}
+			>
 				<div class="mock-site" class:mobile-hidden={previewView !== 'before'}>
 					<div class="browser-bar">
 						<span></span><span></span><span></span><strong>{previewSite}</strong>
 					</div>
-					{@render mockContent(false)}
+					{#key previewSite + selected.join(',')}
+						<ResistanceSiteScene site={previewSite} after={false} {selected} />
+					{/key}
 					<div class="preview-caption">{m.demo_before()}</div>
 				</div>
 				<div class="mock-site after" class:mobile-hidden={previewView !== 'after'}>
 					<div class="browser-bar">
 						<span></span><span></span><span></span><strong>{previewSite}</strong>
 					</div>
-					{@render mockContent(true)}
+					{#key previewSite + selected.join(',')}
+						<ResistanceSiteScene
+							site={previewSite}
+							after={true}
+							{selected}
+							autoVerify={playback.phase === 'settle' &&
+								playback.step === 5 &&
+								pointerTarget === 'captcha-checkbox'}
+						/>
+					{/key}
 					<div class="preview-caption">{m.demo_after()}</div>
 				</div>
 			</div>
@@ -675,6 +614,11 @@
 			monospace;
 		cursor: pointer;
 	}
+	.preview-site select.guide-active {
+		outline: 2px solid var(--signal-deep);
+		outline-offset: 2px;
+		background: color-mix(in srgb, var(--signal) 12%, var(--card));
+	}
 	.preview-scope {
 		margin: 8px 0 12px;
 		font-size: 11px;
@@ -711,6 +655,19 @@
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 8px;
 	}
+	.scene-switched :global(.replica) {
+		animation: preview-enter 360ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+	}
+	@keyframes preview-enter {
+		from {
+			opacity: 0;
+			transform: translateY(7px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
 	.mock-site {
 		min-width: 0;
 		display: flex;
@@ -744,79 +701,6 @@
 		color: var(--muted-foreground);
 		text-overflow: ellipsis;
 	}
-	.mock-body {
-		min-height: 178px;
-		padding: 10px;
-		transition: filter 200ms ease;
-	}
-	.post-feed.desaturated {
-		filter: grayscale(1);
-	}
-	.mock-title {
-		margin-bottom: 9px;
-		font-size: 11px;
-		font-weight: 600;
-	}
-	.mock-media {
-		display: grid;
-		min-height: 58px;
-		place-items: center;
-		border-radius: 3px;
-		background: linear-gradient(135deg, #9db5a6, #ffbe72);
-	}
-	.mock-media.low-quality {
-		filter: blur(1.2px) saturate(0.65);
-	}
-	.play-symbol {
-		font-size: 17px;
-		color: #25241f;
-	}
-	.mock-line {
-		width: 100%;
-		height: 5px;
-		margin-top: 8px;
-		border-radius: 2px;
-		background: var(--border);
-	}
-	.mock-line.narrow {
-		width: 65%;
-	}
-	.recommendations {
-		margin-top: 12px;
-		padding-top: 8px;
-		border-top: 1px solid var(--border);
-	}
-	.recommendations strong {
-		font-size: 10px;
-	}
-	.recommendations .mock-line {
-		height: 4px;
-	}
-	.removed {
-		margin-top: 11px;
-		padding: 10px 5px;
-		border: 1px dashed var(--border);
-		font-size: 10px;
-		text-align: center;
-		color: var(--muted-foreground);
-	}
-	.simulation-banner {
-		margin-top: 8px;
-		padding: 6px;
-		border-left: 2px solid var(--signal-deep);
-		background: var(--card);
-		color: var(--foreground);
-		font-size: 10px;
-	}
-	.mock-verification {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		margin: 0 8px 8px;
-		padding: 8px;
-		border: 1px solid var(--signal-deep);
-		font-size: 10px;
-	}
 	.preview-caption {
 		margin-top: auto;
 		padding: 9px;
@@ -832,7 +716,8 @@
 		color: var(--muted-foreground);
 	}
 	button:focus-visible,
-	input:focus-visible {
+	input:focus-visible,
+	select:focus-visible {
 		outline: 2px solid var(--foreground);
 		outline-offset: 2px;
 	}
@@ -846,61 +731,6 @@
 	.compact .disclosure {
 		padding: 9px 7px;
 	}
-	.mock-media.low-quality {
-		filter: blur(1.2px) saturate(0.65);
-	}
-	.mock-media.trailer {
-		background: linear-gradient(135deg, #6b7988, #a16557);
-	}
-	.mock-media.trailer.paused {
-		filter: saturate(0.55);
-	}
-	.state-note {
-		margin-top: 6px;
-		font-size: 10px;
-		line-height: 1.4;
-		color: var(--muted-foreground);
-	}
-	.short-thumbnails {
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 5px;
-		margin-top: 7px;
-	}
-	.short-thumbnails i {
-		display: block;
-		height: 35px;
-		border-radius: 3px;
-		background: linear-gradient(140deg, #877da3, #d6a26e);
-	}
-	.short-thumbnails i:nth-child(2) {
-		background: linear-gradient(140deg, #5b868b, #aebfa4);
-	}
-	.post-feed {
-		display: grid;
-		grid-template-columns: 16px minmax(0, 1fr);
-		gap: 6px;
-		padding: 8px;
-		border: 1px solid var(--border);
-		border-radius: 3px;
-		background: var(--card);
-		transition: filter 200ms ease;
-	}
-	.post-avatar {
-		width: 16px;
-		height: 16px;
-		border-radius: 50%;
-		background: var(--signal-deep);
-	}
-	.post-feed .mock-line {
-		margin-top: 3px;
-	}
-	.post-media {
-		grid-column: 1 / -1;
-		height: 48px;
-		border-radius: 2px;
-		background: linear-gradient(125deg, #7faba0, #edac80);
-	}
 	.compact .preview-grid {
 		grid-template-columns: 1fr;
 	}
@@ -909,6 +739,22 @@
 	}
 	.compact .preview-grid .mobile-hidden {
 		display: none;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.scene-switched :global(.replica) {
+			animation: none;
+		}
+	}
+	@media (max-width: 1160px) {
+		.preview-grid {
+			grid-template-columns: 1fr;
+		}
+		.view-switch {
+			display: flex;
+		}
+		.preview-grid .mobile-hidden {
+			display: none;
+		}
 	}
 	@media (max-width: 900px) {
 		.demo-content {
@@ -940,14 +786,6 @@
 		}
 		.all-toggle {
 			flex-basis: 43px;
-		}
-		.mock-body {
-			padding: 7px;
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.mock-body {
-			transition: none;
 		}
 	}
 </style>

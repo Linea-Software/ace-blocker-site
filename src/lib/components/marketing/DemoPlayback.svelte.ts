@@ -31,7 +31,8 @@ export class DemoPlayback {
 
 	constructor(
 		cues: DemoCue[] | number,
-		private readonly apply: (step: number) => void
+		private readonly apply: (step: number) => void,
+		private readonly prepare?: () => void
 	) {
 		this.cues =
 			typeof cues === 'number' ? Array.from({ length: cues }, () => ({ target: '' })) : cues;
@@ -85,6 +86,7 @@ export class DemoPlayback {
 		// Restart at a known scene so the next pointer target actually exists.
 		if (this.manualOverride || this.step >= this.total - 1) this.seek(-1);
 		this.manualOverride = false;
+		if (this.step === -1) this.prepare?.();
 		this.playing = true;
 		this.pointerVisible = true;
 		this.advance();

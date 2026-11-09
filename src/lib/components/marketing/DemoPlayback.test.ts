@@ -127,6 +127,21 @@ describe('guided marketing demo playback', () => {
 		expect(playback.pointerTarget).toBe('category');
 	});
 
+	it('runs the preparation hook before the first cue and when restarting after manual changes', () => {
+		const prepare = vi.fn();
+		const guided = new DemoPlayback([{ target: 'one' }, { target: 'two' }], () => {}, prepare);
+		guided.play();
+		expect(prepare).toHaveBeenCalledTimes(1);
+		vi.advanceTimersByTime(CYCLE);
+		guided.pause();
+		guided.play();
+		expect(prepare).toHaveBeenCalledTimes(1);
+		guided.manual();
+		guided.play();
+		expect(prepare).toHaveBeenCalledTimes(2);
+		guided.dispose();
+	});
+
 	it('dispose cancels all pending playback timers', () => {
 		playback.play();
 		playback.dispose();

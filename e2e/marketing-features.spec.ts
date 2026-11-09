@@ -136,7 +136,7 @@ test.describe('Resistance marketing walkthrough', () => {
 		await expect(
 			demo.getByRole('checkbox', { name: 'Select all in Verifications (CAPTCHA)' })
 		).not.toBeChecked();
-		await expect(demo.getByText('Simulated CAPTCHA — not a real challenge')).toHaveCount(0);
+		await expect(demo.locator('.mock-site.after [data-testid="mock-captcha"]')).toHaveCount(0);
 	});
 
 	test('group checkbox acts without opening, individual site checkboxes become mixed', async ({
@@ -151,7 +151,9 @@ test.describe('Resistance marketing walkthrough', () => {
 		await checkbox.uncheck();
 		await checkbox.check();
 		await expect(feeds.locator('.disclosure')).toHaveAttribute('aria-expanded', 'false');
-		await expect(demo.getByText('Suggestions hidden')).toBeVisible();
+		await expect(
+			demo.locator('.mock-site.after [data-testid="reddit-suggestions"]')
+		).toHaveCount(0);
 		await feeds.locator('.disclosure').click();
 		await feeds.getByRole('button', { name: /reddit.com/ }).click();
 		await feeds.getByRole('checkbox', { name: 'Hide recommendations' }).uncheck();
@@ -159,11 +161,35 @@ test.describe('Resistance marketing walkthrough', () => {
 		// The preview is scoped to Reddit; X's still-selected rule must
 		// not change this site's mock content.
 		await expect(demo.getByTestId('resistance-preview-site')).toHaveValue('reddit.com');
-		await expect(demo.getByText('Suggestions hidden')).toHaveCount(0);
+		await expect(
+			demo.locator('.mock-site.after [data-testid="reddit-suggestions"]')
+		).toBeVisible();
 		await feeds.getByRole('button', { name: /x.com/ }).click();
 		await feeds.getByRole('checkbox', { name: 'Hide trending topics' }).uncheck();
 		await expect(checkbox).not.toBeChecked();
-		await expect(demo.getByText('Suggestions hidden')).toHaveCount(0);
+		await expect(demo.getByTestId('resistance-preview-site')).toHaveValue('x.com');
+		await expect(demo.locator('.mock-site.after [data-testid="x-trends"]')).toBeVisible();
+	});
+
+	test('Reddit grayscale includes the logo, controls and avatars, not only its feed', async ({
+		page
+	}) => {
+		await openReadyDemo(page, '/features/resistance');
+		const demo = page.getByTestId('resistance-demo');
+		const before = demo.locator('.mock-site:not(.after) [data-testid="site-replica"]');
+		const after = demo.locator('.mock-site.after [data-testid="site-replica"]');
+		await expect(after).not.toHaveClass(/grayscale-all/);
+		await demo.getByRole('checkbox', { name: 'Select all in Visual stimulation' }).check();
+		await expect(after).toHaveClass(/grayscale-all/);
+		await expect(before).not.toHaveClass(/grayscale-all/);
+		await expect(after.locator('.reddit-logo')).toBeVisible();
+		await expect(after.locator('.reddit-login')).toBeVisible();
+		await expect(after.locator('.community-avatar').first()).toBeVisible();
+		expect(await after.evaluate((element) => getComputedStyle(element).filter)).toBe(
+			'grayscale(1)'
+		);
+		await demo.getByTestId('resistance-preview-site').selectOption('x.com');
+		await expect(after).not.toHaveClass(/grayscale-all/);
 	});
 
 	test('site-scoped preview shows only matching effects and usable mobile before/after', async ({
@@ -180,14 +206,16 @@ test.describe('Resistance marketing walkthrough', () => {
 
 		await site.selectOption('youtube.com');
 		await demo.getByRole('checkbox', { name: 'Select all in Visual stimulation' }).check();
-		await expect(demo.getByText('Video quality reduced', { exact: false })).toBeVisible();
+		await expect(
+			demo.locator('.mock-site.after [data-testid="youtube-video"]')
+		).toHaveAttribute('data-quality', 'low');
 		await site.selectOption('reddit.com');
-		await expect(demo.getByText('Video quality reduced', { exact: false })).toHaveCount(0);
+		await expect(demo.locator('.mock-site.after [data-testid="youtube-video"]')).toHaveCount(0);
 
 		await demo.getByRole('checkbox', { name: 'Select all in Verifications (CAPTCHA)' }).check();
-		await expect(demo.getByText('Simulated CAPTCHA — not a real challenge')).toBeVisible();
+		await expect(demo.locator('.mock-site.after [data-testid="mock-captcha"]')).toBeVisible();
 		await site.selectOption('netflix.com');
-		await expect(demo.getByText('Simulated CAPTCHA — not a real challenge')).toHaveCount(0);
+		await expect(demo.locator('.mock-site.after [data-testid="mock-captcha"]')).toHaveCount(0);
 
 		await before.click();
 		await expect(before).toHaveAttribute('aria-pressed', 'true');
@@ -204,9 +232,98 @@ test.describe('Resistance marketing walkthrough', () => {
 			name: 'Select all in Verifications (CAPTCHA)'
 		});
 		await captcha.check();
-		await expect(demo.getByText('Simulated CAPTCHA — not a real challenge')).toBeVisible();
+		await expect(demo.locator('.mock-site.after [data-testid="mock-captcha"]')).toBeVisible();
 		await captcha.uncheck();
-		await expect(demo.getByText('Simulated CAPTCHA — not a real challenge')).toHaveCount(0);
+		await expect(demo.locator('.mock-site.after [data-testid="mock-captcha"]')).toHaveCount(0);
+	});
+
+	test('pointer selects YouTube before the YouTube interventions appear', async ({ page }) => {
+		await openReadyDemo(page, '/features/resistance');
+		const demo = page.getByTestId('resistance-demo');
+		const site = demo.getByTestId('resistance-preview-site');
+		await demo.getByRole('button', { name: 'Play', exact: true }).click();
+		const videos = demo.getByRole('checkbox', {
+			name: 'Select all in Videos and playback'
+		});
+		await expect(videos).not.toBeChecked();
+		// The cursor must visibly travel to the website selector while Reddit is still shown.
+		await expect(demo.locator('[data-demo-pointer-target="preview-site"]')).toBeVisible({
+			timeout: 6000
+		});
+		await expect(site).toHaveValue('reddit.com');
+		await expect(site).toHaveValue('youtube.com', { timeout: 3500 });
+		await expect(demo.getByText('2 of 6')).toBeVisible();
+		await expect(
+			demo.locator('.mock-site.after [data-testid="youtube-video"]')
+		).toHaveAttribute('data-quality', 'normal');
+		await expect(
+			demo.locator('.mock-site.after [data-testid="youtube-video"]')
+		).toHaveAttribute('data-quality', 'low', { timeout: 5000 });
+		await expect(videos).toBeChecked();
+	});
+
+	test('guided CAPTCHA pointer clicks the checkbox, spins, and completes', async ({ page }) => {
+		await openReadyDemo(page, '/features/resistance');
+		const demo = page.getByTestId('resistance-demo');
+		await demo.getByRole('button', { name: 'Play', exact: true }).click();
+		await expect(demo.locator('[data-demo-pointer-target="captcha-checkbox"]')).toBeVisible({
+			timeout: 16000
+		});
+		const spinner = demo.locator('.mock-site.after [data-testid="captcha-spinner"]');
+		await expect(spinner).toBeVisible({ timeout: 4000 });
+		expect(await spinner.evaluate((el) => getComputedStyle(el).animationName)).toMatch(/spin$/);
+		await expect(demo.locator('.mock-site.after [data-testid="mock-captcha"]')).toHaveCount(0, {
+			timeout: 5000
+		});
+		await expect(demo.getByText('6 of 6')).toBeVisible();
+	});
+
+	test('scroll limit prevents the Reddit feed going past the cap', async ({ page }) => {
+		await openReadyDemo(page, '/features/resistance');
+		const demo = page.getByTestId('resistance-demo');
+		await demo.getByRole('checkbox', { name: 'Select all in Delays and limits' }).check();
+		const before = demo.locator(
+			'.mock-site:not(.after) [data-testid="reddit-scroll-viewport"]'
+		);
+		const after = demo.locator('.mock-site.after [data-testid="reddit-scroll-viewport"]');
+		await before.evaluate((el: HTMLElement) => (el.scrollTop = el.scrollHeight));
+		await after.evaluate((el: HTMLElement) => (el.scrollTop = el.scrollHeight));
+		await expect
+			.poll(() =>
+				after.evaluate((el: HTMLElement) => el.scrollTop <= el.clientHeight * 1.5 + 1)
+			)
+			.toBe(true);
+		await expect(demo.locator('.mock-site.after .scroll-edge')).toBeVisible();
+		expect(
+			await before.evaluate((el: HTMLElement) => el.scrollTop > el.clientHeight * 1.5)
+		).toBe(true);
+	});
+
+	test('YouTube playback continues while its audio starts two seconds later', async ({
+		page
+	}) => {
+		await openReadyDemo(page, '/features/resistance');
+		const demo = page.getByTestId('resistance-demo');
+		await demo.getByRole('checkbox', { name: 'Select all in Delays and limits' }).check();
+		await demo.getByTestId('resistance-preview-site').selectOption('youtube.com');
+		const after = demo.locator('.mock-site.after');
+		await after.getByTestId('youtube-video').click();
+		await expect(after.getByTestId('youtube-audio')).toHaveAttribute('data-ready', 'false');
+		await expect(after.getByTestId('youtube-audio')).toHaveAttribute('data-ready', 'true', {
+			timeout: 4500
+		});
+	});
+
+	test('CAPTCHA has a checkbox with verification progress and can be completed', async ({
+		page
+	}) => {
+		await openReadyDemo(page, '/features/resistance');
+		const demo = page.getByTestId('resistance-demo');
+		await demo.getByRole('checkbox', { name: 'Select all in Verifications (CAPTCHA)' }).check();
+		const after = demo.locator('.mock-site.after');
+		await expect(after.getByTestId('mock-captcha')).toBeVisible();
+		await after.getByTestId('captcha-checkbox').click();
+		await expect(after.getByTestId('mock-captcha')).toHaveCount(0, { timeout: 5000 });
 	});
 
 	test('manual selection stops walkthrough and pointer is not interactive', async ({ page }) => {
@@ -216,7 +333,7 @@ test.describe('Resistance marketing walkthrough', () => {
 		await expect(demo.getByRole('button', { name: 'Pause' })).toBeVisible();
 		await demo.getByRole('checkbox', { name: 'Select all in Visual stimulation' }).check();
 		await expect(demo.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
-		await expect(demo.getByText('0 of 4')).toBeVisible();
+		await expect(demo.getByText('0 of 6')).toBeVisible();
 	});
 
 	test('responsive and reduced motion keep content accessible', async ({ page }) => {
