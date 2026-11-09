@@ -2,17 +2,17 @@
 
 Stand: 6. November 2026 · Grundlage: `messages/en.json`; italienische Texte nur als Verständnishilfe.
 
-| Produktbegriff (EN) | Bevorzugte deutsche Form | Verwendung / Abgrenzung |
-| --- | --- | --- |
-| Network Block | **Netzwerksperre** | Regelpaket für Websites/Kategorien mit eigenem Zeitplan. „Netzwerksperre erstellen“, „Diese Netzwerksperre greift gerade“. |
-| Lock / time lock | **Änderungsschutz**; **zeitgebundener Änderungsschutz** | Schützt eine Netzwerksperre oder Widerstandseinstellungen vor Deaktivierung/Abschwächung. Sperrt **keine zusätzlichen Websites**. „Änderungsschutz einrichten“, „Schutzfrist verlängern“. |
-| Reflection Lock | **Reflexionsschutz** | Entsperrbare Schutzvariante mit Frage und fünf Minuten Wartezeit. „Reflexionsschutz aktivieren“. |
-| Schedule | **Zeitplan**; **Sperrzeiten** | Bestimmt, **wann** Regeln durchgesetzt werden. „Zeitplan festlegen“, „Ohne Zeitplan wird nichts gesperrt“. Montag–Freitag statt mehrdeutigem „werktags“. |
-| Resistance Mode | **Widerstandsmodus**; kurz **Widerstand** | Verändert unterstützte Websites (z. B. Feeds, Farben und Videos), **ohne** eine komplette Websitesperre gleichzusetzen. „Widerstandsmodus aktivieren“. |
-| Friction / intensity | **zusätzliche Hürden** / **Intensität** | Konkrete störungsreduzierende Eingriffe des Widerstandsmodus. „Intensität der Hürden“. |
-| Categories / Site Packs | **Kategorien**; für technische Pakete **Listenpakete** | Vorausgewählte Websites. Herunterladen aktiviert **keine** Netzwerksperre; erst einer Netzwerksperre zuordnen. |
-| Custom Lists | **eigene Listen** | Importierte Domainlisten. „Eigene Liste importieren“. |
-| Free / Pro | **Free / Pro** | Handelsnamen der Tarife unverändert; erläuternd „kostenloser Tarif“ und „Pro-Tarif“. |
+| Produktbegriff (EN)      | Bevorzugte deutsche Form                                | Verwendung / Abgrenzung                                                                                                                                                                             |
+| ------------------------ | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Network Block            | **Netzwerksperre**                                      | Regelpaket für Websites/Kategorien mit eigenem Zeitplan. „Netzwerksperre erstellen“, „Diese Netzwerksperre greift gerade“.                                                                          |
+| Lock / time lock         | **Änderungsschutz**; **zeitgebundener Änderungsschutz** | Schützt eine Netzwerksperre oder Widerstandseinstellungen vor Deaktivierung/Abschwächung. Sperrt **keine zusätzlichen Websites**. „Änderungsschutz einrichten“, „Schutzfrist verlängern“.           |
+| Reflection Lock          | **Reflexionsschutz**                                    | Entsperrbare Schutzvariante mit Frage und fünf Minuten Wartezeit. „Reflexionsschutz aktivieren“.                                                                                                    |
+| Schedule                 | **Zeitplan**; **Sperrzeiten**                           | Bestimmt, **wann** Regeln durchgesetzt werden. „Zeitplan festlegen“, Bei „Immer“ gilt die Regel durchgehend; ein Wochenplan begrenzt die Zeitfenster. Montag–Freitag statt mehrdeutigem „werktags“. |
+| Resistance Mode          | **Widerstandsmodus**; kurz **Widerstand**               | Verändert unterstützte Websites (z. B. Feeds, Farben und Videos), **ohne** eine komplette Websitesperre gleichzusetzen. „Widerstandsmodus aktivieren“.                                              |
+| Resistance interventions | **gezielte Eingriffe**                                  | Fünf Eingriffsgruppen (Feeds, Videos, visuelle Reize, Verzögerungen und simulierte CAPTCHA); keine Intensitätsstufen.                                                                               |
+| Categories / Site Packs  | **Kategorien**; für technische Pakete **Listenpakete**  | Vorausgewählte Websites. Herunterladen aktiviert **keine** Netzwerksperre; erst einer Netzwerksperre zuordnen.                                                                                      |
+| Custom Lists             | **eigene Listen**                                       | Importierte Domainlisten. „Eigene Liste importieren“.                                                                                                                                               |
+| Free / Pro               | **Free / Pro**                                          | Handelsnamen der Tarife unverändert; erläuternd „kostenloser Tarif“ und „Pro-Tarif“.                                                                                                                |
 
 ## Stil
 

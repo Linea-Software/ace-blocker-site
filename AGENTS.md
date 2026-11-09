@@ -92,6 +92,15 @@ Do not default to the old generic marketing composition: centered gradient hero,
 
 For visible marketing work, the mandatory design skills are `frontend-design`, `design-taste-frontend`, and `ui-ux-pro-max`. Use `svelte-code-writer`, `svelte-core-bestpractices`, and `svelte-components` for implementation, then `web-design-guidelines` plus real light/dark screenshots for final review. For dense account/admin product UI, treat `frontend-design` + `ui-ux-pro-max` as primary; `design-taste-frontend` must not override product-UI semantics.
 
+## Features walkthroughs (2026-11-09)
+
+- Public feature routes: `/features/network-blocks` and `/features/resistance`.
+- Marketing demos live in `src/lib/components/marketing/{NetworkBlockDemo,ResistanceDemo}.svelte`. They are deterministic, isolated illustrations: never connect them to the desktop engine, browser user settings or any account mutations.
+- `DemoPlayback.svelte.ts`, `WalkthroughControls.svelte` and `DemoPointer.svelte` provide shared finite, manually controlled walkthrough behavior; retain keyboard controls, independent interaction, no autoplay and reduced-motion support.
+- The live desktop `ace-blocker/apps/ace-app` controls and `boredom-engine` intervention catalog are authoritative for product claims. Keep Free and Pro Gambling/Streaming variants distinguishable.
+- Changes to feature-page copy must update EN/IT/DE/ES messages and the SEO locale gate together; review translations for accuracy.
+- Run focused browser tests with `bun x playwright test --config e2e/marketing-features.config.ts` and repeatable visual QA with `bun scripts/capture-marketing-demos.ts` (32 local PNG screenshots, ignored under `test-results/marketing-demos`).
+
 ## Public language selection (2026-11-06)
 
 The navbar includes a two-language selector (English / Italiano) on desktop
@@ -370,7 +379,6 @@ After completing the code, ask the user if they want a playground link. Only cal
   `POST /api/v1/admin/installers/{publish-desktop,withdraw-desktop}` require
   Better Auth administrator sessions. The legacy
   `set-downloadable` route cannot promote signed desktop releases.
-
 
 ## Curated Free starter categories (2026-11-08)
 

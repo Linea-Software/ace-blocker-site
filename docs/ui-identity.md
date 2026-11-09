@@ -143,7 +143,7 @@ When communicating features, use the actual Ace concepts as visual material:
 - schedules;
 - locks;
 - site packs;
-- resistance intensity;
+- Resistance intervention categories;
 - engine state;
 - the difference between a configured decision and a weak-moment attempt to reverse it.
 
