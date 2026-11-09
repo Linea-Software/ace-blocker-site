@@ -169,6 +169,18 @@ Avoid:
 
 Respect reduced motion.
 
+Walkthrough motion must be causal: the pointer moves from a stable location,
+pauses over a target, presses it, then the interface responds and settles.
+Keep a single pointer between stages, vary cue durations and stop automatic
+playback immediately when a visitor interacts.
+
+The Network Block demonstration mirrors the app's compact actions, icon
+container, readable header/actions separation, Categories/Rules divider,
+weekly schedule coverage and confirmable lock choices. A protected block
+remains viewable. Resistance has five categories, opt-in CAPTCHA and
+site-scoped effects; a script for Reddit must never change the YouTube preview.
+On mobile, show one readable Before/After site panel at a time.
+
 ## 10. Shadcn/Bits UI
 
 Existing shadcn-svelte components can continue to provide behavior and common form patterns, especially in account/admin surfaces.

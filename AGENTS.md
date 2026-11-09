@@ -96,7 +96,10 @@ For visible marketing work, the mandatory design skills are `frontend-design`, `
 
 - Public feature routes: `/features/network-blocks` and `/features/resistance`.
 - Marketing demos live in `src/lib/components/marketing/{NetworkBlockDemo,ResistanceDemo}.svelte`. They are deterministic, isolated illustrations: never connect them to the desktop engine, browser user settings or any account mutations.
-- `DemoPlayback.svelte.ts`, `WalkthroughControls.svelte` and `DemoPointer.svelte` provide shared finite, manually controlled walkthrough behavior; retain keyboard controls, independent interaction, no autoplay and reduced-motion support.
+- DemoPlayback.svelte.ts and DemoPointer.svelte implement finite guided walkthroughs: move pointer -> hover -> press -> change state -> settle. Do not change state before simulated clicking. Preserve no autoplay on mount, manual interaction priority and reduced motion.
+- Marketing NetworkBlockDemo.svelte preserves compact action buttons, a Categories/Rules divider, week schedule preview, and a deliberate lock setup and confirmation step. Locked blocks retain read-only View.
+- ResistanceDemo.svelte uses real intervention catalog IDs and defaults, CAPTCHA opt-in and per-site effects; never apply one site’s script to another website preview.
+- Visual QA screenshots use the real theme control, and browser reports should have zero horizontal overflow and console errors.
 - The live desktop `ace-blocker/apps/ace-app` controls and `boredom-engine` intervention catalog are authoritative for product claims. Keep Free and Pro Gambling/Streaming variants distinguishable.
 - Changes to feature-page copy must update EN/IT/DE/ES messages and the SEO locale gate together; review translations for accuracy.
 - Run focused browser tests with `bun x playwright test --config e2e/marketing-features.config.ts` and repeatable visual QA with `bun scripts/capture-marketing-demos.ts` (32 local PNG screenshots, ignored under `test-results/marketing-demos`).

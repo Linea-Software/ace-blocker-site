@@ -4,6 +4,7 @@
  * Output remains local in the ignored test-results/marketing-demos directory.
  */
 import { chromium, type Page } from 'playwright';
+import { expect } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 
 const origin = process.env.MARKETING_VISUAL_ORIGIN ?? 'http://localhost:5173';
@@ -74,14 +75,29 @@ async function screenshot(
 async function interact(page: Page, route: string) {
 	if (route === '/features/network-blocks') {
 		const demo = page.getByTestId('network-demo');
-		await demo.getByRole('checkbox', { name: 'Social platforms' }).check();
+		const social = demo.getByRole('checkbox', { name: 'Social platforms' });
+		const next = demo.locator('.wizard-footer button').last();
+		await social.check();
+		// In the dev server, initial hydration can finish after the first
+		// browser-visible checkbox update. Retry only if Svelte state is
+		// still not reflected in the wizard's Next button.
+		for (let attempt = 0; attempt < 3 && (await next.isDisabled()); attempt++) {
+			await page.waitForTimeout(600);
+			await social.uncheck();
+			await social.check();
+		}
+		await expect(next).toBeEnabled({ timeout: 10_000 });
 		await demo.locator('#demo-domain').fill('focus.example');
 		await demo.getByRole('button', { name: 'Add', exact: true }).click();
+		await expect(demo.getByText('focus.example')).toBeVisible();
 		await demo.locator('.wizard-footer button').last().click();
 		await demo.getByRole('button', { name: /Scheduled/ }).click();
+		await expect(demo.locator('.wizard-footer button').last()).toBeEnabled();
 		await demo.locator('.wizard-footer button').last().click();
 		await demo.getByRole('button', { name: 'Create block' }).click();
-		await demo.getByRole('button', { name: 'Protect with lock' }).click();
+		await demo.getByRole('button', { name: 'Lock', exact: true }).click();
+		await demo.getByRole('button', { name: 'Review lock' }).click();
+		await demo.getByRole('button', { name: 'Apply lock' }).click();
 	} else if (route === '/features/resistance') {
 		const demo = page.getByTestId('resistance-demo');
 		for (const category of [
@@ -105,11 +121,29 @@ try {
 				const errors: string[] = [];
 				page.on('pageerror', (error) => errors.push(error.message));
 				try {
-					await page.goto(origin + route, { waitUntil: 'networkidle', timeout: 20_000 });
-					await page.evaluate(
-						(dark) => document.documentElement.classList.toggle('dark', dark),
-						theme === 'dark'
-					);
+					await page.goto(origin + route, {
+						waitUntil: 'load',
+						timeout: 20_000
+					});
+					await page.locator('main').waitFor({ state: 'attached', timeout: 10_000 });
+					await page.waitForTimeout(850);
+					// Use the actual theme control, not a transient class mutation:
+					// mode-watcher can restore its chosen mode after hydration.
+					const html = page.locator('html');
+					const themeButton = page.getByRole('button', { name: 'Toggle theme' });
+					for (let attempt = 0; attempt < 4; attempt++) {
+						const isDark = await html.evaluate((element) =>
+							element.classList.contains('dark')
+						);
+						if (isDark === (theme === 'dark')) break;
+						await themeButton.click();
+						await page.waitForTimeout(650);
+					}
+					if (theme === 'dark') {
+						await expect(html).toHaveClass(/dark/);
+					} else {
+						await expect(html).not.toHaveClass(/dark/);
+					}
 					await screenshot(page, route, device.name, theme, 'initial', errors);
 					if (route.startsWith('/features/')) {
 						await interact(page, route);
