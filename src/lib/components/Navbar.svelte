@@ -184,8 +184,14 @@
 				</Sheet.Content>
 			</Sheet.Root>
 
-			<a href={resolve(localizeHref('/') as '/')} class="shrink-0">
-				<BrandLogo alt={m.site_brand_name()} class="h-10 w-auto sm:h-11 md:h-12" />
+			<a
+				href={resolve(localizeHref('/') as '/')}
+				class="shrink-0 max-[359px]:w-10 max-[359px]:overflow-hidden"
+			>
+				<BrandLogo
+					alt={m.site_brand_name()}
+					class="h-10 w-auto max-w-none sm:h-11 md:h-12"
+				/>
 			</a>
 
 			<nav class="hidden h-16 items-stretch md:flex" aria-label={m.nav_toggle_menu()}>

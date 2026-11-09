@@ -1,67 +1,129 @@
-/** Small, finite, user-initiated walkthrough. No application state or persistence. */
+/** A finite walkthrough: cursor travels to a control before its effect occurs. */
+export type DemoPhase = 'idle' | 'travel' | 'hover' | 'press' | 'settle';
+
+export type DemoCue = {
+	target: string;
+	travelMs?: number;
+	hoverMs?: number;
+	pressMs?: number;
+	settleMs?: number;
+};
+
+const DEFAULT_TIMING = {
+	travelMs: 660,
+	hoverMs: 210,
+	pressMs: 160,
+	settleMs: 590
+} as const;
+
 export class DemoPlayback {
 	step = $state(-1);
 	playing = $state(false);
+	phase = $state<DemoPhase>('idle');
+	pointerTarget = $state('');
+	pointerVisible = $state(false);
+	pointerTravelMs = $state<number>(DEFAULT_TIMING.travelMs);
+
 	private timer: ReturnType<typeof setTimeout> | undefined;
+	private manualOverride = false;
+	private readonly cues: DemoCue[];
+	readonly total: number;
 
 	constructor(
-		readonly total: number,
+		cues: DemoCue[] | number,
 		private readonly apply: (step: number) => void
-	) {}
+	) {
+		this.cues =
+			typeof cues === 'number' ? Array.from({ length: cues }, () => ({ target: '' })) : cues;
+		this.total = this.cues.length;
+	}
 
 	private seek(step: number) {
 		this.step = Math.max(-1, Math.min(this.total - 1, step));
 		this.apply(this.step);
 	}
 
-	private queue() {
+	private after(duration: number, callback: () => void) {
+		this.timer = setTimeout(() => {
+			this.timer = undefined;
+			if (this.playing) callback();
+		}, duration);
+	}
+
+	private advance() {
 		if (!this.playing) return;
 		if (this.step >= this.total - 1) {
 			this.pause();
 			return;
 		}
-		this.timer = setTimeout(() => {
-			if (!this.playing) return;
-			this.seek(this.step + 1);
-			this.queue();
-		}, 1450);
+		const index = this.step + 1;
+		const cue = this.cues[index];
+		const travel = cue.travelMs ?? DEFAULT_TIMING.travelMs;
+		const hover = cue.hoverMs ?? DEFAULT_TIMING.hoverMs;
+		const press = cue.pressMs ?? DEFAULT_TIMING.pressMs;
+		const settle = cue.settleMs ?? DEFAULT_TIMING.settleMs;
+
+		this.pointerTravelMs = travel;
+		this.pointerTarget = cue.target;
+		this.phase = 'travel';
+		this.after(travel, () => {
+			this.phase = 'hover';
+			this.after(hover, () => {
+				this.phase = 'press';
+				this.after(press, () => {
+					this.seek(index);
+					this.phase = 'settle';
+					this.after(settle, () => this.advance());
+				});
+			});
+		});
 	}
 
 	play() {
-		if (this.playing) return;
-		if (this.step >= this.total - 1) this.seek(-1);
+		if (this.playing || this.total === 0) return;
+		// Manual edits may leave the visible wizard on a different stage.
+		// Restart at a known scene so the next pointer target actually exists.
+		if (this.manualOverride || this.step >= this.total - 1) this.seek(-1);
+		this.manualOverride = false;
 		this.playing = true;
-		this.queue();
+		this.pointerVisible = true;
+		this.advance();
 	}
 
 	pause() {
 		this.playing = false;
+		this.phase = 'idle';
 		if (this.timer !== undefined) clearTimeout(this.timer);
 		this.timer = undefined;
 	}
 
 	next() {
 		this.pause();
+		this.pointerVisible = false;
 		this.seek(this.step + 1);
 	}
 
 	previous() {
 		this.pause();
+		this.pointerVisible = false;
 		this.seek(this.step - 1);
 	}
 
 	replay() {
 		this.pause();
+		this.manualOverride = false;
+		this.pointerVisible = false;
 		this.seek(-1);
 		this.play();
 	}
 
-	/** A real visitor action always takes precedence over scripted playback. */
 	manual() {
 		this.pause();
+		this.manualOverride = true;
+		this.pointerVisible = false;
 	}
 
 	dispose() {
-		this.pause();
+		this.manual();
 	}
 }

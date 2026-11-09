@@ -1,6 +1,18 @@
 <script lang="ts">
-	import { onDestroy, untrack } from 'svelte';
-	import { Check, Globe, LockKeyhole, LockOpen, Pencil, Plus } from '@lucide/svelte';
+	import { onDestroy, onMount, untrack } from 'svelte';
+	import { SvelteDate } from 'svelte/reactivity';
+	import {
+		Check,
+		Eye,
+		Globe,
+		LockKeyhole,
+		LockOpen,
+		Pencil,
+		Plus,
+		CalendarClock,
+		Hourglass,
+		X
+	} from '@lucide/svelte';
 	import * as m from '$lib/paraglide/messages';
 	import { DemoPlayback } from './DemoPlayback.svelte';
 	import WalkthroughControls from './WalkthroughControls.svelte';
@@ -12,13 +24,35 @@
 	let category = $state(untrack(() => compact));
 	let domain = $state('example.com');
 	let addedDomain = $state('');
-	let scheduleMode = $state<'always' | 'scheduled'>('always');
+	let scheduleMode = $state<'always' | 'scheduled'>(
+		untrack(() => (compact ? 'scheduled' : 'always'))
+	);
 	let days = $state([true, true, true, true, true, false, false]);
 	let from = $state('09:00');
 	let until = $state('17:00');
 	let enabled = $state(true);
 	let locked = $state(false);
+	let lockDialogOpen = $state(false);
+	let viewingDetails = $state(false);
+	let lockKind = $state<'reflection' | 'schedule' | 'until'>('until');
+	let lockConfirmation = $state(false);
+	function defaultLockDate() {
+		const date = new SvelteDate();
+		date.setDate(date.getDate() + 1);
+		const pad = (n: number) => String(n).padStart(2, '0');
+		return [date.getFullYear(), pad(date.getMonth() + 1), pad(date.getDate())].join('-');
+	}
+	let lockEndDate = $state(defaultLockDate());
+	let lockEndTime = $state('18:00');
+	const lockedNow = $derived(locked && lockKind !== 'reflection');
+	const lockEndValid = $derived(
+		lockKind !== 'until' || new Date(lockEndDate + 'T' + lockEndTime).getTime() > Date.now()
+	);
 	let host = $state<HTMLElement>();
+	let demoReady = $state(false);
+	onMount(() => {
+		demoReady = true;
+	});
 	const dayLabels = [
 		m.week_mon_short,
 		m.week_tue_short,
@@ -34,6 +68,27 @@
 		scheduleMode === 'always' || (days.some(Boolean) && from !== until)
 	);
 	const canContinue = $derived(validTargets && (stage === 'content' || validSchedule));
+	const previewSegments = $derived.by(() => {
+		const toMinute = (value: string) => {
+			const [hours, minutes] = value.split(':').map(Number);
+			return hours * 60 + minutes;
+		};
+		const start = toMinute(from);
+		const end = toMinute(until);
+		const intervals =
+			start < end
+				? [[start, end]]
+				: end < start
+					? [
+							[start, 1440],
+							[0, end]
+						]
+					: [];
+		return intervals.map(([a, b]) => ({
+			left: (a / 1440) * 100 + '%',
+			width: ((b - a) / 1440) * 100 + '%'
+		}));
+	});
 	const scheduleLabel = $derived.by(() => {
 		if (scheduleMode === 'always') return m.demo_always();
 		if (days.slice(0, 5).every(Boolean) && days.slice(5).every((day) => !day)) {
@@ -56,20 +111,52 @@
 		until = '17:00';
 		enabled = true;
 		locked = false;
+		lockDialogOpen = false;
+		viewingDetails = false;
+		lockKind = 'reflection';
+		lockConfirmation = false;
 		if (step >= 0) category = true;
 		if (step >= 1) addedDomain = 'example.com';
 		if (step >= 2) stage = 'schedule';
 		if (step >= 3) scheduleMode = 'scheduled';
 		if (step >= 4) stage = 'review';
 		if (step >= 5) stage = 'result';
-		if (step >= 6) locked = true;
+		if (step >= 6) lockDialogOpen = true;
+		if (step >= 7) lockKind = 'until';
+		if (step >= 8) lockConfirmation = true;
+		if (step >= 9) {
+			locked = true;
+			lockDialogOpen = false;
+			lockConfirmation = false;
+		}
 	}
-	const playback = new DemoPlayback(7, applyScript);
-	const pointerTarget = $derived(
-		['category', 'website', 'always', 'scheduled', 'review', 'enabled', 'lock'][
-			playback.step
-		] ?? ''
+	const playback = new DemoPlayback(
+		[
+			{ target: 'category', travelMs: 680 },
+			{ target: 'website', travelMs: 610 },
+			{ target: 'next-content', travelMs: 690, settleMs: 850 },
+			{ target: 'scheduled', travelMs: 680 },
+			{ target: 'next-schedule', travelMs: 680, settleMs: 850 },
+			{ target: 'review', travelMs: 650, settleMs: 850 },
+			{ target: 'lock', travelMs: 720, settleMs: 720 },
+			{ target: 'lock-until', travelMs: 720 },
+			{ target: 'lock-confirm', travelMs: 620, settleMs: 670 },
+			{ target: 'lock-apply', travelMs: 620, settleMs: 840 }
+		],
+		applyScript
 	);
+	const pointerTarget = $derived(playback.pointerTarget);
+	const lockKinds = ['reflection', 'schedule', 'until'] as const;
+	function lockTitle(kind: (typeof lockKinds)[number]) {
+		if (kind === 'reflection') return m.demo_lock_reflection();
+		if (kind === 'schedule') return m.demo_lock_schedule();
+		return m.demo_lock_until();
+	}
+	function lockDescription(kind: (typeof lockKinds)[number]) {
+		if (kind === 'reflection') return m.demo_lock_reflection_description();
+		if (kind === 'schedule') return m.demo_lock_schedule_description();
+		return m.demo_lock_until_description();
+	}
 	onDestroy(() => playback.dispose());
 
 	function nextStage() {
@@ -80,6 +167,28 @@
 	function previousStage() {
 		playback.manual();
 		stage = stage === 'review' ? 'schedule' : 'content';
+	}
+	function openLockDialog() {
+		playback.manual();
+		lockKind = 'until';
+		lockConfirmation = false;
+		lockDialogOpen = true;
+	}
+	function requestLock() {
+		playback.manual();
+		if (!lockEndValid) return;
+		if (lockKind !== 'reflection' && !lockConfirmation) {
+			lockConfirmation = true;
+			return;
+		}
+		locked = true;
+		lockDialogOpen = false;
+		lockConfirmation = false;
+	}
+	function selectLock(kind: 'reflection' | 'schedule' | 'until') {
+		playback.manual();
+		lockKind = kind;
+		lockConfirmation = false;
 	}
 	function addWebsite() {
 		playback.manual();
@@ -97,6 +206,7 @@
 	class="block-demo"
 	data-testid="network-demo"
 	aria-label={m.demo_network_label()}
+	data-demo-ready={demoReady}
 	bind:this={host}
 >
 	{#if !compact}
@@ -131,7 +241,8 @@
 			<p>{m.demo_content_help()}</p>
 			<label
 				class="select-row"
-				class:guide-active={playback.playing && pointerTarget === 'category'}
+				class:guide-active={(playback.phase === 'hover' || playback.phase === 'press') &&
+					pointerTarget === 'category'}
 				data-demo-target="category"
 			>
 				<input
@@ -162,7 +273,9 @@
 					<button
 						type="button"
 						onclick={addWebsite}
-						class:guide-active={playback.playing && pointerTarget === 'website'}
+						class:guide-active={(playback.phase === 'hover' ||
+							playback.phase === 'press') &&
+							pointerTarget === 'website'}
 						data-demo-target="website"
 						><Plus size={16} aria-hidden="true" />{m.demo_add()}</button
 					>
@@ -190,7 +303,9 @@
 					type="button"
 					class:selected={scheduleMode === 'always'}
 					aria-pressed={scheduleMode === 'always'}
-					class:guide-active={playback.playing && pointerTarget === 'always'}
+					class:guide-active={(playback.phase === 'hover' ||
+						playback.phase === 'press') &&
+						pointerTarget === 'always'}
 					data-demo-target="always"
 					onclick={() => {
 						playback.manual();
@@ -203,7 +318,9 @@
 					type="button"
 					class:selected={scheduleMode === 'scheduled'}
 					aria-pressed={scheduleMode === 'scheduled'}
-					class:guide-active={playback.playing && pointerTarget === 'scheduled'}
+					class:guide-active={(playback.phase === 'hover' ||
+						playback.phase === 'press') &&
+						pointerTarget === 'scheduled'}
 					data-demo-target="scheduled"
 					onclick={() => {
 						playback.manual();
@@ -246,6 +363,32 @@
 							/></label
 						>
 					</div>
+					<div class="coverage-preview" aria-label={m.demo_weekly_preview()}>
+						<div class="coverage-heading">
+							<strong>{m.demo_weekly_preview()}</strong>
+							<span>{scheduleLabel}</span>
+						</div>
+						<div class="coverage-ruler" aria-hidden="true">
+							<span>00</span><span>06</span>
+							<span>12</span><span>18</span><span>24</span>
+						</div>
+						{#each days as active, index (index)}
+							<div class="coverage-row">
+								<span class="coverage-day">{dayLabels[index]()}</span>
+								<div class="coverage-track">
+									{#if active}
+										{#each previewSegments as segment (segment.left)}
+											<span
+												class="coverage-block"
+												style:left={segment.left}
+												style:width={segment.width}
+											></span>
+										{/each}
+									{/if}
+								</div>
+							</div>
+						{/each}
+					</div>
 				</fieldset>
 			{/if}
 			<div class="wizard-footer">
@@ -287,7 +430,9 @@
 					type="button"
 					class="primary"
 					onclick={nextStage}
-					class:guide-active={playback.playing && pointerTarget === 'review'}
+					class:guide-active={(playback.phase === 'hover' ||
+						playback.phase === 'press') &&
+						pointerTarget === 'review'}
 					data-demo-target="review"
 					><Check size={16} aria-hidden="true" />{m.demo_save_block()}</button
 				>
@@ -323,7 +468,7 @@
 									: m.demo_scheduled()}
 						</p>
 						<div class="name">
-							<Globe size={21} aria-hidden="true" />
+							<span class="policy-icon"><Globe size={21} aria-hidden="true" /></span>
 							<div>
 								<h3>{m.policy_name()}</h3>
 								<p>{scheduleLabel}</p>
@@ -338,12 +483,14 @@
 								role="switch"
 								aria-checked={enabled}
 								aria-label={m.demo_enabled_label()}
-								disabled={locked && enabled}
+								disabled={lockedNow && enabled}
 								onclick={() => {
 									playback.manual();
 									enabled = !enabled;
 								}}
-								class:guide-active={playback.playing && pointerTarget === 'enabled'}
+								class:guide-active={(playback.phase === 'hover' ||
+									playback.phase === 'press') &&
+									pointerTarget === 'enabled'}
 								data-demo-target="enabled"
 								class:checked={enabled}
 								class="switch"><span></span></button
@@ -351,25 +498,34 @@
 						</div>
 						<button
 							type="button"
-							disabled={locked}
 							onclick={() => {
 								playback.manual();
-								stage = 'content';
-							}}><Pencil size={15} aria-hidden="true" />{m.demo_edit()}</button
+								if (lockedNow) viewingDetails = true;
+								else stage = 'content';
+							}}
 						>
+							{#if lockedNow}<Eye size={15} aria-hidden="true" />{m.demo_view()}
+							{:else}<Pencil size={15} aria-hidden="true" />{m.demo_edit()}{/if}
+						</button>
 						<button
 							type="button"
-							disabled={locked}
-							class:guide-active={playback.playing && pointerTarget === 'lock'}
+							class:guide-active={(playback.phase === 'hover' ||
+								playback.phase === 'press') &&
+								pointerTarget === 'lock'}
 							data-demo-target="lock"
 							onclick={() => {
-								playback.manual();
-								locked = true;
+								if (locked) {
+									playback.manual();
+									viewingDetails = true;
+								} else openLockDialog();
 							}}
-							><LockOpen size={15} aria-hidden="true" />{locked
-								? m.demo_locked()
-								: m.demo_lock()}</button
 						>
+							{#if locked}<LockKeyhole
+									size={15}
+									aria-hidden="true"
+								/>{m.demo_lock_active_short()}
+							{:else}<LockOpen size={15} aria-hidden="true" />{m.demo_lock()}{/if}
+						</button>
 					</div>
 				</div>
 				<dl class="counts">
@@ -384,13 +540,139 @@
 				</dl>
 			</div>
 		</article>
+		{#if lockDialogOpen && !compact}
+			<section class="lock-config" aria-labelledby="demo-lock-heading">
+				<div class="lock-config-heading">
+					<div>
+						<span class="lock-eyebrow">{m.demo_lock_protection_label()}</span>
+						<h3 id="demo-lock-heading">{m.demo_lock_protect_heading()}</h3>
+						<p>{m.demo_lock_choose_hint()}</p>
+					</div>
+					<button
+						type="button"
+						class="icon-button"
+						aria-label={m.demo_lock_cancel()}
+						onclick={() => {
+							playback.manual();
+							lockDialogOpen = false;
+						}}
+					>
+						<X size={17} aria-hidden="true" />
+					</button>
+				</div>
+				<div class="lock-options" aria-label={m.demo_lock_mode_label()}>
+					{#each lockKinds as kind (kind)}
+						<button
+							type="button"
+							class:selected={lockKind === kind}
+							aria-pressed={lockKind === kind}
+							disabled={kind === 'schedule' && scheduleMode !== 'scheduled'}
+							data-demo-target={kind === 'until' ? 'lock-until' : undefined}
+							class:guide-active={(playback.phase === 'hover' ||
+								playback.phase === 'press') &&
+								pointerTarget === 'lock-until' &&
+								kind === 'until'}
+							onclick={() => selectLock(kind)}
+						>
+							<span class="lock-mode-icon">
+								{#if kind === 'reflection'}<Hourglass
+										size={17}
+										aria-hidden="true"
+									/>
+								{:else if kind === 'schedule'}<CalendarClock
+										size={17}
+										aria-hidden="true"
+									/>
+								{:else}<LockKeyhole size={17} aria-hidden="true" />{/if}
+							</span>
+							<span
+								><strong>{lockTitle(kind)}</strong><small
+									>{lockDescription(kind)}</small
+								></span
+							>
+							{#if lockKind === kind}<Check size={16} aria-hidden="true" />{/if}
+						</button>
+					{/each}
+				</div>
+				{#if lockKind === 'until'}
+					<div class="lock-deadline">
+						<label
+							>{m.demo_lock_end_date()}
+							<input
+								type="date"
+								bind:value={lockEndDate}
+								onchange={() => {
+									playback.manual();
+									lockConfirmation = false;
+								}}
+							/>
+						</label>
+						<label
+							>{m.demo_lock_end_time()}
+							<input
+								type="time"
+								bind:value={lockEndTime}
+								onchange={() => {
+									playback.manual();
+									lockConfirmation = false;
+								}}
+							/>
+						</label>
+					</div>
+				{/if}
+				{#if lockConfirmation}
+					<p class="lock-warning" role="status">{m.demo_lock_confirm_warning()}</p>
+				{/if}
+				<div class="lock-config-actions">
+					<button
+						type="button"
+						onclick={() => {
+							playback.manual();
+							lockDialogOpen = false;
+						}}>{m.demo_lock_cancel()}</button
+					>
+					<button
+						type="button"
+						class="primary"
+						data-demo-target={lockConfirmation ? 'lock-apply' : 'lock-confirm'}
+						class:guide-active={(playback.phase === 'hover' ||
+							playback.phase === 'press') &&
+							(pointerTarget === 'lock-apply' || pointerTarget === 'lock-confirm')}
+						disabled={!lockEndValid}
+						onclick={requestLock}
+					>
+						<LockKeyhole size={15} aria-hidden="true" />{lockConfirmation
+							? m.demo_lock_apply()
+							: m.demo_lock_continue()}
+					</button>
+				</div>
+			</section>
+		{/if}
+		{#if viewingDetails && !compact}
+			<section class="view-config" aria-label={m.demo_view()}>
+				<div>
+					<strong>{m.policy_name()}</strong>
+					<p>{scheduleLabel}</p>
+					<p>{m.demo_lock_status()}: {lockTitle(lockKind)}</p>
+				</div>
+				<button type="button" onclick={() => (viewingDetails = false)}
+					>{m.demo_lock_cancel()}</button
+				>
+			</section>
+		{/if}
 		{#if !compact}<p class="result-note" role="status">
-				{locked ? m.demo_lock_warning() : m.demo_result_help()}
+				{lockedNow ? m.demo_lock_warning() : m.demo_result_help()}
 			</p>{/if}
 	{/if}
 	{#if !compact}
 		<WalkthroughControls {playback} />
-		<DemoPointer root={host} target={pointerTarget} playing={playback.playing} />
+		<DemoPointer
+			root={host}
+			target={pointerTarget}
+			visible={playback.pointerVisible}
+			phase={playback.phase}
+			travelMs={playback.pointerTravelMs}
+		/>
 	{/if}
 </div>
 
@@ -619,6 +901,70 @@
 		gap: 12px;
 		margin-top: 12px;
 	}
+	.coverage-preview {
+		display: grid;
+		gap: 5px;
+		margin-top: 17px;
+		padding: 13px 12px;
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		background: var(--muted);
+	}
+	.coverage-heading {
+		display: flex;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 4px 10px;
+		margin-bottom: 3px;
+	}
+	.coverage-heading strong {
+		font-size: 12px;
+	}
+	.coverage-heading span {
+		font:
+			11px 'IBM Plex Mono',
+			monospace;
+		color: var(--muted-foreground);
+	}
+	.coverage-ruler,
+	.coverage-row {
+		display: grid;
+		grid-template-columns: 20px minmax(0, 1fr);
+		align-items: center;
+		gap: 10px;
+	}
+	.coverage-ruler {
+		display: flex;
+		justify-content: space-between;
+		padding-left: 30px;
+		font:
+			10px 'IBM Plex Mono',
+			monospace;
+		color: var(--muted-foreground);
+	}
+	.coverage-row {
+		min-height: 17px;
+	}
+	.coverage-day {
+		font:
+			11px 'IBM Plex Mono',
+			monospace;
+		color: var(--muted-foreground);
+	}
+	.coverage-track {
+		position: relative;
+		height: 9px;
+		border-radius: 2px;
+		background: color-mix(in srgb, var(--border) 82%, var(--card));
+		overflow: hidden;
+	}
+	.coverage-block {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		background: var(--signal-deep);
+		border-radius: 2px;
+	}
 	.time-row label {
 		display: grid;
 		gap: 5px;
@@ -694,11 +1040,16 @@
 		font-size: 11px;
 	}
 	.policy-main {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: space-between;
-		gap: 12px;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+		column-gap: 22px;
+		row-gap: 16px;
 		padding: 18px;
+	}
+	.policy-body {
+		min-width: 0;
+		container: network-card / inline-size;
 	}
 	.policy-identity {
 		min-width: 0;
@@ -713,8 +1064,18 @@
 	}
 	.name {
 		display: flex;
-		align-items: flex-start;
-		gap: 10px;
+		align-items: center;
+		gap: 12px;
+	}
+	.policy-icon {
+		display: grid;
+		place-items: center;
+		flex: 0 0 40px;
+		width: 40px;
+		height: 40px;
+		border: 1px solid var(--border);
+		border-radius: 5px;
+		background: var(--muted);
 	}
 	.name h3 {
 		font:
@@ -730,27 +1091,44 @@
 	}
 	.policy-actions {
 		display: flex;
-		gap: 8px;
+		gap: 4px;
 		flex-wrap: wrap;
 		align-items: center;
+		justify-content: flex-end;
+		min-width: 0;
 	}
 	.policy-actions > button {
 		display: inline-flex;
-		min-height: 38px;
+		min-height: 36px;
 		align-items: center;
-		gap: 5px;
-		border: 1px solid var(--border);
+		gap: 6px;
+		border: 1px solid transparent;
 		border-radius: 4px;
 		padding: 7px 9px;
-		background: var(--card);
+		background: transparent;
+		color: var(--foreground);
+		white-space: nowrap;
 		font-size: 12px;
 		cursor: pointer;
+	}
+	.policy-actions > button:hover:not(:disabled) {
+		border-color: var(--border);
+		background: var(--muted);
+	}
+	.policy-actions > button[data-demo-target='lock']:not(:disabled) {
+		border-color: color-mix(in srgb, var(--signal-deep) 45%, var(--border));
+		color: var(--signal-deep);
 	}
 	.enabled-label {
 		display: flex;
 		align-items: center;
 		gap: 8px;
+		padding-right: 10px;
+		margin-right: 4px;
+		border-right: 1px solid var(--border);
 		font-size: 12px;
+		color: var(--muted-foreground);
+		white-space: nowrap;
 	}
 	.switch {
 		position: relative;
@@ -779,14 +1157,21 @@
 	}
 	.counts {
 		display: flex;
-		gap: 22px;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 6px 16px;
 		margin: 0 18px 15px;
 		padding-top: 13px;
 		border-top: 1px solid var(--border);
 	}
 	.counts div {
-		display: grid;
-		gap: 4px;
+		display: inline-flex;
+		align-items: baseline;
+		gap: 5px;
+	}
+	.counts div + div {
+		padding-left: 16px;
+		border-left: 1px solid var(--border);
 	}
 	.counts dt {
 		font-size: 11px;
@@ -795,8 +1180,165 @@
 	.counts dd {
 		margin: 0;
 		font:
-			600 15px 'IBM Plex Mono',
+			500 12px 'IBM Plex Mono',
 			monospace;
+	}
+	.lock-config,
+	.view-config {
+		display: grid;
+		gap: 14px;
+		margin: 14px 18px;
+		padding: 17px;
+		border: 1px solid var(--signal-deep);
+		border-radius: 5px;
+		background: var(--card);
+	}
+	.lock-config-heading {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 12px;
+	}
+	.lock-eyebrow {
+		display: block;
+		margin-bottom: 4px;
+		color: var(--signal-deep);
+		font:
+			600 11px 'IBM Plex Sans Condensed',
+			sans-serif;
+	}
+	.lock-config h3 {
+		margin: 0;
+		font:
+			600 21px 'IBM Plex Sans Condensed',
+			sans-serif;
+	}
+	.lock-config-heading p,
+	.view-config p {
+		margin: 5px 0 0;
+		color: var(--muted-foreground);
+		font-size: 12px;
+		line-height: 1.5;
+	}
+	.lock-config .icon-button {
+		display: grid;
+		place-items: center;
+		width: 36px;
+		height: 36px;
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		background: transparent;
+		color: var(--foreground);
+		cursor: pointer;
+	}
+	.lock-options {
+		display: grid;
+		gap: 7px;
+	}
+	.lock-options button {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		width: 100%;
+		min-height: 60px;
+		padding: 10px 12px;
+		text-align: left;
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		background: var(--background);
+		color: var(--foreground);
+		cursor: pointer;
+	}
+	.lock-options button.selected {
+		border-color: var(--signal-deep);
+		background: color-mix(in srgb, var(--signal) 9%, var(--card));
+	}
+	.lock-options button > span:nth-child(2) {
+		display: grid;
+		flex: 1;
+		gap: 3px;
+	}
+	.lock-options strong {
+		font-size: 12px;
+	}
+	.lock-options small {
+		font-size: 11px;
+		line-height: 1.35;
+		color: var(--muted-foreground);
+	}
+	.lock-mode-icon {
+		display: grid;
+		place-items: center;
+		width: 36px;
+		height: 36px;
+		flex: 0 0 36px;
+		border: 1px solid var(--border);
+		border-radius: 3px;
+	}
+	.lock-deadline {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+	}
+	.lock-deadline label {
+		display: grid;
+		gap: 5px;
+		font-size: 12px;
+	}
+	.lock-deadline input {
+		min-width: 0;
+		padding: 8px;
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		background: var(--background);
+		color: var(--foreground);
+		font-size: 12px;
+	}
+	.lock-warning {
+		border-left: 3px solid var(--signal-deep);
+		padding: 9px 12px;
+		background: color-mix(in srgb, var(--signal) 10%, var(--card));
+		font-size: 12px;
+		line-height: 1.5;
+	}
+	.lock-config-actions {
+		display: flex;
+		justify-content: flex-end;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.lock-config-actions button,
+	.view-config button {
+		display: inline-flex;
+		justify-content: center;
+		align-items: center;
+		gap: 6px;
+		min-height: 40px;
+		padding: 7px 12px;
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		background: var(--card);
+		color: var(--foreground);
+		font-size: 12px;
+		cursor: pointer;
+	}
+	.lock-config-actions button.primary {
+		background: var(--foreground);
+		color: var(--background);
+	}
+	.view-config {
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+	}
+	@media (max-width: 520px) {
+		.lock-config,
+		.view-config {
+			margin: 12px;
+			padding: 12px;
+		}
+		.view-config {
+			grid-template-columns: 1fr;
+		}
 	}
 	.result-note {
 		margin: 0;
@@ -823,6 +1365,18 @@
 		background-color: color-mix(in srgb, var(--signal) 14%, var(--card));
 	}
 
+	@container network-card (max-width: 600px) {
+		.policy-main {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 17px;
+		}
+		.policy-actions {
+			justify-content: flex-start;
+			width: 100%;
+			padding-top: 12px;
+			border-top: 1px solid var(--border);
+		}
+	}
 	@media (max-width: 520px) {
 		.demo-stage {
 			padding: 16px;

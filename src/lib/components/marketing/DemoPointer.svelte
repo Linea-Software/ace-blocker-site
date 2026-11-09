@@ -1,79 +1,155 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { MousePointer2 } from '@lucide/svelte';
+	import type { DemoPhase } from './DemoPlayback.svelte';
 
 	let {
 		root,
 		target,
-		playing
-	}: { root: HTMLElement | undefined; target: string; playing: boolean } = $props();
-	let left = $state(0);
-	let top = $state(0);
-	let visible = $state(false);
+		visible,
+		phase = 'idle',
+		travelMs = 660
+	}: {
+		root: HTMLElement | undefined;
+		target: string;
+		visible: boolean;
+		phase?: DemoPhase;
+		travelMs?: number;
+	} = $props();
+
+	let x = $state(28);
+	let y = $state(70);
+	let initialized = $state(false);
+	const pressed = $derived(phase === 'press');
 
 	$effect(() => {
-		const element = root;
+		const container = root;
 		const name = target;
-		const active = playing;
-		let canceled = false;
+		const enabled = visible;
+		if (!container || !enabled) {
+			initialized = false;
+			return;
+		}
+		let disposed = false;
+		let frame = 0;
 		let observer: ResizeObserver | undefined;
-		let destination: HTMLElement | null = null;
-		function position() {
-			if (!element || !destination) return;
-			const bounds = element.getBoundingClientRect();
-			const control = destination.getBoundingClientRect();
-			left = control.left - bounds.left + control.width * 0.62;
-			top = control.top - bounds.top + control.height * 0.55;
+		let node: HTMLElement | null = null;
+
+		// The pointer remains mounted across editor stages instead of teleporting.
+		if (!initialized) {
+			x = Math.min(34, container.clientWidth * 0.08);
+			y = Math.min(90, container.clientHeight * 0.18);
+			initialized = true;
 		}
-		if (element && name && active) {
-			void tick().then(() => {
-				if (canceled) return;
-				destination = element.querySelector<HTMLElement>(
-					'[data-demo-target="' + name + '"]'
-				);
-				if (!destination) {
-					visible = false;
-					return;
-				}
-				position();
-				visible = true;
-				observer = new ResizeObserver(position);
-				observer.observe(element);
-				observer.observe(destination);
-				window.addEventListener('resize', position);
+		const update = () => {
+			if (disposed || !node) return;
+			const rect = container.getBoundingClientRect();
+			const bounds = node.getBoundingClientRect();
+			if (!bounds.width && !bounds.height) return;
+			const nextX = bounds.left - rect.left + bounds.width * 0.56;
+			const nextY = bounds.top - rect.top + bounds.height * 0.56;
+			cancelAnimationFrame(frame);
+			frame = requestAnimationFrame(() => {
+				if (disposed) return;
+				x = Math.max(6, Math.min(rect.width - 26, nextX));
+				y = Math.max(6, Math.min(rect.height - 30, nextY));
 			});
-		} else {
-			visible = false;
-		}
+		};
+		void tick().then(() => {
+			if (disposed) return;
+			node = container.querySelector<HTMLElement>(
+				'[data-demo-target="' + CSS.escape(name) + '"]'
+			);
+			if (!node) return;
+			frame = requestAnimationFrame(update);
+			observer = new ResizeObserver(update);
+			observer.observe(container);
+			observer.observe(node);
+			window.addEventListener('resize', update);
+		});
 		return () => {
-			canceled = true;
+			disposed = true;
+			cancelAnimationFrame(frame);
 			observer?.disconnect();
-			window.removeEventListener('resize', position);
+			window.removeEventListener('resize', update);
 		};
 	});
 </script>
 
-{#if playing && visible}
-	<span class="demo-pointer" aria-hidden="true" style:left={left + 'px'} style:top={top + 'px'}>
-		<MousePointer2 size={23} fill="var(--foreground)" strokeWidth={1.5} />
+{#if visible}
+	<span
+		class="demo-pointer"
+		class:pressed
+		aria-hidden="true"
+		data-demo-pointer-phase={phase}
+		style:--cursor-x={x + 'px'}
+		style:--cursor-y={y + 'px'}
+		style:--cursor-travel={travelMs + 'ms'}
+	>
+		<MousePointer2 size={22} fill="var(--foreground)" strokeWidth={1.6} />
+		<span class="click-ring"></span>
 	</span>
 {/if}
 
 <style>
 	.demo-pointer {
 		position: absolute;
-		z-index: 10;
+		top: 0;
+		left: 0;
+		z-index: 25;
 		display: block;
+		width: 24px;
+		height: 24px;
 		color: var(--background);
 		pointer-events: none;
-		filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.3));
-		transition:
-			left 550ms cubic-bezier(0.22, 0.8, 0.24, 1),
-			top 550ms cubic-bezier(0.22, 0.8, 0.24, 1);
+		transform: translate3d(var(--cursor-x), var(--cursor-y), 0);
+		transition: transform var(--cursor-travel) cubic-bezier(0.27, 0.75, 0.24, 1);
+		filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.4));
+		will-change: transform;
+		animation: pointer-enter 220ms ease-out both;
+	}
+	.demo-pointer :global(svg) {
+		transform-origin: 2px 2px;
+		transition: transform 110ms ease-out;
+	}
+	.demo-pointer.pressed :global(svg) {
+		transform: scale(0.79);
+	}
+	.click-ring {
+		position: absolute;
+		top: -7px;
+		left: -7px;
+		width: 30px;
+		height: 30px;
+		border: 2px solid var(--signal-deep);
+		border-radius: 50%;
+		opacity: 0;
+		transform: scale(0.4);
+	}
+	.pressed .click-ring {
+		animation: cursor-click 340ms ease-out forwards;
+	}
+	@keyframes pointer-enter {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+	@keyframes cursor-click {
+		0% {
+			opacity: 0.85;
+			transform: scale(0.4);
+		}
+		100% {
+			opacity: 0;
+			transform: scale(1.2);
+		}
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.demo-pointer {
-			transition: none;
+			display: none;
 		}
 	}
 </style>
