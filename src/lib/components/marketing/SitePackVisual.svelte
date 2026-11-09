@@ -17,13 +17,25 @@
 		},
 		{
 			name: m.site_pack_betting,
-			subtitle: m.site_pack_betting_count,
-			plan: 'pro',
+			subtitle: m.demo_category_starter,
+			plan: 'free',
 			state: 'available'
 		},
 		{
 			name: m.site_pack_streaming,
-			subtitle: m.site_pack_streaming_count,
+			subtitle: m.demo_category_starter,
+			plan: 'free',
+			state: 'available'
+		},
+		{
+			name: m.site_pack_betting,
+			subtitle: m.demo_category_extended,
+			plan: 'pro',
+			state: 'locked'
+		},
+		{
+			name: m.site_pack_streaming,
+			subtitle: m.demo_category_extended,
 			plan: 'pro',
 			state: 'locked'
 		}
@@ -31,7 +43,7 @@
 </script>
 
 <div class="pack-catalog" aria-label={m.site_pack_visual_label()}>
-	{#each packs as pack (pack.name())}
+	{#each packs as pack (pack.plan + pack.name())}
 		<div class:locked={pack.state === 'locked'} class="site-pack-row">
 			<span class="state-rail" aria-hidden="true"></span>
 

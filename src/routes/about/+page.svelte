@@ -1,8 +1,8 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
 	import MarketingFooter from '$lib/components/marketing/MarketingFooter.svelte';
-	import PolicyVisual from '$lib/components/marketing/PolicyVisual.svelte';
-	import ResistanceScale from '$lib/components/marketing/ResistanceScale.svelte';
+	import NetworkBlockDemo from '$lib/components/marketing/NetworkBlockDemo.svelte';
+	import ResistanceDemo from '$lib/components/marketing/ResistanceDemo.svelte';
 	import ScheduleTimeline from '$lib/components/marketing/ScheduleTimeline.svelte';
 	import SitePackVisual from '$lib/components/marketing/SitePackVisual.svelte';
 	import { Download } from '@lucide/svelte';
@@ -43,7 +43,16 @@
 					{m.about_mechanism_description()}
 				</p>
 			</div>
-			<PolicyVisual />
+			<div>
+				<NetworkBlockDemo compact />
+				<a
+					href={resolve(
+						localizeHref('/features/network-blocks') as '/features/network-blocks'
+					)}
+					class="mt-4 inline-block text-sm font-semibold underline underline-offset-4"
+					>{m.feature_explore_blocks()}</a
+				>
+			</div>
 		</div>
 	</section>
 
@@ -90,7 +99,12 @@
 					{m.about_resistance_description()}
 				</p>
 			</div>
-			<ResistanceScale />
+			<ResistanceDemo compact />
+			<a
+				href={resolve(localizeHref('/features/resistance') as '/features/resistance')}
+				class="mt-5 inline-block text-sm font-semibold underline underline-offset-4"
+				>{m.feature_explore_resistance()}</a
+			>
 		</div>
 	</section>
 

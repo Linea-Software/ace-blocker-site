@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
 	import MarketingFooter from '$lib/components/marketing/MarketingFooter.svelte';
-	import ResistanceScale from '$lib/components/marketing/ResistanceScale.svelte';
+	import ResistanceDemo from '$lib/components/marketing/ResistanceDemo.svelte';
 	import SitePackVisual from '$lib/components/marketing/SitePackVisual.svelte';
 
 	import * as m from '$lib/paraglide/messages';
@@ -10,6 +10,7 @@
 	import { page } from '$app/state';
 	import { canonicalUrl } from '$lib/seo';
 	import { resolve } from '$app/paths';
+	import { localizeHref } from '$lib/paraglide/runtime';
 	import { linkEngine } from '$lib/utils';
 
 	import { apiClient } from '$lib/api-client';
@@ -141,7 +142,14 @@
 						{m.pricing_resistance_description()}
 					</p>
 					<div class="mt-7">
-						<ResistanceScale />
+						<ResistanceDemo compact />
+						<a
+							href={resolve(
+								localizeHref('/features/resistance') as '/features/resistance'
+							)}
+							class="mt-4 inline-block text-sm font-semibold underline underline-offset-4"
+							>{m.feature_explore_resistance()}</a
+						>
 					</div>
 				</div>
 				<div>
