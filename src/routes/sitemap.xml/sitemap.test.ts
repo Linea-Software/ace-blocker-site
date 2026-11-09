@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GET } from './+server';
+import { INDEXABLE_PATHS, localesForPath } from '$lib/seo';
 
 describe('sitemap', () => {
 	it('includes each public locale and only indexable pages', async () => {
@@ -19,6 +20,13 @@ describe('sitemap', () => {
 		expect(xml).not.toContain('/checkout');
 		expect(xml).not.toContain('/admin');
 		expect(xml).not.toContain('/signin');
-		expect((xml.match(/<url>/g) ?? []).length).toBe(28);
+		expect(xml).toContain('<loc>https://aceblocker.com/features/network-blocks</loc>');
+		expect(xml).toContain('<loc>https://aceblocker.com/it/features/resistance</loc>');
+		expect(xml).toContain('<loc>https://aceblocker.com/de/features/resistance</loc>');
+		const expectedUrls = INDEXABLE_PATHS.reduce(
+			(sum, path) => sum + localesForPath(path).length,
+			0
+		);
+		expect((xml.match(/<url>/g) ?? []).length).toBe(expectedUrls);
 	});
 });

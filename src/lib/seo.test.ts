@@ -5,6 +5,9 @@ describe('SEO URL helpers', () => {
 	it('uses the public domain and preserves locale without query strings', () => {
 		expect(canonicalUrl('/it/about')).toBe('https://aceblocker.com/it/about');
 		expect(canonicalUrl('/')).toBe('https://aceblocker.com/');
+		expect(canonicalUrl('/it/features/resistance')).toBe(
+			'https://aceblocker.com/it/features/resistance'
+		);
 	});
 	it('localizes paths consistently with reciprocal alternates', () => {
 		expect(basePath('/de/download/')).toBe('/download');
@@ -16,6 +19,12 @@ describe('SEO URL helpers', () => {
 			'de'
 		]);
 		expect(alternateUrls('/faq').map(({ locale }) => locale)).toEqual(['en', 'es', 'it', 'de']);
+		expect(alternateUrls('/features/network-blocks').map(({ locale }) => locale)).toEqual([
+			'en',
+			'es',
+			'it',
+			'de'
+		]);
 	});
 	it('does not index private or unknown routes', () => {
 		expect(isIndexablePage('/de/download')).toBe(true);
@@ -27,6 +36,8 @@ describe('SEO URL helpers', () => {
 		expect(isIndexablePage('/it/privacy')).toBe(true);
 		expect(isIndexablePage('/de/faq')).toBe(true);
 		expect(isIndexablePage('/es/signin')).toBe(false);
+		expect(isIndexablePage('/de/features/network-blocks')).toBe(true);
+		expect(isIndexablePage('/es/features/resistance')).toBe(true);
 		expect(isIndexablePage('/checkout')).toBe(false);
 		expect(isIndexablePage('/admin')).toBe(false);
 		expect(isIndexablePage('/unknown')).toBe(false);
