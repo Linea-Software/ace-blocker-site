@@ -420,6 +420,8 @@
 	.resistance-demo {
 		position: relative;
 		min-width: 0;
+		/* Breakpoints follow the demo's available space, not the page viewport. */
+		container: resistance-layout / inline-size;
 		overflow: hidden;
 		border: 1px solid var(--border);
 		border-radius: 7px;
@@ -808,7 +810,7 @@
 			display: none;
 		}
 	}
-	@media (max-width: 900px) {
+	@container resistance-layout (max-width: 760px) {
 		.demo-content,
 		.compact .demo-content {
 			grid-template-columns: 1fr;

@@ -206,6 +206,56 @@ test.describe('Network Block marketing walkthrough', () => {
 });
 
 test.describe('Resistance layout and responsiveness', () => {
+	test('Get Pro keeps compact Resistance labels inside their controls', async ({ page }) => {
+		for (const width of [390, 1366, 1920]) {
+			await page.setViewportSize({ width, height: 900 });
+			await page.goto('/get-pro', { waitUntil: 'networkidle' });
+			const demo = page.getByTestId('resistance-demo');
+			await expect(demo).toBeVisible();
+			const toggle = demo.getByRole('button', { name: 'Choose the interventions' });
+
+			if (await toggle.isVisible()) {
+				await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+				await expect(demo.locator('.preview')).toBeVisible();
+				await toggle.click();
+				await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+			}
+
+			await expect(demo.getByTestId('category-captcha')).toBeVisible();
+			const measurements = await demo.locator('.category').evaluateAll((categories) =>
+				categories.map((category) => {
+					const disclosure = category.querySelector<HTMLElement>('.disclosure');
+					const copy = category.querySelector<HTMLElement>('.category-copy');
+					return {
+						categoryWidth: category.clientWidth,
+						categoryScrollWidth: category.scrollWidth,
+						disclosureWidth: disclosure?.clientWidth ?? 0,
+						disclosureScrollWidth: disclosure?.scrollWidth ?? 0,
+						copyWidth: copy?.getBoundingClientRect().width ?? 0
+					};
+				})
+			);
+			expect(measurements).toHaveLength(5);
+			for (const item of measurements) {
+				expect(
+					item.categoryScrollWidth,
+					`category overflow at ${width}px`
+				).toBeLessThanOrEqual(item.categoryWidth + 1);
+				expect(
+					item.disclosureScrollWidth,
+					`label overflow at ${width}px`
+				).toBeLessThanOrEqual(item.disclosureWidth + 1);
+				expect(item.copyWidth, `zero-width category text at ${width}px`).toBeGreaterThan(
+					65
+				);
+			}
+			expect(
+				await page.evaluate(() => document.documentElement.scrollWidth),
+				`page overflow at ${width}px`
+			).toBeLessThanOrEqual(width);
+		}
+	});
+
 	test('homepage gives the website preview most of the width', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 });
 		await page.goto('/', { waitUntil: 'networkidle' });
