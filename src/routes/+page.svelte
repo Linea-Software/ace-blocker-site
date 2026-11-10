@@ -143,28 +143,27 @@
 		</ol>
 	</section>
 
-	<section class="border-b border-border py-16 sm:py-20">
+	<section class="border-b border-border py-14 sm:py-18" aria-labelledby="home-resistance">
 		<div class="ace-shell">
-			<div class="grid gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:items-end">
-				<div class="max-w-md">
+			<div class="mb-8 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:gap-8">
+				<div class="max-w-3xl">
 					<h2
-						class="font-display text-4xl leading-[0.95] font-semibold tracking-tight sm:text-5xl"
+						id="home-resistance"
+						class="font-display text-3xl leading-tight font-semibold tracking-tight sm:text-4xl"
 					>
 						{m.home_resistance_title()}
 					</h2>
-					<p class="mt-5 leading-relaxed text-muted-foreground">
+					<p class="mt-3 max-w-2xl leading-relaxed text-muted-foreground">
 						{m.home_resistance_description()}
 					</p>
-					<a
-						href={resolve(
-							localizeHref('/features/resistance') as '/features/resistance'
-						)}
-						class="mt-4 inline-block text-sm font-semibold underline underline-offset-4"
-						>{m.feature_explore_resistance()}</a
-					>
 				</div>
-				<ResistanceDemo compact />
+				<a
+					href={resolve(localizeHref('/features/resistance') as '/features/resistance')}
+					class="inline-flex min-h-11 items-center text-sm font-semibold underline underline-offset-4 md:justify-self-end"
+					>{m.feature_explore_resistance()}</a
+				>
 			</div>
+			<ResistanceDemo compact />
 		</div>
 	</section>
 

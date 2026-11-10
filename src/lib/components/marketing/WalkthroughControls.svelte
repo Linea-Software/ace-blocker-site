@@ -3,7 +3,7 @@
 	import * as m from '$lib/paraglide/messages';
 	import type { DemoPlayback } from './DemoPlayback.svelte';
 
-	let { playback }: { playback: DemoPlayback } = $props();
+	let { playback, onNavigate }: { playback: DemoPlayback; onNavigate?: () => void } = $props();
 </script>
 
 <div class="walkthrough" role="group" aria-label={m.demo_walkthrough_label()}>
@@ -14,12 +14,26 @@
 				{m.demo_pause()}
 			</button>
 		{:else}
-			<button type="button" onclick={() => playback.play()} aria-label={m.demo_play()}>
+			<button
+				type="button"
+				onclick={() => {
+					onNavigate?.();
+					playback.play();
+				}}
+				aria-label={m.demo_play()}
+			>
 				<Play size={15} aria-hidden="true" />
 				{m.demo_play()}
 			</button>
 		{/if}
-		<button type="button" onclick={() => playback.replay()} aria-label={m.demo_replay()}>
+		<button
+			type="button"
+			onclick={() => {
+				onNavigate?.();
+				playback.replay();
+			}}
+			aria-label={m.demo_replay()}
+		>
 			<RotateCcw size={15} aria-hidden="true" />
 			{m.demo_replay()}
 		</button>
@@ -30,7 +44,10 @@
 		>
 		<button
 			type="button"
-			onclick={() => playback.previous()}
+			onclick={() => {
+				onNavigate?.();
+				playback.previous();
+			}}
 			disabled={playback.step < 0}
 			aria-label={m.demo_previous()}
 		>
@@ -38,7 +55,10 @@
 		</button>
 		<button
 			type="button"
-			onclick={() => playback.next()}
+			onclick={() => {
+				onNavigate?.();
+				playback.next();
+			}}
 			disabled={playback.step === playback.total - 1}
 			aria-label={m.demo_next()}
 		>

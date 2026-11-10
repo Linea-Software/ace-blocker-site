@@ -205,6 +205,81 @@ test.describe('Network Block marketing walkthrough', () => {
 	});
 });
 
+test.describe('Resistance layout and responsiveness', () => {
+	test('homepage gives the website preview most of the width', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 });
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const section = page.locator('section[aria-labelledby="home-resistance"]');
+		await expect(
+			section.getByRole('heading', { name: 'Make websites less distracting' })
+		).toBeVisible();
+		const demo = section.getByTestId('resistance-demo');
+		const preview = await demo.locator('.preview').boundingBox();
+		const groups = await demo.locator('.groups').boundingBox();
+		expect(preview).not.toBeNull();
+		expect(groups).not.toBeNull();
+		expect(preview!.width / (preview!.width + groups!.width)).toBeGreaterThan(0.69);
+		await expect(demo.getByRole('button', { name: 'Before' })).toBeVisible();
+		await expect(demo.getByRole('button', { name: 'After' })).toBeVisible();
+	});
+
+	test('the feature page preserves two wide comparison sites on desktop', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 });
+		await openReadyDemo(page, '/features/resistance');
+		const demo = page.getByTestId('resistance-demo');
+		const preview = await demo.locator('.preview').boundingBox();
+		const groups = await demo.locator('.groups').boundingBox();
+		expect(preview).not.toBeNull();
+		expect(groups).not.toBeNull();
+		expect(preview!.width / (preview!.width + groups!.width)).toBeGreaterThan(0.64);
+		await expect(demo.locator('.mock-site')).toHaveCount(2);
+		await expect(demo.locator('.mock-site').first()).toBeVisible();
+		await expect(demo.locator('.mock-site').last()).toBeVisible();
+	});
+
+	test('mobile homepage controls start collapsed and remain usable', async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 844 });
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const demo = page.getByTestId('resistance-demo');
+		const toggle = demo.getByRole('button', { name: 'Choose the interventions' });
+		await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+		await expect(demo.getByTestId('category-feeds')).toBeHidden();
+		await expect(demo.locator('.preview')).toBeVisible();
+
+		await toggle.click();
+		await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+		const feeds = demo.getByTestId('category-feeds');
+		await expect(feeds).toBeVisible();
+		await feeds.getByRole('checkbox').uncheck();
+		await expect(feeds.locator('.selection-count')).toHaveText('0/2');
+		await toggle.click();
+		await expect(feeds).toBeHidden();
+		expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+			390
+		);
+	});
+
+	test('the full mobile demo can collapse interventions without hiding the website', async ({
+		page
+	}) => {
+		await page.setViewportSize({ width: 390, height: 844 });
+		await openReadyDemo(page, '/features/resistance');
+		const demo = page.getByTestId('resistance-demo');
+		const toggle = demo.getByRole('button', { name: 'Choose the interventions' });
+		await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+		await toggle.click();
+		await expect(demo.getByTestId('category-video')).toBeHidden();
+		await demo.getByTestId('resistance-preview-site').selectOption('youtube.com');
+		await expect(demo.locator('[data-site="youtube.com"]')).toHaveCount(2);
+		await expect(demo.locator('.mock-site.after')).toBeVisible();
+		await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+		await demo.getByRole('button', { name: 'Play', exact: true }).click();
+		await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+		await expect(demo.getByTestId('category-visual')).toBeVisible();
+		await demo.getByRole('button', { name: 'Pause', exact: true }).click();
+	});
+});
+
 test.describe('Resistance marketing walkthrough', () => {
 	test('all sections start collapsed and CAPTCHA unchecked', async ({ page }) => {
 		await openReadyDemo(page, '/features/resistance');

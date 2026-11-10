@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount, untrack } from 'svelte';
 	import {
 		ChevronDown,
 		ChevronRight,
@@ -95,6 +95,8 @@
 	);
 	let selected = $state<string[]>([...defaults]);
 	let openKind = $state<Kind | null>(null);
+	// The compact homepage preview starts visible on mobile; the full walkthrough keeps its controls open.
+	let mobileControlsOpen = $state(untrack(() => !compact));
 	let openSite = $state<string | null>(null);
 	let host = $state<HTMLElement>();
 	let demoReady = $state(false);
@@ -182,118 +184,146 @@
 	</div>
 	<div class="demo-content">
 		<div class="groups">
-			<div class="group-intro">
-				<h3>{m.demo_interventions_heading()}</h3>
-				<p>{m.demo_interventions_help()}</p>
-			</div>
-			{#each sections as section (section.kind)}
-				{@const all = section.scripts.every((script) => selected.includes(script.id))}
-				{@const count = section.scripts.filter((script) =>
-					selected.includes(script.id)
-				).length}
-				{@const partial = count > 0 && !all}
-				<div class="category" data-testid={'category-' + section.kind}>
-					<div class="category-header">
-						<button
-							type="button"
-							class="disclosure"
-							aria-expanded={openKind === section.kind}
-							aria-controls={'demo-group-' + section.kind}
-							onclick={() => {
-								playback.manual();
-								openKind = openKind === section.kind ? null : section.kind;
-								openSite = null;
-							}}
-						>
-							<span class="category-icon">
-								{#if section.kind === 'feeds'}<ListFilter
-										size={19}
-										aria-hidden="true"
-									/>
-								{:else if section.kind === 'video'}<PlaySquare
-										size={19}
-										aria-hidden="true"
-									/>
-								{:else if section.kind === 'visual'}<Palette
-										size={19}
-										aria-hidden="true"
-									/>
-								{:else if section.kind === 'interruptions'}<Hourglass
-										size={19}
-										aria-hidden="true"
-									/>
-								{:else}<ShieldQuestionMark size={19} aria-hidden="true" />{/if}
-							</span>
-							<span class="category-copy"
-								><strong>{section.title()}</strong>{#if !compact}<small
-										>{section.description()}</small
-									>{/if}</span
-							>
-							<span class="selection-count">{count}/{section.scripts.length}</span>
-							<ChevronDown
-								size={15}
-								aria-hidden="true"
-								class={openKind === section.kind ? 'rotated' : ''}
-							/>
-						</button>
-						<label
-							class="all-toggle"
-							class:guide-active={(playback.phase === 'hover' ||
-								playback.phase === 'press') &&
-								pointerTarget === section.kind}
-							data-demo-target={section.kind}
-							title={m.demo_select_category({ category: section.title() })}
-						>
-							<input
-								type="checkbox"
-								checked={all}
-								indeterminate={partial}
-								aria-label={m.demo_select_category({ category: section.title() })}
-								onchange={() => toggleGroup(section)}
-							/>
-						</label>
-					</div>
-					{#if openKind === section.kind}
-						<div class="site-groups" id={'demo-group-' + section.kind}>
-							{#each section.scripts as script (script.id)}
-								<div class="site">
-									<button
-										type="button"
-										aria-expanded={openSite === script.id}
-										onclick={() => {
-											playback.manual();
-											openSite = openSite === script.id ? null : script.id;
-										}}
-									>
-										<Globe size={15} aria-hidden="true" /><span
-											>{script.site}</span
-										>
-										<ChevronRight
-											size={15}
-											aria-hidden="true"
-											class={openSite === script.id ? 'rotated' : ''}
-										/>
-									</button>
-									{#if openSite === script.id}
-										<label class="script-row"
-											><input
-												type="checkbox"
-												checked={selected.includes(script.id)}
-												onchange={(event) =>
-													toggleScript(
-														script.id,
-														event.currentTarget.checked
-													)}
-											/><span>{script.title()}</span></label
-										>
-									{/if}
-								</div>
-							{/each}
-						</div>
-					{/if}
+			<button
+				type="button"
+				class="mobile-groups-toggle"
+				aria-controls="resistance-interventions-panel"
+				aria-expanded={mobileControlsOpen}
+				onclick={() => {
+					playback.manual();
+					mobileControlsOpen = !mobileControlsOpen;
+				}}
+			>
+				<ListFilter size={17} aria-hidden="true" />
+				<strong>{m.demo_interventions_heading()}</strong>
+				<ChevronDown
+					size={17}
+					aria-hidden="true"
+					class={mobileControlsOpen ? 'rotated' : ''}
+				/>
+			</button>
+			<div
+				id="resistance-interventions-panel"
+				class="groups-body"
+				class:expanded={mobileControlsOpen}
+			>
+				<div class="group-intro">
+					<h3>{m.demo_interventions_heading()}</h3>
+					<p>{m.demo_interventions_help()}</p>
 				</div>
-			{/each}
-			<p class="category-footnote">{m.demo_captcha_default()}</p>
+				{#each sections as section (section.kind)}
+					{@const all = section.scripts.every((script) => selected.includes(script.id))}
+					{@const count = section.scripts.filter((script) =>
+						selected.includes(script.id)
+					).length}
+					{@const partial = count > 0 && !all}
+					<div class="category" data-testid={'category-' + section.kind}>
+						<div class="category-header">
+							<button
+								type="button"
+								class="disclosure"
+								aria-expanded={openKind === section.kind}
+								aria-controls={'demo-group-' + section.kind}
+								onclick={() => {
+									playback.manual();
+									openKind = openKind === section.kind ? null : section.kind;
+									openSite = null;
+								}}
+							>
+								<span class="category-icon">
+									{#if section.kind === 'feeds'}<ListFilter
+											size={19}
+											aria-hidden="true"
+										/>
+									{:else if section.kind === 'video'}<PlaySquare
+											size={19}
+											aria-hidden="true"
+										/>
+									{:else if section.kind === 'visual'}<Palette
+											size={19}
+											aria-hidden="true"
+										/>
+									{:else if section.kind === 'interruptions'}<Hourglass
+											size={19}
+											aria-hidden="true"
+										/>
+									{:else}<ShieldQuestionMark size={19} aria-hidden="true" />{/if}
+								</span>
+								<span class="category-copy"
+									><strong>{section.title()}</strong>{#if !compact}<small
+											>{section.description()}</small
+										>{/if}</span
+								>
+								<span class="selection-count">{count}/{section.scripts.length}</span
+								>
+								<ChevronDown
+									size={15}
+									aria-hidden="true"
+									class={openKind === section.kind ? 'rotated' : ''}
+								/>
+							</button>
+							<label
+								class="all-toggle"
+								class:guide-active={(playback.phase === 'hover' ||
+									playback.phase === 'press') &&
+									pointerTarget === section.kind}
+								data-demo-target={section.kind}
+								title={m.demo_select_category({ category: section.title() })}
+							>
+								<input
+									type="checkbox"
+									checked={all}
+									indeterminate={partial}
+									aria-label={m.demo_select_category({
+										category: section.title()
+									})}
+									onchange={() => toggleGroup(section)}
+								/>
+							</label>
+						</div>
+						{#if openKind === section.kind}
+							<div class="site-groups" id={'demo-group-' + section.kind}>
+								{#each section.scripts as script (script.id)}
+									<div class="site">
+										<button
+											type="button"
+											aria-expanded={openSite === script.id}
+											onclick={() => {
+												playback.manual();
+												openSite =
+													openSite === script.id ? null : script.id;
+											}}
+										>
+											<Globe size={15} aria-hidden="true" /><span
+												>{script.site}</span
+											>
+											<ChevronRight
+												size={15}
+												aria-hidden="true"
+												class={openSite === script.id ? 'rotated' : ''}
+											/>
+										</button>
+										{#if openSite === script.id}
+											<label class="script-row"
+												><input
+													type="checkbox"
+													checked={selected.includes(script.id)}
+													onchange={(event) =>
+														toggleScript(
+															script.id,
+															event.currentTarget.checked
+														)}
+												/><span>{script.title()}</span></label
+											>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						{/if}
+					</div>
+				{/each}
+				<p class="category-footnote">{m.demo_captcha_default()}</p>
+			</div>
 		</div>
 		<div class="preview">
 			<div class="preview-head">
@@ -375,7 +405,7 @@
 		</div>
 	</div>
 	{#if !compact}
-		<WalkthroughControls {playback} />
+		<WalkthroughControls {playback} onNavigate={() => (mobileControlsOpen = true)} />
 		<DemoPointer
 			root={host}
 			target={pointerTarget}
@@ -412,8 +442,17 @@
 	}
 	.demo-content {
 		display: grid;
-		grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+		grid-template-columns: minmax(0, 0.35fr) minmax(0, 0.65fr);
 		gap: 0;
+	}
+	.compact .demo-content {
+		grid-template-columns: minmax(0, 0.3fr) minmax(0, 0.7fr);
+	}
+	.mobile-groups-toggle {
+		display: none;
+	}
+	.groups-body {
+		min-width: 0;
 	}
 	.groups {
 		padding: 18px;
@@ -572,6 +611,7 @@
 		min-width: 0;
 		padding: 18px;
 		background: var(--muted);
+		container-type: inline-size;
 	}
 	.preview-head {
 		display: flex;
@@ -729,7 +769,19 @@
 		padding: 12px;
 	}
 	.compact .disclosure {
-		padding: 9px 7px;
+		padding: 10px 7px;
+		gap: 6px;
+	}
+	.compact .category-icon {
+		flex-basis: 25px;
+		width: 25px;
+		height: 25px;
+	}
+	.compact .category-copy strong {
+		font-size: 12px;
+	}
+	.compact .all-toggle {
+		flex-basis: 43px;
 	}
 	.compact .preview-grid {
 		grid-template-columns: 1fr;
@@ -745,7 +797,7 @@
 			animation: none;
 		}
 	}
-	@media (max-width: 1160px) {
+	@container (max-width: 650px) {
 		.preview-grid {
 			grid-template-columns: 1fr;
 		}
@@ -757,12 +809,44 @@
 		}
 	}
 	@media (max-width: 900px) {
-		.demo-content {
+		.demo-content,
+		.compact .demo-content {
 			grid-template-columns: 1fr;
 		}
 		.groups {
+			padding: 10px 14px;
 			border-right: 0;
 			border-bottom: 1px solid var(--border);
+		}
+		.mobile-groups-toggle {
+			display: flex;
+			width: 100%;
+			min-height: 44px;
+			align-items: center;
+			gap: 10px;
+			border: 0;
+			padding: 8px 3px;
+			text-align: left;
+			background: transparent;
+			color: var(--foreground);
+			font-size: 13px;
+			cursor: pointer;
+		}
+		.mobile-groups-toggle strong {
+			flex: 1;
+		}
+		.mobile-groups-toggle:focus-visible {
+			outline: 2px solid var(--foreground);
+			outline-offset: 2px;
+		}
+		.groups-body:not(.expanded) {
+			display: none;
+		}
+		.group-intro h3 {
+			display: none;
+		}
+		.group-intro {
+			margin: 8px 0 12px;
 		}
 	}
 	@media (max-width: 540px) {

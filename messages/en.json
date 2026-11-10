@@ -569,7 +569,7 @@
 	"home_hold_title": "Lock the rule when you want it to stick.",
 	"home_hold_description": "Lock a rule and it cannot be weakened until the lock ends.",
 	"home_resistance_title": "Make websites less distracting",
-	"home_resistance_description": "On supported sites, choose which feeds, playback features, visual effects, delays or simulated checks to change. Each intervention is independently configurable.",
+	"home_resistance_description": "Choose which distracting elements to remove, reduce or delay on supported websites. Configure each intervention independently.",
 	"home_schedule_title": "Set when the block runs.",
 	"home_schedule_description": "Build a week once. Ace turns those hours into active enforcement, with locks where you need the decision to stay fixed.",
 	"home_packs_title": "Block a category without maintaining a domain list.",
