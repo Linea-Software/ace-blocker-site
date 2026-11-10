@@ -3,6 +3,8 @@ export type DemoPhase = 'idle' | 'travel' | 'hover' | 'press' | 'settle';
 
 export type DemoCue = {
 	target: string;
+	/** A timed visual response with no pointer click (e.g. a network reply). */
+	passive?: boolean;
 	travelMs?: number;
 	hoverMs?: number;
 	pressMs?: number;
@@ -59,6 +61,17 @@ export class DemoPlayback {
 		}
 		const index = this.step + 1;
 		const cue = this.cues[index];
+		if (cue.passive) {
+			this.pointerVisible = false;
+			this.pointerTarget = '';
+			this.phase = 'settle';
+			this.after(cue.settleMs ?? DEFAULT_TIMING.settleMs, () => {
+				this.seek(index);
+				this.advance();
+			});
+			return;
+		}
+		this.pointerVisible = true;
 		const travel = cue.travelMs ?? DEFAULT_TIMING.travelMs;
 		const hover = cue.hoverMs ?? DEFAULT_TIMING.hoverMs;
 		const press = cue.pressMs ?? DEFAULT_TIMING.pressMs;

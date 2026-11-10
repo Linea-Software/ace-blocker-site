@@ -108,6 +108,90 @@ test.describe('Network Block marketing walkthrough', () => {
 		await expect(demo.getByRole('button', { name: 'View' })).toBeEnabled();
 	});
 
+	test('browser scene follows the lock and returns a simulated HTTP 404', async ({ page }) => {
+		await openReadyDemo(page, '/features/network-blocks');
+		const demo = page.getByTestId('network-demo');
+		const next = demo.locator('.walkthrough').getByRole('button', { name: 'Next' });
+		const previous = demo.locator('.walkthrough').getByRole('button', { name: 'Previous' });
+
+		for (let step = 0; step <= 9; step++) await next.click();
+		await expect(demo.locator('.lock-seal')).toBeVisible();
+		await expect(demo.getByRole('button', { name: 'Try opening the website' })).toBeVisible();
+
+		await next.click(); // Open the simulated browser after protecting the rule.
+		const browser = demo.getByTestId('blocked-browser-demo');
+		await expect(browser).toBeVisible();
+		await expect(browser.getByRole('button', { name: 'Browser address bar' })).toBeVisible();
+		await expect(browser.getByText('404', { exact: true })).toHaveCount(0);
+
+		await next.click(); // Type the domain.
+		await expect(browser.getByText('https://example.com')).toBeVisible();
+		await next.click(); // Navigate: loading, not yet blocked.
+		await expect(browser.getByText('Loading website…')).toBeVisible();
+		await next.click(); // Passive network response; no second click.
+		await expect(browser.getByText('HTTP 404', { exact: true })).toBeVisible();
+		await expect(browser.getByRole('heading', { name: 'Not Found' })).toBeVisible();
+
+		await previous.click();
+		await expect(browser.getByText('Loading website…')).toBeVisible();
+		await browser.getByRole('button', { name: 'Back to rule' }).click();
+		await expect(browser).toHaveCount(0);
+		await demo.getByRole('button', { name: 'Replay' }).click();
+		await expect(demo.getByText('Choose what to block')).toBeVisible();
+	});
+
+	test('manual browser navigation shows 404 only after the request', async ({ page }) => {
+		await openReadyDemo(page, '/features/network-blocks');
+		const demo = page.getByTestId('network-demo');
+		const next = demo.locator('.walkthrough').getByRole('button', { name: 'Next' });
+		for (let step = 0; step <= 9; step++) await next.click();
+
+		await demo.getByRole('button', { name: 'Try opening the website' }).click();
+		const browser = demo.getByTestId('blocked-browser-demo');
+		await browser.getByRole('button', { name: 'Browser address bar' }).click();
+		await browser.getByRole('button', { name: 'Open website' }).click();
+		await expect(browser.getByText('Loading website…')).toBeVisible();
+		await expect(browser.getByText('HTTP 404', { exact: true })).toBeVisible({ timeout: 3500 });
+		await expect(demo.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+	});
+
+	test('out-of-schedule manual browser preview does not claim a 404 block', async ({ page }) => {
+		await openReadyDemo(page, '/features/network-blocks');
+		const demo = page.getByTestId('network-demo');
+		await demo.locator('#demo-domain').fill('example.com');
+		await demo.getByRole('button', { name: 'Add', exact: true }).click();
+		await demo.locator('.wizard-footer button').last().click();
+		await demo.getByRole('button', { name: /Scheduled/ }).click();
+		await demo.locator('.day-picker label').first().click(); // Monday is off.
+		await demo.locator('.wizard-footer button').last().click();
+		await demo.getByRole('button', { name: 'Create block' }).click();
+		await demo.getByRole('button', { name: 'Try opening the website' }).click();
+		const browser = demo.getByTestId('blocked-browser-demo');
+		await browser.getByRole('button', { name: 'Browser address bar' }).click();
+		await browser.getByRole('button', { name: 'Open website' }).click();
+		await expect(browser.getByRole('heading', { name: 'Website not blocked' })).toBeVisible({
+			timeout: 3500
+		});
+		await expect(browser.getByText('HTTP 404', { exact: true })).toHaveCount(0);
+	});
+
+	test('guided browser preview enters the address before showing the HTTP response', async ({
+		page
+	}) => {
+		await openReadyDemo(page, '/features/network-blocks');
+		const demo = page.getByTestId('network-demo');
+		const next = demo.locator('.walkthrough').getByRole('button', { name: 'Next' });
+		for (let step = 0; step <= 9; step++) await next.click();
+
+		await demo.getByRole('button', { name: 'Play', exact: true }).click();
+		const browser = demo.getByTestId('blocked-browser-demo');
+		await expect(browser).toBeVisible({ timeout: 5000 });
+		await expect(browser.getByText('https://example.com')).toBeVisible({ timeout: 5500 });
+		await expect(browser.getByText('Loading website…')).toBeVisible({ timeout: 6000 });
+		await expect(browser.getByText('HTTP 404', { exact: true })).toBeVisible({ timeout: 5000 });
+		await expect(demo.locator('.demo-pointer')).toHaveCount(0);
+	});
+
 	test('all schedule weekdays off cannot be saved', async ({ page }) => {
 		await openReadyDemo(page, '/features/network-blocks');
 		const demo = page.getByTestId('network-demo');

@@ -17,6 +17,7 @@
 	import { DemoPlayback } from './DemoPlayback.svelte';
 	import WalkthroughControls from './WalkthroughControls.svelte';
 	import DemoPointer from './DemoPointer.svelte';
+	import BlockedBrowserDemo from './BlockedBrowserDemo.svelte';
 
 	let { compact = false }: { compact?: boolean } = $props();
 	type Stage = 'content' | 'schedule' | 'review' | 'result';
@@ -34,6 +35,9 @@
 	let locked = $state(false);
 	let lockDialogOpen = $state(false);
 	let viewingDetails = $state(false);
+	let browserOpen = $state(false);
+	let browserPhase = $state<'ready' | 'typed' | 'loading' | 'result'>('ready');
+	let browserLoadTimer: ReturnType<typeof setTimeout> | undefined;
 	let lockKind = $state<'reflection' | 'schedule' | 'until'>('until');
 	let lockConfirmation = $state(false);
 	function defaultLockDate() {
@@ -64,6 +68,22 @@
 	];
 	const steps = [m.demo_content(), m.demo_schedule(), m.demo_review()];
 	const validTargets = $derived(category || !!addedDomain);
+	// The simulated browser visits the configured domain at Monday 10:30.
+	// Never show a 404 when that particular rule would be inactive.
+	const simulatedBlockActive = $derived.by(() => {
+		if (!enabled || !addedDomain) return false;
+		if (scheduleMode === 'always') return true;
+		const toMinutes = (time: string) => {
+			const [hours, minutes] = time.split(':').map(Number);
+			return hours * 60 + minutes;
+		};
+		const start = toMinutes(from);
+		const end = toMinutes(until);
+		const minute = 10 * 60 + 30;
+		if (start === end) return false;
+		if (start < end) return days[0] && start <= minute && minute < end;
+		return (days[0] && minute >= start) || (days[6] && minute < end);
+	});
 	const validSchedule = $derived(
 		scheduleMode === 'always' || (days.some(Boolean) && from !== until)
 	);
@@ -101,7 +121,15 @@
 		});
 	});
 
+	function clearBrowserLoad() {
+		if (browserLoadTimer !== undefined) clearTimeout(browserLoadTimer);
+		browserLoadTimer = undefined;
+	}
+
 	function applyScript(step: number) {
+		clearBrowserLoad();
+		browserOpen = false;
+		browserPhase = 'ready';
 		stage = 'content';
 		category = false;
 		addedDomain = '';
@@ -129,6 +157,10 @@
 			lockDialogOpen = false;
 			lockConfirmation = false;
 		}
+		if (step >= 10) browserOpen = true;
+		if (step >= 11) browserPhase = 'typed';
+		if (step >= 12) browserPhase = 'loading';
+		if (step >= 13) browserPhase = 'result';
 	}
 	const playback = new DemoPlayback(
 		[
@@ -141,7 +173,11 @@
 			{ target: 'lock', travelMs: 720, settleMs: 720 },
 			{ target: 'lock-until', travelMs: 720 },
 			{ target: 'lock-confirm', travelMs: 620, settleMs: 670 },
-			{ target: 'lock-apply', travelMs: 620, settleMs: 840 }
+			{ target: 'lock-apply', travelMs: 620, settleMs: 840 },
+			{ target: 'browser-open', travelMs: 690, settleMs: 850 },
+			{ target: 'browser-address', travelMs: 720, settleMs: 950 },
+			{ target: 'browser-go', travelMs: 600, settleMs: 380 },
+			{ target: '', passive: true, settleMs: 1050 }
 		],
 		applyScript
 	);
@@ -157,7 +193,40 @@
 		if (kind === 'schedule') return m.demo_lock_schedule_description();
 		return m.demo_lock_until_description();
 	}
-	onDestroy(() => playback.dispose());
+	onDestroy(() => {
+		clearBrowserLoad();
+		playback.dispose();
+	});
+
+	function openBrowser() {
+		playback.manual();
+		clearBrowserLoad();
+		browserOpen = true;
+		browserPhase = 'ready';
+	}
+
+	function typeBrowserAddress() {
+		playback.manual();
+		clearBrowserLoad();
+		browserPhase = 'typed';
+	}
+
+	function navigateBrowser() {
+		playback.manual();
+		clearBrowserLoad();
+		browserPhase = 'loading';
+		browserLoadTimer = setTimeout(() => {
+			browserLoadTimer = undefined;
+			browserPhase = 'result';
+		}, 950);
+	}
+
+	function closeBrowser() {
+		playback.manual();
+		clearBrowserLoad();
+		browserOpen = false;
+		browserPhase = 'ready';
+	}
 
 	function nextStage() {
 		playback.manual();
@@ -438,6 +507,15 @@
 				>
 			</div>
 		</section>
+	{:else if browserOpen && !compact}
+		<BlockedBrowserDemo
+			domain={addedDomain}
+			phase={browserPhase}
+			blocked={simulatedBlockActive}
+			onAddress={typeBrowserAddress}
+			onNavigate={navigateBrowser}
+			onBack={closeBrowser}
+		/>
 	{:else}
 		<div class="result-heading">
 			<span>{m.demo_result_heading()}</span>
@@ -660,9 +738,26 @@
 				>
 			</section>
 		{/if}
-		{#if !compact}<p class="result-note" role="status">
+		{#if !compact}
+			<p class="result-note" role="status">
 				{lockedNow ? m.demo_lock_warning() : m.demo_result_help()}
-			</p>{/if}
+			</p>
+			{#if addedDomain && !lockDialogOpen}
+				<div class="browser-action">
+					<button
+						type="button"
+						data-demo-target="browser-open"
+						class:guide-active={(playback.phase === 'hover' ||
+							playback.phase === 'press') &&
+							pointerTarget === 'browser-open'}
+						onclick={openBrowser}
+					>
+						<Globe size={16} aria-hidden="true" />{m.demo_browser_open()}
+					</button>
+					<small>{m.demo_browser_preview_note()}</small>
+				</div>
+			{/if}
+		{/if}
 	{/if}
 	{#if !compact}
 		<WalkthroughControls {playback} />
@@ -684,6 +779,39 @@
 		border: 1px solid var(--border);
 		border-radius: 7px;
 		background: var(--card);
+	}
+	.browser-action {
+		display: flex;
+		align-items: center;
+		gap: 10px 14px;
+		flex-wrap: wrap;
+		padding: 12px 18px 16px;
+	}
+	.browser-action button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 7px;
+		min-height: 40px;
+		padding: 8px 12px;
+		border: 1px solid var(--signal-deep);
+		border-radius: 4px;
+		background: var(--card);
+		color: var(--foreground);
+		font-size: 12px;
+		font-weight: 600;
+		cursor: pointer;
+	}
+	.browser-action button:hover {
+		background: color-mix(in srgb, var(--signal) 10%, var(--card));
+	}
+	.browser-action button:focus-visible {
+		outline: 2px solid var(--foreground);
+		outline-offset: 2px;
+	}
+	.browser-action small {
+		color: var(--muted-foreground);
+		font-size: 11px;
 	}
 	.demo-meta,
 	.result-heading {
