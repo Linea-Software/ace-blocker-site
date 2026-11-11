@@ -1,32 +1,45 @@
-# Ace Blocker — glossario italiano e controllo editoriale
+# Italian Localization: Terminology and Editorial Review
 
-Revisione: 6 novembre 2026 · Italiano (Italia) · Confronto EN/IT in due passaggi (fedeltà, qualità editoriale). Non è un parere legale né un'approvazione da parte di un revisore umano.
+Reviewed November 6, 2026. Locale: Italian (Italy). Compared EN and IT in two passes: accuracy and writing quality. This is not legal advice or independent human approval.
 
-| Concetto EN                   | Scelta IT                                                                           | Significato e impiego                                                                                                                                                                 |
-| ----------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Network Block                 | **blocco di rete**                                                                  | Configurazione che collega siti e categorie a orari di applicazione. «Blocco» va bene se il contesto è chiaro.                                                                        |
-| Lock / time-lock              | **protezione delle regole**, **protezione delle modifiche**, **protezione a tempo** | Impedisce modifiche che indebolirebbero le regole mentre è attivo; non aggiunge siti né prolunga gli orari del filtro. Per le azioni: «Proteggi»; per lo stato: «Modifiche bloccate». |
-| Schedule                      | **programmazione**, **orari programmati**                                           | Giorni e intervalli in cui il blocco di rete applica le regole. Senza orari, il filtro non si applica.                                                                                |
-| Resistance Mode               | **modalità Resistenza**; **Resistenza** nella navigazione                           | Funzione Pro che modifica l'esperienza dei siti supportati (feed, video, interfaccia, ritardi), senza equivalere al blocco di rete.                                                   |
-| Categories                    | **categorie predefinite**, **categorie**                                            | Elenchi offerti da Ace, alcuni Free; il catalogo completo è Pro. «Selezionate» può descriverne la cura editoriale.                                                                    |
-| Custom Lists                  | **liste personalizzate**                                                            | Elenchi di domini importati dall'utente, funzione Pro.                                                                                                                                |
-| Downloaded vs enabled         | **scaricata** vs **collegata al blocco**                                            | Scaricare una lista rende disponibili i dati, ma non avvia il blocco: va aggiunta a un blocco di rete con orari attivi.                                                               |
-| Free / Pro                    | **Free**, **Pro**                                                                   | Nomi invariati. Blocco essenziale Free; Pro include Resistenza, tutte le categorie, liste personalizzate e backup nel cloud.                                                          |
-| Recurring payment             | **pagamento ricorrente**                                                            | Non «prezzo ricorrente». Distinguere addebito, rinnovo, prezzo e disdetta.                                                                                                            |
-| Authenticated product release | **versione verificata**                                                             | Evitare «release autenticate». Una versione verificata non è necessariamente installabile.                                                                                            |
-| Settings                      | **Impostazioni**                                                                    | Nome unico per sezione, navigazione, tooltip e istruzioni.                                                                                                                            |
-| Private by Design             | **Privacy fin dalla progettazione**                                                 | Privacy integrata nella concezione del prodotto, non scelta opzionale dell'utente.                                                                                                    |
+| English concept | Preferred Italian form | Meaning and use |
+| --- | --- | --- |
+| Network Block                 | **blocco di rete**                                                                  | Configuration that links sites and categories to enforcement periods. Use «Blocco» only when the context is clear. |
+| Lock / time-lock              | **protezione delle regole**, **protezione delle modifiche**, **protezione a tempo** | Prevents changes that weaken active rules. It does not add sites or extend filtering times. Action: «Proteggi». State: «Modifiche bloccate». |
+| Schedule                      | **programmazione**, **orari programmati**                                           | Days and times when a Network Block enforces its rules. Without configured times, the filter does not apply. |
+| Resistance Mode               | **modalità Resistenza**; **Resistenza** nella navigazione                           | Pro feature that changes feeds, videos, UI, and delays on supported sites. It does not mean a Network Block. |
+| Categories                    | **categorie predefinite**, **categorie**                                            | Curated lists offered by Ace. Some are Free; the full catalog is Pro. «Selezionate» describes editorial selection. |
+| Custom Lists                  | **liste personalizzate**                                                            | Imported domain lists. This is a Pro feature. |
+| Downloaded vs enabled         | **scaricata** vs **collegata al blocco**                                            | Downloading makes list data available. To enforce it, attach the list to a Network Block with an active schedule. |
+| Free / Pro                    | **Free**, **Pro**                                                                   | Keep plan names unchanged. Free includes basic blocking. Pro adds Resistance, all categories, Custom Lists, and cloud backup. |
+| Recurring payment             | **pagamento ricorrente**                                                            | Do not use «prezzo ricorrente». Distinguish charges, renewals, prices, and cancellation. |
+| Authenticated product release | **versione verificata**                                                             | A verified release is not necessarily installable. Avoid «release autenticate». |
+| Settings                      | **Impostazioni**                                                                    | Use the same name in navigation, section headings, tooltips, and instructions. |
+| Private by Design             | **Privacy fin dalla progettazione**                                                 | Privacy is part of product design, not an optional user preference. |
 
-## Plurali dinamici
+## Dynamic Plurals
 
-Per i contatori con accordo grammaticale, selezionare frasi complete per **0, 1 e >1** tramite `countMessage` o rami espliciti (per i giorni di prova). Esempi: «Nessun blocco», «1 blocco», «2 blocchi»; «Nessuna visita», «1 visita», «2 visite». Non introdurre plurali artificiali per termini invariabili come «record» e «account». Le chiavi e i placeholder originari restano invariati; nuove chiavi sono dedicate esclusivamente alle varianti necessarie.
+For counters, provide complete phrases for **zero, one, and more than one**.
+Use `countMessage` or explicit branches for trial-day messages.
+Keep these translation examples unchanged: «Nessun blocco», «1 blocco», «2 blocchi»; «Nessuna visita», «1 visita», «2 visite».
+Do not invent plural forms for unchanged terms such as «record» and «account».
+Keep original keys and placeholders. Add keys only for required variants.
 
-## Da verificare prima della pubblicazione
+## Checks Before Publication
 
-- **Revisione legale indipendente:** affermazioni su dati di utilizzo Pro, segnalazioni di errori facoltative, backup e cifratura, terze parti, conservazione, consenso alle modifiche, limiti di responsabilità e sospensione dell'accesso. La traduzione non modifica le condizioni sostanziali dell'inglese.
-- **Originali EN da chiarire:** nel sito `faq_a1` e `home_what_is_description` possono far pensare che i lock mantengano i filtri attivi fuori orario; nell'app `category_apply_note` parla impropriamente di una lista «bloccata» anziché dei siti inclusi; `onboarding_resistance_toggle_hint` promette modifiche d'intensità in qualsiasi momento anche in presenza di lock; `onboarding_welcome_body` non esplicita il requisito Pro per Resistenza; `tour_blocked_attempts_body` descrive «sites blocked» benché la metrica sia un conteggio di tentativi. Non correggere di nascosto l'inglese intervenendo solo sull'italiano: serve una revisione separata delle sorgenti.
-- **Claim da riconfermare:** FAQ e privacy, piattaforme supportate, rapidità di configurazione («meno di un minuto»), disponibilità categorie e aggiornamenti. L'audit editoriale non equivale a verifica legale o commerciale.
+- **Independent legal review:** Review claims about Pro usage data, optional error reports, backup, encryption, third parties, retention, consent to changes, liability, and access suspension. Translation must not change the English legal terms.
+- **English source issues:** `faq_a1` and `home_what_is_description` can imply that locks keep filtering active outside scheduled periods.
+  In the app, `category_apply_note` describes a list as blocked instead of the sites it contains.
+  `onboarding_resistance_toggle_hint` says intensity can change at any time, even with a lock.
+  `onboarding_welcome_body` does not explain that Resistance requires Pro.
+  `tour_blocked_attempts_body` says “sites blocked”, but the metric counts attempts.
+  Review English source messages separately. Do not silently change their meaning in Italian.
+- **Claims to confirm:** Review the FAQ, privacy policy, supported platforms, setup time (“less than one minute”), categories, and updates.
+  An editorial review does not replace legal or commercial verification.
 
-## Verifica
+## Verification
 
-Il catalogo italiano è confrontato integralmente con quello inglese. Per ogni modifica preservare URL, chiavi, parametri e riferimenti commerciali; eseguire compilazione Paraglide, check, test e controllo visuale nelle schermate effettive. Non cambiare frasi già corrette soltanto per preferenza lessicale.
+The Italian catalog has been compared with the complete English catalog.
+Preserve URLs, keys, parameters, and commercial references in every change.
+Run Paraglide compilation, checks, tests, and visual reviews on actual screens.
+Do not revise correct phrases only because of a style preference.
