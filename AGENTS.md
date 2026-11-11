@@ -2,35 +2,41 @@
 
 ## Package Management & Runtime
 
-ALWAYS use **Bun** for all package management and script execution tasks.
+Use **Bun** for package management and script execution.
 
 - Use `bun install` instead of `npm install`
 - Use `bun run` instead of `npm run`
 - Use `bun` instead of `node`
-- Do NOT use `npm`, `yarn`, or `pnpm` under any circumstances.
+- Never use `npm`, `yarn`, or `pnpm`.
 - **When installing packages**, use `bun add <package>` or `bun add -d <package>`.
 - **TypeScript compatibility**: Keep `typescript@~6` and `@typescript/native@npm:typescript@7` installed together while `svelte-check` requires both. The `check` script uses `--tsgo`. Do not bump the root `typescript` dependency to 7 until Svelte tooling supports it without TypeScript 6.
 - **Adapter compatibility**: Keep `@sveltejs/adapter-node` on v5 while using SvelteKit 2; adapter-node v6 requires SvelteKit 3. Review the migration as a coordinated major update.
-- **Running Locally**: The development server is ALWAYS running at `https://localhost:5173/` during development. You do NOT need to run `bun run dev` yourself. Use this URL to test and verify changes.
-- **Initial Setup**: Run `bun run setup` to configure `.env` (generating `BETTER_AUTH_SECRET`, a persistent Ed25519 entitlement signing/verification key pair outside the checkout, and missing `DEFAULT_ADMIN_*` fixture credentials if needed), start Docker PostgreSQL, and apply Drizzle migrations. `bun run gen:entitlement-keys` provisions/reuses dev entitlement keys and populates `.env`; a positional output directory manages standalone files without touching `.env`. On VPS, `setup-vps.sh` passes `ACE_VPS_BOOTSTRAP=1` to dev bootstrap while `setup-env.ts` creates/reuses a separate production pair under `~/.config/ace-blocker/entitlement-keys` and writes both values to `.env` (mode 0600). Reruns never rotate keys. `scripts/setup.ts` detects Debian/Ubuntu, Arch, Fedora/RHEL, openSUSE and Alpine via `os-release`, checks `certutil` first, and installs distro-specific NSS tools only when needed; package selection lives in `scripts/linux-setup.ts` and is covered by unit tests. See README.md. The production VPS script `scripts/setup-vps.sh` is separately Debian/Ubuntu-specific; do not treat it as portable.
-- **Local DB migration rebases**: The checked-in `drizzle/0000` replaces earlier development migration files. `bun run setup` executes `bun scripts/db-baseline.ts` before `db:migrate`; it compares the existing local catalog against the checked-in snapshot and, only for a matching legacy schema, records the new baseline while preserving older migration history. It removes the obsolete `account.issuer` field only if `account` is empty under an exclusive lock. Any unexpected differences or non-local/prod URL must fail closed. Run `bun scripts/db-baseline.ts --dry-run` for read-only diagnosis. Do not reset user databases or hand-edit migration history. See README.md.
+- **Running locally:** The development server runs at `https://localhost:5173/`. Do not start `bun run dev` yourself. Use that URL to test and verify changes.
+- **Initial setup:** Run `bun run setup`. It configures `.env`, creates `BETTER_AUTH_SECRET`, creates a persistent Ed25519 entitlement signing and verification key pair outside the checkout, and fills missing `DEFAULT_ADMIN_*` fixture credentials when needed. It also starts Docker PostgreSQL and applies Drizzle migrations.
+  Run `bun run gen:entitlement-keys` to create or reuse development entitlement keys and fill `.env`. Provide a positional output directory to manage standalone files without changing `.env`.
+  On a VPS, `setup-vps.sh` passes `ACE_VPS_BOOTSTRAP=1` to the development bootstrap. `setup-env.ts` creates or reuses a separate production key pair in `~/.config/ace-blocker/entitlement-keys`. It writes both values to `.env` with mode 0600. Repeated setup must never rotate keys.
+  `scripts/setup.ts` detects Debian/Ubuntu, Arch, Fedora/RHEL, openSUSE, and Alpine through `os-release`. It checks for `certutil` before installing distribution-specific NSS tools. `scripts/linux-setup.ts` selects packages; unit tests cover this selection. See README.md.
+  The production VPS script `scripts/setup-vps.sh` supports Debian/Ubuntu only. Do not treat it as portable.
+- **Local database migration rebases:** The checked-in `drizzle/0000` replaces earlier development migrations. During `bun run setup`, run `bun scripts/db-baseline.ts` before `db:migrate`. Compare the existing local catalog with the checked-in snapshot. Record the new baseline only for a matching legacy schema, and preserve older migration history.
+  Remove the obsolete `account.issuer` field only when `account` is empty and an exclusive lock is held. Fail closed for unexpected schema differences or a non-local/production database URL.
+  For read-only diagnosis, run `bun scripts/db-baseline.ts --dry-run`. Never reset user databases or edit migration history by hand. See README.md.
 - **Database Management**: Run `bun run db:delete` to stop the Docker database and delete its associated volumes (virtual disk); this is destructive and must never be used as an automatic migration-repair step.
 - **Development Credentials**: `bun run setup` fills missing/blank `DEFAULT_ADMIN_EMAIL`, `DEFAULT_ADMIN_USERNAME` and `DEFAULT_ADMIN_PASSWORD` in `.env` without overwriting nonblank custom values. The dev seeder also falls back to these defaults:
     - **Email**: `dev@example.com`
     - **Username**: `Admin`
     - **Password**: `dev-password`
     - **Login**: `https://localhost:5173/signin` after `bun run dev`
-      Both `hooks.server.ts:init` and `seedDatabase()` require a local loopback PostgreSQL URL before seeding any dev account. Existing users retain their passwords; only role/email verification/Pro fixture are updated. For custom admin emails, require a custom 12+-character password (never assign the public dev password). Do not log passwords. The production provisioning flow in `scripts/provision-admin.ts` remains separate and unchanged.
-- **Committing Changes**: You **MUST** perform git commits yourself. Once you have finished a task and verified it, run `git add .` and `git commit -m "..."` with a descriptive message. Do NOT ask the user to commit for you.
+      Both `hooks.server.ts:init` and `seedDatabase()` require a local loopback PostgreSQL URL before they seed a development account. Keep existing user passwords. Update only the role, email verification, and Pro fixture. For a custom admin email, require a custom password of at least 12 characters. Never use the public development password or log passwords. Keep the production provisioning flow in `scripts/provision-admin.ts` separate and unchanged.
+- **Committing changes:** Commit verified work yourself. Run `git add .` and `git commit -m "..."` with a descriptive message. Do not ask the user to make the commit.
 
 ## Self-Maintenance (IMPORTANT)
 
-- **Maintain Context**: You MUST automatically edit this `AGENTS.md` file whenever significant changes occur in the project (e.g., new tools added, new core documentation links found, project structure changes, or new patterns established). Keep this document up-to-date as the "Source of Truth" for your behavior in this project.
+- **Maintain context:** Update this `AGENTS.md` when the project changes significantly. Examples include new tools, core documentation links, structural changes, and established patterns. Keep this document current as the source of truth for work in this project.
 
 ## Core Documentation & Tech Stack
 
 **🚨 CRITICAL MANDATORY REQUIREMENT 🚨**
-Before performing ANY task related to the technologies below, you MUST use `read_url_content` to read the linked `llms.txt` documentation. Relying solely on internal knowledge is UNACCEPTABLE and leads to outdated patterns (e.g., missing Svelte 5 runes).
+Before you work with a technology listed below, use `read_url_content` to read its linked `llms.txt` documentation. Do not rely only on internal knowledge. It can omit current requirements, such as Svelte 5 runes.
 
 - **Svelte 5 & SvelteKit**: [Documentation](https://svelte.dev/llms.txt) - Full-stack framework. **MUST use Svelte 5 runes (`$state`, `$derived`, `$effect`, etc.)**.
 - **Drizzle ORM**: [Documentation](https://orm.drizzle.team/llms.txt) - Database management.
@@ -43,10 +49,10 @@ Before performing ANY task related to the technologies below, you MUST use `read
 
 ### Mandatory Research Workflow
 
-1. **Identify**: Determine which technologies from the list above are involved in the task.
-2. **Fetch**: Call `read_url_content` for EVERY relevant documentation URL.
-3. **Analyze**: Use only the patterns, runes, and practices found in that documentation.
-4. **Citing Source**: In your plan, briefly mention which documentation was consulted (e.g., "Consulted Svelte 5 llms.txt for proper rune usage").
+1. **Identify:** Find the listed technologies that the task uses.
+2. **Fetch:** Call `read_url_content` for every relevant documentation URL.
+3. **Analyze:** Use the patterns, runes, and practices in that documentation.
+4. **Cite sources:** In your plan, name the documentation you consulted (for example, "Consulted Svelte 5 llms.txt for proper rune usage").
 
 **FAILURE TO FOLLOW THIS WORKFLOW IS A PROJECT-LEVEL FAILURE.**
 
@@ -57,7 +63,7 @@ Before performing ANY task related to the technologies below, you MUST use `read
 ## Localization (Paraglide JS)
 
 - **LLM translation and editorial QA:** Read [`docs/LLM_LOCALIZATION_WORKFLOW.md`](docs/LLM_LOCALIZATION_WORKFLOW.md) before producing or reviewing target-locale content; it covers both the website and desktop app, product terminology, natural writing, independent QA and SEO/localized-page gates.
-- **CRITICAL**: All user-facing text **MUST** be localized using Paraglide. Hardcoded strings are **FORBIDDEN** in UI components.
+- **Critical:** Localize all user-facing text with Paraglide. Do not hardcode strings in UI components.
 - **Workflow**:
     1. Add the string key to `messages/en.json` (format: `"snake_case_key": "Text content"`).
     2. Run `bun run check` (or let the dev server auto-generate fields) to ensure types are updated.
@@ -69,13 +75,13 @@ Before performing ANY task related to the technologies below, you MUST use `read
 
 ## Project Description
 
-This is the **Ace Blocker** marketing and subscription website — a full-stack SvelteKit application for product publicity, user management, subscriptions, and REST API access. It handles authentication (Better Auth), payments (DodoPayments), file hosting (BunnyCDN), and serves as the upstream content provider for the Ace Engine (site packs, resistance scripts, and binary releases).
+This project is the **Ace Blocker** marketing and subscription website. It uses full-stack SvelteKit for public pages, accounts, subscriptions, and REST APIs. Better Auth handles authentication. DodoPayments handles payments. BunnyCDN hosts files. The website supplies site packs, Resistance scripts, and binary releases to Ace Engine.
 
 ## UI Identity
 
 **Before any task that creates, redesigns, or materially alters visible UI, read `docs/ui-identity.md`.** It is the approved target identity for the website and keeps the public site aligned with the desktop app.
 
-The site should be the more expressive side of a shared Ace language:
+Use a more expressive version of the shared Ace visual language on the website:
 
 - Signal amber (`#FFB000`) for intervention/commitment/attention;
 - warm Ink/Paper neutrals instead of blue-slate defaults;
@@ -85,12 +91,12 @@ The site should be the more expressive side of a shared Ace language:
 - actual Ace concepts — policies, schedules, locks, resistance, site packs — used as the visual material;
 - product-UI previews may simplify, but must stay visually faithful to the current desktop app domain components instead of inventing a separate pseudo-app language;
 - theme-dependent brand artwork should follow the CSS `.dark` state rather than hydration-time JavaScript theme guesses, so the correct asset is present on first paint and refresh;
-- the official brand files come from the sibling `ace-blocker-logo` repository: **use `ace-lockup-{light,dark}-no-tagline-transparent.svg` for visible site branding**, `ace-lockup-{light,dark}-transparent.png` for email branding, and `ace-icon-*-transparent.svg` for UI favicons. The SVGs must not have a background rectangle and the PNGs must retain alpha. The no-tagline logo is legible in the navbar at 48 px-high on desktop.
+- Use official brand files from the sibling `ace-blocker-logo` repository. For visible site branding, **use `ace-lockup-{light,dark}-no-tagline-transparent.svg`**. For email branding, use `ace-lockup-{light,dark}-transparent.png`. For UI favicons, use `ace-icon-*-transparent.svg`. SVGs must not contain background rectangles. PNGs must retain transparency. The desktop navbar must keep the no-tagline logo legible at a height of 48 px.
 - restrained, explanatory motion.
 
-Do not default to the old generic marketing composition: centered gradient hero, blurred blobs, release pill, three equal feature cards, rounded icon tiles, hover-lift cards, or generic premium glow/crown treatment.
+Do not reuse the old generic marketing layout. Avoid centered gradient heroes, blurred blobs, release pills, three equal feature cards, rounded icon tiles, hover-lift cards, and generic premium glow or crown effects.
 
-For visible marketing work, the mandatory design skills are `frontend-design`, `design-taste-frontend`, and `ui-ux-pro-max`. Use `svelte-code-writer`, `svelte-core-bestpractices`, and `svelte-components` for implementation, then `web-design-guidelines` plus real light/dark screenshots for final review. For dense account/admin product UI, treat `frontend-design` + `ui-ux-pro-max` as primary; `design-taste-frontend` must not override product-UI semantics.
+For visible marketing changes, use the required `frontend-design`, `design-taste-frontend`, and `ui-ux-pro-max` skills. For implementation, use `svelte-code-writer`, `svelte-core-bestpractices`, and `svelte-components`. For final review, use `web-design-guidelines` and real screenshots in light and dark modes. For dense account/admin product UI, treat `frontend-design` + `ui-ux-pro-max` as primary; `design-taste-frontend` must not override product-UI semantics.
 
 ## Features walkthroughs (2026-11-09)
 
@@ -98,24 +104,26 @@ For visible marketing work, the mandatory design skills are `frontend-design`, `
 - Marketing demos live in `src/lib/components/marketing/{NetworkBlockDemo,ResistanceDemo}.svelte`. They are deterministic, isolated illustrations: never connect them to the desktop engine, browser user settings or any account mutations.
 - DemoPlayback.svelte.ts and DemoPointer.svelte implement finite guided walkthroughs: move pointer -> hover -> press -> change state -> settle. Do not change state before simulated clicking. Preserve no autoplay on mount, manual interaction priority and reduced motion.
 - Marketing NetworkBlockDemo.svelte preserves compact action buttons, a Categories/Rules divider, week schedule preview, and a deliberate lock setup and confirmation step. Locked blocks retain read-only View.
-- The non-compact Network Block walkthrough now ends with a purely local, simulated browser scene: click to open, fill the configured custom domain, navigate, and show an HTTP 404 only when the configured rule applies at the fixed example time (Monday 10:30). The website preview never makes external requests or uses an iframe. Its final network response is a passive timed cue, not a fictitious extra click; preserve manual Back/Play/Replay, reduced-motion support, and the unchanged compact homepage demo.
+- End the non-compact Network Block walkthrough with a local simulated browser scene. Show these actions in order: click to open, enter the configured custom domain, and navigate. Show HTTP 404 only if the configured rule applies at the fixed example time (Monday 10:30).
+  The preview must not make external requests or use an iframe. Show the final network response as a passive timed cue, not as an invented click. Keep manual Back/Play/Replay, reduced-motion support, and the unchanged compact homepage demo.
 - ResistanceDemo.svelte uses real intervention catalog IDs and defaults, CAPTCHA opt-in and per-site effects; never apply one site’s script to another website preview.
-- The Resistance demo layout prioritizes the replica preview: roughly 30% controls / 70% preview in the compact homepage version (under a full-width editorial heading), and 35% / 65% on the feature page. Wide feature previews keep side-by-side Before/After; narrow preview containers use a switch. **Use the named `resistance-layout` CSS container query (<=760px component width)**, not a viewport media query, to stack controls above the preview and expose the collapsible panel; this also protects the embedded compact demo inside `/get-pro` at desktop viewport widths. Compact controls start collapsed; full walkthrough controls start expanded and guided playback reopens them as needed. Preserve preview interactions and prevent category text overflow.
-- Visual QA screenshots use the real theme control, and browser reports should have zero horizontal overflow and console errors.
+- Give the replica preview most of the Resistance demo width. On the compact homepage version, use about 30% for controls and 70% for the preview, below a full-width editorial heading. On the feature page, use about 35% for controls and 65% for the preview.
+  Show Before/After side by side in wide previews. Use a switch in narrow preview containers. **Use the named `resistance-layout` CSS container query (<=760px component width)** instead of a viewport media query. Stack controls above the preview and show the collapsible panel at this width. This must also protect the compact demo inside `/get-pro` on desktop viewports.
+  Start compact controls collapsed and full walkthrough controls expanded. Reopen controls during guided playback as needed. Preserve preview interactions and prevent category text overflow.
+- For visual QA screenshots, use the real theme control. Verify that the browser reports no horizontal overflow or console errors.
 - The live desktop `ace-blocker/apps/ace-app` controls and `boredom-engine` intervention catalog are authoritative for product claims. Keep Free and Pro Gambling/Streaming variants distinguishable.
-- Changes to feature-page copy must update EN/IT/DE/ES messages and the SEO locale gate together; review translations for accuracy.
+- When feature-page text changes, update EN/IT/DE/ES messages and the SEO locale gate together. Check each translation for accuracy.
 - Run focused browser tests with `bun x playwright test --config e2e/marketing-features.config.ts` and repeatable visual QA with `bun scripts/capture-marketing-demos.ts` (32 local PNG screenshots, ignored under `test-results/marketing-demos`).
 
 ## Public language selection (2026-11-06)
 
-The navbar includes a two-language selector (English / Italiano) on desktop
-and in the mobile menu. It uses Paraglide's URL-first strategy, keeps the
-current pathname, query, and fragment, and changes document location so SSR,
-metadata, and headings all agree. Other configured languages remain supported
-by their existing URLs but are not offered here before full translation.
+The desktop navbar and mobile menu offer English / Italiano selection.
+Paraglide detects the locale from the URL first. The selector keeps the current
+pathname, query, and fragment. It changes the document location so that SSR,
+metadata, and headings use the same locale. Other configured languages remain accessible through their existing URLs.
+Do not add them to the selector before their translations are complete.
 The Italian message catalog covers public, account/admin, and email strings;
-Privacy and Terms page bodies use Paraglide message keys. Localized legal
-language still requires independent professional review before publication.
+Privacy and Terms page bodies use Paraglide message keys. Obtain independent professional review of localized legal text before publication.
 See `docs/ITALIAN_TERMINOLOGY.md` for the shared IT glossary, unresolved
 English-source ambiguities and the `src/lib/utils/count-message.ts` pattern
 for zero/singular/plural agreement.
@@ -123,8 +131,9 @@ for zero/singular/plural agreement.
 ## Installer-release artifact policy (2026-11-10)
 
 - Admin installer uploads accept only `AceBlocker-VERSION.msi` (Windows x64)
-  or `AceBlocker-VERSION-linux-x64.tar.gz` (Linux x64). GitHub Actions artifacts
-  download as ZIP wrappers; upload the inner platform package, not the ZIP.
+  or `AceBlocker-VERSION-linux-x64.tar.gz` (Linux x64). GitHub Actions
+  downloads include ZIP wrappers. Upload the platform package inside the ZIP,
+  not the wrapper.
 - Authoritative target names are in `src/lib/installer-release-policy.ts`.
   Server-side structural checks (MSI header, bounded safe tar/gzip with x64
   ELF binaries and mandatory files) live in
@@ -138,47 +147,50 @@ for zero/singular/plural agreement.
   same version; one database transaction publishes both download flags.
   Withdrawal disables both. Only the signed desktop publication endpoint may
   approve Windows; the generic legacy toggle cannot.
-- Authenticode is **not** verified by the Linux website itself. The trusted
+- The Linux website does **not** verify Authenticode. The trusted
   native Windows signing/verifier stage and offline Ed25519 release signature
   remain separate required gates. Do not claim signed Linux manifests or
   unattended MSI installation exist. See `docs/DESKTOP_UPDATES.md`.
 
 ## Installer publication UI environments (2026-11-11)
 
-- The admin installer page exposes explicit disabled-action reasons and shows
-  whether it is running in development or production publication mode.
+- The admin installer page explains why an action is disabled. It also shows
+  whether publication runs in development or production mode.
 - Unsigned/manual installers can be published only in a SvelteKit development
   build with `NODE_ENV=development` and local PostgreSQL, as guarded by
   `src/lib/server/installer-publication-mode.ts`. Even there, the server
   requires validated x64 installer bytes and the signed Windows/Linux pair
   remains atomic.
-- In production, ordinary Windows MSI uploads are **rejected**, even when the
-  MSI header is valid. Production Windows releases enter only via the trusted
+- In production, reject ordinary Windows MSI uploads, even if the MSI header is valid. Production Windows releases enter only via the trusted
   Authenticode-verified, Ed25519-signed CI/offline pipeline and private staging,
   then appear as staged candidates in the admin list. The admin can upload
   the matching validated Linux bundle and publish the signed Windows row.
   Never treat a manually supplied MSI as signed based solely on its filename
   or compound-file header. See `docs/DESKTOP_UPDATES.md`.
-- `src/lib/installer-publication-ui.ts` only explains availability in the
-  browser. API-side gates in `src/lib/server/api/routers/admin/installers.ts`
-  and `src/lib/server/desktop-update-service.ts` remain authoritative.
+- `src/lib/installer-publication-ui.ts` explains action availability only in
+  the browser. Enforce the authoritative gates in
+  `src/lib/server/api/routers/admin/installers.ts` and
+  `src/lib/server/desktop-update-service.ts`.
 
 ## Download page primary installer actions (2026-11-11)
 
 - The public `/download` hero contains **one selected-platform installer card**. It offers the direct installer button and matching terminal command together, above the other-builds list.
-- Platform tabs (Windows/macOS/Linux) update both actions from the same published `platformRows` metadata, and explicit `?arch=` links select the requested OS even if unavailable. Use `src/routes/download/_components/installer-command.ts` to generate commands; Windows downloads an MSI and invokes `msiexec`, while Linux downloads the validated tar.gz bundle and invokes its included `install.sh`. Never copy stale CDN URLs or present a command for an unpublished installer.
-- With no release, keep both actions visible but disabled, and show `Not currently available`. Preserve responsive stacking, long-command horizontal scrolling, and correct copy feedback. Other platform builds and checksum validation remain in their lower sections.
+- Make the Windows/macOS/Linux tabs update both actions from the same published `platformRows` metadata. An explicit `?arch=` link must select the requested OS even if no installer is available.
+  Generate commands with `src/routes/download/_components/installer-command.ts`. For Windows, download the MSI and invoke `msiexec`. For Linux, download the validated tar.gz bundle and invoke its included `install.sh`. Never copy stale CDN URLs or show a command for an unpublished installer.
+- If no release is available, show both actions in a disabled state. Show `Not currently available`. Preserve responsive stacking, horizontal scrolling for long commands, and correct copy feedback. Other platform builds and checksum validation remain in their lower sections.
 
 ## Pro product page visibility (2026-11-11)
 
 - `/get-pro` has two subscription-aware hero paths: Free visitors see the upgrade introduction; active Pro accounts see the activation/linking panel. The price/billing comparison and checkout calls to action remain **Free-only**.
 - **Both** Free and Pro users must see the Resistance and Categories marketing sections. Active Pro accounts additionally see a concise list of included Pro features (all curated categories, Custom Lists, Resistance, cloud backup, and Network Blocks) without prompting them to purchase again.
-- Never equate a website subscription with verified desktop activation. Pro linking continues through `ProActivationPanel`; only the desktop app confirms import. The browser component tests in `src/routes/get-pro/page.svelte.spec.ts` cover both branches.
+- Do not treat a website subscription as proof of desktop activation. Pro linking continues through `ProActivationPanel`; only the desktop app confirms import. The browser component tests in `src/routes/get-pro/page.svelte.spec.ts` cover both branches.
 
 ## HTTPS desktop device linking (2026-11-11)
 
-- The preferred license/account handoff starts inside **Ace Blocker Desktop → Settings → License → Connect account**, not by navigating to an `aceblocker://` URL from the website. Tauri's native Rust process starts and polls a one-time HTTP(S) device challenge; browser `/connect` displays the code entry and explicitly authorizes the logged-in, email-verified user.
-- Server routes `/api/device-link/{start,poll,approve}` are **native SvelteKit** endpoints. The Elysia API interceptor in `src/hooks.server.ts` must exempt those paths or they return 404. Raw device secrets and unclaimed API keys never appear in browser URLs; device challenge storage is hash-only, expires after 10 minutes, polls at least every 5 seconds, and atomically consumes an approval once.
+- Start the preferred license and account handoff at **Ace Blocker Desktop → Settings → License → Connect account**. Do not start it by opening an `aceblocker://` URL from the website.
+  Tauri's native Rust process starts and polls a one-time HTTP(S) device challenge. The browser route `/connect` displays the code entry and explicitly authorizes the signed-in, email-verified user.
+- Implement `/api/device-link/{start,poll,approve}` as **native SvelteKit** routes. Exempt them from the Elysia API interceptor in `src/hooks.server.ts`; otherwise, they return 404.
+  Never put raw device secrets or unclaimed API keys in browser URLs. Store device challenges only as hashes. Expire challenges after 10 minutes. Poll no more often than every 5 seconds. Consume each approval atomically and only once.
 - After native redemption, the Tauri process imports the account key through the existing capability-protected engine remoc `setApiKey` RPC. Never introduce a browser-accessible engine HTTP listener or transmit its privileged capability to JavaScript.
 - `drizzle/0003_tearful_ultimates.sql` creates `device_links`; deploy the migration **before** deploying native clients and the website. Keep edge rate limiting on unauthenticated start/poll endpoints. See `docs/DEVICE_LINKING.md` for protocol and security gates.
 - Legacy `aceblocker://` is available only through a **manual** fallback button. Do not auto-open it on `/signin`, `/get-pro`, or checkout completion. Tests: `src/lib/server/device-link.test.ts`, `e2e/device-link.spec.ts` and Pro activation component tests.
@@ -186,22 +198,22 @@ for zero/singular/plural agreement.
 ## Desktop account activation
 
 - The engine exposes **typed remoc IPC, not a local browser HTTP endpoint**. Website sign-in, checkout completion, and Pro activation pass account keys to the allowlisted `aceblocker://account/api-key` handler, with credentials in the URI fragment rather than the query string.
-- Opening the protocol is only a handoff request; the browser **cannot know** whether the desktop app imported the key or verified Pro. Never show a successful desktop activation without an explicit app-origin acknowledgement. Show a pending state with instructions to verify under Settings → License in Ace Blocker, and let the user retry. Website Pro entitlement may be shown as active independently.
+- Opening the protocol only requests a handoff. The browser **cannot know** whether the desktop app imported the key or verified Pro. Never show a successful desktop activation without an explicit app-origin acknowledgement. Show a pending state with instructions to verify under Settings → License in Ace Blocker, and let the user retry. Website Pro entitlement may be shown as active independently.
 - Linux development registers the handler in the user session as part of the desktop app's `bun run dev` / `tauri dev`; see `ace-blocker/apps/ace-app/docs/DEV_AUTOMATION.md`.
 
 ## Environment validation at startup
 
-- **Development now fails closed:** Vite's `configureServer` hook validates the presence and nonblank values of every required server environment setting **before the dev server listens**. `hooks.server.ts:init` repeats the check. Missing settings cause a clearly labeled `[ACE ENV ERROR]` with the missing variable names, not secret values. Fill in all required settings before starting development.
+- **Development fails closed:** Before the development server listens, Vite's `configureServer` hook verifies that every required server environment variable exists and is not blank. `hooks.server.ts:init` repeats the check. Missing settings cause a clearly labeled `[ACE ENV ERROR]` with the missing variable names, not secret values. Fill in all required settings before starting development.
 - `src/lib/server/config/development.ts` derives the required keys from the production schema, excluding runtime `NODE_ENV`, production-only `BETTER_AUTH_URL` and `ORIGIN`, and optional settings such as `ACE_RELEASE_INGEST_TOKEN`. Empty and whitespace-only values count as missing; it does **not** make network calls or prove API credentials are valid.
-- **Builds, tests, migrations and scripts remain import-safe:** missing provider credentials must not throw at module import time, and the Vite startup check runs only for the real dev server (not Vitest). Email/CDN services still return explicit errors if invoked in a missing-key test. See `src/lib/server/optional-providers.test.ts`.
+- **Keep builds, tests, migrations, and scripts import-safe.** Missing provider credentials must not cause errors when a module loads. Run Vite's startup validation only for the real development server, not Vitest. Email/CDN services still return explicit errors if invoked in a missing-key test. See `src/lib/server/optional-providers.test.ts`.
 - Production retains strict syntax/security validation in `src/lib/server/config/production.ts` and `hooks.server.ts:init`. Never bypass production validation or insert dummy production credentials.
 - In development, `BETTER_AUTH_URL` is not required: Better Auth resolves its base URL from `PUBLIC_BETTER_AUTH_URL` when absent. `ORIGIN` is read by the production SvelteKit Node adapter, not required by the Vite development server. Both remain strictly required by the production schema.
 
 ## SEO and AI-search conventions
 
-- Canonical production origin: `https://aceblocker.com`. Use `src/lib/seo.ts` to manage indexable public routes, canonical URLs, and language alternatives. Do not add private routes to the sitemap.
+- Production origin: `https://aceblocker.com`. Use `src/lib/seo.ts` for public indexable routes, canonical URLs, and language alternatives. Exclude private routes from the sitemap.
 - Paraglide compilation must use URL-first locale detection in **both** `vite.config.ts` and the `paraglide:compile` script. Use `localizeHref` on public navigation links so the selected locale survives navigation.
-- The `/faq` page has fully localized main content across EN, IT, ES and DE. Other indexable public pages are available in English and Italian, including the legal page bodies. Spanish and German still fall back to English on those pages and must not be advertised or indexed as fully translated. `localesForPath` is the SEO gate.
+- The `/faq` main content is fully localized in EN, IT, ES, and DE. Other indexable public pages are available in English and Italian, including the legal page bodies. Spanish and German still fall back to English on those pages and must not be advertised or indexed as fully translated. `localesForPath` is the SEO gate.
 - Visible FAQ answers and JSON-LD must stay in sync; never invent reviews, prices, feature claims or availability. See `docs/SEO.md` for the Search Console/Bing manual setup and post-deploy `bun run seo:audit` read-only smoke checks.
 
 ## Project Structure
@@ -229,7 +241,8 @@ for zero/singular/plural agreement.
         - `api/`: Elysia API implementation using `@elysiajs/openapi` for type-safe RPC and auto-generated documentation.
         - `cdn/`: BunnyCDN file management (`common.ts`, `delete.ts`, `get.ts`, `upload.ts`).
         - `cache.ts`: Server-side caching.
-        - `ace-hosts-site-packs.ts`: Production startup + 2nd-of-month 04:00 UTC pull of all 14 canonical SQLite site-pack ZIPs from the latest `Linea-Software/ace-hosts` GitHub release; verifies SHA-256, skips unchanged assets, mirrors changed files to BunnyCDN, serializes simultaneous runs, and exposes in-process status to admin endpoints. Admins can manually trigger asynchronous sync from `/admin/releases/site-packs`. GitHub never pushes site packs to the site. The legacy Anime/Manga Extended pack is retired only after syncing a release that no longer includes it. See README.md.
+        - `ace-hosts-site-packs.ts`: At production startup and at 04:00 UTC on the second day of each month, fetch all 14 canonical SQLite site-pack ZIPs from the latest `Linea-Software/ace-hosts` GitHub release. Verify SHA-256 and skip unchanged assets. Mirror changed files to BunnyCDN. Serialize concurrent runs and expose in-process status through admin endpoints.
+          Admins can start an asynchronous sync at `/admin/releases/site-packs`. GitHub never pushes site packs to the website. Retire the legacy Anime/Manga Extended pack only after syncing a release that omits it. See README.md.
         - Installer CI intake is one-way GitHub Actions → site at `POST /api/v1/releases/ingest/installer`. It uses `ACE_RELEASE_INGEST_TOKEN` (not a GitHub credential), verifies the submitted SHA-256, records source provenance, rejects version/target reuse, and always creates a staged release that still requires admin publication.
         - `email.ts`: Email sending.
         - `messages.ts`: Server-side message/notification logic.
@@ -249,22 +262,24 @@ for zero/singular/plural agreement.
 - **User Extensions (1:1)**:
     - **Pro Status**: Managed via the `proStatus` table in `schema.ts` to avoid bloating the core `user` table.
     - **Backups**: Managed via the `backups` table in `schema.ts`. Each user has exactly one latest backup (upserted).
-- **Relations**: All `relations` (including `userRelations`) should be defined in `schema.ts` to ensure visibility across the entire app schema.
+- **Relations:** Define all `relations`, including `userRelations`, in `schema.ts`. This makes them visible across the application schema.
 
 ## API Development & Documentation
 
-The project uses **Elysia** to handle all API requests under the `/api` prefix.
+**Elysia** handles all API requests under `/api`.
 
 - **Catch-all Route**: `src/routes/api/[...slugs]/+server.ts` forwards all requests to the Elysia app.
 - **Type Safety**: The Elysia app exports an `AppType`. Use `@elysiajs/eden` in external projects to get full type safety and auto-completion.
 - **OpenAPI / Swagger**:
     - In development mode, the interactive Swagger UI is available at `/api/docs`.
     - The raw OpenAPI specification is available at `/api/v1/openapi.json`.
-- **Router Pattern**: Always use modular routers in `src/lib/server/api/routers/`.
+- **Router pattern:** Use modular routers in `src/lib/server/api/routers/`.
 
 ## Payments (DodoPayments)
 
-- **Country-based currency:** `/get-pro` and `/checkout` read only `X-Ace-Visitor-Country` from Nginx, never raw client-controlled `CDN-RequestCountryCode` or `CF-IPCountry`. The VPS Nginx configuration trusts BunnyCDN country data only from IPs in `/etc/nginx/ace-bunny-edges.geo` (generated from Bunny's published edge feeds), or Cloudflare data from a trusted Cloudflare peer. `scripts/vps/refresh-bunny-edges.sh` installs/refreshes this allowlist and the VPS setup installs a daily cron job. Country mapping supports USD/EUR/GBP/INR; unknown locations fall back to USD. Deploy the updated Nginx config as well as the app whenever changing this path.
+- **Country-based currency:** `/get-pro` and `/checkout` must read only `X-Ace-Visitor-Country` from Nginx. Never trust raw client-controlled `CDN-RequestCountryCode` or `CF-IPCountry`.
+  Trust BunnyCDN country data only from IPs in `/etc/nginx/ace-bunny-edges.geo`, which uses Bunny's published edge feeds. Alternatively, trust Cloudflare data only from a trusted Cloudflare peer. `scripts/vps/refresh-bunny-edges.sh` installs and refreshes this allowlist; the VPS setup installs a daily cron job.
+  Map countries to USD/EUR/GBP/INR. Use USD for unknown locations. When this path changes, deploy both the updated Nginx configuration and the application.
 
 Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })` in `src/lib/server/auth.ts`.
 
@@ -275,17 +290,20 @@ Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })
 - **Webhooks**: Dodo deliveries arrive at `POST /api/auth/dodopayments/webhooks` — the Dodo dashboard endpoint must be `https://<host>/api/auth/dodopayments/webhooks`. Signature verification (Svix-style `webhook-id`/`webhook-timestamp`/`webhook-signature`) happens in the plugin via `@dodopayments/core/webhook`.
 - **Idempotency**: webhook events are recorded in `dodo_webhook_events` (keyed by a payload digest, see `src/lib/server/webhook-events.ts`). Every `onSubscription*` handler in `auth.ts` is gated by `shouldProcessWebhook()`, so retried deliveries are no-ops and stale events (older timestamp for the same subscription) are rejected.
 - **scheduled cancellation**: `subscription.cancelled` with `cancel_at_next_billing_date: true` keeps access until `next_billing_date` (matching the account page); only a final `subscription.expired`/`failed`/`on_hold`/`paused` clears it.
-- **Billing identity after inline checkout:** Local signup intentionally does not pre-create a Dodo customer. An inline purchase may therefore leave `user.dodoCustomerId` empty. `src/lib/server/billing-subscription.ts` reconciles active subscriptions against the signed-in user's **verified, exactly matching** email (including all customer pages and previously linked IDs). Sync and post-checkout verification persist a discovered active customer ID. Missing billing linkage is not HTTP 400 and must not revoke a manually granted Pro license. Cancellation uses the same lookup.
+- **Billing identity after inline checkout:** Local signup does not create a Dodo customer in advance. An inline purchase can leave `user.dodoCustomerId` empty.
+  `src/lib/server/billing-subscription.ts` reconciles active subscriptions against the signed-in user's **verified, exactly matching** email. It checks all customer pages and previously linked IDs. Sync and post-checkout verification save a discovered active customer ID.
+  Missing billing linkage must not cause HTTP 400 or revoke a manually granted Pro license. Use the same lookup for cancellation.
 - **Checkout confirmation:** `/checkout/completed` checks Pro at most four times, then shows an actionable delayed/error state with an explicit retry. A redirect is not confirmation of payment, and desktop protocol handoff still has no app-origin acknowledgement.
 - **Checkout appearance:** `/checkout?theme=dark|light` updates the site's mode as well as Dodo's hosted checkout theme. The responsive mobile cost/renewal strip appears before the embedded form; the full order panel is desktop-only. Dodo owns its cross-origin payment fields: style them via Dodo customization/checkout options, not host-page CSS.
-- **Testing**: `bun scripts/test-dodo-webhooks.ts` signs real webhook payloads against the dev server and asserts pro status changes (needs a running dev server + dev DB). Billing identity, API reconciliation and bounded confirmation are covered by corresponding Vitest tests; real dark/mobile checkout screenshots are saved in `test-results/`.
+- **Testing:** Run `bun scripts/test-dodo-webhooks.ts` to sign real webhook payloads against the development server and verify Pro status changes. This test needs a running development server and database. Billing identity, API reconciliation and bounded confirmation are covered by corresponding Vitest tests; real dark/mobile checkout screenshots are saved in `test-results/`.
 
 ## Nomenclature & Design Patterns
 
-- **Design tokens & UI consistency**: `docs/ui-identity.md` is the approved **target** visual direction. The token system currently lives in `src/routes/layout.css` (Tailwind v4 `@theme`), while [`docs/design-tokens.md`](docs/design-tokens.md) documents the current/legacy token state and prior consolidation work. The new palette is approved as a direction, but migrate it visually and incrementally; do not perform blind global color replacements without screenshot verification.
-- **Svelte Components**: All `.svelte` files MUST use `UpperCamelCase` naming convention (e.g., `Button.svelte`, `UserCard.svelte`).
+- **Design tokens and UI consistency:** Follow the approved **target** visual direction in `docs/ui-identity.md`. The current token system is in `src/routes/layout.css` (Tailwind v4 `@theme`). [`docs/design-tokens.md`](docs/design-tokens.md) records current and legacy tokens and earlier consolidation work.
+  The new palette is an approved direction. Migrate to it visually and in small steps. Never replace colors globally without checking screenshots.
+- **Svelte components:** Name every `.svelte` file in `UpperCamelCase` (for example, `Button.svelte` or `UserCard.svelte`).
 - **Typed Svelte props**: Use a type annotation on the destructuring (`let { foo }: { foo: string } = $props();`) rather than `$props<{ foo: string }>()`; the latter breaks the current `svelte-check --tsgo` CI typecheck.
-- **Page-specific components**: These MUST reside in a `./_components` folder within the route directory OR be prefixed with an underscore (e.g., `_Component.svelte`) to differentiate them from routes.
+- **Page-specific components:** Put them in the route's `./_components` directory or prefix their names with an underscore (for example, `_Component.svelte`). This distinguishes components from routes.
 - `/messages/`: Localization message files for Paraglide. During development, always prioritize English (`en`). Only translate when explicitly requested.
 - `/scripts/`: Development and maintenance scripts. **ALWAYS use TypeScript** for these scripts.
 - `/drizzle/`: Database migrations managed by Drizzle.
@@ -308,7 +326,8 @@ Use `bun run <script>` for these tasks:
 - `db:push`: Pushes schema changes to the database (development).
 - `db:migrate`: Runs migrations.
 - `db:studio`: Opens Drizzle Studio.
-- `provision-admin`: Idempotently promotes an existing account without changing its password. New accounts securely prompt for and confirm a password during direct interactive use; `--password-stdin` remains available for piped/non-interactive provisioning. Provisioning requires the lockfile-compatible Better Auth runtime; known-bad 1.7.0-1.7.2 installs must be repaired with `bun install --frozen-lockfile` rather than adding the reverted `account.issuer` column.
+- `provision-admin`: Promote an existing account without changing its password. Running the script again must have the same result. During interactive creation of a new account, prompt securely for a password and confirmation. Keep `--password-stdin` available for piped or noninteractive provisioning.
+  Use the Better Auth runtime compatible with the lockfile. Repair known-bad 1.7.0–1.7.2 installations with `bun install --frozen-lockfile`. Do not restore the reverted `account.issuer` column.
 - `check`: Compiles the git-ignored Paraglide output first, then runs SvelteKit sync and Svelte-check. Keep this self-contained so fresh CI checkouts do not depend on generated local files.
 - `test`: Runs unit and E2E tests.
 - `format`: Formats code with Prettier.
@@ -324,12 +343,12 @@ All server-side logging uses **Pino** for structured JSON logging.
 - **Component-level loggers**: In standalone server modules (CDN, pro, auth) and Elysia route files (admin routers, releases), create a module-level logger with `createLogger('component:name')`.
 - **SvelteKit hooks**: `src/hooks.server.ts` injects a per-request child logger into `event.locals.log` with a unique `requestId`.
 - **Dev vs Prod**: In development, logs are pretty-printed with colors via `pino-pretty`. In production, logs are raw JSON to stdout.
-- **Redaction**: Sensitive fields (`password`, `token`, `secret`, `apiKey`, `accessKey`, `headers.authorization`, `headers.cookie`) are automatically redacted from nested objects.
+- **Redaction:** The logger automatically removes sensitive fields from nested objects: `password`, `token`, `secret`, `apiKey`, `accessKey`, `headers.authorization`, and `headers.cookie`.
 - **DO NOT use `console.log` or `console.error`** in server-side code. Always use `log.info(...)`, `log.error(...)`, `log.warn(...)`, or `log.debug(...)`.
 
 ## Agent Skills
 
-You have specialized **Skills** at your disposal located in `./.agents/skills/` (managed by `npx skills`). Before performing complex tasks, you should check these directories for `SKILL.md` files. These files contain project-specific patterns, instructions, and examples that MUST be followed.
+Specialized **Skills** are in `./.agents/skills/` (managed by `npx skills`). Before complex tasks, check these directories for `SKILL.md`. Follow the project-specific patterns, instructions, and examples in these files.
 
 The following skills are installed for all agents:
 
@@ -406,26 +425,26 @@ The following skills are installed for all agents:
 
 ## Svelte MCP Tools usage:
 
-You have access to a Svelte MCP server for documentation. Use these tools effectively:
+Use the Svelte MCP documentation tools as follows:
 
 ### 1. list-sections
 
-Use this FIRST to discover all available documentation sections. Returns a structured list with titles, use_cases, and paths.
+Use this first to find available documentation sections. It returns titles, use_cases, and paths.
 When asked about Svelte or SvelteKit topics, ALWAYS use this tool at the start of the chat to find relevant sections.
 
 ### 2. get-documentation
 
-Retrieves full documentation content for specific sections. Accepts single or multiple sections.
+Fetch the full documentation for relevant sections. Request one or more sections per call.
 After calling the list-sections tool, you MUST analyze the returned documentation sections (especially the use_cases field) and then use the get-documentation tool to fetch ALL documentation sections that are relevant for the user's task.
 
 ### 3. svelte-autofixer
 
-Analyzes Svelte code and returns issues and suggestions.
+Analyze Svelte code for issues and suggested changes.
 You MUST use this tool whenever writing Svelte code before sending it to the user. Keep calling it until no issues or suggestions are returned.
 
 ### 4. playground-link
 
-Generates a Svelte Playground link with the provided code.
+Generate a Svelte Playground link from the supplied code.
 After completing the code, ask the user if they want a playground link. Only call this tool after user confirmation and NEVER if code was written to files in their project.
 
 ## Signed desktop MSI updates (server, gated)
@@ -439,8 +458,8 @@ After completing the code, ask the user if they want a playground link. Only cal
   using a bounded stream; public MSI delivery bypasses the VPS.
   `src/lib/server/desktop-update-service.ts` enforces staged/publishing/
   published/withdrawn state, audit and explicit admin review.
-- `GET /api/v1/releases/desktop/latest` is anonymous, account-independent
-  and default-disabled; it is **not** the legacy `/releases/latest` content feed.
+- `GET /api/v1/releases/desktop/latest` is anonymous and independent of accounts.
+  It is disabled by default. It is **not** the legacy `/releases/latest` content feed.
   `ACE_DESKTOP_UPDATES_ENABLED` must remain unset until production signing
   and pinned Windows client checks are ready.
 - Only `POST /api/v1/releases/ingest/desktop` takes a CI bearer token;
@@ -451,8 +470,8 @@ After completing the code, ask the user if they want a playground link. Only cal
 ## Curated Free starter categories (2026-11-08)
 
 The server catalog in `src/lib/server/ace-hosts-site-packs.ts` includes
-`pack-gambling-free` and `pack-streaming-free`, in addition to their
-separate broader Pro lists. The source-of-truth builder in sibling `ace-hosts`
+`pack-gambling-free` and `pack-streaming-free`. The broader Pro lists remain
+separate. The source-of-truth builder in sibling `ace-hosts`
 publishes these as `site-pack-*-free.zip`; a release must be published
 before the catalog can actually sync from GitHub. Do not claim availability
 from catalog registration alone.
