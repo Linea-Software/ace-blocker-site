@@ -15,6 +15,7 @@
 
 	import { apiClient } from '$lib/api-client';
 	import { onMount } from 'svelte';
+	import { Check } from '@lucide/svelte';
 	import PricingSection from './_components/PricingSection.svelte';
 	import ProActivationPanel from './_components/ProActivationPanel.svelte';
 
@@ -27,6 +28,13 @@
 	const enginePort = $derived(Number(page.url.searchParams.get('engine_port')) || 0);
 	const isPro = $derived(data.isPro || false);
 	let linkStatus = $state<'idle' | 'loading' | 'pending' | 'error'>('idle');
+	const proBenefits = [
+		m.pricing_all_packs,
+		m.pricing_custom_packs,
+		m.pricing_resistance,
+		m.pricing_cloud_backup,
+		m.pricing_network_blocks
+	];
 
 	async function handleLinkEngine() {
 		if (linkStatus === 'loading') return;
@@ -131,39 +139,73 @@
 				/>
 			</div>
 		</section>
-
-		<section class="border-b border-border bg-card py-14 sm:py-20">
-			<div class="ace-shell grid gap-12 lg:grid-cols-2">
-				<div>
-					<h2 class="font-display text-3xl font-semibold">
-						{m.about_resistance_title()}
+	{:else}
+		<section
+			class="border-b border-border bg-background py-12 sm:py-16"
+			aria-labelledby="pro-features-title"
+		>
+			<div
+				class="ace-shell grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-start"
+			>
+				<div class="max-w-lg">
+					<p class="font-mono text-xs text-signal-deep dark:text-signal">
+						{m.site_brand_name()} / {m.plan_pro_name()}
+					</p>
+					<h2 id="pro-features-title" class="mt-3 font-display text-3xl font-semibold">
+						{m.nav_pro_features()}
 					</h2>
-					<p class="mt-3 max-w-lg leading-relaxed text-muted-foreground">
-						{m.pricing_resistance_description()}
+					<p class="mt-3 leading-relaxed text-muted-foreground">
+						{m.plan_pro_description()}
 					</p>
-					<div class="mt-7">
-						<ResistanceDemo compact />
-						<a
-							href={resolve(
-								localizeHref('/features/resistance') as '/features/resistance'
-							)}
-							class="mt-4 inline-block text-sm font-semibold underline underline-offset-4"
-							>{m.feature_explore_resistance()}</a
+				</div>
+				<ul class="grid gap-x-6 sm:grid-cols-2" data-testid="active-pro-features">
+					{#each proBenefits as benefit, i (i)}
+						<li
+							class="flex min-h-14 items-center gap-3 border-t border-border py-3 text-sm font-medium"
 						>
-					</div>
-				</div>
-				<div>
-					<h2 class="font-display text-3xl font-semibold">{m.about_packs_title()}</h2>
-					<p class="mt-3 max-w-lg leading-relaxed text-muted-foreground">
-						{m.pricing_categories_description()}
-					</p>
-					<div class="mt-7">
-						<SitePackVisual />
-					</div>
-				</div>
+							<Check
+								class="size-4 shrink-0 text-signal-deep dark:text-signal"
+								aria-hidden="true"
+							/>
+							<span>{benefit()}</span>
+						</li>
+					{/each}
+				</ul>
 			</div>
 		</section>
 	{/if}
+
+	<section class="border-b border-border bg-card py-14 sm:py-20">
+		<div class="ace-shell grid gap-12 lg:grid-cols-2">
+			<div>
+				<h2 class="font-display text-3xl font-semibold">
+					{m.about_resistance_title()}
+				</h2>
+				<p class="mt-3 max-w-lg leading-relaxed text-muted-foreground">
+					{m.pricing_resistance_description()}
+				</p>
+				<div class="mt-7">
+					<ResistanceDemo compact />
+					<a
+						href={resolve(
+							localizeHref('/features/resistance') as '/features/resistance'
+						)}
+						class="mt-4 inline-block text-sm font-semibold underline underline-offset-4"
+						>{m.feature_explore_resistance()}</a
+					>
+				</div>
+			</div>
+			<div>
+				<h2 class="font-display text-3xl font-semibold">{m.about_packs_title()}</h2>
+				<p class="mt-3 max-w-lg leading-relaxed text-muted-foreground">
+					{m.pricing_categories_description()}
+				</p>
+				<div class="mt-7">
+					<SitePackVisual />
+				</div>
+			</div>
+		</div>
+	</section>
 </main>
 
 <MarketingFooter />

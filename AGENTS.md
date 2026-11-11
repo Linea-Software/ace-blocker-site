@@ -149,6 +149,12 @@ for zero/singular/plural agreement.
 - Platform tabs (Windows/macOS/Linux) update both actions from the same published `platformRows` metadata, and explicit `?arch=` links select the requested OS even if unavailable. Use `src/routes/download/_components/installer-command.ts` to generate commands; Windows downloads an MSI and invokes `msiexec`, while Linux downloads the validated tar.gz bundle and invokes its included `install.sh`. Never copy stale CDN URLs or present a command for an unpublished installer.
 - With no release, keep both actions visible but disabled, and show `Not currently available`. Preserve responsive stacking, long-command horizontal scrolling, and correct copy feedback. Other platform builds and checksum validation remain in their lower sections.
 
+## Pro product page visibility (2026-11-11)
+
+- `/get-pro` has two subscription-aware hero paths: Free visitors see the upgrade introduction; active Pro accounts see the activation/linking panel. The price/billing comparison and checkout calls to action remain **Free-only**.
+- **Both** Free and Pro users must see the Resistance and Categories marketing sections. Active Pro accounts additionally see a concise list of included Pro features (all curated categories, Custom Lists, Resistance, cloud backup, and Network Blocks) without prompting them to purchase again.
+- Never equate a website subscription with verified desktop activation. Pro linking continues through `ProActivationPanel`; only the desktop app confirms import. The browser component tests in `src/routes/get-pro/page.svelte.spec.ts` cover both branches.
+
 ## Desktop account activation
 
 - The engine exposes **typed remoc IPC, not a local browser HTTP endpoint**. Website sign-in, checkout completion, and Pro activation pass account keys to the allowlisted `aceblocker://account/api-key` handler, with credentials in the URI fragment rather than the query string.
