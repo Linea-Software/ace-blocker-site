@@ -110,44 +110,57 @@ Keep Portuguese `pt` and Brazilian Portuguese `pt-BR` separate.
   Flag untranslated or nearly identical strings for review. Do not flag brand names as translation errors.
 - Check spelling, punctuation, dates, numbers, button width, screen-reader output, and RTL where required.
 - Do not send secrets, credentials, personal data, or unnecessary private text to translation prompts.
-## Esempio concreto: fedeltà del significato
+## Practical Example: Preserve the Meaning
 
 EN (`control_lock_help_detail`, app):
 
 > A lock does not block more websites. It protects your chosen rules from being turned off or weakened impulsively.
 
-IT candidata naturale:
+Proposed natural Italian text:
 
 > Bloccare le modifiche non aggiunge siti al filtro: impedisce di disattivare o indebolire d'impulso le regole che hai scelto.
 
-Un letterale “il blocco blocca...” sarebbe poco chiaro. La versione italiana è **solo una proposta**: va confrontata con il testo e il controllo in cui compare e con il glossario definitivo.
+A literal translation such as “il blocco blocca...” would be unclear.
+The Italian text is **only a proposal**. Compare it with the source text, the UI control, and the final approved glossary before use.
 
-## Prompt base riutilizzabile (adattare alla lingua e al percorso)
+## Reusable Base Prompt (Adapt to the Locale and Workflow)
 
-> Agisci come localizzatore madrelingua e UX writer di Ace Blocker, non come traduttore parola per parola. Traduci dall'inglese a **[locale target]** i segmenti JSON allegati per **[app/sito e pagina]**. Utente: **[pubblico]**. Obiettivo della schermata: **[azione]**. Tono: preciso, breve e naturale; per l'app sobrio, per il sito espressivo ma verificabile. Segui il glossario **[glossario approvato]** e i 3–5 esempi **[esempi]**. Non modificare chiavi, placeholder, tag, URL o fatti. Evita calchi, forma passiva burocratica, gergo inutile e promesse aggiunte. Se l'inglese è ambiguo, non inventare: segnala la chiave in un report esterno. Restituisci **solo un oggetto JSON valido**, con esattamente le chiavi fornite; produci le note di revisione in un secondo output separato quando richiesto.
+> Act as a native-language localization specialist and UX writer for Ace Blocker. Do not translate word for word. Translate the attached JSON segments from English into **[target locale]** for **[app/site and page]**. Audience: **[audience]**. Screen goal: **[action]**. Use precise, brief, natural language. Keep the desktop app calm. Make the website more expressive, but keep its claims verifiable. Follow **[approved glossary]** and the 3–5 examples in **[examples]**. Do not change keys, placeholders, tags, URLs, or facts. Avoid literal English patterns, bureaucratic passive voice, needless jargon, and new promises. If the English source is ambiguous, do not guess. List the key in a separate report. Return **only one valid JSON object** with exactly the supplied keys. Provide review notes in a separate output only when requested.
 
-Prompt secondo passaggio:
+Second-pass prompt:
 
-> Sei un revisore editoriale indipendente. Confronta EN, traduzione in **[locale]**, contesto UI, glossario e limiti del prodotto. Segnala solo: (1) significato alterato/omesso, (2) frase poco idiomatica, (3) terminologia incoerente, (4) placeholder o formati errati, (5) testo non leggibile nel contesto. Per ogni problema fornisci chiave, gravità, proposta corretta e una breve motivazione. Non cambiare ciò che è già naturale; marca `needs_review` quando servono decisioni di prodotto.
+> Act as an independent editorial reviewer. Compare the English source, translation into **[locale]**, UI context, glossary, and product limits. Report only these problems: (1) changed or missing meaning, (2) unnatural phrasing, (3) inconsistent terms, (4) incorrect placeholders or formats, and (5) text that is hard to read in context. For each problem, provide the key, severity, corrected text, and a brief explanation. Do not change text that is already natural. Mark `needs_review` when a product decision is necessary.
 
-## Verifiche per repository
+## Checks by Repository
 
-**App desktop — `ace-blocker/apps/ace-app`**
+**Desktop app — `ace-blocker/apps/ace-app`**
 
-- Fonte EN: `messages/en.json`; destinazioni: `messages/{locale}.json`. La configurazione supporta en, de, it, es, fr, pt, pt-BR; solo en e it sono completi. Il controllo in-app mostra Sistema/English/Italiano.
-- Da questa cartella eseguire: `bun run i18n:audit` (integrità _delle chiavi EN referenziate_, non copertura target); `bun run check`; se si modificano viste o formati, test/screenshot appropriati.
-- Esaminare in modo speciale: differenza Network Block/Lock; regole attive vs semplicemente scaricate; schedule, date/ore, contatore tentativi locali; vincoli anti-manomissione, stati di update e azioni irreversibili.
-- Vedere `docs/ui-identity.md` dell'app (chiarezza prima di personalità del marchio).
+- English source: `messages/en.json`. Targets: `messages/{locale}.json`. The configuration supports en, de, it, es, fr, pt, and pt-BR. Only en and it are complete. The in-app control displays Sistema/English/Italiano.
+- In the app directory, run `bun run i18n:audit` to verify the integrity of _referenced English keys_, not target-language coverage. Run `bun run check`. If you change views or formats, run the relevant tests and check screenshots.
+- Review the difference between Network Block and Lock. Distinguish enforced rules from downloaded lists. Check schedules, dates, times, local attempt counts, anti-tampering limits, update states, and irreversible actions.
+- Read the app's `docs/ui-identity.md`. Put clarity before brand personality.
 
-**Sito — `ace-blocker-site`**
+**Website — `ace-blocker-site`**
 
-- Fonte EN: `messages/en.json`; destinazioni: `messages/{locale}.json`; in codice usare `m.chiave()` e link che conservano la lingua (`localizeHref`).
-- Da questa cartella eseguire `bun run check` e test pertinenti. Per SEO, verificare `src/lib/seo.ts`: `localesForPath` espone EN/ES/IT/DE solo per `/faq`, EN/IT per le altre pagine pubbliche; non dichiarare ES/DE completi altrove prima di tradurre **tutto** il contenuto utile e i metadati. Poi eseguire `bun run seo:audit` in ambiente disponibile.
-- La FAQ usa gli stessi messaggi per il testo visibile e JSON-LD: preservare corrispondenza. Privacy e Terms ora usano chiavi Paraglide anche nel corpo dei componenti; restano obbligatori la revisione legale e il controllo dei claim sulla privacy prima della pubblicazione.
-- Controllo umano obbligatorio per checkout, prova gratuita, importi, rinnovo, disdetta, policy di trattamento dati e claim sul prodotto. Sito e app devono usare lo stesso glossario ma il registro dei testi può differire.
+- English source: `messages/en.json`. Targets: `messages/{locale}.json`. In code, use `m.chiave()` and language-preserving links with `localizeHref`.
+- In the website directory, run `bun run check` and relevant tests. For SEO, inspect `src/lib/seo.ts`. Its `localesForPath` exposes EN/ES/IT/DE only for `/faq`, and EN/IT for other public pages. Do not declare ES/DE complete on other pages until you translate **all** useful content and metadata. Then run `bun run seo:audit` in an available environment.
+- The FAQ uses the same messages for visible text and JSON-LD. Keep them consistent. Privacy and Terms now use Paraglide keys in their component bodies. Obtain legal review and verify privacy claims before publication.
+- Require human review of checkout, free trials, amounts, renewals, cancellation, data-processing policies, and product claims. Use the same glossary for the website and app. Their writing styles can differ.
 
-## Criteri di accettazione e manutenzione
+## Acceptance Criteria and Maintenance
 
-Per dichiarare completata una lingua o una pagina: **0 errori di JSON/chiavi/placeholder**, check tecnici superati, **0 ambiguità critiche non risolte**, revisione nativa delle schermate rappresentative e dei testi ad alto rischio, nessun troncamento che alteri il significato, nessun percorso SEO spacciato per interamente tradotto quando non lo è. Eseguire una verifica differenziale ogni volta che cambia `en.json` e riaprire solo i segmenti impattati.
+Before you declare a language or page complete, meet all these conditions:
 
-**Suggerimento evolutivo:** aggiungere una piccola skill Ace-specifica di _localization editorial QA_ che faccia leggere questo playbook, glossario approvato ed esempi prima di generare stringhe; mantenere le skill generiche esistenti come riferimento tecnico, non come prompt stilistico.
+- Report **zero JSON, key, or placeholder errors**.
+- Pass the technical checks.
+- Resolve **all critical ambiguities**.
+- Obtain native-speaker review of representative screens and high-risk text.
+- Remove truncation that changes the meaning.
+- Do not present an SEO route as fully translated if it still has untranslated required content.
+
+Run a differential review each time `en.json` changes.
+Reopen only the affected segments.
+
+**Future improvement:** Add a small Ace-specific _localization editorial QA_ skill.
+Have it read this guide, the approved glossary, and examples before it generates strings.
+Keep existing general skills as technical references, not as writing-style prompts.
