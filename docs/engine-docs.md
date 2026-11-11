@@ -1,87 +1,93 @@
-# Ace Engine Project Context
+# Ace Engine: Project Context
 
-This file provides the necessary context for AI models to understand the project structure, core concepts, and development policies of the **ace-engine**.
+This guide explains the ace-engine structure, main concepts, and development rules.
 
-## 🚀 Project Overview
+## Project Overview
 
-Ace Engine is a high-performance network and program blocker. It is built as a **service engine** that does not manage a UI directly but exposes a robust **REST API** (Axum-based, located in `src/service/api/`) for client applications.
+Ace Engine blocks network traffic and programs.
+It runs as a service and does not directly manage the user interface.
+Client applications use its Axum REST API in `src/service/api/`.
 
-The core logic resides in the `engine-core` crate, while the `src/` directory contains the service layer, database management, and the **system-wide MITM proxy** (`src/service/proxy.rs`) which coordinates URL evaluation and script injection.
+The `engine-core` crate contains the core logic.
+The `src/` directory contains the service, database management, and system-wide MITM proxy.
+The proxy at `src/service/proxy.rs` evaluates URLs and coordinates script injection.
 
 ---
 
-## 🏗️ Core Concepts
+## Core Concepts
 
-### 1. Network Blocks
+### Network Blocks
 
-A **Network Block** is a bundle of rules used to decide what to block and when. It consists of:
+A **Network Block** groups rules that specify which sites to block and when to block them.
 
-- **User Defined Rules**: Regex-based rules (`engine-core/src/network_block/regex_rules.rs`).
-- **Exceptions**: Rules that override blocks (`engine-core/src/network_block/mod.rs`).
-- **Sites Lists**: Collections of millions of sites (see below).
-- **Schedule**: Weekday/time-based activation rules.
-- **Lock**: Logic that prevents weakening the blocking rules.
+- **User-defined rules:** Regular expression rules in `engine-core/src/network_block/regex_rules.rs`.
+- **Exceptions:** Rules that override blocks in `engine-core/src/network_block/mod.rs`.
+- **Sites Lists:** Collections that contain millions of sites.
+- **Schedule:** Rules that specify active weekdays and times.
+- **Lock:** Rules that prevent users from weakening a Network Block.
 
 - **Location:** `engine-core/src/network_block/mod.rs`
-- **Storage:** Metadata stored in **SQLite** via **Diesel**, entries in memory/RocksDB.
+- **Storage:** Store metadata in SQLite with Diesel. Keep entries in memory or RocksDB.
 
-### 2. Sites Lists
+### Sites Lists
 
-Static or dynamic databases of sites/hosts to be blocked.
+Sites Lists contain static or dynamic records of sites and hosts to block.
 
-- **Implementation:** Backed by **RocksDB** for high-performance lookups of millions of entries.
+- **Implementation:** Use RocksDB to look up millions of entries.
 - **Location:** `engine-core/src/network_block/sites_list.rs`
-- **Syncing:** Can be imported from URLs or local files using the **Importer** (`engine-core/src/network_block/importer/`).
+- **Sync:** Import data from URLs or local files with `engine-core/src/network_block/importer/`.
 
-### 3. Schedule & Locks
+### Schedules and Locks
 
-- **Schedule**: Defines active time windows. Uses bitmasks for weekdays.
-- **Lock**: Implements a "strictness" policy. A lock can only be changed to a stricter state (e.g., from Unlocked to LockedUntilEnd).
+- **Schedule:** Specify active periods with weekday bitmasks.
+- **Lock:** Allow changes only to a stricter state, such as Unlocked to LockedUntilEnd.
 - **Location:** `engine-core/src/common/schedule.rs` and `engine-core/src/common/lock.rs`.
 
-### 4. Resistance Mode
+### Resistance Mode
 
-Custom JavaScript injected into specific websites to reduce their addictive qualities (e.g., removing infinite scroll).
+Resistance Mode injects JavaScript into selected sites to reduce distracting features, such as infinite scrolling.
 
 - **Location:** `engine-core/src/common/resistance_mode.rs`
-- **Management:** Managed via a `ResistanceScriptTree` for fast domain-based script lookup.
+- **Management:** Use `ResistanceScriptTree` for fast script lookups by domain.
 
 ---
 
-## 📂 Architecture & Data Management
+## Architecture and Data Management
 
-### 🗄️ Database (SQLite + Diesel)
+### Database (SQLite and Diesel)
 
 - **ORM:** Diesel RS.
 - **Migrations:** Located in `/migrations`.
 - **Schema:** Defined in `src/schema.rs`.
-- **Repositories:** Modularized in `src/db/` (e.g., `sites_list_repo.rs`, `network_block_repo.rs`).
-- **Policy:** Repository functions should return Diesel models or specific requested values. Use basic models when appropriate.
+- **Repositories:** Keep database access in `src/db/`, including `sites_list_repo.rs` and `network_block_repo.rs`.
+- **Policy:** Return Diesel models or the requested values. Use basic models when appropriate.
 
-### 🧠 Network Manager (`src/manager/network/`)
+### Network Manager (`src/manager/network/`)
 
-The main orchestrator of the system.
+The Network Manager coordinates the system.
 
-- **Policy:** **ALWAYS use in-memory data.** The manager loads all rules into memory on startup. Do not query the database during URI evaluation.
-- **Thread Safety:** Wrapped in `Arc<RwLock<NetworkManager>>` within the AppState.
-- **Refactoring Note:** Terminology has been updated from "Hosts List" to "Sites List" and "Net List" to "Network Block".
+- **Policy:** **Use in-memory data for URI evaluation.** Load rules into memory at startup.
+  Do not query the database while evaluating a URI.
+- **Thread safety:** Store the manager in `Arc<RwLock<NetworkManager>>` within AppState.
+- **Terminology:** Use “Sites List” instead of “Hosts List”. Use “Network Block” instead of “Net List”.
 
-### 🛡️ Proxy Service (`src/service/proxy.rs`)
+### Proxy Service (`src/service/proxy.rs`)
 
-The MITM proxy that intercepts traffic. It consults the `NetworkManager` for every request to determine if it should be blocked, allowed, or modified (script injection).
-
----
-
-## 🧪 Testing & Documentation
-
-- **REST API Docs:** Available via Swagger UI at `/swagger-ui` (OpenAPI generated).
-- **Integration Tests:** Located in `/tests`, focusing on API and proxy correctness.
-- **Unit Tests:** Found within the respective source files.
+The MITM proxy intercepts traffic.
+It asks the `NetworkManager` whether to block, allow, or modify each request with script injection.
 
 ---
 
-## 📖 Further Documentation
+## Tests and Documentation
 
-- `docs/rest-api.md`: Detailed REST API endpoint documentation.
-- `docs/error-policies.md`: Error handling conventions.
-- `docs/ROADMAP.md`: Project future goals.
+- **REST API:** Open the generated Swagger UI at `/swagger-ui`.
+- **Integration tests:** Check API and proxy behavior in `/tests`.
+- **Unit tests:** Keep tests near the relevant source files.
+
+---
+
+## Further Documentation
+
+- `docs/rest-api.md`: REST API endpoints.
+- `docs/error-policies.md`: Error-handling rules.
+- `docs/ROADMAP.md`: Future project goals.
