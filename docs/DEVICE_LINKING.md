@@ -1,33 +1,60 @@
-# HTTPS device linking for Ace Blocker
+# HTTPS Device Linking for Ace Blocker
 
-## Why
-Browsers legitimately warn before launching an external protocol handler such as `aceblocker://`. The preferred activation path uses a time-limited, browser-authorized device code instead. It does **not** bypass browser security prompts; it avoids asking the browser to launch a desktop application.
+## Purpose
+Browsers show a security warning when a website starts an external protocol handler such as `aceblocker://`.
+Ace Blocker uses a temporary device code instead.
+The browser authorizes the link through HTTPS.
+This process does not bypass browser security prompts.
+The browser does not have to start the desktop application.
 
 ## Flow
-1. In Desktop → **Settings → License → Connect account**, the Tauri Rust process POSTs to `/api/device-link/start`. It receives a 256-bit `deviceCode` secret, a distinct 12-character `userCode`, an interval (5 seconds), and a 10-minute expiry. The native process retains `deviceCode` in memory, never in the WebView.
-2. Tauri opens the normal HTTPS URL `/connect`. It shows no device secret. The desktop UI shows the user code; the person types that code into the authenticated browser page.
-3. `/api/device-link/approve` requires same-origin POST, a verified Better Auth user session, a valid one-time code, and an unexpired pending challenge. Its one-row conditional UPDATE authorizes the challenge for **that** user.
-4. Tauri sends the secret to `/api/device-link/poll` at the advertised interval. The service atomically changes `approved → redeeming` and issues an account API key once. The response is marked `no-store`. A second redemption cannot issue another key.
-5. Only Tauri Rust receives the issued credential. It forwards the key through the existing capability-protected remoc `setApiKey` call to the engine. The JavaScript UI receives only `linked` or an error; it never receives the key.
-6. The desktop refreshes its entitlement, including Free or Pro state. Pro access is governed by the signed entitlement and server-side subscription checks—not by possession of a user code.
+1. In **Desktop → Settings → License → Connect account**, Tauri Rust sends a POST request to `/api/device-link/start`.
+   The server returns a secret 256-bit `deviceCode` and a separate 12-character `userCode`.
+   It also returns a 5-second polling interval and a 10-minute expiration time.
+   The native process keeps `deviceCode` in memory. It never sends the secret to the WebView.
+2. Tauri opens the HTTPS `/connect` page without a device secret in the URL.
+   The desktop shows the user code. The user enters the same code on the authenticated browser page.
+3. `/api/device-link/approve` accepts only same-origin POST requests.
+   It requires a verified Better Auth session, a valid one-time code, and a pending unexpired challenge.
+   A conditional UPDATE authorizes one challenge row for the authenticated user.
+4. Tauri sends `deviceCode` to `/api/device-link/poll` at the specified interval.
+   The server atomically changes `approved` to `redeeming` and issues one account API key.
+   The response uses `no-store`. Another redemption cannot issue another key.
+5. Only native Tauri Rust receives the API key.
+   Tauri sends it to the engine through the existing capability-protected remoc `setApiKey` call.
+   JavaScript receives only `linked` or an error. JavaScript never receives the API key.
+6. The desktop refreshes the entitlement and the Free or Pro state.
+   Signed entitlements and server-side subscription checks control Pro access. A user code alone does not grant Pro access.
 
-## Security boundaries
-- User code: uniformly generated from a 32-character alphabet, 12 characters (~60 bits of entropy). The code identifies the authorization request but is not a bearer credential for redemption.
-- Device code: 32 random bytes, base64url. Server persistence stores only SHA-256 hashes of both codes and the approved user ID. DB migration `0003_tearful_ultimates.sql` adds `device_links`.
-- Single-use and expiry: 10 minutes, database compare-and-set prevents competing pollers from redeeming the same grant. An uncertain key-issuance failure is treated as terminal rather than replaying a possibly issued credential.
-- Never place `deviceCode`, API keys, privileged IPC capability tokens, or session credentials in a browser URL, browser storage, logs, or JavaScript responses.
-- `/api/device-link/start` and `/api/device-link/poll` intentionally need no browser session; they must be protected by **edge/API gateway rate limits** and monitored for abuse in production. The service gives no cross-origin access, and browser approval requires valid cookies and a same-origin `Origin` header.
-- The new API endpoints are **SvelteKit** routes, not Elysia routes. Keep the `handleApi` exemption in `src/hooks.server.ts`, or all start/poll/approve calls return 404.
-- The native HTTP client uses loopback HTTP in debug only and HTTPS in production. Redirects are disallowed, and each request has a 12-second timeout.
-- The legacy `aceblocker://` protocol path remains a manual fallback for older installations; it must never auto-open on signin/signup/checkout or Pro landing pages.
+## Security Requirements
+- **User code:** Generate 12 characters uniformly from a 32-character alphabet (approximately 60 bits of entropy).
+  The code identifies the request. It is not a bearer credential for redemption.
+- **Device code:** Generate 32 random bytes and encode them as base64url.
+  Store only SHA-256 hashes of both codes and the approved user ID.
+  Migration `0003_tearful_ultimates.sql` adds `device_links`.
+- **Single use and expiration:** Expire grants after 10 minutes.
+  Use database compare-and-set to prevent competing pollers from redeeming one grant.
+  Treat an uncertain key-issuance failure as terminal. Do not replay a possibly issued credential.
+- Never put `deviceCode`, API keys, privileged IPC capability tokens, or session credentials in URLs, browser storage, logs, or JavaScript responses.
+- `/api/device-link/start` and `/api/device-link/poll` do not require a browser session.
+  Apply **edge/API gateway rate limits** in production. Monitor these endpoints for abuse.
+  Do not allow cross-origin access. Browser approval requires valid cookies and a same-origin `Origin` header.
+- Use **SvelteKit** routes for these endpoints, not Elysia routes.
+  Keep the `handleApi` exemption in `src/hooks.server.ts`. Without it, start, poll, and approve return 404.
+- Use loopback HTTP only in debug builds. Use HTTPS in production.
+  Do not follow redirects. Set a 12-second timeout for each native HTTP request.
+- Keep `aceblocker://` as a manual fallback for older installations.
+  Never open it automatically on sign-in, sign-up, checkout, or Pro landing pages.
 
 ## Deployment
-1. Deploy the additive Postgres migration (`bun run db:migrate`) before shipping desktop builds that use the new endpoints.
-2. Deploy the updated site and enforce per-IP/IP-prefix rate limiting at the edge for start/poll and stronger per-account limits on approve.
-3. Deploy desktop builds with Tauri's `device_link_start`, `device_link_poll`, and `device_link_cancel` native commands.
-4. Verify that the browser authorization page is HTTPS, the code matches the desktop, and the app reports Pro only after a successful engine account refresh.
+1. Apply the additive PostgreSQL migration with `bun run db:migrate` before you ship desktop builds that use these endpoints.
+2. Deploy the site. Set per-IP/IP-prefix edge limits for start and poll. Set stronger per-account limits for approve.
+3. Ship desktop builds with native Tauri commands `device_link_start`, `device_link_poll`, and `device_link_cancel`.
+4. Verify that `/connect` uses HTTPS and displays the matching code.
+   Confirm that the app reports Pro only after the engine refreshes the account successfully.
 
 ## Tests
-- Site: `bun run check`, `bun run test:unit -- --run src/lib/server/device-link.test.ts`, `bunx playwright test --config e2e/marketing-features.config.ts device-link.spec.ts`.
-- Desktop: `cd ../ace-blocker && cargo check -p ace-app --lib`, plus `cd apps/ace-app && bun run check && bun run test:unit -- --run src/lib/utils/account-browser.test.ts`.
-- Security regression: reject cross-origin approval, reject unauthenticated approval, enforce polling interval, reject malformed codes and consume grants once.
+- **Site checks:** `bun run check`, `bun run test:unit -- --run src/lib/server/device-link.test.ts`, `bunx playwright test --config e2e/marketing-features.config.ts device-link.spec.ts`.
+- **Desktop checks:** `cd ../ace-blocker && cargo check -p ace-app --lib`, then `cd apps/ace-app && bun run check && bun run test:unit -- --run src/lib/utils/account-browser.test.ts`.
+- **Security checks:** Reject cross-origin and unauthenticated approval. Enforce the polling interval.
+  Reject malformed codes. Confirm that each grant can be used only once.
