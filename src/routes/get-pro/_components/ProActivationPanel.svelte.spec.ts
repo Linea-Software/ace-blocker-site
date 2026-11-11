@@ -14,11 +14,11 @@ describe('Pro desktop activation panel', () => {
 			.element(page.getByText('Pro subscription active on this account'))
 			.toBeVisible();
 		await expect
-			.element(page.getByText('Sent to the operating system — not yet confirmed'))
+			.element(page.getByText('Legacy link sent — import not confirmed'))
 			.toBeVisible();
 		await expect.element(page.getByText('Confirm inside the app')).toBeVisible();
 		await expect
-			.element(page.getByRole('button', { name: 'Send license again' }))
+			.element(page.getByRole('button', { name: 'Retry legacy app link' }))
 			.toBeVisible();
 	});
 

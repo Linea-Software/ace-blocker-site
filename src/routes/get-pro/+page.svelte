@@ -14,7 +14,6 @@
 	import { linkEngine } from '$lib/utils';
 
 	import { apiClient } from '$lib/api-client';
-	import { onMount } from 'svelte';
 	import { Check } from '@lucide/svelte';
 	import PricingSection from './_components/PricingSection.svelte';
 	import ProActivationPanel from './_components/ProActivationPanel.svelte';
@@ -58,11 +57,8 @@
 		}
 	}
 
-	onMount(() => {
-		if (isPro && (origin === 'ace-engine' || origin === 'aceblocker')) {
-			handleLinkEngine();
-		}
-	});
+	// Desktop authorization is now explicitly started in the app via /connect.
+	// Never auto-dispatch aceblocker:// from a marketing page.
 
 	function handleUpgrade() {
 		const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';

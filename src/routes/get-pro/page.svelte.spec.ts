@@ -56,7 +56,9 @@ describe('/get-pro subscription-aware content', () => {
 			.toBeVisible();
 		await expect.element(page.getByTestId('resistance-demo')).toBeVisible();
 		await expect
-			.element(page.getByRole('button', { name: 'Send license to Ace Blocker' }))
+			.element(
+				page.getByRole('button', { name: 'Use legacy app link (browser confirmation)' })
+			)
 			.toBeVisible();
 		await expect
 			.element(page.getByRole('heading', { name: 'Core blocking is free. Pro adds more.' }))

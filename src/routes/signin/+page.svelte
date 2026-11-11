@@ -31,7 +31,8 @@
 	const checkoutReturn = $derived(
 		(() => {
 			const candidate = page.url.searchParams.get('redirectTo');
-			return candidate?.startsWith('/checkout?') && !candidate.startsWith('//')
+			return (candidate === '/connect' || candidate?.startsWith('/checkout?')) &&
+				!candidate?.startsWith('//')
 				? candidate
 				: null;
 		})()
@@ -48,21 +49,14 @@
 		} catch (err) {
 			console.error(err);
 			error = m.auth_link_error();
+			linkAttempted = false;
 		} finally {
 			loading = false;
 		}
 	}
 
-	$effect(() => {
-		if (
-			$session.data &&
-			(origin === 'ace-engine' || origin === 'aceblocker') &&
-			!linkAttempted &&
-			!loading
-		) {
-			linkEngine();
-		}
-	});
+	// Account authorization for legacy URI clients is always an explicit click.
+	// Never dispatch aceblocker:// merely because an authenticated page loads.
 
 	async function handleSignIn(e: Event) {
 		e.preventDefault();
@@ -84,7 +78,7 @@
 						loading = false;
 						await goto(checkoutReturn);
 					} else if (origin === 'ace-engine' || origin === 'aceblocker') {
-						await linkEngine();
+						loading = false;
 					} else {
 						loading = false;
 						goto(resolve(localizeHref('/') as '/'));
@@ -112,7 +106,7 @@
 						return;
 					}
 					if (origin === 'ace-engine' || origin === 'aceblocker') {
-						await linkEngine();
+						loading = false;
 					} else {
 						loading = false;
 						goto(resolve(localizeHref('/') as '/'));
@@ -165,6 +159,27 @@
 					<p class="mt-3 leading-relaxed text-muted-foreground">
 						{m.auth_link_pending_description()}
 					</p>
+				</div>
+			{:else if $session.data && (origin === 'ace-engine' || origin === 'aceblocker')}
+				<div class="border-l-4 border-information bg-information/5 p-6" role="status">
+					<h1 class="font-display text-3xl font-semibold">{m.device_link_title()}</h1>
+					<p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+						{m.device_link_from_desktop()}
+					</p>
+					<a
+						href={resolve('/connect')}
+						class="mt-5 inline-flex min-h-11 items-center rounded-md bg-foreground px-4 font-medium text-background"
+						>{m.device_link_title()}</a
+					>
+					<button
+						type="button"
+						disabled={loading}
+						onclick={() => void linkEngine()}
+						class="mt-3 inline-flex min-h-11 items-center rounded-md border border-border px-4 text-sm font-medium hover:bg-accent disabled:opacity-50"
+					>
+						{m.pro_activation_open()}
+					</button>
+					{#if error}<p role="alert" class="mt-3 text-sm text-danger">{error}</p>{/if}
 				</div>
 			{:else if step === 'credentials'}
 				<header class="mb-8">

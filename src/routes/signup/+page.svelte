@@ -13,7 +13,6 @@
 	import SignUpForm from './_components/SignUpForm.svelte';
 
 	let isSubmitted = $state(false);
-	let linkAttempted = $state(false);
 	let linkPending = $state(false);
 	let linkError = $state(false);
 	let linkPromise: Promise<boolean> | null = null;
@@ -24,7 +23,6 @@
 
 	function linkEngine(): Promise<boolean> {
 		if (linkPromise) return linkPromise;
-		linkAttempted = true;
 		linkPromise = (async () => {
 			try {
 				await deliverApiKeyToEngine();
@@ -40,12 +38,8 @@
 	}
 
 	$effect(() => {
-		if ($session.data) {
-			if (origin === 'ace-engine' || origin === 'aceblocker') {
-				if (!linkAttempted) void linkEngine();
-			} else {
-				goto(resolve(localizeHref('/') as '/'));
-			}
+		if ($session.data && origin !== 'ace-engine' && origin !== 'aceblocker') {
+			goto(resolve(localizeHref('/') as '/'));
 		}
 	});
 
@@ -86,7 +80,6 @@
 						class="mt-5 inline-flex min-h-11 items-center rounded-md border border-border px-4 font-medium hover:bg-accent"
 						onclick={() => {
 							linkPromise = null;
-							linkAttempted = false;
 							linkError = false;
 							void linkEngine();
 						}}
@@ -94,8 +87,25 @@
 						{m.checkout_activation_retry()}
 					</button>
 				</div>
+			{:else if $session.data && (origin === 'ace-engine' || origin === 'aceblocker') && !linkPending}
+				<div class="border-l-4 border-information bg-information/5 p-6" role="status">
+					<h1 class="font-display text-3xl font-semibold">{m.device_link_title()}</h1>
+					<p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+						{m.device_link_from_desktop()}
+					</p>
+					<a
+						href={resolve('/connect')}
+						class="mt-5 inline-flex min-h-11 items-center rounded-md bg-foreground px-4 text-sm font-medium text-background"
+						>{m.device_link_title()}</a
+					>
+					<button
+						type="button"
+						class="mt-3 inline-flex min-h-11 items-center rounded-md border border-border px-4 text-sm font-medium hover:bg-accent"
+						onclick={() => void linkEngine()}>{m.pro_activation_open()}</button
+					>
+				</div>
 			{:else if !isSubmitted && !linkPending}
-				<SignUpForm {origin} onlinkengine={linkEngine} onsubmitted={handleSubmitted} />
+				<SignUpForm onsubmitted={handleSubmitted} />
 			{:else}
 				<div class="border-l-4 border-information pl-5">
 					<div

@@ -87,3 +87,21 @@ export const userRelations = relations(user, ({ many, one }) => ({
 	proStatus: one(proStatus),
 	twoFactors: many(twoFactor)
 }));
+
+/** Expiring device grants, storing only SHA-256 hashes of the two codes. */
+export const deviceLinks = pgTable(
+	'device_links',
+	{
+		deviceCodeHash: text('device_code_hash').primaryKey(),
+		userCodeHash: text('user_code_hash').notNull().unique(),
+		status: text('status').notNull().default('pending'),
+		approvedUserId: text('approved_user_id').references(() => user.id, {
+			onDelete: 'set null'
+		}),
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+		expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+		lastPolledAt: timestamp('last_polled_at', { withTimezone: true }),
+		consumedAt: timestamp('consumed_at', { withTimezone: true })
+	},
+	(table) => [index('device_links_expiry_idx').on(table.expiresAt)]
+);

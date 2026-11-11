@@ -34,11 +34,17 @@
 			{m.pro_activation_description()}
 		</p>
 		<div class="mt-8 flex flex-wrap gap-3">
+			<a
+				href={resolve('/connect')}
+				class="inline-flex min-h-12 items-center justify-center rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90"
+			>
+				{m.device_link_title()}
+			</a>
 			<button
 				type="button"
 				onclick={onactivate}
 				disabled={status === 'loading'}
-				class="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90 disabled:opacity-50"
+				class="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-border px-5 font-medium hover:bg-accent disabled:opacity-50"
 			>
 				{#if status === 'loading'}
 					<Loader2 class="size-4 animate-spin" aria-hidden="true" />

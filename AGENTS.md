@@ -155,6 +155,14 @@ for zero/singular/plural agreement.
 - **Both** Free and Pro users must see the Resistance and Categories marketing sections. Active Pro accounts additionally see a concise list of included Pro features (all curated categories, Custom Lists, Resistance, cloud backup, and Network Blocks) without prompting them to purchase again.
 - Never equate a website subscription with verified desktop activation. Pro linking continues through `ProActivationPanel`; only the desktop app confirms import. The browser component tests in `src/routes/get-pro/page.svelte.spec.ts` cover both branches.
 
+## HTTPS desktop device linking (2026-11-11)
+
+- The preferred license/account handoff starts inside **Ace Blocker Desktop → Settings → License → Connect account**, not by navigating to an `aceblocker://` URL from the website. Tauri's native Rust process starts and polls a one-time HTTP(S) device challenge; browser `/connect` displays the code entry and explicitly authorizes the logged-in, email-verified user.
+- Server routes `/api/device-link/{start,poll,approve}` are **native SvelteKit** endpoints. The Elysia API interceptor in `src/hooks.server.ts` must exempt those paths or they return 404. Raw device secrets and unclaimed API keys never appear in browser URLs; device challenge storage is hash-only, expires after 10 minutes, polls at least every 5 seconds, and atomically consumes an approval once.
+- After native redemption, the Tauri process imports the account key through the existing capability-protected engine remoc `setApiKey` RPC. Never introduce a browser-accessible engine HTTP listener or transmit its privileged capability to JavaScript.
+- `drizzle/0003_tearful_ultimates.sql` creates `device_links`; deploy the migration **before** deploying native clients and the website. Keep edge rate limiting on unauthenticated start/poll endpoints. See `docs/DEVICE_LINKING.md` for protocol and security gates.
+- Legacy `aceblocker://` is available only through a **manual** fallback button. Do not auto-open it on `/signin`, `/get-pro`, or checkout completion. Tests: `src/lib/server/device-link.test.ts`, `e2e/device-link.spec.ts` and Pro activation component tests.
+
 ## Desktop account activation
 
 - The engine exposes **typed remoc IPC, not a local browser HTTP endpoint**. Website sign-in, checkout completion, and Pro activation pass account keys to the allowlisted `aceblocker://account/api-key` handler, with credentials in the URI fragment rather than the query string.

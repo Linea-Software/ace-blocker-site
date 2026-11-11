@@ -8,15 +8,7 @@
 	import * as m from '$lib/paraglide/messages.js';
 	import { resolve } from '$app/paths';
 
-	let {
-		origin = null,
-		onlinkengine,
-		onsubmitted
-	}: {
-		origin?: string | null;
-		onlinkengine: () => Promise<boolean>;
-		onsubmitted: (email: string) => void;
-	} = $props();
+	let { onsubmitted }: { onsubmitted: (email: string) => void } = $props();
 
 	let name = $state('');
 	let email = $state('');
@@ -44,22 +36,10 @@
 			},
 			{
 				onSuccess: async () => {
-					if (origin === 'ace-engine' || origin === 'aceblocker') {
-						const linked = await onlinkengine();
-						loading = false;
-						if (!linked) {
-							error = m.auth_link_error();
-						} else {
-							onsubmitted(email);
-							password = '';
-							confirmPassword = '';
-						}
-					} else {
-						loading = false;
-						onsubmitted(email);
-						password = '';
-						confirmPassword = '';
-					}
+					loading = false;
+					onsubmitted(email);
+					password = '';
+					confirmPassword = '';
 				},
 				onError: (ctx: any) => {
 					loading = false;

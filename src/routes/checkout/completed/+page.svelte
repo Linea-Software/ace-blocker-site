@@ -32,12 +32,8 @@
 		return () => verificationAbort?.abort();
 	});
 
-	$effect(() => {
-		if (isSuccess && isPro && activationStatus === 'idle' && data.success) {
-			const timer = setTimeout(activateInApp, 1000);
-			return () => clearTimeout(timer);
-		}
-	});
+	// Do not trigger an external-protocol browser popup automatically.
+	// New desktop clients authorize through /connect using device linking.
 
 	function waitForVerification(signal: AbortSignal): Promise<void> {
 		return new Promise((resolve, reject) => {
@@ -308,7 +304,7 @@
 						{m.checkout_activation_pending_detail()}
 					</p>
 				{/if}
-				{#if activationStatus === 'failed' || activationStatus === 'pending'}
+				{#if activationStatus === 'idle' || activationStatus === 'failed' || activationStatus === 'pending'}
 					<button
 						type="button"
 						onclick={activateInApp}

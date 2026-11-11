@@ -7,7 +7,7 @@ import { defineConfig } from '@playwright/test';
  */
 export default defineConfig({
 	testDir: '.',
-	testMatch: 'marketing-features.spec.ts',
+	testMatch: ['marketing-features.spec.ts', 'navbar-preferences.spec.ts', 'device-link.spec.ts'],
 	use: { baseURL: 'http://localhost:5173' },
 	webServer: {
 		command: 'bun run dev',

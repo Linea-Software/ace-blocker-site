@@ -52,7 +52,12 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 // request.formData() on multipart requests before reaching fallback handlers,
 // which drains the body stream. We intercept early and forward to Elysia directly.
 const handleApi: Handle = async ({ event, resolve }) => {
-	if (event.url.pathname.startsWith('/api')) {
+	// Device-link handlers are native SvelteKit routes. The global Elysia
+	// interceptor otherwise consumes them and returns 404 before route matching.
+	if (
+		event.url.pathname.startsWith('/api') &&
+		!event.url.pathname.startsWith('/api/device-link/')
+	) {
 		return app.handle(event.request);
 	}
 	return resolve(event);
