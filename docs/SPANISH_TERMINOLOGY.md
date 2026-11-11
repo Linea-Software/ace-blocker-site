@@ -1,60 +1,74 @@
-# Ace Blocker — glossario spagnolo internazionale e QA editoriale
+# International Spanish Localization: Terms and Editorial Review
 
-Data: 6 novembre 2026 · Locale: `es` (Spagna e America Latina) · Fonte primaria: `messages/en.json` dei due prodotti.
+Date: November 6, 2026. Locale: `es` (Spain and Latin America). Main source: both products' `messages/en.json`.
 
-Questo documento registra le convenzioni usate per Ace Blocker Desktop e Ace Blocker Site. Il testo spagnolo è una localizzazione editoriale assistita da GPT-6, confrontata con l'inglese e con il funzionamento documentato del prodotto. **Non equivale alla certificazione di un revisore madrelingua o di un legale**.
+This document records terms for Ace Blocker Desktop and Ace Blocker Site. GPT-6 assisted with Spanish translation and editorial review. This is **not certification by a native-speaking editor or legal expert**.
 
-## Terminologia approvata per la traduzione
+## Approved Translation Terms
 
-| Concetto EN                         | Spagnolo `es`                                          | Distinzione semantica                                                                                   |
-| ----------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| Network Block                       | **bloqueo de red**                                     | Configurazione di siti/categorie e orari: applica il filtro solo nei periodi configurati.               |
-| Block (nel contesto Network Blocks) | **bloqueo**                                            | Forma breve solo quando è evidente che si parla del filtro sui siti.                                    |
-| Lock                                | **protección contra cambios**, **protección**          | Impedisce di eliminare, disattivare o indebolire una configurazione: **non** aggiunge siti da bloccare. |
-| Hard / timed lock                   | **protección estricta**, **protección temporal**       | Protezione non rimovibile fino al termine.                                                              |
-| Schedule lock                       | **protección por horario**                             | Vincolo alle modifiche applicato durante il periodo previsto dalla configurazione.                      |
-| Reflection Lock                     | **protección con reflexión**                           | Richiede una domanda di riflessione e un'attesa di 5 minuti per disattivare la protezione.              |
-| Locked (settings)                   | **cambios protegidos**                                 | Stato delle modifiche, non stato del filtraggio di rete.                                                |
-| Schedule                            | **horario**, **horas programadas**                     | Periodi settimanali di applicazione dei blocchi, con orario e fuso salvati.                             |
-| Resistance Mode                     | **Modo Resistencia**, **Resistencia**                  | Modifica le funzionalità distraenti dei siti compatibili, senza necessariamente impedire l'accesso.     |
-| Categories / Site Packs             | **categorías**, **categorías seleccionadas**           | Gruppi di domini disponibili, non necessariamente applicati a un blocco.                                |
-| Custom Lists                        | **listas personalizadas**                              | Liste importate e riutilizzabili, disponibili con Pro.                                                  |
-| Downloaded / attached / enabled     | **descargada** / **añadida al bloqueo** / **activado** | Distinguere disponibilità dei dati dall'applicazione della regola.                                      |
-| Blocking attempts                   | **intentos de acceso bloqueados**                      | Contatore di tentativi, non numero di domini unici.                                                     |
-| Safe Search                         | **Búsqueda segura**                                    | Filtraggio del contenuto esplicito nei motori compatibili.                                              |
-| Free / Pro                          | **Free / Pro**                                         | Nomi commerciali non tradotti.                                                                          |
-| Engine                              | **motor**                                              | Motore locale di Ace Blocker.                                                                           |
-| Backup                              | **copia de seguridad**                                 | File/copia della configurazione.                                                                        |
-| Cloud backup                        | **copia de seguridad en la nube**                      | Funzione Pro di salvataggio/ripristino sull'account.                                                    |
-| Account                             | **cuenta**                                             | Profilo personale.                                                                                      |
-| Subscription                        | **suscripción**                                        | Abbonamento a un piano.                                                                                 |
-| Renewal / cancellation              | **renovación / cancelación**                           | Distinguere rinnovo automatico, interruzione dei pagamenti e fine dell'accesso.                         |
+| English concept | Preferred Spanish term | Meaning and use |
+| --- | --- | --- |
+| Network Block                       | **bloqueo de red**                                     | Sites, categories, and schedule. Rules apply only during configured times. |
+| Block (nel contesto Network Blocks) | **bloqueo**                                            | Short form only when website filtering is clear from context. |
+| Lock                                | **protección contra cambios**, **protección**          | Prevents deletion, deactivation, or weaker settings. Does not add blocked sites. |
+| Hard / timed lock                   | **protección estricta**, **protección temporal**       | Cannot be removed until its period ends. |
+| Schedule lock                       | **protección por horario**                             | Prevents changes during the configured period. |
+| Reflection Lock                     | **protección con reflexión**                           | Requires a reflection question and a five-minute wait. |
+| Locked (settings)                   | **cambios protegidos**                                 | Indicates protected settings, not active website filtering. |
+| Schedule                            | **horario**, **horas programadas**                     | Weekly enforcement periods with saved time and time zone. |
+| Resistance Mode                     | **Modo Resistencia**, **Resistencia**                  | Changes distracting website functions without necessarily blocking access. |
+| Categories / Site Packs             | **categorías**, **categorías seleccionadas**           | Domain groups available for use, not automatically applied to a block. |
+| Custom Lists                        | **listas personalizadas**                              | Reusable imported lists for Pro users. |
+| Downloaded / attached / enabled     | **descargada** / **añadida al bloqueo** / **activado** | Distinguish downloaded data, attachment to a block, and active enforcement. |
+| Blocking attempts                   | **intentos de acceso bloqueados**                      | Counts blocked attempts, not unique domains. |
+| Safe Search                         | **Búsqueda segura**                                    | Filters explicit results in compatible search engines. |
+| Free / Pro                          | **Free / Pro**                                         | Keep commercial plan names unchanged. |
+| Engine                              | **motor**                                              | Local Ace Blocker engine. |
+| Backup                              | **copia de seguridad**                                 | Saved file or copy of a configuration. |
+| Cloud backup                        | **copia de seguridad en la nube**                      | Pro feature for saving and restoring account data. |
+| Account                             | **cuenta**                                             | Personal user profile. |
+| Subscription                        | **suscripción**                                        | Subscription to a plan. |
+| Renewal / cancellation              | **renovación / cancelación**                           | Distinguish automatic renewal, payment cancellation, and end of access. |
 
-## Registro e convenzioni
+## Writing Rules
 
-- Seconda persona singolare **tú**; niente alternanza immotivata con `usted` o `vos`.
-- Spagnolo standard transatlantico: **equipo / dispositivo** dove evita `ordenador/computadora`, `sitio web`, `configuración`, `correo electrónico`.
-- Pulsanti brevi e imperativi: `Guardar`, `Eliminar`, `Descargar`, `Proteger`; conferme esplicitano effetti e irreversibilità.
-- Per i contatori utilizzare chiavi esistenti `_zero`, `_one` e plurale con `countMessage`; controllare 0, 1, molti.
-- Preservare brand, URL, placeholder, importi, durata della prova, condizioni di rinnovo, fusi e riferimenti a terzi.
-- Le etichette delle anteprime dense sono accorciate dove serve: `Feeds laborales`, `Elegidos`, `Autom.`.
+- Use informal singular **tú**. Do not switch without reason to `usted` or `vos`.
+- Use international Spanish. Prefer **equipo / dispositivo**, `sitio web`, `configuración`, and `correo electrónico` when regional terms differ.
+- Use short imperative buttons: `Guardar`, `Eliminar`, `Descargar`, `Proteger`.
+- Explain consequences and irreversible actions in confirmation text.
+- Use `_zero`, `_one`, and plural message keys with `countMessage`. Test zero, one, and multiple items.
+- Preserve brand names, URLs, placeholders, prices, trial duration, renewal terms, time zones, and third-party references.
+- Use short labels in dense previews when needed: `Feeds laborales`, `Elegidos`, `Autom.`.
 
-## Revisione di significato e naturalezza
+## Meaning and Readability Review
 
-- `control_lock_help_detail` / `lock_explanation`: chiarito che una protezione **non blocca più siti** e non estende il filtro fuori orario.
-- `lock_preview_schedule`, `lock_preview_until`, `lock_support_note`: conservati i vincoli sui cambiamenti, le scadenze e i limiti dell'assistenza.
-- `tour_blocked_attempts_body`: evitato il fraintendimento «numero di siti» quando il contatore misura i **tentativi**.
-- `category_apply_note`: esplicitato che **scaricare** una categoria non significa attivarne il blocco.
-- Le frasi del checkout distinguono importo dovuto oggi, prezzo periodico, rinnovo e annullamento.
-- Le anteprime del sito hanno rivelato troncamenti in spagnolo; le etichette sono state abbreviate mantenendone il significato.
+- `control_lock_help_detail` / `lock_explanation`: Protection does **not** block more sites or extend filtering outside scheduled times.
+- `lock_preview_schedule`, `lock_preview_until`, `lock_support_note`: Keep change limits, expiration, and support limits accurate.
+- `tour_blocked_attempts_body`: The counter measures blocked **attempts**, not the number of sites.
+- `category_apply_note`: Downloading a category does not activate a block.
+- Checkout messages distinguish the amount due today, recurring price, renewal, and cancellation.
+- Site previews showed truncated Spanish labels. Shorten labels only when their meaning remains clear.
 
-## Rischi da verificare prima della pubblicazione commerciale
+## Required Checks Before Commercial Publication
 
-1. **Revisione legale umana delle pagine Privacy e Terms**, in particolare dichiarazioni su crittografia, conservazione, cancellazione, diritti degli interessati, dati di uso di Resistenza, terze parti, limitazione di responsabilità, sospensione, rimborsi e diritto applicabile nei mercati di destinazione. Non introdurre unilateralmente varianti regionali o clausole nuove.
-2. **Testi sorgente EN da chiarire**: `faq_a1` e `home_what_is_description` possono suggerire che la protezione mantenga attivo il filtro fuori orario; `onboarding_resistance_toggle_hint` promette regolazione «in qualsiasi momento» benché una protezione attiva possa impedirla; `category_apply_note` EN usa un soggetto semanticamente ambiguo; `onboarding_welcome_body` non precisa il requisito Pro di Resistenza. Non modificare di nascosto la sorgente nell'ambito della traduzione spagnola.
-3. **Claim funzionali/commerciali da confermare**: tempi «circa un minuto» per la configurazione, piattaforme effettivamente disponibili, durata prova 14 giorni, disponibilità funzionalità Free/Pro e categorie, eventuali prezzi/valute dipendenti dal mercato e condizioni Dodo Payments.
-4. **QA necessario prima del rilascio**: revisione editoriale indipendente da madrelingua, test di checkout e account con ambiente autenticato, test della WebView nativa e della lingua del sistema su Windows/macOS/Linux, controllo responsivo delle modali e del tema scuro. Gli screenshot del browser di sviluppo non provano il comportamento del motore Tauri.
+1. Obtain an independent legal review of Privacy and Terms.
+   Review encryption, retention, deletion, data rights, Resistance usage data, third parties, liability, suspension, refunds, and governing law.
+   Do not add regional clauses without approval.
+2. Review ambiguous English messages: `faq_a1`, `home_what_is_description`, `onboarding_resistance_toggle_hint`, `category_apply_note`, and `onboarding_welcome_body`.
+   Some can suggest that a lock extends filtering hours or that Resistance settings always remain editable.
+   The welcome message does not clearly state that Resistance requires Pro.
+   Review English source strings separately. Do not silently change them during Spanish translation.
+3. Verify product claims about one-minute setup, platforms, a 14-day trial, Free and Pro features, categories, prices, currencies, and Dodo Payments terms.
+4. Obtain an independent native-speaking editorial review.
+   Test checkout and account pages with authentication.
+   Test the native WebView and system locale on Windows, macOS, and Linux.
+   Check responsive dialogs and dark mode.
+   Development browser screenshots do not prove Tauri engine behavior.
 
-## Verifiche tecniche
+## Technical Verification
 
-Cataloghi in `messages/es.json`: Desktop 748/748 chiavi EN; Site 818/818. Placeholder invariati. SvelteKit/Paraglide compilano; test per contatori 0/1/multipli e selettori lingua aggiunti/aggiornati. URL locali e SEO del sito includono `/es` nei canonical, hreflang e sitemap delle 7 pagine pubbliche. I test e le limitazioni effettivamente verificati sono riportati nel report di consegna.
+At review time, `messages/es.json` matched 748/748 English Desktop keys and 818/818 Site keys.
+Placeholders were unchanged. SvelteKit and Paraglide compiled.
+Counter and locale selector tests were added or updated.
+Local site URLs and SEO include `/es` in canonical, `hreflang`, and sitemap data for seven public pages.
+The delivery report records the actual tests and their limitations.
