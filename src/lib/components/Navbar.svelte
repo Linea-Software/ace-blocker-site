@@ -2,7 +2,9 @@
 	import * as Sheet from '$lib/components/ui/sheet';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import {
+		ArrowUpRight,
 		BookOpen,
+		ChevronDown,
 		Download,
 		Gauge,
 		Info,
@@ -11,12 +13,14 @@
 		LogOut,
 		Menu,
 		Moon,
+		Settings2,
 		Sun,
 		User,
 		UserPlus
 	} from '@lucide/svelte';
 	import BrandLogo from '$lib/components/BrandLogo.svelte';
 	import LanguageSelector from '$lib/components/LanguageSelector.svelte';
+	import { languageSwitchHref, type AvailableSiteLocale } from '$lib/components/language-switch';
 	import { authClient } from '$lib/auth-client';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
@@ -34,8 +38,15 @@
 		{ href: '/about' as const, label: m.nav_about(), icon: Info },
 		{ href: '/faq' as const, label: m.nav_faq(), icon: BookOpen }
 	];
+	const languages: { locale: AvailableSiteLocale; label: string }[] = [
+		{ locale: 'en', label: 'English' },
+		{ locale: 'it', label: 'Italiano' },
+		{ locale: 'de', label: 'Deutsch' },
+		{ locale: 'es', label: 'Español' }
+	];
 
 	let isMobileMenuOpen = $state(false);
+	const activeLocale = $derived(page.url.pathname.match(/^\/(it|de|es)(?:\/|$)/)?.[1] ?? 'en');
 	const userInitial = $derived(
 		$session.data?.user
 			? ($session.data.user.name?.[0] ?? $session.data.user.email[0]).toUpperCase()
@@ -46,6 +57,12 @@
 
 	function isActive(href: string) {
 		return basePath(page.url.pathname) === href;
+	}
+
+	function changeLanguage(locale: AvailableSiteLocale) {
+		if (locale !== activeLocale) {
+			window.location.assign(languageSwitchHref(page.url, locale));
+		}
 	}
 
 	async function handleSignOut() {
@@ -66,7 +83,7 @@
 		<div class="flex min-w-0 items-center gap-3 md:gap-8">
 			<Sheet.Root bind:open={isMobileMenuOpen}>
 				<Sheet.Trigger
-					class="inline-flex size-11 items-center justify-center rounded-md border border-border bg-card hover:bg-accent md:hidden"
+					class="inline-flex size-11 items-center justify-center rounded-md border border-border bg-card hover:bg-accent lg:hidden"
 					aria-label={m.nav_toggle_menu()}
 				>
 					<Menu class="size-5" aria-hidden="true" />
@@ -194,7 +211,7 @@
 				/>
 			</a>
 
-			<nav class="hidden h-16 items-stretch md:flex" aria-label={m.nav_toggle_menu()}>
+			<nav class="hidden h-16 items-stretch lg:flex" aria-label={m.nav_toggle_menu()}>
 				{#each navLinks as link (link.href)}
 					<a
 						href={resolve(localizeHref(link.href) as typeof link.href)}
@@ -210,31 +227,58 @@
 		</div>
 
 		<div class="flex shrink-0 items-center gap-1.5 sm:gap-2">
-			<LanguageSelector />
+			<DropdownMenu.DropdownMenu>
+				<DropdownMenu.Trigger
+					class="hidden h-10 w-12 items-center justify-center gap-1 rounded-md border border-border bg-card hover:bg-accent md:inline-flex"
+					aria-label={`${m.nav_language_label()} / ${m.nav_toggle_theme()}`}
+				>
+					<Settings2 class="size-4" aria-hidden="true" />
+					<ChevronDown class="size-3" aria-hidden="true" />
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Content align="end" class="w-48 rounded-md border-border shadow-none">
+					<DropdownMenu.Label class="text-xs text-muted-foreground">
+						{m.nav_language_label()}
+					</DropdownMenu.Label>
+					<DropdownMenu.RadioGroup value={activeLocale}>
+						{#each languages as language (language.locale)}
+							<DropdownMenu.RadioItem
+								value={language.locale}
+								onclick={() => changeLanguage(language.locale)}
+							>
+								{language.label}
+							</DropdownMenu.RadioItem>
+						{/each}
+					</DropdownMenu.RadioGroup>
+					<DropdownMenu.Separator />
+					<DropdownMenu.Item onclick={toggleMode}>
+						{#if mode.current === 'dark'}
+							<Sun class="size-4" aria-hidden="true" />
+							{m.nav_light_mode()}
+						{:else}
+							<Moon class="size-4" aria-hidden="true" />
+							{m.nav_dark_mode()}
+						{/if}
+					</DropdownMenu.Item>
+				</DropdownMenu.Content>
+			</DropdownMenu.DropdownMenu>
 			<a
 				href={resolve(localizeHref('/get-pro') as '/get-pro')}
 				class={[
-					'hidden min-h-10 items-center rounded-md border px-3 text-sm font-medium sm:inline-flex',
-					isActive('/get-pro')
-						? 'border-foreground bg-foreground text-background'
-						: 'border-border bg-card hover:bg-accent'
+					'hidden min-h-10 items-center gap-1 rounded-md border px-3 text-sm font-semibold sm:inline-flex',
+					isPro
+						? isActive('/get-pro')
+							? 'border-foreground bg-foreground text-background'
+							: 'border-border bg-card hover:bg-accent'
+						: isActive('/get-pro')
+							? 'border-signal bg-signal/15 text-foreground'
+							: 'border-signal bg-card text-foreground hover:bg-signal/10'
 				]}
 			>
 				{isPro ? m.nav_pro_features() : m.account_get_pro()}
-			</a>
-
-			<button
-				type="button"
-				class="relative inline-flex size-10 items-center justify-center rounded-md border border-border bg-card hover:bg-accent"
-				onclick={toggleMode}
-				aria-label={m.nav_toggle_theme()}
-			>
-				{#if mode.current === 'dark'}
-					<Sun class="size-4" aria-hidden="true" />
-				{:else}
-					<Moon class="size-4" aria-hidden="true" />
+				{#if !isPro}
+					<ArrowUpRight class="size-3.5 text-signal-deep" aria-hidden="true" />
 				{/if}
-			</button>
+			</a>
 
 			{#if $session.data}
 				{#if $session.data.user.role === 'admin'}
