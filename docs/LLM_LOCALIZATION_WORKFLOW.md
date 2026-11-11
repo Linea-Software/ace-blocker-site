@@ -1,76 +1,115 @@
-# Ace Blocker — traduzione LLM e localizzazione naturale
+# Ace Blocker: LLM Translation and Natural Localization
 
-> Playbook operativo condiviso per **Ace Blocker Site** e **Ace Blocker Desktop**. Revisione: 2026-11-06. I numeri sotto sono uno snapshot, non un test dinamico.
+> Shared workflow for **Ace Blocker Site** and **Ace Blocker Desktop**.
+> Reviewed November 6, 2026. The counts below are historical snapshots, not live test results.
 
-## Obiettivo
+## Purpose
 
-Pubblicare testi che sembrino scritti originariamente nella lingua di destinazione, restando precisi sul funzionamento del prodotto. **Tradurre l'esperienza, non le parole isolate**: nessuna traduzione letterale, enfasi pubblicitaria artificiale, promessa aggiunta o ambiguità su lock, orari, abbonamenti e dati. L'inglese è la sorgente attuale; non assumere che ogni frase sorgente sia già ottimale.
+Write text that reads naturally in the target language.
+Keep the product behavior and security limits accurate.
+Translate the user experience, not isolated words.
+Do not add claims or change the meaning of locks, schedules, subscriptions, or data use.
+English is the current source. Review unclear English text before translation.
 
-## Stato verificato (2026-11-06)
+## Verified Starting State (November 6, 2026)
 
-| Repository                 | Sorgente EN                      | Locali configurati            | Chiavi già tradotte   |
-| -------------------------- | -------------------------------- | ----------------------------- | --------------------- |
-| `ace-blocker/apps/ace-app` | 720 chiavi in `messages/en.json` | en, de, it, es, fr, pt, pt-BR | it: 13; altre: 0      |
-| `ace-blocker-site`         | 724 chiavi in `messages/en.json` | en, es, it, de                | es/it/de: 56 ciascuno |
+| Repository | English source | Configured locales | Already translated keys |
+| --- | --- | --- | --- |
+| `ace-blocker/apps/ace-app` | 720 keys in `messages/en.json` | en, de, it, es, fr, pt, pt-BR | it: 13; others: 0 |
+| `ace-blocker-site` | 724 keys in `messages/en.json` | en, es, it, de | es/it/de: 56 each |
 
-I conteggi riguardano le chiavi e **non** equivalgono a copertura effettiva di pagine o UI. Entrambi i progetti usano Paraglide/inlang, ma i relativi file `project.inlang/settings.json` non sono identici. Non cambiare versione o sintassi del message format solo per tradurre.
+These numbers count keys. They do **not** measure complete UI or page translations.
+Both projects use Paraglide/inlang, but their `project.inlang/settings.json` files differ.
+Do not change message formats or dependency versions only to translate strings.
 
-## Stato successivo alla prima implementazione (2026-11-06)
+## State After Initial Implementation (November 6, 2026)
 
-I conteggi sopra documentano **il punto di partenza**. Dopo la localizzazione
-EN/IT, il catalogo desktop conta 731 chiavi per lingua e quello del sito 805. I corpi di Privacy e Terms ora usano Paraglide, e il sito pubblica
-le pagine italiane tramite il gate SEO; gli altri locali non sono stati
-dichiarati completi. I controlli tecnici superati non equivalgono a una
-revisione madrelingua/legale: la pubblicazione richiede soprattutto un
-controllo competente dei testi su lock, pagamenti, privacy, termini e dati.
+The table above records the starting state.
+After the EN/IT work, the desktop catalog had 731 keys per language.
+The site catalog had 805 keys.
+Privacy and Terms page bodies now use Paraglide.
+The SEO gate exposes the completed Italian pages.
+Other locales were not declared complete.
+Passing technical checks is not equivalent to legal or native-speaking review.
+Review lock, payment, privacy, Terms, and data claims before publication.
 
-## Fonti e precedenze
+## Sources and Priority
 
-1. Verità di prodotto: codice e contenuti correnti, documentazione su blocchi, lock, schedule, resistance, pagamenti e privacy. Se un testo è ambiguo o sembra falso, **segnalarlo**, non correggerlo in modo creativo.
-2. Terminologia e tono: questo documento + glossario approvato per ciascuna lingua (da mantenere insieme alle PR).
-3. Segmenti originali: `messages/en.json` di ciascun progetto e, ove necessario, contenuti non ancora internazionalizzati.
-4. Skill tecniche di supporto: `.agents/skills/i18n-localization/SKILL.md` nel workspace e `ace-blocker-site/.agents/skills/paraglide-js-internationalization-i18n/SKILL.md`. Sono **guide tecniche generiche**, non una garanzia di buona prosa; per gli import usare il pattern effettivo del progetto (`import * as m` e `m.chiave()`) e Bun, non gli esempi generici della skill che citano altri framework/npm.
+1. **Product behavior:** Use current code, product content, and documents on Network Blocks, locks, schedules, Resistance, payments, and privacy.
+   Report ambiguous or incorrect claims. Do not invent corrections.
+2. **Terms and tone:** Use this guide and the approved glossary for each language. Keep glossaries current in pull requests.
+3. **English messages:** Read each project's `messages/en.json` and other content that still needs localization.
+4. **Technical skills:** Consult `.agents/skills/i18n-localization/SKILL.md` and
+   `ace-blocker-site/.agents/skills/paraglide-js-internationalization-i18n/SKILL.md`.
+   These guides cover technology, not the quality of the writing.
+   Use the project's actual `import * as m` and `m.key()` patterns.
+   Use Bun instead of generic npm examples.
 
-## Tonalità Ace
+## Ace Writing Style
 
-- **App desktop:** breve, calmo, diretto, preciso, non moralizzante. Mostrare chiaramente stato, conseguenza e azione; preferire frasi quotidiane a gergo astratto.
-- **Sito:** più espressivo nei titoli, ma verificabile e concreto. Non promettere risultati garantiti, compatibilità, protezioni o funzioni non confermate.
-- **Entrambi:** naturalezza madrelingua, lessico coerente e inclusivo; evitare calchi dall'inglese, anglicismi superflui, passivi burocratici, superlativi inventati, punti esclamativi di marketing e sinonimi alternati per uno stesso concetto.
-- Sono ammesse trasposizioni di sintassi, ordine e lunghezza purché il significato resti invariato. Prima chiarezza, poi brevità; non troncare spiegazioni di sicurezza o vincoli per farle stare in UI.
+- **Desktop app:** Use short, calm, direct text. State conditions, results, and actions without judgment.
+- **Website:** Use more expressive headings, but keep every claim measurable and accurate.
+- **Both:** Use natural, inclusive language and consistent terms.
+  Avoid literal English patterns, unnecessary English loanwords, formal passive voice, invented superlatives, and marketing exclamation marks.
+  Do not alternate synonyms for one technical concept.
+- You can change sentence order and length when the meaning stays the same.
+  Keep essential security explanations and constraints, even when UI space is limited.
+## Proposed Glossary Before the First Translation Pass
 
-## Glossario da approvare prima della prima ondata
+| English concept | Meaning to preserve | Proposed Italian form to validate |
+| --- | --- | --- |
+| Network Block        | Configuration that filters sites or categories during a schedule. | `blocco di rete`                                                      |
+| Lock / time-lock     | Protects block settings against changes that weaken rules. Does **not** block more sites. | `blocco delle modifiche` / `protezione delle regole` secondo contesto |
+| Locked               | Prevents users from weakening a rule while its protection is active. | `modifiche bloccate` oppure `protetto`, secondo il controllo          |
+| Schedule             | Times during which a Network Block enforces rules. | `programmazione` / `orari programmati`                                |
+| Resistance Mode      | Tools that reduce distracting parts of supported sites. Not a Network Block. | `modalità Resistenza` (nome prodotto da convalidare)                  |
+| Category / Site Pack | List of sites. Downloading it does **not** activate filtering. | `categoria` (distinguere da lista personalizzata)                     |
+| Pro / Ace Blocker    | Commercial plan or product name. | lasciare invariato                                                    |
 
-| Concetto EN          | Significato da preservare                                                                                              | Proposta IT da validare                                               |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Network Block        | Regola/configurazione che applica filtri a siti o categorie secondo un programma                                       | `blocco di rete`                                                      |
-| Lock / time-lock     | Vincolo che protegge **le impostazioni** di un blocco da modifiche che lo indebolirebbero; non aggiunge siti bloccati  | `blocco delle modifiche` / `protezione delle regole` secondo contesto |
-| Locked               | Una regola non può essere indebolita finché il vincolo è attivo                                                        | `modifiche bloccate` oppure `protetto`, secondo il controllo          |
-| Schedule             | Intervalli/orari in cui il Network Block applica le sue regole                                                         | `programmazione` / `orari programmati`                                |
-| Resistance Mode      | Strumenti che introducono attrito/riducono elementi distraenti nei siti supportati; non equivalenti a un Network Block | `modalità Resistenza` (nome prodotto da convalidare)                  |
-| Category / Site Pack | Elenco di siti; il download **non** attiva da solo il blocco                                                           | `categoria` (distinguere da lista personalizzata)                     |
-| Pro / Ace Blocker    | Nome commerciale, piano o marchio                                                                                      | lasciare invariato                                                    |
+This glossary is a **proposal**, not an approved list.
+Approve terms with examples from real screens.
+Then use the same terms on the website, desktop, FAQ, and emails.
+Do not translate both `Lock` and `Network Block` as generic `blocco` when this is ambiguous.
+Choose Spain-specific or international Spanish before translation.
+Keep Portuguese `pt` and Brazilian Portuguese `pt-BR` separate.
 
-Questo glossario è **proposto**, non un elenco già approvato. Scegliere termini finali con esempi UI reali, poi usare la stessa terminologia nel sito, nell'app, nelle FAQ e nelle email. In particolare non rendere `Lock` e `Network Block` entrambi con il generico `blocco` quando crea ambiguità. Per spagnolo scegliere prima ES-ES vs spagnolo internazionale; per portoghese mantenere distinti pt e pt-BR.
+## Procedure for Each Language or Feature
 
-## Procedura per ogni lingua / funzionalità
+1. **Select a complete user experience.** Group 20–50 related keys from one screen or workflow.
+   Examples include Network Block creation, scheduling, locks, checkout, and FAQ.
+   For each key, include the English text, key, screen, control type, purpose, available space, variables, and available screenshot.
+   Exclude approved keys unless their English source changed.
+2. **Define the brief.** Specify locale, regional variant, audience, tone, approved terms, untranslated terms, and product rules.
+   Include 3–5 examples of approved natural writing in the target language.
+3. **Translate with the LLM.** Request one JSON object with exactly the selected keys and natural target-language values.
+   Permit clear reformulation. Do not omit information, add claims, or change product behavior.
+   Record source ambiguity separately. Do not invent an answer.
+4. **Use an independent review pass.** In a separate call, compare English, UI context, and the draft.
+   Prefer a reviewer that does not see the translator's reasoning.
+   Check literal patterns, false friends, reversed meaning, terminology, brand tone, and security limits.
+   Return only justified changes and a `needs_review` list. Do not rewrite correct text for personal preference.
+5. **Get focused human review.** Ask a competent native speaker to approve important screens.
+   Review locks, anti-tampering, schedules, irreversible actions, privacy, legal terms, prices, trials, renewals, cancellation, and security.
+   An LLM cannot replace legal review or verification of commercial claims.
+6. **Run automatic and visual checks.** Validate JSON, keys, placeholders, formats, and Paraglide compilation.
+   Check screenshots at narrow widths and desktop sizes, in light and dark modes.
+   Check truncation, plurals, and text with real data. Do not depend only on back-translation.
+7. **Publish complete pages or flows.** Do not index a page as localized while its main body remains English.
+   Record the terms, prompt, model version, date, reviewer, QA result, and unresolved strings.
 
-1. **Seleziona per esperienza, non per centinaia di chiavi casuali.** Raggruppa 20–50 chiavi di una schermata o percorso (es. creazione Network Block, applicazione degli orari, lock, checkout, FAQ). Per ogni chiave allega testo EN, chiave, schermata, tipo di controllo, azione/scopo, spazio disponibile, variabili ed eventuale screenshot. Escludi chiavi già revisionate salvo modifiche della sorgente.
-2. **Congela il brief.** Specifica lingua/variante regionale, pubblico, tono, glossario approvato, termini da non tradurre e regole di prodotto. Fornisci 3–5 esempi di ottime frasi già approvate nella lingua; è il mezzo più efficace per evitare “traduttese”.
-3. **Prima passata LLM (traduttore editoriale).** Richiedi un JSON contenente esattamente le chiavi richieste, valori naturali nella lingua target. Consenti riformulazioni, ma vieta omissioni, claim aggiunti e modifiche al comportamento. Le ambiguità si annotano separatamente, non si risolvono inventando.
-4. **Seconda passata indipendente (revisore).** In una chiamata distinta, preferibilmente senza mostrare il ragionamento del traduttore, confronta sorgente, contesto e proposta. Cerca calchi, falsi amici, significati invertiti, incoerenza del glossario, tono fuori marca, ambiguità su limiti e stati. Restituisci solo le modifiche motivate e un elenco `needs_review`; non sovrascrivere tutto per gusti soggettivi.
-5. **Revisione umana mirata.** Un madrelingua o revisore competente approva le schermate principali. Revisione obbligatoria per: lock/anti-manomissione, date e orari, avvisi irreversibili, privacy, termini legali, prezzi, trial, rinnovo, disdetta e sicurezza. L'LLM non sostituisce revisione legale o conferma dei dati commerciali.
-6. **QA automatico e visuale.** Valida JSON e chiavi; controlla placeholder, formattazione, output per locale, compilazione Paraglide, screenshot in finestra stretta, desktop, light/dark, testi troncati, pluralizzazione e lettura con dati reali. Non basarsi solo sulla retrotraduzione.
-7. **Pubblica per pagina/percorso completi.** Non indicizzare una pagina come localizzata se il corpo principale è ancora inglese. Archivia linguaggio scelto, prompt, modello/versione, data, revisore, esito QA e stringhe che necessitano un secondo intervento.
+## Mandatory Automatic Constraints
 
-## Vincoli automatici non negoziabili
-
-- Stesso insieme di chiavi dell'input, stesso formato JSON e valori stringa; niente commenti, markdown o nuove chiavi nel file localizzato.
-- Preservare **esattamente** placeholder e sintassi (`{days}`, `{count}`, `{version}`, `{name}`), nomi tecnici/brand, tag/markup presenti, URL, identificatori e sequenze di escape.
-- Non concatenare stringhe tradotte in modo da imporre l'ordine grammaticale inglese. Per plurali/varianti consultare il message format effettivamente installato, senza inventare sintassi ICU non verificata.
-- Fallback EN consentito internamente ma non dichiarare “tradotto” un percorso con parti essenziali in EN. Evidenziare stringhe non tradotte o troppo simili alla sorgente per controllo, senza considerare errori i brand.
-- Controllare ortografia, punteggiatura, formati di date/numeri, espansione dei bottoni, leggibilità screen reader e RTL se la lingua lo richiede.
-- Nessuna chiave, dato personale, credenziale o contenuto privato non necessario inviato ai prompt.
-
+- Keep exactly the input keys, JSON structure, and string values.
+  Do not put comments, Markdown, or extra keys into localized JSON.
+- Preserve all placeholders and syntax: `{days}`, `{count}`, `{version}`, `{name}`.
+  Also preserve brand names, technical names, markup, URLs, identifiers, and escape sequences.
+- Do not join translated strings in a way that forces English word order.
+  Check the installed message format before adding plural forms.
+  Do not invent unsupported ICU syntax.
+- Allow internal English fallback, but do not claim full translation when required content remains English.
+  Flag untranslated or nearly identical strings for review. Do not flag brand names as translation errors.
+- Check spelling, punctuation, dates, numbers, button width, screen-reader output, and RTL where required.
+- Do not send secrets, credentials, personal data, or unnecessary private text to translation prompts.
 ## Esempio concreto: fedeltà del significato
 
 EN (`control_lock_help_detail`, app):
