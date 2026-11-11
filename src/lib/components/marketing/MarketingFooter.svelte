@@ -14,10 +14,6 @@
 			<p class="mt-4 max-w-md text-sm text-muted-foreground">{m.footer_identity_line()}</p>
 		</div>
 		<div class="sm:text-right">
-			<a
-				href={resolve(localizeHref('/faq') as '/faq')}
-				class="text-sm font-medium hover:underline">{m.nav_faq()}</a
-			>
 			<nav class="flex gap-5 text-sm" aria-label={m.footer_legal_navigation()}>
 				<a href={resolve(localizeHref('/terms') as '/terms')} class="hover:underline"
 					>{m.footer_terms()}</a
