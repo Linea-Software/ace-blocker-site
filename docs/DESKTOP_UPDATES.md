@@ -1,38 +1,43 @@
 # Ace Blocker desktop MSI releases — server contract (v1)
 
-**Status: implemented, fail-closed, not enabled for production.** This document
-is the server-side counterpart of `ace-blocker/docs/PRODUCT_UPDATES.md` and
-`ace-blocker/crates/ace-update-security/src/lib.rs`. It does **not** implement
-privileged MSI execution or claim that unattended installation is ready.
-The server never holds an Ed25519 private release key.
+**Status: implemented, fail-closed, not enabled for production.**
+This document defines the server contract. Read it with
+`ace-blocker/docs/PRODUCT_UPDATES.md` and
+`ace-blocker/crates/ace-update-security/src/lib.rs`.
+This server does **not** execute MSI files with elevated privileges.
+Unattended installation is not ready.
+Never store an Ed25519 private release key on the server.
 
 ## Public API and backwards compatibility
 
 `GET https://aceblocker.com/api/v1/releases/desktop/latest?os=windows&architecture=x64&channel=stable`
 
-- **200**: exact signed JSON envelope (`payload`, `signature`, `key_id`).
-  No user session, API key, Pro entitlement, payment, signed URL or download token.
-- **304** when `If-None-Match` matches the envelope ETag. `Cache-Control:
-public, no-cache, must-revalidate` requires revalidation even on shared caches.
-- **204**, with no body: no approved release, or the highest historically
-  distributed version has been withdrawn. **Never fall back to an older version.**
-- **400** for any unsupported target/channel; v1 only supports Windows/x64/stable/MSI.
-- **503** when the operator has not explicitly enabled desktop updates or when
-  signing trust configuration is missing. No anonymous authentication challenges.
-- Unexpected server/database failures remain 5xx and must not be treated as
-  unsigned update permission. No MSI is ever returned by the website process.
+- **200:** Return the exact signed JSON envelope (`payload`, `signature`, `key_id`).
+  Do not require a user session, API key, Pro entitlement, payment, signed URL,
+  or download token.
+- **304:** Return this status when `If-None-Match` matches the envelope ETag.
+  `Cache-Control: public, no-cache, must-revalidate` requires shared caches
+  to revalidate the response.
+- **204:** Return no body if no release is approved or if the highest version
+  ever distributed was withdrawn. **Never return an older version as fallback.**
+- **400:** Reject unsupported targets or channels. v1 supports only Windows/x64/stable/MSI.
+- **503:** Return this status if the operator has not enabled desktop updates
+  or the signing trust configuration is missing. Do not challenge anonymous clients for authentication.
+- Keep unexpected server and database failures as 5xx errors. Never interpret
+  a failure as permission to deliver an unsigned update. The website process
+  must never return MSI bytes.
 
-**Client integration note:** The current Rust `fetch_verified_release` treats an
-empty 204 body as a malformed envelope, rather than `UpToDate`. Before
-production rollout, the desktop owner must add explicit 204/304 handling and a
-revocation/version-floor policy. Do **not** work around this by serving an
-unsigned empty JSON payload or an older signed release.
+**Client integration note:** The current Rust `fetch_verified_release` treats
+an empty 204 response as a malformed envelope, not `UpToDate`.
+Before production release, the desktop owner must handle 204 and 304 explicitly.
+The desktop owner must also add a revocation and version-floor policy.
+Do **not** return unsigned empty JSON or an older signed release as a workaround.
 
-`GET /api/v1/releases/latest` is **unchanged** and still feeds the content
-updater (site packs and Resistance Mode). The legacy installer upload,
-admin toggle and public manual download remain compatible. Legacy installers
-do not become eligible for signed desktop updates merely because
-`canBeDownloaded=true`.
+Keep `GET /api/v1/releases/latest` **unchanged**. It supplies the content
+updater for site packs and Resistance Mode.
+Keep legacy installer uploads, the admin toggle, and public manual downloads
+compatible. A legacy installer with `canBeDownloaded=true` is **not** eligible
+for signed desktop updates.
 
 ## Exact v1 signature contract
 
@@ -46,8 +51,8 @@ Response envelope:
 }
 ```
 
-A **fictional, invalid-for-production** decoded payload, illustrated with
-placeholder digests (not a valid signed release):
+The following decoded payload is **fictional and invalid for production**.
+Its digests are placeholders. It is not a valid signed release:
 
 ```json
 {
@@ -67,44 +72,45 @@ An **intentionally invalid illustrative signature** is
 `AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==`.
 Never copy this example into release metadata or a trust store.
 
-1. Build the payload from precisely these **nine** camelCase fields. Values
-   must be ASCII. Reject unknown, missing or duplicate keys. The payload is
-   serialized with sorted ASCII keys, no whitespace,
+1. Build the payload with exactly these **nine** camelCase fields.
+   Use ASCII values. Reject unknown, missing, and duplicate keys.
+   Serialize with sorted ASCII keys and no whitespace:
    `json.dumps(..., sort_keys=True, separators=(',', ':'), ensure_ascii=True)`.
-2. Ed25519 signs **exactly**
+2. Sign **exactly** this byte sequence with Ed25519:
    `ASCII("ace-blocker-windows-msi-release-v1") || 0x00 || payload_JSON_UTF8`.
-   There is no JSON reserialization after signature verification, no
-   signature over a mutable HTTP response object, and no unhashed critical
-   field outside the payload.
-3. `payload` and `signature` use **padded standard RFC 4648 base64**.
-   `key_id` selects a **client-embedded**, approved public key. Unknown
-   key IDs fail verification. Signed payloads are max 16 KiB.
-4. Versions are strict three-component stable SemVer (`major.minor.patch`)
-   with unsigned 64-bit components. Neither prerelease/build suffixes,
-   lexical version ordering, nor downgrades are accepted. Package URL is
-   **exactly** the configured public CDN origin followed by
-   `ace-blocker-installer/signed/windows/x64/<version>/<sha256>.msi`,
-   including the deployment's `dev/` prefix when applicable.
-5. The approved publisher certificate's DER SHA-256 fingerprint must agree
-   with both the server's configured policy and the desktop binary's pinned
-   publisher identity. The client MUST verify the MSI content SHA-256 **and**
-   its Windows Authenticode signer before any eventual install operation.
+   Never reserialize JSON after signature verification.
+   Never sign a mutable HTTP response object.
+   Put every critical field inside the signed payload.
+3. Encode `payload` and `signature` with **padded standard RFC 4648 base64**.
+   Use `key_id` to select a **client-embedded**, approved public key.
+   Reject unknown key IDs. Limit signed payloads to 16 KiB.
+4. Require strict stable three-part SemVer (`major.minor.patch`).
+   Each component must be an unsigned 64-bit integer.
+   Reject prerelease/build suffixes, lexical version ordering, and downgrades.
+   Require the **exact** configured public CDN origin followed by
+   `ace-blocker-installer/signed/windows/x64/<version>/<sha256>.msi`.
+   Include the deployment's `dev/` prefix when applicable.
+5. Match the approved publisher certificate's DER SHA-256 fingerprint to both
+   the server policy and the desktop binary's pinned publisher identity.
+   Before any installation, the client **must** verify the MSI content SHA-256
+   **and** its Windows Authenticode signer.
 
-**v1 compatibility limitation:** The currently checked-in Rust verifier uses
-`deny_unknown_fields` and does **not** accept `artifactId`, `fileSize`,
-`publishedAt`, `packageType`, `minimumUpdaterVersion` or a signed
-revocation floor in the payload. Their authoritative server-side values are
-stored in PostgreSQL, but are **not signed v1 client inputs**. In particular,
-the client bounds file downloads and checks their signed SHA-256, but does not
-validate a signed expected byte count. Do not add them to a v1 response as
-unauthenticated safety claims. A future explicitly versioned v2 signing
-contract, updated offline signer and updated Rust verifier are required to
-authenticate those fields. This limitation must be resolved before claiming
-the complete extended metadata contract has shipped.
+**v1 compatibility limitation:** The checked-in Rust verifier uses
+`deny_unknown_fields`. It does **not** accept `artifactId`, `fileSize`,
+`publishedAt`, `packageType`, `minimumUpdaterVersion`, or a signed revocation
+floor in the payload.
+PostgreSQL stores the authoritative server values, but v1 clients do **not**
+receive them as signed inputs. The client limits download size and verifies the
+signed SHA-256. It does not verify a signed expected byte count.
+Do not add these values to a v1 response as unverified safety claims.
+To authenticate them, create an explicitly versioned v2 signature contract,
+update the offline signer, and update the Rust verifier.
+Resolve this limitation before claiming the complete extended metadata contract
+has shipped.
 
 ## Preparation, CI upload, and signer custody
 
-Required **server** settings (leave absent/unset until thoroughly vetted):
+Required **server** settings (leave them unset until you verify production readiness):
 
 | Environment variable                             | Meaning                                                                                                                |
 | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
@@ -119,33 +125,36 @@ Required **server** settings (leave absent/unset until thoroughly vetted):
 
 The **client build** pins `ACE_RELEASE_MANIFEST_PUBLIC_KEY_HEX`,
 `ACE_RELEASE_PUBLISHER_CERT_SHA256`, and
-`ACE_RELEASE_MANIFEST_URL=https://aceblocker.com/api/v1/releases/desktop/latest`
-as documented in the desktop repo. Do not confuse release signing with
-entitlement JWT signing. Never send a release-signing private key to the VPS,
-website env, Git, a public CI job, or a debug log. Provision it via an
-operator-controlled offline signer/HSM with independent two-person review;
-record signer provenance and approvals outside mutable GitHub Actions
-claims.
+`ACE_RELEASE_MANIFEST_URL=https://aceblocker.com/api/v1/releases/desktop/latest`.
+The desktop repository documents these values.
+Keep release signing separate from entitlement JWT signing.
+Never send the private release-signing key to the VPS, website environment,
+Git, a public CI job, or a debug log.
+Use an operator-controlled offline signer or HSM. Require an independent
+review by two people. Record signer provenance and approvals outside mutable
+GitHub Actions claims.
 
 **Procedure** for CI and trusted release operators:
 
-1. Produce a final, Authenticode-signed Windows/x64 MSI and verify the pinned
-   signing certificate on a trusted Windows runner. Compute SHA-256 of the
-   _final_ signed bytes. A checksum of a pre-signing MSI is invalid.
-2. Determine the immutable future public URL, e.g.
+1. Produce the final Authenticode-signed Windows/x64 MSI.
+   On a trusted Windows runner, verify the pinned signing certificate.
+   Compute SHA-256 of the _final_ signed bytes.
+   Never use the checksum from an unsigned or pre-signing MSI.
+2. Determine the immutable future public URL, for example:
    `https://cdn.aceblocker.com/ace-blocker-installer/signed/windows/x64/1.10.0/<sha256>.msi`.
-   Use the desktop repository's
-   `installer/release_manifest.py prepare` with that URL, version and pinned
-   publisher fingerprint. It emits `release-payload.json` and the exact
-   `release-signing-input.bin` to be signed offline. Use
-   `release_manifest.py assemble` with the detached Ed25519 signature and
-   approved `key_id`. Its `assemble` command is **not** a verification
-   ceremony; independently verify the signature before submitting.
-3. Upload the MSI **directly** from the protected CI runner into the private
-   Bunny Storage API using its dedicated AccessKey (never via the VPS):
+   In the desktop repository, run `installer/release_manifest.py prepare`
+   with that URL, version, and pinned publisher fingerprint.
+   The command creates `release-payload.json` and the exact
+   `release-signing-input.bin` for offline signing.
+   Run `release_manifest.py assemble` with the detached Ed25519 signature
+   and approved `key_id`. **Do not treat `assemble` as signature verification.**
+   Independently verify the signature before submission.
+3. Upload the MSI **directly** from the protected CI runner to the private
+   Bunny Storage API. Use its dedicated AccessKey. Never send the MSI through
+   the VPS:
    `PUT https://storage.bunnycdn.com/PRIVATE_ZONE/desktop-updates/<version>/<sha256>.msi`.
-   The zone must be separated from all public pull zones, not merely placed
-   under a hard-to-guess public URL.
+   Keep this zone separate from every public pull zone. A hard-to-guess URL
+   does not make a public zone private.
 4. POST a **small JSON** document to
    `https://aceblocker.com/api/v1/releases/ingest/desktop`, with
    `Authorization: Bearer <ACE_RELEASE_INGEST_TOKEN>` and:
@@ -163,97 +172,102 @@ claims.
         "sourceRunId": "<workflow run id>"
     }
     ```
-    The token is checked with constant-time comparison. Ingest is limited to
-    six authenticated requests/minute and two concurrent inspections per
-    process. The JSON payload is at most 16 KiB. Send an explicit valid HTTP
-    `Content-Length` (HTTP 411 otherwise); chunked/unknown-length JSON is rejected
-    before the request body is parsed. The reverse proxy must enforce the same limit. CI provenance fields are
-    **untrusted declarations**, for audit only; they are not used as authority.
-5. Server verifies the signature, target, version, expected public URL,
-   publisher pin, staging key, streaming MSI header, bytes, size and SHA-256
-   **from the private storage object** before inserting the candidate and
-   audit row in one DB transaction. Successful result:
+    The server checks the token with constant-time comparison.
+    Limit ingest to six authenticated requests per minute and two concurrent
+    inspections per process. Limit JSON to 16 KiB.
+    Send a valid explicit HTTP `Content-Length`. Without it, return HTTP 411.
+    Reject chunked or unknown-length JSON before parsing the body.
+    Enforce the same size limit in the reverse proxy.
+    Treat CI provenance fields as **untrusted declarations** for audit only.
+    Never use them as authority.
+5. Before inserting the candidate and audit row in one database transaction,
+   verify the signature, target, version, expected public URL, publisher pin,
+   and staging key. Stream MSI bytes **from the private storage object**.
+   Verify the MSI header, bytes, size, and SHA-256. Successful result:
    `201 {"success":true,"id":"<UUID>","state":"staged"}`.
-   Invalid input is 400, duplicates are 409, auth failure 401, disabled or
-   failed Bunny storage 503, and overlimit requests 413/429.
+   Return 400 for invalid input, 409 for duplicates, and 401 for authentication
+   failures. Return 503 for disabled or failed Bunny storage.
+   Return 413 or 429 for limit violations.
    A DB partial unique index prevents concurrent signed target/version
    reservations. Reuse of a legacy target/version is also rejected during
    normal ingest. Only a protected operator can approve publication.
 
-Unlike the historical `POST /api/v1/releases/ingest/installer`, this new
-signed path does **not** transfer a large MSI through SvelteKit/Bun or call
-`file.arrayBuffer()`. Existing CI jobs continue using the old route for
-legacy candidates until migrated. The website still has the old 100 MiB
-in-memory installer uploader: it must not be used for the secure signed
-release path. MSI size is currently bounded by PostgreSQL's 32-bit
-`size` column (`2147483647` bytes, or just under 2 GiB).
+Unlike the legacy `POST /api/v1/releases/ingest/installer`, the signed route
+must **not** transfer large MSI files through SvelteKit/Bun or call
+`file.arrayBuffer()`. Existing CI jobs can use the legacy route for legacy
+candidates until migration.
+The website still has a 100 MiB in-memory installer uploader. Never use it
+for secure signed releases. PostgreSQL's 32-bit `size` column limits MSI files
+to `2147483647` bytes (just under 2 GiB).
 
 ## Admin publication: local development versus production
 
-The admin installer list makes publication requirements visible per row. A
-disabled **Make available** button includes a reason (unverified artifact,
-withdrawn signed release, missing Linux companion, legacy build or platform
-linked to a signed Windows release).
+Show publication requirements for each row in the admin installer list.
+When **Make available** is disabled, show why. Possible reasons are an unverified
+artifact, a withdrawn signed release, a missing Linux companion, a legacy build,
+or a platform linked to a signed Windows release.
 
-**Local development:** Manual uploads of Windows x64 MSI or Linux x64 tar.gz
-are allowed when running a SvelteKit development build with
-`NODE_ENV=development` and a **local PostgreSQL database**. The server still
-validates the installer file's structure and format before upload, and only
-rows with `artifact_validated_at` set may be marked downloadable. An unsigned
-development release is never promoted to the signed desktop update feed.
-Development files use the existing `/dev/` Bunny namespace. A production build
-cannot enable this manual publishing path by changing `NODE_ENV`.
+**Local development:** Allow manual Windows x64 MSI and Linux x64 tar.gz uploads
+only in a SvelteKit development build with `NODE_ENV=development` and a
+**local PostgreSQL database**.
+Before upload, validate the installer's structure and format.
+Mark a row downloadable only when `artifact_validated_at` is set.
+Never promote an unsigned development release to the signed desktop update feed.
+Store development files in the existing Bunny `/dev/` namespace.
+Changing `NODE_ENV` must not enable manual publication in a production build.
 
-**Production/release:** The admin's ordinary upload form accepts **Linux
-companion bundles only**. Manual Windows MSI uploads are rejected by the API,
-because even a structurally valid MSI is not proven Authenticode-signed. To
-publish Windows, use the trusted external Windows Authenticode verification
-and offline Ed25519 signer, private staging upload and
-`POST /api/v1/releases/ingest/desktop` described below. The verified,
-`staged` candidate then appears in the admin installers list. Upload exactly
-one validated Linux companion of the same version, and click **Make available**
-on the signed Windows candidate. The backend revalidates the staged MSI and
-Linux companion before atomically publishing both.
+**Production/release:** Allow **only Linux companion bundles** in the ordinary
+admin upload form. The API must reject manual Windows MSI uploads. A valid MSI
+file structure does not prove a valid Authenticode signature.
+For Windows publication, use trusted external Windows Authenticode verification,
+the offline Ed25519 signer, private staging upload, and
+`POST /api/v1/releases/ingest/desktop`.
+The verified candidate appears as `staged` in the admin installer list.
+Upload exactly one validated Linux companion with the same version.
+Select **Make available** on the signed Windows candidate.
+Before publishing both artifacts atomically, the backend must revalidate the
+staged MSI and Linux companion.
 
-This admin UI deliberately does not accept a bare "signed" checkbox, a
-developer-supplied manifest signature, or unsigned Windows binaries in
-production. The website cannot independently validate Authenticode on Linux;
-the trusted Windows verification ceremony is mandatory prior to signed
-ingest. Don't weaken this to an MSI-header check.
+In production, the admin UI must not accept a bare "signed" checkbox,
+a developer-supplied manifest signature, or unsigned Windows binaries.
+The Linux website cannot independently verify Windows Authenticode.
+Complete trusted Windows verification before signed ingest.
+**Never replace that verification with an MSI-header check.**
 
 ## Required installer artifacts and publication readiness
 
-The admin upload supports **Windows x64 MSI** (`AceBlocker-<version>.msi`)
-and **Linux x64 tar.gz** (`AceBlocker-<version>-linux-x64.tar.gz`) only.
-The GitHub Actions artifact download is a ZIP wrapper containing the actual
-platform file; do not upload that wrapper. Other architectures and macOS are
-not enabled in this workflow.
+The admin upload supports only **Windows x64 MSI**
+(`AceBlocker-<version>.msi`) and **Linux x64 tar.gz**
+(`AceBlocker-<version>-linux-x64.tar.gz`).
+GitHub Actions downloads include a ZIP wrapper around the platform file.
+Upload the platform file, not the ZIP wrapper.
+Do not enable other architectures or macOS in this workflow.
 
-New uploads receive `artifact_validated_at` only after the server inspects
-the file. Windows validation checks the MSI compound-file header; Linux
-validation safely parses the gzip/tar archive without extraction, rejects
-links, traversal, duplicates and unsupported entries, checks the required
-payload files and x64 ELF headers, and bounds expanded bytes. A file's
-name or MIME type alone is insufficient. Uploads are capped at 100 MiB.
-Previous rows remain **unverified** (NULL), not automatically grandfathered in.
+Set `artifact_validated_at` only after the server inspects the uploaded file.
+For Windows, check the MSI compound-file header.
+For Linux, parse gzip/tar safely without extraction. Reject links, path
+traversal, duplicate entries, and unsupported entries. Verify required payload
+files and x64 ELF headers. Limit expanded bytes.
+Do not rely only on file names or MIME types. Limit uploads to 100 MiB.
+Keep existing rows **unverified** (NULL). Do not automatically approve them.
 
-Before approving a signed Windows desktop release, the server requires
-**exactly one** server-validated Linux tarball of the same version, verifies
-the Linux storage bytes again against recorded SHA-256/size/structure,
-and rejects mismatched non-null CI source commits. The signed Windows
-publication and Linux public-download flag are committed together in one
-database transaction. Withdrawal disables both. Published Linux packages
-are *structurally* checked, not separately cryptographically signed by
-a v1 Linux manifest; do not call them authenticated Linux updates.
+Before approval of a signed Windows desktop release, require **exactly one**
+server-validated Linux tarball with the same version.
+Recheck the Linux storage bytes, SHA-256, size, and structure.
+Reject mismatched non-null CI source commits.
+Commit Windows publication and the Linux public-download flag in one database
+transaction. On withdrawal, disable both.
+The server checks published Linux packages for structure, but no v1 Linux
+manifest signs them separately. Do not call them authenticated Linux updates.
 
-Old legacy Windows MSI rows can no longer be made publicly downloadable
-through the simple `set-downloadable` toggle. Signed Windows release
-publication must use `publish-desktop` after a trusted external signing
-and an approved signed envelope. The website validates signed metadata and
-the MSI stored bytes, but **does not independently run Windows Authenticode
-verification on the Linux server**. The trusted Windows signing stage must
-run the pinned Authenticode verifier before ingest; production signing and
-automatic installation remain separate, gated deliverables.
+Do not publish legacy Windows MSI rows with the simple `set-downloadable`
+toggle. Publish signed Windows releases only through `publish-desktop`, after
+trusted external signing and approval of a signed envelope.
+The website checks signed metadata and stored MSI bytes. It **does not verify
+Windows Authenticode independently on Linux**.
+Run the pinned Authenticode verifier in the trusted Windows signing stage
+before ingest. Production signing and automatic installation remain separate
+gated deliverables.
 
 ## Manual publication, withdrawal, audits
 
@@ -262,69 +276,72 @@ automatic installation remain separate, gated deliverables.
   `POST /api/v1/admin/installers/publish-desktop` with
   `{"id":"<staged UUID>"}` and
   `POST /api/v1/admin/installers/withdraw-desktop` with the same body.
-- Publishing claims the staged row through an atomic
-  `staged -> publishing` update. A partial PostgreSQL unique index prevents
-  simultaneous publication of two versions for the same target/channel. It checks immutable row-vs-signature
-  consistency, revalidates the private MSI, refuses re-use of an older
-  previously distributed version, copies the package once to the immutable
-  public hash-based path by stream, and rehashes the **public storage bytes**
-  and checks the **anonymous public pull-zone HEAD** before `published` is committed and announced. Failed publication returns
-  the row to `staged`, with an attempted best-effort deletion of partial CDN
-  output, including when the DB commit fails after promotion. A crash may leave `publishing`: this must be investigated by an
-  operator; never auto-promote it on restart.
-- The legacy manual installer download route also recognizes the new
-  content-addressed public MSI path after approval; it never reuses the
-  Bunny Storage API URL as the public download location.
-- Signed release states are `staged`, `publishing`, `published`,
-  and `withdrawn`; existing rows are migrated to `legacy`. Only the
-  explicitly published, valid, signed version can appear in desktop discovery.
-  The old `set-downloadable` toggle **refuses** signed rows. Signed
-  historical records cannot be deleted through the legacy installer deletion
-  path.
-- Persistent `desktop_release_audit` rows record release ID, actor
-  (`ci:ingest-token` or Better Auth admin user ID), action, outcome, UTC
-  timestamp. Errors also go to redacted Pino logs. No passwords, storage
-  credentials, private signing keys or bearer tokens are logged.
-- Withdrawal is one-way in v1 and invalidates both desktop and legacy
-  installer caches. A withdrawn highest release still forms the **version
-  floor** for feed selection, so an older, potentially vulnerable release is
-  not silently proposed. To restore service, sign and publish a strictly
-  **higher** version, even if it intentionally reverts application changes.
-- A previously downloaded MSI or CDN edge cache cannot be remotely revoked
-  with an API change. For emergency removal, also purge/remove CDN objects,
-  publish security notices, and apply a _client-side privileged persistent
-  revocation floor_ before enabling automatic execution.
-- The website cache is process-local, reloaded at startup and immediately
-  invalidated after publish/withdraw. A multi-process deployment requires
-  inter-instance invalidation before it is safe to scale replicas; do not
-  deploy replicas with independent stale release caches.
+- Claim a staged row with an atomic `staged -> publishing` update.
+  Use a partial PostgreSQL unique index to prevent concurrent publication of
+  two versions for the same target/channel.
+  Verify immutable row-to-signature consistency and revalidate the private MSI.
+  Reject reuse of an older version that was already distributed.
+  Stream the package once to its immutable public hash-based path.
+  Rehash the **public storage bytes** and check the **anonymous public pull-zone HEAD**
+  before committing and announcing `published`.
+  After a failure, return the row to `staged`. Attempt best-effort deletion of
+  partial CDN output, including after a failed database commit following promotion.
+  A crash can leave a row in `publishing`. An operator must investigate it.
+  Never promote such a row automatically after restart.
+- After approval, let the legacy manual installer download route recognize
+  the new content-addressed public MSI path.
+  Never use the Bunny Storage API URL as a public download URL.
+- Use `staged`, `publishing`, `published`, and `withdrawn` for signed release
+  states. Migrate existing rows to `legacy`.
+  Show only explicitly published, valid, signed versions in desktop discovery.
+  The old `set-downloadable` toggle **must refuse** signed rows.
+  Never delete signed historical records through the legacy installer route.
+- Record release ID, actor (`ci:ingest-token` or Better Auth admin user ID),
+  action, outcome, and UTC timestamp in persistent `desktop_release_audit` rows.
+  Write errors to redacted Pino logs. Never log passwords, storage credentials,
+  private signing keys, or bearer tokens.
+- Withdrawal is permanent in v1. Invalidate both desktop and legacy installer
+  caches when a release is withdrawn.
+  Keep the withdrawn highest release as the **version floor** for feed selection.
+  Never silently propose an older, potentially vulnerable release.
+  To restore service, sign and publish a strictly **higher** version. This
+  requirement also applies if that release intentionally reverts application changes.
+- An API change cannot revoke an MSI already downloaded or stored in a CDN
+  edge cache. For emergency removal, purge or remove CDN objects and publish
+  security notices. Apply a _client-side privileged persistent revocation floor_
+  before enabling automatic execution.
+- Keep the website cache local to each process. Reload it at startup and
+  invalidate it immediately after publication or withdrawal.
+  Before scaling to multiple processes, implement inter-instance invalidation.
+  Never deploy replicas with independent stale release caches.
 
 ## BunnyCDN and production gates
 
-**Only** the approved final hash-addressed MSI is served from the existing
-public Bunny CDN. No token, signed expiration, redirect to user-supplied URL,
-login, or license check is permitted under the signed update path. Configure
-public read access for `ace-blocker-installer/signed/` without Bunny URL
-Token Authentication. Test anonymous HEAD/GET end-to-end on the configured
-public host before enabling the client. Keep the staging storage zone
-**physically private** and disconnected from public pull zones. Rate-limit
-and monitor authenticated staging operations. CDN integrity at rest remains
-an operational responsibility; every client must independently verify the
-release signature and MSI hash (and Windows publisher certificate).
+Serve **only** the approved final hash-addressed MSI from the existing public
+Bunny CDN. Never require a token, signed expiry, login, or license check on
+this signed update path. Never redirect to a user-supplied URL.
+Configure public reads for `ace-blocker-installer/signed/` without Bunny URL
+Token Authentication. Test anonymous HEAD and GET on the configured public host
+before you enable the client.
+Keep the staging storage zone **physically private** and separate from public
+pull zones. Rate-limit and monitor authenticated staging operations.
+CDN integrity at rest remains an operational responsibility. Each client must
+independently verify the release signature, MSI hash, and Windows publisher
+certificate.
 
-Release-signing keys cannot rotate by having this server return a new
-unauthenticated public key. A future trusted desktop build must embed/authorize
-the new root, distributed with a release signed by the previously trusted
-root; overlap old/new releases for transition. With the current one-key
-client verifier, server-only rotation is unsafe. Key compromise requires a
-separately reviewed recovery/distribution channel.
+Never rotate release-signing keys by returning an unauthenticated public key
+from this server. A future trusted desktop build must embed or authorize the
+new root. Distribute that build in a release signed by the previously trusted
+root. Overlap old and new releases during the transition.
+The current client verifier accepts one key. Server-only rotation is unsafe.
+After key compromise, use a separately reviewed recovery and distribution
+channel.
 
-**Keep `ACE_DESKTOP_UPDATES_ENABLED` unset** until the offline/HSM
-Ed25519 signing process, pinned client release key, pinned Authenticode
-publisher, private staging storage, anonymous public pull-zone downloads,
-signed CI packaging, manual approval procedure, client 204 handling,
-client rollback floor and privileged safe MSI installer have been independently
-verified. This code and the tests do **not** establish Windows installer
-safety, rollback of installed software, or integrity of production credentials.
-No VMs, manual Windows installation, or production releases are used in
-the server tests.
+**Keep `ACE_DESKTOP_UPDATES_ENABLED` unset** until independent verification of
+all production gates: offline/HSM Ed25519 signing, the pinned client release
+key, the pinned Authenticode publisher, private staging storage, anonymous public
+pull-zone downloads, signed CI packaging, manual approval, client 204 handling,
+a client rollback floor, and a safe privileged MSI installer.
+This code and its tests do **not** prove Windows installer safety, rollback
+of installed software, or the integrity of production credentials.
+Server tests use no VMs, manual Windows installation, or production releases.
