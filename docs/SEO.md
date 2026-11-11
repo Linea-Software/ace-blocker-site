@@ -1,35 +1,63 @@
-# SEO, international search and AI search operations
+# SEO, International Search, and AI Search
 
-This site's public canonical origin is **https://aceblocker.com**. The FAQ is currently the only page with completely translated main content in all four languages; other public pages are indexable in English only. Localized but untranslated versions remain available to visitors and are marked `noindex` until the content is ready. The SSR pages, JSON-LD, HTML language attributes, canonical links, reciprocal `hreflang` values, and sitemap must describe **the same public content**. Do not add marketing claims or star ratings that are not visible and verifiable.
+The public canonical origin is **https://aceblocker.com**.
+At the time of this guide, only the FAQ has fully translated main content in all four languages.
+Index other public pages in English only.
+Visitors can open incomplete localized pages, but search engines must see `noindex` until translation is complete.
+Keep server-rendered content, JSON-LD, `<html lang>`, canonical URLs, reciprocal `hreflang`, and the sitemap consistent.
+Do not invent marketing claims or ratings.
 
-## Deploy checklist
+## Deployment Checks
 
-1. Deploy the code and verify `https://aceblocker.com/robots.txt` and `/sitemap.xml` return HTTP 200 without a login or CDN challenge. The sitemap intentionally omits account, auth, admin and checkout routes.
-2. Run `bun run seo:audit https://aceblocker.com` after deployment. This read-only script checks page titles, descriptions, canonicals, headings, JSON-LD, sitemap entries and robots.txt. It exits nonzero when it finds an issue. For staging, provide the staging origin (canonical links are still expected to point to production).
-3. Confirm **server-rendered** HTML of `/`, `/it/faq`, `/de/faq` and `/es/faq` using View Source, not just a hydrated browser. Verify correct `<html lang>`, visible translations, `hreflang`, self-canonical, and JSON-LD.
-4. Test key pages with Google's [Rich Results Test](https://search.google.com/test/rich-results) and [URL Inspection](https://support.google.com/webmasters/answer/9012289). Structured data doesn't guarantee a rich result; FAQ rich results have eligibility restrictions.
-5. Use [PageSpeed Insights](https://pagespeed.web.dev/) on mobile and desktop (home, download, FAQ). Track real Core Web Vitals over time rather than assigning an unmeasured score.
+1. Deploy the site. Check that `https://aceblocker.com/robots.txt` and `/sitemap.xml` return HTTP 200 without authentication or CDN challenges.
+   Keep account, authentication, administration, and checkout routes out of the sitemap.
+2. Run `bun run seo:audit https://aceblocker.com` after deployment.
+   This read-only script checks titles, descriptions, canonical links, headings, JSON-LD, sitemap entries, and `robots.txt`.
+   It returns a nonzero exit code when it finds an error.
+   For staging, supply the staging origin. Canonical links must still point to production.
+3. Inspect server-rendered source for `/`, `/it/faq`, `/de/faq`, and `/es/faq`.
+   Do not rely on the hydrated browser page alone.
+   Check `<html lang>`, translated text, `hreflang`, self-canonical URLs, and JSON-LD.
+4. Test important pages with Google's [Rich Results Test](https://search.google.com/test/rich-results) and [URL Inspection](https://support.google.com/webmasters/answer/9012289).
+   Structured data does not guarantee rich results. Google limits FAQ rich-result eligibility.
+5. Check mobile and desktop pages with [PageSpeed Insights](https://pagespeed.web.dev/).
+   Include the home, download, and FAQ pages. Monitor real Core Web Vitals.
+   Do not report an unmeasured score.
 
-## Search engines (manual account access required)
+## Search Engine Setup (Manual Account Access Required)
 
-- **Google Search Console:** verify the Domain property for `aceblocker.com` by DNS (preferred). Alternatively, provide the Google HTML verification token as `PUBLIC_GOOGLE_SITE_VERIFICATION` in the hosting environment and redeploy, then verify using the HTML-tag method. Submit `https://aceblocker.com/sitemap.xml`, inspect the homepage and `/faq`, and monitor indexing, performance, Core Web Vitals and available generative-AI reports.
-- **Bing Webmaster Tools:** verify the site (DNS/import from Google or a HTML tag using `PUBLIC_BING_SITE_VERIFICATION`), submit the same sitemap and review the **AI Performance** report, cited pages, grounding queries and URL errors.
-- Do not commit dashboard credentials or claim that ownership verification or sitemap submission is complete until someone with access performs it.
+- **Google Search Console:** Verify the `aceblocker.com` Domain property through DNS when possible.
+  Alternatively, set `PUBLIC_GOOGLE_SITE_VERIFICATION` in hosting and redeploy. Then use HTML-tag verification.
+  Submit `https://aceblocker.com/sitemap.xml`. Inspect `/` and `/faq`.
+  Monitor indexing, performance, Core Web Vitals, and available AI search reports.
+- **Bing Webmaster Tools:** Verify ownership through DNS, Google import, or `PUBLIC_BING_SITE_VERIFICATION`.
+  Submit the same sitemap. Review **AI Performance**, cited pages, grounding queries, and URL errors.
+- Do not commit dashboard credentials.
+  Do not say verification or submission is complete until an authorized user finishes it.
 
-## Crawler and AI-search checks
+## Crawler and AI Search Checks
 
-- Google's search AI features use normal Search indexing; there is no need for special `llms.txt` files or AI-specific schema.
-- `robots.txt` allows ordinary public search crawling, including **OAI-SearchBot** (ChatGPT Search), **Googlebot** and **Bingbot**. Confirm CDN/WAF/firewall settings also allow legitimate crawlers and that the HTML is publicly reachable without cookies or JavaScript execution.
-- Don't conflate OAI-SearchBot (search) with GPTBot (model training). Their crawler controls are independent.
-- Review published copy for accuracy and add original examples, release notes and real customer feedback only when available; do not buy fake citations or manufacture testimonials.
+- Google AI search uses normal Search indexing. Do not add a special `llms.txt` file or AI-specific schema for it.
+- `robots.txt` allows ordinary public search crawlers, including **OAI-SearchBot**, **Googlebot**, and **Bingbot**.
+  Check that CDN, WAF, and firewall settings allow legitimate crawlers.
+  Public HTML must be accessible without cookies or JavaScript.
+- Keep OAI-SearchBot (search) separate from GPTBot (model training). Their controls are independent.
+- Review published text for accuracy.
+  Add original examples, release notes, and real customer feedback only when they exist.
+  Do not buy fake citations or invent testimonials.
 
-## Ongoing process
+## Regular Checks
 
-Monthly: review Search Console search terms, indexing, 404s, CWV and Bing AI citations; log a baseline of branded/non-branded impressions, clicks, CTR and cited pages. Adjust **existing helpful content** for genuine search questions. Re-run `bun run seo:audit` after each public content change.
+**Every month:** Review Search Console queries, indexing, 404 errors, Core Web Vitals, and Bing AI citations.
+Record baseline branded and non-branded impressions, clicks, CTR, and cited pages.
+Improve existing useful content for real search questions.
+Run `bun run seo:audit` after each public content change.
 
-Quarterly: review FAQ for correctness, check link coverage, test actual locale rendering, validate schema, and confirm the sitemap's public-language list. When adding a new translated page, update `src/lib/seo.ts` and content catalogues together; never label untranslated body content with a false `hreflang`.
+**Every quarter:** Review FAQ accuracy, links, locale rendering, schema, and sitemap languages.
+When adding a translated page, update `src/lib/seo.ts` and the content catalogs together.
+Never declare an untranslated page as translated through `hreflang`.
 
-Official reference material:
+## Official References
 
 - https://developers.google.com/search/docs/fundamentals/ai-optimization-guide
 - https://developers.google.com/search/docs/specialty/international/localized-versions
