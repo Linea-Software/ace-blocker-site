@@ -1,9 +1,9 @@
 # VPS Deployment Guide for Ace Blocker
 
-This guide provides a step-by-step walkthrough for deploying the Ace Blocker website to a Linux VPS (Ubuntu 22.04+ recommended) using **Docker**, **Bun**, **Nginx**, and **Certbot**.
+Deploy the Ace Blocker website to a Linux VPS with **Docker**, **Bun**, **Nginx**, and **Certbot**. Ubuntu 22.04 or later is recommended. Follow the steps in order.
 
 > [!TIP]
-> **Automated path:** Most of the steps below are automated by `scripts/setup-vps.sh`. To use it:
+> **Automated setup:** `scripts/setup-vps.sh` performs most of these steps. Run it as follows:
 >
 > ```bash
 > sudo bash scripts/setup-vps.sh            # uses defaults (domain: aceblocker.com)
@@ -12,23 +12,23 @@ This guide provides a step-by-step walkthrough for deploying the Ace Blocker web
 >     --b2-key-id <id> --b2-app-key <key> --b2-bucket <bucket>
 > ```
 >
-> The flags are optional — the script prompts for anything it needs (Cloudflare token, B2 credentials). The manual steps in this guide remain useful for understanding what the script does and for troubleshooting. Where the script and this guide differ, **the script is the source of truth.**
+> The flags are optional. The script asks for missing values, such as the Cloudflare token and B2 credentials. Use the manual steps to understand or troubleshoot the setup. If the script and this guide differ, **follow the script**.
 >
-> Credential-bearing setup steps validate access before continuing. Invalid GitHub, Cloudflare, or B2 credentials are discarded and prompted again. The production .env configurator likewise verifies Dodo, Resend, and Bunny Storage credentials when a safe provider check exists; webhook/signing secrets that have no standalone verification endpoint are required but cannot be remotely authenticated during setup.
+> Setup checks credential access before continuing. It discards invalid GitHub, Cloudflare, or B2 credentials and asks again. The production `.env` configurator also verifies Dodo, Resend, and Bunny Storage credentials when the provider offers a safe check. You must provide webhook and signing secrets even when no standalone endpoint can verify them. Setup cannot authenticate those secrets remotely.
 
 ---
 
 ## 📋 Prerequisites
 
-1.  **A VPS**: (DigitalOcean, Hetzner, AWS, etc.) with at least 1GB RAM, running Ubuntu 22.04 or 24.04.
-2.  **A Domain Name**: Pointed to your VPS IP address (A record).
-3.  **SSH key access**: You should be able to log in via SSH key (password SSH login is disabled during hardening).
+1. **VPS:** Use at least 1 GB of RAM and Ubuntu 22.04 or 24.04 (for example, DigitalOcean, Hetzner, or AWS).
+2. **Domain:** Point its A record to the VPS IP address.
+3. **SSH key access:** Verify that you can sign in with an SSH key. The hardening procedure disables password-based SSH login.
 
 ---
 
 ## 🛠️ 1. Initial Server Setup
 
-Login to your server and perform basic security steps.
+Log in to the server. Apply the basic security settings.
 
 ```bash
 # Update system
@@ -40,7 +40,7 @@ sudo apt install -y curl git ufw nginx gnupg
 
 ### Create a New User
 
-It is highly recommended not to run everything as `root`.
+Avoid running all services as `root`.
 
 ```bash
 # Create a new user (replace 'aceblocker' with your preferred username)
@@ -56,11 +56,11 @@ chmod 600 /home/aceblocker/.ssh/authorized_keys
 
 #### Sudo access (scoped, not blanket)
 
-Avoid adding the service user to the `sudo` group with passwordless access — that
-makes the account effectively root, so any app or dependency compromise becomes a
-full root compromise. Instead, grant general sudo that **requires a password**,
-plus a narrow passwordless exception (pinned to absolute paths) for the few
-commands the deployment needs:
+Do not grant the service user unrestricted passwordless sudo. That access makes
+the account effectively root. A compromised application or dependency could then
+compromise the whole server.
+Require a password for general sudo. Grant passwordless access only to the few
+required commands, with absolute paths and fixed arguments:
 
 ```bash
 # Set a password for the user (used for sudo and console login, NOT for SSH)
@@ -87,12 +87,12 @@ su - aceblocker
 ```
 
 > [!NOTE]
-> The automated `setup-vps.sh` creates exactly this scoped sudoers file. Adjust the
-> paths if your distro installs these binaries elsewhere (check with `command -v docker`).
+> `setup-vps.sh` creates this scoped sudoers file. If your distribution uses
+> different binary paths, check them with `command -v docker` and update the file.
 
 ### SSH Hardening
 
-Secure your SSH connection by disabling root login and limiting login attempts.
+Disable root SSH login and limit login attempts.
 
 1. Open the SSH configuration file:
 
@@ -100,7 +100,7 @@ Secure your SSH connection by disabling root login and limiting login attempts.
     sudo nano /etc/ssh/sshd_config
     ```
 
-2. Ensure the following settings are configured:
+2. Set the following configuration values:
 
     ```ini
     # Disable root login
@@ -146,7 +146,7 @@ Secure your SSH connection by disabling root login and limiting login attempts.
 'passwordauthentication|permitrootlogin'` — that prints the _effective_
     > config, which is the only thing worth trusting here.
 
-3. Validate the config, then reload (don't blindly restart — a bad config plus a restart can drop sshd and lock you out):
+3. Validate the configuration, then reload SSH. Do not restart SSH without validation. An invalid configuration can stop SSH and lock you out:
 
     ```bash
     # Confirm there are no syntax errors BEFORE applying
@@ -157,15 +157,14 @@ Secure your SSH connection by disabling root login and limiting login attempts.
     ```
 
 > [!WARNING]
-> Before you disable `PasswordAuthentication`, confirm key-based login works for
-> the new user **in a separate terminal**, and keep your current session open
-> until you've verified a fresh login succeeds. If the key copy failed and you've
-> already disabled passwords + root login, you'll be locked out and will need your
-> provider's recovery console.
+> Before you disable `PasswordAuthentication`, test SSH key login for the new user
+> **in a separate terminal**. Keep the current session open until the new login
+> succeeds. If the key copy fails and you disable both password and root login,
+> you will need the provider's recovery console to regain access.
 
 ### Setup Firewall
 
-Allow SSH, HTTP, and HTTPS. Use `limit` on SSH to rate-limit connection attempts.
+Allow SSH, HTTP, and HTTPS. Apply `limit` to SSH to restrict connection attempts.
 
 ```bash
 sudo ufw limit OpenSSH
@@ -176,7 +175,7 @@ sudo ufw --force enable
 
 ### Install Fail2Ban (Brute-Force Protection)
 
-Fail2Ban monitors logs and temporarily bans IPs that show malicious behavior (e.g., repeated failed SSH logins).
+Fail2Ban reads logs and temporarily blocks IP addresses after suspicious activity, such as repeated failed SSH logins.
 
 ```bash
 sudo apt install -y fail2ban
@@ -184,7 +183,7 @@ sudo systemctl enable fail2ban
 sudo systemctl start fail2ban
 ```
 
-The default configuration protects SSH out of the box. To check status:
+The default configuration protects SSH. Check its status:
 
 ```bash
 sudo fail2ban-client status sshd
@@ -192,14 +191,14 @@ sudo fail2ban-client status sshd
 
 ### Enable Automatic Security Updates
 
-Keep the OS patched against known vulnerabilities automatically.
+Enable automatic OS security updates.
 
 ```bash
 sudo apt install -y unattended-upgrades
 sudo dpkg-reconfigure --priority=low unattended-upgrades
 ```
 
-This will automatically install security updates daily. You can verify it's active:
+The system now installs security updates daily. Verify that automatic updates are active:
 
 ```bash
 sudo systemctl status unattended-upgrades
@@ -211,7 +210,7 @@ sudo systemctl status unattended-upgrades
 
 ### Install Docker & Docker Compose
 
-The database (and optionally the application) runs in Docker.
+Run the database in Docker. You can also run the application in Docker.
 
 ```bash
 # Install Docker
@@ -220,12 +219,11 @@ sudo sh get-docker.sh
 ```
 
 > [!WARNING]
-> **Do not add the service user to the `docker` group by default.** Membership in
-> the `docker` group is effectively root (a container can mount the host
-> filesystem as root), which undermines the scoped-sudo setup above. The
-> deployment runs Docker commands through the scoped `sudo` rule instead
-> (`sudo docker ...`). Only add the user to the group if you have a specific need
-> and accept that it grants root-equivalent access:
+> **Do not add the service user to the `docker` group by default.** Members can
+> mount the host filesystem as root from a container. This bypasses the scoped
+> sudo controls. Run Docker commands through the scoped `sudo` rule instead
+> (`sudo docker ...`). Add the user to the group only when necessary and only if
+> you accept root-equivalent access:
 >
 > ```bash
 > # Optional, root-equivalent — only if you really need it:
@@ -234,7 +232,7 @@ sudo sh get-docker.sh
 
 ### Install Bun
 
-Used for package management and running the app.
+Use Bun for package management and application execution.
 
 ```bash
 curl -fsSL https://bun.sh/install | bash
@@ -253,15 +251,15 @@ cd ace-blocker-site
 ```
 
 > [!NOTE]
-> Keep the clone URL above in sync with `REPO_URL` in `scripts/setup-vps.sh`
-> (currently `https://github.com/Linea-Software/ace-blocker-site.git`) — they
-> must match. For a **private** repo, prefer a read-only deploy key over a
-> personal access token; the automated script avoids writing any token to disk
-> (no plaintext `~/.git-credentials`).
+> Keep the clone URL and `REPO_URL` in `scripts/setup-vps.sh` identical.
+> The current URL is `https://github.com/Linea-Software/ace-blocker-site.git`.
+> For a **private** repository, prefer a read-only deploy key to a personal
+> access token. The automated script never writes the token to disk or to
+> plaintext `~/.git-credentials`.
 
 ### Initial Setup
 
-Run the project's setup script to install dependencies, configure the initial `.env`, and start the database.
+Run the project setup script. It installs dependencies, creates the initial `.env`, and starts the database.
 
 ```bash
 bun install
@@ -270,13 +268,13 @@ bun run setup
 
 ### Production Environment Variables
 
-Edit the `.env` file for production.
+Edit `.env` for production.
 
 ```bash
 nano .env
 ```
 
-Ensure the following are set correctly:
+Set and verify these values:
 
 - `DATABASE_URL`: Set to `postgres://postgres:mysecretpassword@localhost:5432/aceblocker` (adjust user/pass/db if changed).
 - `BETTER_AUTH_SECRET`: Already generated by `setup`.
@@ -297,11 +295,11 @@ Ensure the following are set correctly:
 
 ## 🐳 4. Docker Configuration
 
-The project uses `compose.yaml` to manage infrastructure. By default, it manages the PostgreSQL database.
+Use `compose.yaml` to manage infrastructure. By default, it manages PostgreSQL.
 
 ### The `compose.yaml` File
 
-This file defines the services required for the application.
+This file defines the services that the application needs.
 
 ```yaml
 services:
@@ -337,17 +335,21 @@ volumes:
 ```
 
 > [!WARNING]
-> **Security**: In production, you MUST set `POSTGRES_PASSWORD` to a strong, unique value in your `.env` file. The `compose.yaml` uses `${VARIABLE}` syntax to safely pull these values from your environment.
+> **Security:** In production, set a strong, unique `POSTGRES_PASSWORD` in `.env`.
+> `compose.yaml` reads the value from the environment through `${VARIABLE}` syntax.
 >
-> **Port Binding**: The database port is bound to `127.0.0.1` (localhost only), so it cannot be reached from the public internet. Only your app running locally can connect.
+> **Port binding:** Bind the database port to `127.0.0.1` only. This prevents
+> direct access from the public internet. Local applications can connect.
 >
-> **Restart Policy**: `unless-stopped` is preferred over `always` — the container won't restart if you intentionally stop it manually.
+> **Restart policy:** Prefer `unless-stopped` to `always`. Docker will not
+> restart a container that you intentionally stop.
 >
-> **Health Check**: PostgreSQL health checks are configured so Docker Compose can verify the database is ready before dependent services start.
+> **Health check:** Use the configured PostgreSQL health checks. Docker Compose
+> uses them to confirm database readiness before starting dependent services.
 
 ### Manual Database Management
 
-If you're not using the `bun run setup` script, you can start the database manually:
+If you do not run `bun run setup`, start the database manually:
 
 ```bash
 docker compose up -d
@@ -355,7 +357,7 @@ docker compose up -d
 
 ### Dockerizing the Application (Optional)
 
-A `Dockerfile` is provided to run the SvelteKit application in a containerized environment. This is recommended for consistent deployments.
+The provided `Dockerfile` runs the SvelteKit application in a container. Use it for consistent deployments.
 
 1. **Build the image**:
 
@@ -365,7 +367,7 @@ docker build -t ace-blocker-site .
 
 2. **Run with Docker Compose**:
 
-To run both the app and the DB in Docker, you can add an `app` service to your `compose.yaml`:
+To run the application and database in Docker, add an `app` service to `compose.yaml`:
 
 ```yaml
 app:
@@ -392,11 +394,11 @@ app:
 bun run build
 ```
 
-This generates the output in the `.svelte-kit/output` (or `build/` depending on adapter) directory.
+The build writes output to `.svelte-kit/output` or `build/`, depending on the adapter.
 
 ### Create a Systemd Service
 
-To keep the server alive and restart on failure.
+Create a service to keep the server running and restart it after a failure.
 
 1. Create the service file:
 
@@ -443,7 +445,7 @@ SystemCallArchitectures=native
 WantedBy=multi-user.target
 ```
 
-**Note**: Make sure the `.env` file has restricted permissions so that secrets are not world-readable:
+**Security:** Restrict permissions on `.env` so other users cannot read secrets:
 
 ```bash
 chmod 600 /home/aceblocker/ace-blocker-site/.env
@@ -500,14 +502,14 @@ server {
 ```
 
 > [!IMPORTANT]
-> If this origin sits behind the Cloudflare proxy, `$remote_addr` is a Cloudflare
+> If this origin is behind the Cloudflare proxy, `$remote_addr` is a Cloudflare
 > edge IP, so every visitor shares one rate-limit bucket. Add a real-IP config in
 > the `http` context (`/etc/nginx/conf.d/cloudflare-realip.conf`) with
 > `set_real_ip_from` for each range in <https://www.cloudflare.com/ips-v4> and
 > `ips-v6`, plus `real_ip_header CF-Connecting-IP;` and `real_ip_recursive off;`.
 > `scripts/setup-vps.sh` generates this file for you.
 
-_Note: The `X-Forwarded-Proto` header is essential for SvelteKit and Better Auth to correctly detect HTTPS._
+_Keep `X-Forwarded-Proto`. SvelteKit and Better Auth need it to detect HTTPS correctly._
 
 3. Disable the default Nginx configuration and enable your site:
 
@@ -527,7 +529,7 @@ sudo systemctl restart nginx
 
 ## 🔒 7. HTTPS Support (SSL)
 
-We recommend using **Certbot** with the **Cloudflare DNS plugin** for easy, automatically renewing SSL certificates, especially if you want to support wildcard domains or have restrictive firewall settings.
+Use **Certbot** with the **Cloudflare DNS plugin** for automatic certificate renewal. This setup also supports wildcard domains and restricted firewall configurations.
 
 ### Install Certbot and Cloudflare Plugin
 
@@ -552,7 +554,7 @@ sudo apt install -y certbot python3-certbot-dns-cloudflare
 
 ### Obtain Certificate
 
-Run the following command to obtain the certificate via DNS challenge:
+Run this command to request the certificate with a DNS challenge:
 
 ```bash
 sudo certbot certonly --dns-cloudflare --dns-cloudflare-credentials ~/.cloudflare.ini -d aceblocker.com -d www.aceblocker.com
@@ -560,7 +562,7 @@ sudo certbot certonly --dns-cloudflare --dns-cloudflare-credentials ~/.cloudflar
 
 ### Update Nginx for SSL
 
-After obtaining the certificates, update your Nginx configuration to enable HTTPS and HTTP/2.
+After you obtain the certificates, enable HTTPS and HTTP/2 in Nginx.
 
 1. Open your configuration:
 
@@ -568,7 +570,7 @@ After obtaining the certificates, update your Nginx configuration to enable HTTP
     sudo nano /etc/nginx/sites-available/ace-blocker
     ```
 
-2. Replace the content with this robust SSL configuration:
+2. Replace the content with this SSL configuration:
 
 ```nginx
 server {
@@ -635,13 +637,13 @@ server {
 }
 ```
 
-_Note: If you get an "unknown directive 'http2'" error, it means your Nginx is very new (>= 1.25.1). In that case, remove `http2` from the `listen` lines and add `http2 on;` as a separate line inside the `server` block._
+_If Nginx reports "unknown directive 'http2'" on version 1.25.1 or later, remove `http2` from each `listen` directive. Add `http2 on;` as a separate line inside the `server` block._
 
-Alternatively, you can run `sudo certbot --nginx` after obtaining the cert to have Certbot attempt to automatically configure Nginx, though the manual method above gives you more control.
+You can also run `sudo certbot --nginx` after obtaining the certificate. Certbot then attempts to configure Nginx automatically. Use the manual method above if you need more control.
 
 ### Verify Auto-Renewal
 
-Certbot adds a timer to your system to handle renewals automatically.
+Certbot installs a timer for automatic renewal.
 
 ```bash
 sudo systemctl status certbot.timer
@@ -651,15 +653,15 @@ sudo systemctl status certbot.timer
 
 ### Regional subscription currency (BunnyCDN / Cloudflare)
 
-BunnyCDN forwards the visitor's two-letter country to the origin in `CDN-RequestCountryCode`. The live site uses BunnyCDN, not Cloudflare, for its public requests. **Do not trust that request header directly in SvelteKit**, because origin traffic may bypass the CDN or supply forged values.
+BunnyCDN forwards the visitor's two-letter country to the origin in `CDN-RequestCountryCode`. The live site uses BunnyCDN, not Cloudflare, for its public requests. **Do not trust that request header directly in SvelteKit.** Requests can bypass the CDN or contain forged values.
 
 The `scripts/setup-vps.sh` Nginx configuration (and `scripts/vps/nginx.sh`) maps country headers from verified BunnyCDN source IPs, with Cloudflare as an alternative. Nginx overwrites `X-Ace-Visitor-Country` and strips raw CDN country headers before proxying to the app. Pricing and checkout use that trusted header to select the matching Dodo subscription currency. The helper `scripts/vps/refresh-bunny-edges.sh` retrieves Bunny's official IPv4/IPv6 edge lists and is installed as `/usr/local/sbin/ace-refresh-bunny-edges`, with a daily refresh in `/etc/cron.d/ace-bunny-geo`. A failed update does not replace a previously working list.
 
-To activate this after a code update, deploy the **Nginx configuration as well as the SvelteKit build**. Simply redeploying the app without updating the reverse proxy will continue to default to USD. For manual deployments, reproduce the trusted edge-IP validation and header mapping from the setup script rather than forwarding the public request header blindly. Test an Italian visitor with `/get-pro` (expect EUR) and a matching `/checkout` session.
+After a code update, deploy **both the Nginx configuration and the SvelteKit build**. If you update only the app, the currency still defaults to USD. For manual deployments, copy the trusted edge-IP checks and header mapping from the setup script. Never forward unverified public request headers. Test an Italian visitor with `/get-pro` (expect EUR) and a matching `/checkout` session.
 
 ## 🚀 8. CDN Configuration (Optional - BunnyCDN)
 
-If you are using a CDN like BunnyCDN to serve your site, follow these critical steps to avoid connection errors:
+If you use BunnyCDN or another CDN, follow these steps to prevent connection errors:
 
 ### 1. BunnyCDN Dashboard Setup
 
@@ -688,7 +690,7 @@ Your domain (`aceblocker.com`) must point to BunnyCDN, **NOT** directly to your 
 
 ## 💳 9. Webhooks (Dodo Payments)
 
-Since the project uses Dodo Payments, you must configure the webhook URL in your **Dodo Payments Dashboard**:
+Configure the webhook URL in the **Dodo Payments Dashboard**:
 
 1. Log in to Dodo Payments.
 2. Go to **Developer > Webhooks**.
@@ -699,19 +701,20 @@ Since the project uses Dodo Payments, you must configure the webhook URL in your
 
 ## 💾 10. Database Backups (Crucial)
 
-To prevent data loss, schedule a daily backup of your Postgres container. A good
-strategy has three parts: a consistent dump, an **off-site copy** (a backup that
-only lives on the same server is lost if the server is), and **encryption at rest**.
+Schedule a daily backup of the PostgreSQL container. Make a consistent database
+dump. Store an **off-site copy** so a server failure cannot destroy every backup.
+Use **encryption at rest**.
 
 > [!TIP]
-> The automated `setup-vps.sh` builds this entire backup pipeline (local + Backblaze
-> B2 off-site + optional GPG encryption) and installs the cron job. The steps below
-> document what it produces and how to set it up by hand.
+> `setup-vps.sh` creates the local and Backblaze B2 backup pipeline. It can
+> enable GPG encryption and installs the cron job. The following steps show how
+> to configure and verify the same pipeline manually.
 
 ### 10a. Set up off-site storage (Backblaze B2)
 
-B2's free tier covers the first 10 GB of storage, and uploads/transactions are free,
-so compressed database dumps typically cost nothing.
+The stated B2 free tier includes the first 10 GB of storage and free uploads
+and transactions. Compressed database dumps can therefore cost nothing within
+those limits.
 
 1. In the B2 console, **create a bucket** (keep it **Private**). Note the exact name.
 2. Optionally set a **Lifecycle rule** on the bucket to delete files after ~30 days
@@ -721,7 +724,7 @@ so compressed database dumps typically cost nothing.
    shown only once).
 4. Under **Caps & Alerts**, set a low cap/alert so cost can't surprise you.
 
-Install and configure `rclone` as the service user:
+Install and configure `rclone` under the service user:
 
 ```bash
 curl -fsSL https://rclone.org/install.sh | sudo bash
@@ -741,8 +744,8 @@ sudo -u aceblocker rclone lsd b2backup:YOUR_BUCKET    # confirms the specific bu
 ```
 
 > [!NOTE]
-> Use the **keyID** as the `account` value (not your master Account ID — B2 rejects
-> that with a 401). B2 bucket names may contain uppercase; match the exact case.
+> Set `account` to the **keyID**, not the master Account ID. B2 rejects the
+> master ID with HTTP 401. Bucket names are case-sensitive; preserve uppercase.
 
 ### 10b. Backup script
 
@@ -816,11 +819,10 @@ echo "Backup completed: ${FINAL}"
 ```
 
 > [!WARNING]
-> Ensure `.env` is `chmod 600`. If you set `BACKUP_PASSPHRASE`, the dumps are
-> encrypted before leaving the server — recommended, since they're full database
-> dumps. **Store the passphrase somewhere safe and separate; without it the
-> backups cannot be restored.** If you omit it, the dumps are uploaded
-> unencrypted.
+> Set `.env` permissions to `chmod 600`. Set `BACKUP_PASSPHRASE` to encrypt
+> full database dumps before they leave the server. **Store the passphrase in
+> a separate secure location. Without it, you cannot restore the backups.**
+> If you omit the variable, uploads are unencrypted.
 
 _(Check your actual container name with `docker ps` — it should be `ace-blocker-db`.)_
 
@@ -835,8 +837,8 @@ crontab -e
 
 ### 10d. Verify before trusting it
 
-A backup you've never restored is a guess. After setup, run it once by hand and
-confirm the off-site copy appears in the B2 console:
+Do not trust a backup until you test it. After setup, run the backup manually.
+Confirm that the off-site copy appears in the B2 console:
 
 ```bash
 sudo -u aceblocker /home/aceblocker/backups/backup_db.sh
@@ -847,7 +849,7 @@ gunzip -t ~/backups/db_*.sql.gz 2>/dev/null && echo "archive OK"   # if unencryp
 
 ## 🔄 11. Maintenance & Updates
 
-To update the site with new changes:
+To deploy updated website code:
 
 ```bash
 cd /home/aceblocker/ace-blocker-site
@@ -859,7 +861,7 @@ sudo systemctl restart ace-blocker
 ```
 
 > [!TIP]
-> If you have local modifications to `compose.yaml` that you want to preserve, create a `compose.override.yaml` instead of modifying the tracked file. Docker Compose automatically merges `compose.yaml` and `compose.override.yaml` files. This way `git pull` works cleanly every time.
+> To preserve local Compose changes, put them in `compose.override.yaml` instead of editing tracked `compose.yaml`. Docker Compose merges the two files. This lets `git pull` update the tracked file without conflicts from local changes.
 
 ---
 
@@ -867,7 +869,7 @@ sudo systemctl restart ace-blocker
 
 ### View App Logs
 
-The app runs as a systemd service, so you can view its logs using `journalctl`.
+The application runs as a systemd service. Read its logs with `journalctl`.
 
 ```bash
 # View last 100 lines
@@ -889,21 +891,21 @@ docker compose logs -f db
 
 ### "CSRF Error" or "Invalid Origin"
 
-Ensure the `ORIGIN` variable in `.env` exactly matches your domain (including `https://`) and that Nginx is passing the `X-Forwarded-Proto` header.
+Set `ORIGIN` in `.env` to the exact domain, including `https://`. Verify that Nginx forwards `X-Forwarded-Proto`.
 
 ### Database Connection Issues
 
-If the app cannot connect to the database, ensure the Docker container is running:
+If the application cannot connect to PostgreSQL, verify that the Docker container is running:
 
 ```bash
 docker ps
 ```
 
-If it's not running, check the logs with `docker compose logs`.
+If the container is stopped, inspect logs with `docker compose logs`.
 
 ### Memory Issues (Low RAM VPS)
 
-If your build fails or the app crashes on a 512MB/1GB VPS, add a swap file:
+If the build fails or the application crashes on a 512 MB or 1 GB VPS, add swap:
 
 ```bash
 sudo fallocate -l 2G /swapfile
@@ -915,7 +917,7 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 
 ## Signed Pro entitlements
 
-The desktop engine accepts only signed, API-key-bound Ed25519 leases. In development, `bun run setup` or `bun run gen:entitlement-keys` creates/reuses the dev pair under `~/.config/ace-blocker/dev-entitlement-keys` and adds both signing variables to `.env`. On VPS, `setup-vps.sh` → `setup-env.ts` (also used by `scripts/vps/app-service.sh`) creates/reuses a separate production pair under `~/.config/ace-blocker/entitlement-keys` and writes both values to the deployment `.env` (mode 0600). Valid existing values are preserved; partial/mismatched pairs fail rather than rotating.
+The desktop engine accepts only signed, API-key-bound Ed25519 leases. In development, `bun run setup` or `bun run gen:entitlement-keys` creates/reuses the dev pair under `~/.config/ace-blocker/dev-entitlement-keys` and adds both signing variables to `.env`. On VPS, `setup-vps.sh` → `setup-env.ts` (also used by `scripts/vps/app-service.sh`) creates/reuses a separate production pair under `~/.config/ace-blocker/entitlement-keys` and writes both values to the deployment `.env` (mode 0600). Keep valid existing values. Reject incomplete or mismatched pairs instead of rotating keys.
 
 To generate a standalone pair on a trusted machine **outside the repository** without modifying `.env`, run:
 
@@ -925,15 +927,14 @@ bun run gen:entitlement-keys -- "$HOME/.config/ace-blocker/entitlement-keys"
 
 The resulting `server-signing-private.b64` contains the PKCS#8 DER private key
 encoded in base64. Put its **contents** into the backend secret
-`ACE_ENTITLEMENT_SIGNING_KEY_BASE64`. Never commit or print this private key.
+`ACE_ENTITLEMENT_SIGNING_KEY_BASE64`. Never print or commit this private key.
 
 The `desktop-verification-public.b64` file contains the raw 32-byte public key
 encoded in base64. Put its **contents** into the backend variable
 `ACE_ENTITLEMENT_PUBLIC_KEY_BASE64` to check the key pair on the backend.
 The engine obtains this public key from the authenticated
 `GET /api/v1/account/entitlement` response at runtime and saves it with the
-signed lease for offline verification. Neither development nor release builds
-need the key in Cargo or CI variables. Production must use HTTPS; key rotation
+signed lease for offline verification. Neither development nor release builds need the key in Cargo or CI variables. Production must use HTTPS; key rotation
 takes effect on the next authenticated license refresh without a desktop rebuild.
 
 A lease lasts up to 24 hours; existing paid capabilities can continue offline
@@ -941,9 +942,9 @@ for up to another 72 hours when the server cannot be contacted. Already active
 blocking protections stay enforced after downgrade, but enabling new Pro
 capabilities is not allowed after expiration. No device limit is enforced.
 
-**Pre-release billing policy:** DodoPayments stays in `test_mode` even with
-`NODE_ENV=production`. Use test-mode Dodo credentials until the product explicitly
-changes this policy.
+**Pre-release billing policy:** Keep DodoPayments in `test_mode`, including when
+`NODE_ENV=production`. Use test-mode Dodo credentials until the product changes
+this policy explicitly.
 
 ### Signed desktop MSI updates (disabled until configured)
 
@@ -953,10 +954,10 @@ not use Better Auth, Pro licenses, payment status or tokenized CDN URLs for
 public update discovery/download. The admin approval and private staging
 Bunny zones are separate from legacy installer downloads.
 
-For a production cutover, provision only **public** Ed25519 verification
-keys on the VPS, keep the signing private key off-box, configure a distinct
-private Bunny staging storage zone, and test direct anonymous HTTPS MSI
-downloads from the public CDN. Apply the Drizzle migration with
+Before production cutover, put only **public** Ed25519 verification keys on the
+VPS. Keep the private signing key off the server. Configure a separate private
+Bunny staging storage zone. Test direct anonymous HTTPS MSI downloads from the
+public CDN. Apply the Drizzle migration with
 `bun run db:migrate` using the site's existing migration process and
 validate the schema before enabling `ACE_DESKTOP_UPDATES_ENABLED=true`.
 Keep the legacy content updater untouched.
