@@ -1,29 +1,28 @@
-# Ace Blocker — Design Tokens & UI Consistency
+# Ace Blocker: Design Tokens and UI Consistency
 
-Status: audit + consolidation plan. The token _system_ already exists (Tailwind
-CSS v4 + shadcn-svelte); this document records it, catalogues where UI code
-bypasses it, and lists the decisions needed before a mechanical migration.
+Status: Token audit and consolidation plan.
+The system uses Tailwind CSS v4 and shadcn-svelte.
+This document records the tokens, code that does not use them, and required migration decisions.
 
-> Visual identity is protected: none of the values below may be changed
-> without founder approval, and any color migration must be verified visually
-> (screenshots or a browser) — never inferred from source alone.
+> Protect the approved visual identity.
+> Do not change the values without founder approval.
+> Verify all color migrations in a browser or screenshots. Do not infer visual results from source code.
 
-## 1. Token system
+## 1. Token System
 
-Defined in `src/routes/layout.css` (Tailwind v4 `@theme inline` mapping CSS
-variables to `--color-*` / `--radius-*` utilities).
+The tokens are defined in `src/routes/layout.css`.
+Tailwind v4 `@theme inline` maps CSS variables to `--color-*` and `--radius-*` utilities.
 
-- Radius: `--radius: 0.625rem` with `sm/md/lg/xl` derived offsets.
-- Light + dark surfaces via `:root` / `.dark` `oklch` variables:
-  `--background`, `--foreground`, `--card`, `--popover`, `--primary`,
-  `--secondary`, `--muted`, `--accent`, `--destructive`, `--border`,
-  `--input`, `--ring`, `--chart-*`, `--sidebar-*`.
-- Base layer: `* { border-border outline-ring/50 }`, `body { bg-background text-foreground }`.
+- Radius: `--radius: 0.625rem`; derive `sm/md/lg/xl` values from this token.
+- Light and dark surfaces: use `:root` and `.dark` `oklch` variables.
+  These include `--background`, `--foreground`, `--card`, `--popover`, `--primary`,
+  `--secondary`, `--muted`, `--accent`, `--destructive`, `--border`, `--input`,
+  `--ring`, `--chart-*`, and `--sidebar-*`.
+- Base styles: `* { border-border outline-ring/50 }` and `body { bg-background text-foreground }`.
 
-`--primary` is a light amber (`oklch(0.795 0.185 79.1)`); in dark mode it
-becomes a pale slate-blue (`oklch(0.929 0.013 255.508)`) — i.e. the semantic
-`primary` token does **not** represent the marketing brand amber.
-
+In light mode, `--primary` is amber: `oklch(0.795 0.185 79.1)`.
+In dark mode, it is pale slate-blue: `oklch(0.929 0.013 255.508)`.
+Thus, `primary` does **not** always mean marketing brand amber.
 ## 2. De-facto palette (measured across `src/`, excluding `lib/components/ui`)
 
 | Role                           | Value(s) actually used                     | Count     | Notes                          |
@@ -37,81 +36,64 @@ becomes a pale slate-blue (`oklch(0.929 0.013 255.508)`) — i.e. the semantic
 | Light surface                  | `#F8FAFC` (slate-50)                       | 9×        | light panels                   |
 | Neutrals (raw)                 | `#CBD5E1`, `#64748B`, `#E2E8F0`, `#94A3B8` | 1–8×      | borders/text                   |
 
-### Key inconsistency findings
+### Token Inconsistencies
 
-1. **Three different "brand ambers"** with no single source of truth:
-   `--primary` (light amber), `amber-500`/`#FFBF00` (marketing amber), and
-   `amber-400/600/700` for gradients/hover. They are visually distinct
-   shades, so this is a palette decision, not a mechanical swap.
-2. **Dark background is hardcoded** (`#0B0B0F`) instead of using
-   `--background`/`--card`, and **multiple dark surface hexes** coexist
-   (`#0B0F19` vs `#111827` vs `#1F2937` vs `#0F172A`) — likely the same
-   intent expressed four ways.
-3. **Raw slate hexes** (`#64748B` text, `#CBD5E1`/`#E2E8F0` borders) duplicate
-   the `muted`/`border` tokens.
-4. **Radius mix**: `rounded-lg`/`rounded-xl` (the shadcn `--radius` scale) is
-   used widely, but `rounded-2xl`, `rounded-3xl`, `rounded-[22px]` and
-   `rounded-md` are also used ad hoc (esp. on cards/buttons), so card corner
-   radii are inconsistent across pages.
+1. The site uses three distinct amber sources: light-mode `--primary`, marketing `amber-500`/`#FFBF00`, and hover/gradient `amber-400/600/700`.
+   These values are visually different. Do not replace them without a palette decision.
+2. `#0B0B0F` is hardcoded instead of using `--background` or `--card`.
+   The site also uses `#0B0F19`, `#111827`, `#1F2937`, and `#0F172A` for dark surfaces.
+   These values appear to represent similar surfaces.
+3. Raw slate colors `#64748B`, `#CBD5E1`, and `#E2E8F0` duplicate `muted` or `border` roles.
+4. Radii vary across pages. The site uses `rounded-lg`, `rounded-xl`, `rounded-2xl`,
+   `rounded-3xl`, `rounded-[22px]`, and `rounded-md`.
+   Different values make card and button corners inconsistent.
+## 3. UI Primitives
 
-## 3. UI primitives
+`src/lib/components/ui/` contains shadcn-svelte controls.
+These include buttons, inputs, cards, dialogs, badges, tabs, separators, sheets, menus, alerts, toasts, and labels.
+Many components add one-off styling such as `bg-amber-500` or `rounded-xl border border-border bg-card p-6`.
+Repeated styling is a larger problem than missing primitives.
+Shared `Panel` and `EmptyState` components can reduce these repeated styles.
+## 4. Approved Decisions (Round 5)
 
-`src/lib/components/ui/` holds the shadcn-svelte primitives (button, input,
-card, dialog, badge, tabs, separator, sheet, dropdown-menu, select, alert,
-sonner/toaster, label, …). Duplication risk is the **one-off styling applied
-on top of** these primitives (raw `bg-amber-500`, `rounded-xl border
-border-border bg-card p-6` blocks repeated inline) rather than missing
-primitives. An `EmptyState` and a `Card`/`Panel` wrapper would remove the most
-repeated inline `rounded-xl border … p-6` card recipe.
+1. Use `amber-500` (`#f59e0b`) as the canonical brand amber in `--color-brand`.
+2. Use `--background`, `--card`, and `--muted` for dark surfaces.
+   Map each existing value before changing it.
 
-## 4. Decisions (founder, round 5)
+## 5. Migration Status
 
-1. **Canonical brand amber = `amber-500` (`#f59e0b`)** → exposed as `--color-brand`.
-2. **Dark surfaces unify onto `--background`/`--card`/`--muted`** (pending the value mapping, see §5).
-
-## 5. Migration status
-
-**Done (committed):**
+### Completed and Committed
 
 - Added `--color-brand: #f59e0b` to `layout.css` `@theme`.
-- Replaced `amber-500` → `brand` (247×) and `[#FFBF00]` → `brand` (46×) across 17
-  `.svelte` files. `amber-500`→`brand` is value-identical (verified in the built
-  CSS: `.bg-brand{background-color:#f59e0b}`); `#FFBF00`→`brand` is the approved
-  brightness consolidation (slightly less bright hero accent).
-- Unified dark surfaces onto tokens: `dark:bg-[#0B0B0F]`/`dark:bg-[#0B0F19]` →
-  `dark:bg-background`, `dark:bg-[#111827]` → `dark:bg-card`, and the two inline
-  `background-color:#0b0b0f`/`#0b0f19` rules → `var(--background)`. Pixel-diff
-  verified (before/after): subtle ~8.4 delta on a 64px header strip, cards
-  effectively unchanged — no regression.
+- Changed `amber-500` to `brand` (247 uses) and `[#FFBF00]` to `brand` (46 uses) across 17 `.svelte` files.
+  The `amber-500` change keeps the same value.
+  Built CSS confirmed `.bg-brand{background-color:#f59e0b}`.
+  The `#FFBF00` change uses the approved, slightly darker brand color in the hero.
+- Changed `dark:bg-[#0B0B0F]` and `dark:bg-[#0B0F19]` to `dark:bg-background`.
+  Changed `dark:bg-[#111827]` to `dark:bg-card`.
+  Changed two inline `background-color:#0b0b0f` and `#0b0f19` rules to `var(--background)`.
+  Pixel comparisons showed an approximately 8.4 delta on a 64px header strip.
+  Card appearance did not change significantly.
 
-**Pending (require visual verification, light + dark):**
+### Round 6 Decisions and Completed Work
 
-- ~~`amber-400`/`amber-600`/`amber-700` remain as explicit **shade steps** for
-  gradients and hover states — flattening them to `brand` would remove hover
-  affordance; decide whether to keep them or derive dark/light brand shades.~~
-  **Decision (round 6): keep them.** They are the Tailwind default ambers and
-  every use is a hover state or gradient endpoint; flattening would remove the
-  hover affordance and deriving new shades would be a palette change. The
-  comment in `layout.css` `@theme` records this.
-- ~~`#0F172A` occurrences are **light-mode inline text colors** (not dark surfaces)
-  — normalize them to a text token/class or leave as-is (cosmetic).~~
-  **Done (round 6):** the two page-level `:global(body) { color: #0f172a }`
-  rules (get-pro, about) now use `var(--foreground)`; the email-template
-  occurrences in `src/lib/server/email.ts` are intentionally left as-is
-  (email HTML is not tokenized).
-- ~~Radius normalization (`rounded-2xl/3xl/[22px]` outliers → the `--radius` scale).~~
-  **Done (round 6), scoped:** small icon boxes on get-pro/download/about normalized
-  `rounded-2xl` → `rounded-xl` (matching the icon-box radius used elsewhere on
-  the same pages). Large marketing cards (about feature cards, download
-  platform cards) keep their larger radii as deliberate accents — each page is
-  internally consistent, and flattening them would change the marketing look
-  without founder sign-off.
-- ~~Extract the repeated `rounded-xl border … p-6` card recipe and an `EmptyState`
-  primitive into shared components.~~
-  **Done (round 6):** `src/lib/components/Panel.svelte` (the
-  `rounded-xl border … p-6` recipe, `variant="surface"` for the admin
-  light-surface recipe) and `src/lib/components/EmptyState.svelte` were added;
-  the admin release pages (stats cards + table empty states) now use them.
-  The account page's `Tabs.TabsContent` cards still pass the recipe as a
-  `class` prop (a wrapper would alter the tabpanel DOM) — they can follow once
-  the recipe is shared as a constant.
+- Keep Tailwind `amber-400`, `amber-600`, and `amber-700` for hover and gradient states.
+  Replacing them with `brand` would remove hover feedback.
+  New derived shades would change the palette.
+  The `layout.css` `@theme` comment records this decision.
+- The two page-level `:global(body) { color: #0f172a }` rules on get-pro and about now use `var(--foreground)`.
+  Preserve raw `#0F172A` in `src/lib/server/email.ts`. Email HTML does not use site tokens.
+- Change small icon boxes on get-pro, download, and about from `rounded-2xl` to `rounded-xl`.
+  Keep larger radii on marketing feature and platform cards.
+  These are intentional accents. Do not change them without founder approval.
+- Added `src/lib/components/Panel.svelte` for `rounded-xl border … p-6`.
+  Its `variant="surface"` supports the light admin surface.
+  Added `src/lib/components/EmptyState.svelte`.
+  Admin release pages now use these components for statistics and empty tables.
+
+### Remaining Constraint
+
+The account page still passes the card recipe as a `class` to `Tabs.TabsContent`.
+A wrapper would change the tab-panel DOM structure.
+Consider a shared class constant before you change that structure.
+Verify later changes visually in both light and dark themes.
