@@ -568,3 +568,76 @@ test('localized feature routes expose translated titles and content', async ({ p
 		await expect(page.locator('html')).toHaveAttribute('lang', locale);
 	}
 });
+
+test.describe('Download page primary installer actions', () => {
+	test('an explicit architecture URL selects the requested platform', async ({ page }) => {
+		for (const [arch, platform] of [
+			['windows_x64', 'Windows'],
+			['macos_universal', 'macOS'],
+			['linux_x64', 'Linux']
+		]) {
+			await page.goto(`/download?arch=${arch}`, { waitUntil: 'networkidle' });
+			const card = page.getByTestId('primary-installer-card');
+			await expect(card.getByRole('button', { name: platform, exact: true })).toHaveAttribute(
+				'aria-pressed',
+				'true'
+			);
+		}
+	});
+
+	test('download button and terminal command are in the same above-the-fold card', async ({
+		page
+	}) => {
+		for (const width of [390, 768, 1440]) {
+			await page.setViewportSize({ width, height: 900 });
+			await page.goto('/download', { waitUntil: 'networkidle' });
+			const card = page.getByTestId('primary-installer-card');
+			await expect(card).toBeVisible();
+			const download = card.getByRole('button', { name: 'Download now' });
+			const copy = card.getByRole('button', { name: /Copy .* installation command/ });
+			await expect(download).toBeVisible();
+			await expect(copy).toBeVisible();
+			const downloadBox = await download.boundingBox();
+			const copyBox = await copy.boundingBox();
+			expect(downloadBox).not.toBeNull();
+			expect(copyBox).not.toBeNull();
+			expect(downloadBox!.y + downloadBox!.height).toBeLessThan(900);
+			expect(copyBox!.y + copyBox!.height).toBeLessThan(900);
+			expect(
+				await page.evaluate(() => document.documentElement.scrollWidth)
+			).toBeLessThanOrEqual(width);
+		}
+	});
+
+	test('platform switcher updates both installation options without offering unavailable files', async ({
+		page
+	}) => {
+		await page.goto('/download', { waitUntil: 'networkidle' });
+		const card = page.getByTestId('primary-installer-card');
+		for (const platform of ['Windows', 'macOS', 'Linux']) {
+			const option = card.getByRole('button', { name: platform, exact: true });
+			await option.click();
+			await expect(option).toHaveAttribute('aria-pressed', 'true');
+			const download = card.getByRole('button', { name: 'Download now' });
+			const copy = card.getByRole('button', {
+				name: `Copy ${platform} installation command`
+			});
+			await expect(copy).toBeVisible();
+			const available = (await card.locator('pre code').count()) > 0;
+			expect(await download.isEnabled()).toBe(available);
+			expect(await copy.isEnabled()).toBe(available);
+			if (available) {
+				const command = await card.locator('pre code').innerText();
+				const suffix =
+					platform === 'Windows'
+						? '/download/windows_'
+						: platform === 'macOS'
+							? '/download/macos_universal'
+							: '/download/linux_';
+				expect(command).toContain(suffix);
+			} else {
+				await expect(card.getByText('Not currently available').first()).toBeVisible();
+			}
+		}
+	});
+});

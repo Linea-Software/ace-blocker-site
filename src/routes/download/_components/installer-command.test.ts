@@ -12,7 +12,8 @@ describe('terminal installer commands', () => {
 		const command = installerCommand('windows', 'x64');
 		expect(command).toContain('https://aceblocker.com/download/windows_x64');
 		expect(command).toContain('Invoke-WebRequest');
-		expect(command).toContain('Start-Process');
+		expect(command).toContain('Start-Process msiexec.exe');
+		expect(command).toContain('AceBlocker-Setup.msi');
 	});
 
 	it('downloads and opens a macOS installer from the disk image', () => {
@@ -23,10 +24,11 @@ describe('terminal installer commands', () => {
 		expect(command).toContain('open "$a"');
 	});
 
-	it('installs the downloaded Linux package using apt', () => {
+	it('extracts the published Linux bundle and invokes its installer', () => {
 		const command = installerCommand('linux', 'arm64');
 		expect(command).toContain('/download/linux_arm64');
 		expect(command).toContain('curl -fL');
-		expect(command).toContain('sudo apt install -y "$file"');
+		expect(command).toContain('tar -xzf');
+		expect(command).toContain('bash ./install.sh');
 	});
 });

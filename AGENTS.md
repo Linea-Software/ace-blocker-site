@@ -143,6 +143,12 @@ for zero/singular/plural agreement.
   remain separate required gates. Do not claim signed Linux manifests or
   unattended MSI installation exist. See `docs/DESKTOP_UPDATES.md`.
 
+## Download page primary installer actions (2026-11-11)
+
+- The public `/download` hero contains **one selected-platform installer card**. It offers the direct installer button and matching terminal command together, above the other-builds list.
+- Platform tabs (Windows/macOS/Linux) update both actions from the same published `platformRows` metadata, and explicit `?arch=` links select the requested OS even if unavailable. Use `src/routes/download/_components/installer-command.ts` to generate commands; Windows downloads an MSI and invokes `msiexec`, while Linux downloads the validated tar.gz bundle and invokes its included `install.sh`. Never copy stale CDN URLs or present a command for an unpublished installer.
+- With no release, keep both actions visible but disabled, and show `Not currently available`. Preserve responsive stacking, long-command horizontal scrolling, and correct copy feedback. Other platform builds and checksum validation remain in their lower sections.
+
 ## Desktop account activation
 
 - The engine exposes **typed remoc IPC, not a local browser HTTP endpoint**. Website sign-in, checkout completion, and Pro activation pass account keys to the allowlisted `aceblocker://account/api-key` handler, with credentials in the URI fragment rather than the query string.

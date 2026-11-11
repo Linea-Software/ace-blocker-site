@@ -12,10 +12,9 @@
 		IconFileText,
 		IconExternalLink
 	} from '@tabler/icons-svelte';
-	import Loader2 from '@lucide/svelte/icons/loader-2';
+	import { Check, Copy, Terminal, Loader2 } from '@lucide/svelte';
 	import { onMount } from 'svelte';
-	import { installerArch } from './_components/installer-command';
-	import InstallCommands from './_components/InstallCommands.svelte';
+	import { installerArch, installerCommand } from './_components/installer-command';
 	import PlatformGrid from './_components/PlatformGrid.svelte';
 	import ChecksumCard from './_components/ChecksumCard.svelte';
 
@@ -52,17 +51,24 @@
 	);
 
 	let detectedPlatform = $state<PlatformId | null>(null);
+	let chosenPlatform = $state<PlatformId | null>(null);
+	let copiedPlatform = $state<PlatformId | null>(null);
 	let isManualLoading = $state(false);
 
 	const preferredPlatform = $derived.by<PlatformId | null>(() => {
-		if (REQUESTED_PLATFORM && platformRows[REQUESTED_PLATFORM]) return REQUESTED_PLATFORM;
+		if (REQUESTED_PLATFORM) return REQUESTED_PLATFORM;
 		if (detectedPlatform && platformRows[detectedPlatform]) return detectedPlatform;
 		return null;
 	});
 
-	const effectivePlatform = $derived.by<PlatformId | null>(() => {
-		return preferredPlatform ?? availablePlatforms[0] ?? null;
-	});
+	const effectivePlatform = $derived<PlatformId>(
+		chosenPlatform ??
+			preferredPlatform ??
+			availablePlatforms[0] ??
+			REQUESTED_PLATFORM ??
+			detectedPlatform ??
+			'windows'
+	);
 
 	function detectPlatform(): PlatformId | null {
 		if (typeof window === 'undefined') return null;
@@ -79,9 +85,26 @@
 		detectedPlatform = detectPlatform();
 	});
 
-	const selectedMeta = $derived<PlatformMeta | null>(
-		effectivePlatform ? (platformRows[effectivePlatform] ?? null) : null
+	const selectedMeta = $derived<PlatformMeta | null>(platformRows[effectivePlatform] ?? null);
+	const selectedCommand = $derived(
+		selectedMeta ? installerCommand(effectivePlatform, selectedMeta.architecture) : null
 	);
+
+	async function copySelectedCommand() {
+		if (!selectedCommand) return;
+		try {
+			await navigator.clipboard.writeText(selectedCommand);
+			copiedPlatform = effectivePlatform;
+		} catch {
+			copiedPlatform = null;
+		}
+	}
+
+	function choosePlatform(platform: PlatformId) {
+		chosenPlatform = platform;
+		copiedPlatform = null;
+		isManualLoading = false;
+	}
 
 	function formatSize(meta: PlatformMeta | null): string {
 		return meta ? Math.round(meta.size / 1024 / 1024) + '\u00A0MB' : '—';
@@ -95,7 +118,7 @@
 			icon: IconBrandWindows,
 			size: formatSize(platformRows.windows),
 			version: platformRows.windows?.version ?? null,
-			ext: '.exe',
+			ext: '.msi',
 			details: m.download_platform_windows_details(),
 			isAvailable: platformRows.windows !== null
 		},
@@ -117,14 +140,14 @@
 			icon: IconBrandUbuntu,
 			size: formatSize(platformRows.linux),
 			version: platformRows.linux?.version ?? null,
-			ext: '.deb',
+			ext: '.tar.gz',
 			details: m.download_platform_linux_details(),
 			isAvailable: platformRows.linux !== null
 		}
 	]);
 
 	function handleManualDownload() {
-		if (!effectivePlatform) return;
+		if (!selectedMeta) return;
 		isManualLoading = true;
 		window.location.href = `/download/${installerArch(effectivePlatform, selectedMeta?.architecture ?? 'x64')}`;
 		setTimeout(() => {
@@ -147,76 +170,152 @@
 
 <main id="main-content">
 	<section class="border-b border-border">
-		<div class="ace-shell grid gap-10 py-14 lg:grid-cols-[0.78fr_1.22fr] lg:items-end lg:py-20">
-			<div>
+		<div
+			class="ace-shell grid gap-8 py-10 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)] lg:items-start lg:gap-12 lg:py-14"
+		>
+			<div class="min-w-0">
 				<p class="font-mono text-xs text-muted-foreground">{m.download_release_label()}</p>
 				<h1
 					class="mt-4 font-display text-5xl leading-[0.92] font-semibold tracking-tight sm:text-6xl"
 				>
 					{m.download_platform_title()}
 				</h1>
-				<p class="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
+				<p class="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
 					{m.download_platform_description()}
 				</p>
 			</div>
 
-			<div class="overflow-hidden rounded-lg border border-border bg-card">
-				{#if selectedMeta}
-					<div class="grid sm:grid-cols-[1fr_auto] sm:items-stretch">
-						<div class="p-5 sm:p-6">
-							<div class="flex flex-wrap items-center gap-x-5 gap-y-2">
-								<p class="font-display text-2xl font-semibold">
-									{effectivePlatform === 'windows'
-										? m.download_platform_windows()
-										: effectivePlatform === 'macos'
-											? m.download_platform_macos()
-											: m.download_platform_linux()}
-								</p>
-								<p class="font-mono text-xs text-muted-foreground">
-									v{selectedMeta.version}
-								</p>
-								<p class="font-mono text-xs text-muted-foreground">
-									{formatSize(selectedMeta)}
-								</p>
-							</div>
-
-							<p class="mt-4 text-sm text-muted-foreground">
-								{m.download_description()}
-							</p>
-
-							<a
-								href="https://github.com/aintDatCap/ace-blocker/releases"
-								target="_blank"
-								rel="noreferrer"
-								class="mt-5 inline-flex items-center gap-2 text-sm font-medium hover:underline"
-							>
-								<IconFileText size={16} aria-hidden="true" />
-								{m.download_release_notes({ version: selectedMeta.version })}
-								<IconExternalLink size={13} aria-hidden="true" />
-							</a>
-						</div>
-
-						<div
-							class="border-t border-border p-5 sm:flex sm:items-center sm:border-t-0 sm:border-l sm:p-6"
-						>
+			<div
+				class="min-w-0 overflow-hidden rounded-lg border border-border bg-card"
+				data-testid="primary-installer-card"
+			>
+				<div class="border-b border-border px-4 py-4 sm:px-5">
+					<p class="mb-3 text-xs font-semibold text-muted-foreground">
+						{m.download_platform_select_label()}
+					</p>
+					<div
+						class="grid grid-cols-3 gap-2"
+						role="group"
+						aria-label={m.download_platform_select_label()}
+					>
+						{#each platformOptions as option (option.id)}
+							{@const PlatformIcon = option.icon}
 							<button
 								type="button"
-								onclick={handleManualDownload}
-								disabled={isManualLoading || !effectivePlatform}
-								class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-foreground px-5 font-medium text-background hover:opacity-90 disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
+								aria-pressed={effectivePlatform === option.id}
+								onclick={() => choosePlatform(option.id as PlatformId)}
+								class={[
+									'inline-flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-md border px-2 text-xs font-semibold transition-colors sm:text-sm',
+									effectivePlatform === option.id
+										? 'border-foreground bg-foreground text-background'
+										: 'border-border bg-background text-foreground hover:bg-accent'
+								]}
 							>
-								{#if isManualLoading}
-									<Loader2 class="size-4 animate-spin" aria-hidden="true" />
+								<PlatformIcon size={18} stroke={1.6} aria-hidden="true" />
+								<span class="min-w-0 truncate">{option.name}</span>
+							</button>
+						{/each}
+					</div>
+				</div>
+
+				<div class="border-b border-border px-4 py-4 sm:px-5">
+					<div class="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+						<strong class="font-display text-xl font-semibold">
+							{effectivePlatform === 'windows'
+								? m.download_platform_windows()
+								: effectivePlatform === 'macos'
+									? m.download_platform_macos()
+									: m.download_platform_linux()}
+						</strong>
+						{#if selectedMeta}
+							<span class="font-mono text-xs text-muted-foreground"
+								>v{selectedMeta.version}</span
+							>
+							<span class="font-mono text-xs text-muted-foreground"
+								>{formatSize(selectedMeta)}</span
+							>
+						{:else}
+							<span class="text-xs text-muted-foreground"
+								>{m.download_not_available()}</span
+							>
+						{/if}
+					</div>
+				</div>
+
+				<div class="grid gap-4 p-4 sm:p-5 xl:grid-cols-[minmax(0,0.76fr)_minmax(0,1.24fr)]">
+					<div class="flex min-w-0 flex-col gap-3">
+						<p class="text-sm font-semibold">{m.download_file_option_label()}</p>
+						<button
+							type="button"
+							onclick={handleManualDownload}
+							disabled={isManualLoading || !selectedMeta}
+							class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-foreground px-4 font-medium text-background hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+						>
+							{#if isManualLoading}
+								<Loader2 class="size-4 animate-spin" aria-hidden="true" />
+							{:else}
+								<IconDownload size={18} aria-hidden="true" />
+							{/if}
+							{m.download_manual_button()}
+						</button>
+					</div>
+
+					<div class="min-w-0">
+						<div class="flex min-h-6 flex-wrap items-center justify-between gap-2">
+							<p class="inline-flex items-center gap-2 text-sm font-semibold">
+								<Terminal class="size-4" aria-hidden="true" />
+								{m.download_terminal_option_label()}
+							</p>
+							<button
+								type="button"
+								onclick={copySelectedCommand}
+								disabled={!selectedCommand}
+								aria-label={m.download_command_copy_for({
+									platform:
+										effectivePlatform === 'windows'
+											? m.download_platform_windows()
+											: effectivePlatform === 'macos'
+												? m.download_platform_macos()
+												: m.download_platform_linux()
+								})}
+								class="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+							>
+								{#if copiedPlatform === effectivePlatform && selectedCommand}
+									<Check class="size-4" aria-hidden="true" />
+									{m.download_command_copied()}
 								{:else}
-									<IconDownload size={18} aria-hidden="true" />
+									<Copy class="size-4" aria-hidden="true" />
+									{m.download_command_copy()}
 								{/if}
-								{m.download_manual_button()}
 							</button>
 						</div>
+						<div class="mt-2 min-w-0 rounded-md border border-border bg-background">
+							{#if selectedCommand}
+								<pre
+									class="overflow-x-auto px-3 py-3 font-mono text-xs leading-relaxed"><code
+										>{selectedCommand}</code
+									></pre>
+							{:else}
+								<p class="px-3 py-3 text-xs text-muted-foreground">
+									{m.download_not_available()}
+								</p>
+							{/if}
+						</div>
 					</div>
-				{:else}
-					<div class="p-6 text-sm text-muted-foreground">
-						{m.download_not_available()}
+				</div>
+
+				{#if selectedMeta}
+					<div class="border-t border-border px-4 py-3 sm:px-5">
+						<a
+							href="https://github.com/aintDatCap/ace-blocker/releases"
+							target="_blank"
+							rel="noreferrer"
+							class="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
+						>
+							<IconFileText size={16} aria-hidden="true" />
+							{m.download_release_notes({ version: selectedMeta.version })}
+							<IconExternalLink size={13} aria-hidden="true" />
+						</a>
 					</div>
 				{/if}
 			</div>
@@ -233,14 +332,6 @@
 			/>
 		</div>
 	</section>
-
-	<InstallCommands
-		platforms={[
-			{ id: 'windows', architecture: platformRows.windows?.architecture ?? null },
-			{ id: 'macos', architecture: platformRows.macos?.architecture ?? null },
-			{ id: 'linux', architecture: platformRows.linux?.architecture ?? null }
-		] satisfies { id: PlatformId; architecture: string | null }[]}
-	/>
 
 	{#if selectedMeta?.hash}
 		<section class="py-12 sm:py-16">
