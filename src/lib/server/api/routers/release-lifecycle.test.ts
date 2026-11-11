@@ -129,6 +129,11 @@ vi.mock('$lib/server/cache', async (importOriginal) => {
 	};
 });
 
+vi.mock('$lib/server/installer-publication-mode', () => ({
+	canPublishUnsignedInstallers: vi.fn().mockReturnValue(false)
+}));
+
+import { canPublishUnsignedInstallers } from '$lib/server/installer-publication-mode';
 import { adminRouter } from './admin';
 import { scriptsRouter } from './scripts';
 
@@ -153,6 +158,19 @@ describe('admin release uploads', () => {
 		});
 	});
 
+	it('rejects manual Windows uploads in production before invoking the uploader', async () => {
+		const res = await adminHandle('/admin/installers/upload', {
+			method: 'POST',
+			body: uploadBody(validMsi, {
+				version: '1.0.0',
+				os: 'windows',
+				architecture: 'x64'
+			})
+		});
+		expect(res.status).toBe(409);
+		expect(uploadInstaller).not.toHaveBeenCalled();
+	});
+
 	it('stages a resistance upload: not downloadable until marked', async () => {
 		uploadResistanceModeScript.mockResolvedValue({
 			isErr: () => false,
@@ -172,7 +190,8 @@ describe('admin release uploads', () => {
 		);
 	});
 
-	it('stages an installer upload: not downloadable until marked', async () => {
+	it('allows manual Windows MSI upload in local development only', async () => {
+		vi.mocked(canPublishUnsignedInstallers).mockReturnValue(true);
 		uploadInstaller.mockResolvedValue({
 			isErr: () => false,
 			_unsafeUnwrap: () => ({ downloadUrl: 'https://cdn/x.exe', hash: 'abc' })
@@ -280,7 +299,7 @@ describe('admin set-downloadable lifecycle', () => {
 		expect(db.update).not.toHaveBeenCalled();
 	});
 
-	it('never enables an unsigned Linux candidate directly', async () => {
+	it('never enables an unsigned Linux candidate directly in production', async () => {
 		const { db } = await import('$lib/server/db');
 		vi.mocked(db.query.aceBlockerInstaller.findFirst).mockResolvedValue({
 			id: 'linux-1',
@@ -290,6 +309,60 @@ describe('admin set-downloadable lifecycle', () => {
 			artifactValidatedAt: new Date()
 		} as never);
 		const res = await markDownloadable('/admin/installers/set-downloadable', 'linux-1', true);
+		expect(res.status).toBe(409);
+		expect(db.update).not.toHaveBeenCalled();
+	});
+
+	it('allows a validated unsigned Windows release in local development', async () => {
+		vi.mocked(canPublishUnsignedInstallers).mockReturnValue(true);
+		const { db } = await import('$lib/server/db');
+		vi.mocked(db.query.aceBlockerInstaller.findFirst).mockResolvedValue({
+			id: 'w-dev',
+			os: 'windows',
+			architecture: 'x64',
+			updateState: 'legacy',
+			artifactValidatedAt: new Date()
+		} as never);
+		vi.mocked(db.update).mockReturnValue(updateChain() as never);
+		const res = await markDownloadable('/admin/installers/set-downloadable', 'w-dev', true);
+		expect(res.status).toBe(200);
+		expect(db.update).toHaveBeenCalled();
+	});
+
+	it('allows a validated Linux installer in local development without signed Windows', async () => {
+		vi.mocked(canPublishUnsignedInstallers).mockReturnValue(true);
+		const { db } = await import('$lib/server/db');
+		vi.mocked(db.query.aceBlockerInstaller.findFirst)
+			.mockResolvedValueOnce({
+				id: 'l-dev',
+				version: '1.0.0',
+				os: 'linux',
+				architecture: 'x64',
+				updateState: 'legacy',
+				artifactValidatedAt: new Date()
+			} as never)
+			.mockResolvedValueOnce(null as never);
+		vi.mocked(db.update).mockReturnValue(updateChain() as never);
+		const res = await markDownloadable('/admin/installers/set-downloadable', 'l-dev', true);
+		expect(res.status).toBe(200);
+		expect(db.update).toHaveBeenCalled();
+	});
+
+	it('refuses an unverified release even in local development', async () => {
+		vi.mocked(canPublishUnsignedInstallers).mockReturnValue(true);
+		const { db } = await import('$lib/server/db');
+		vi.mocked(db.query.aceBlockerInstaller.findFirst).mockResolvedValue({
+			id: 'w-unverified',
+			os: 'windows',
+			architecture: 'x64',
+			updateState: 'legacy',
+			artifactValidatedAt: null
+		} as never);
+		const res = await markDownloadable(
+			'/admin/installers/set-downloadable',
+			'w-unverified',
+			true
+		);
 		expect(res.status).toBe(409);
 		expect(db.update).not.toHaveBeenCalled();
 	});

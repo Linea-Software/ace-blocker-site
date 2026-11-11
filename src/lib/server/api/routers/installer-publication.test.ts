@@ -142,6 +142,11 @@ vi.mock('$lib/server/cdn', async (importOriginal) => {
 	};
 });
 
+vi.mock('$lib/server/installer-publication-mode', () => ({
+	canPublishUnsignedInstallers: vi.fn().mockReturnValue(false)
+}));
+
+import { canPublishUnsignedInstallers } from '$lib/server/installer-publication-mode';
 import { adminRouter } from './admin';
 import { GET } from '../../../../routes/download/[arch]/+server';
 import { load } from '../../../../routes/download/+page.server';
@@ -184,13 +189,15 @@ describe('installer publication lifecycle (regression: upload visible on /downlo
 	beforeEach(async () => {
 		rows = [];
 		vi.clearAllMocks();
+		vi.mocked(canPublishUnsignedInstallers).mockReturnValue(false);
 		vi.mocked((await import('$lib/server/auth')).auth.api.getSession).mockResolvedValue({
 			session: {} as never,
 			user: { role: 'admin' } as never
 		});
 	});
 
-	it('stages the upload: the admin upload endpoint asks for canBeDownloaded=false', async () => {
+	it('stages a manual MSI upload for local development only', async () => {
+		vi.mocked(canPublishUnsignedInstallers).mockReturnValue(true);
 		uploadInstaller.mockResolvedValue({
 			isOk: () => true,
 			isErr: () => false,

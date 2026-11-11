@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { aceBlockerInstaller } from '$lib/server/db/schema';
 import { desc } from 'drizzle-orm';
+import { canPublishUnsignedInstallers } from '$lib/server/installer-publication-mode';
 
 export const load: PageServerLoad = async () => {
 	const installers = await db
@@ -12,6 +13,7 @@ export const load: PageServerLoad = async () => {
 
 	return {
 		installers,
+		allowUnsignedPublishing: canPublishUnsignedInstallers(),
 		totalDownloads
 	};
 };

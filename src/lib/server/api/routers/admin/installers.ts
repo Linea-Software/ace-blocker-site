@@ -7,6 +7,8 @@ import { invalidateInstallerCache } from '$lib/server/cache';
 import crypto from 'crypto';
 import { createLogger } from '$lib/server/logger';
 import { validateInstallerArtifact } from '$lib/server/installer-artifact-validation';
+import { supportedInstallerTarget } from '$lib/installer-release-policy';
+import { canPublishUnsignedInstallers } from '$lib/server/installer-publication-mode';
 
 const log = createLogger('api:admin:installers');
 
@@ -70,6 +72,17 @@ export const installersRouter = new Elysia({ prefix: '/installers' })
 				};
 			}
 
+			// The regular uploader cannot authenticate the MSI's publisher certificate.
+			// Production Windows release candidates must use the trusted signed CI ingest.
+			if (os === 'windows' && !canPublishUnsignedInstallers()) {
+				set.status = 409;
+				return {
+					error: true,
+					message:
+						'Windows MSI releases must be Authenticode-verified and staged through the signed release pipeline; manual uploads are development-only'
+				};
+			}
+
 			const invalid = await validateInstallerArtifact(file, version, os, architecture);
 			if (invalid) {
 				set.status = 400;
@@ -128,6 +141,10 @@ export const installersRouter = new Elysia({ prefix: '/installers' })
 					message: t.String()
 				}),
 				403: t.String(),
+				409: t.Object({
+					error: t.Boolean(),
+					message: t.String()
+				}),
 				500: t.Object({
 					error: t.Boolean(),
 					message: t.String()
@@ -168,15 +185,27 @@ export const installersRouter = new Elysia({ prefix: '/installers' })
 				};
 			}
 
-			// The legacy toggle can withdraw old releases, but cannot authorize a
-			// new public release. The signed Windows publish/withdraw transaction
-			// is the only authority for the complete Windows + Linux pair.
+			// Only local development can publish structurally validated, unsigned
+			// legacy binaries. Production continues to require signed Windows ingest.
 			if (canBeDownloaded) {
-				set.status = 409;
-				return {
-					error: true,
-					message: 'Publish a signed Windows release with a verified Linux companion'
-				};
+				if (!canPublishUnsignedInstallers()) {
+					set.status = 409;
+					return {
+						error: true,
+						message: 'Publish a signed Windows release with a verified Linux companion'
+					};
+				}
+				if (
+					!existing.artifactValidatedAt ||
+					!supportedInstallerTarget(existing.os, existing.architecture)
+				) {
+					set.status = 409;
+					return {
+						error: true,
+						message:
+							'Only server-validated Windows x64 MSI and Linux x64 bundles may be published'
+					};
+				}
 			}
 			if (existing.os === 'linux') {
 				const publishedWindows = await db.query.aceBlockerInstaller.findFirst({
@@ -192,7 +221,8 @@ export const installersRouter = new Elysia({ prefix: '/installers' })
 					set.status = 409;
 					return {
 						error: true,
-						message: 'Withdraw the signed Windows release to withdraw both platforms'
+						message:
+							'Publish or withdraw the signed Windows release to change both platforms'
 					};
 				}
 			}

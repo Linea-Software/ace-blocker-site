@@ -188,6 +188,39 @@ in-memory installer uploader: it must not be used for the secure signed
 release path. MSI size is currently bounded by PostgreSQL's 32-bit
 `size` column (`2147483647` bytes, or just under 2 GiB).
 
+## Admin publication: local development versus production
+
+The admin installer list makes publication requirements visible per row. A
+disabled **Make available** button includes a reason (unverified artifact,
+withdrawn signed release, missing Linux companion, legacy build or platform
+linked to a signed Windows release).
+
+**Local development:** Manual uploads of Windows x64 MSI or Linux x64 tar.gz
+are allowed when running a SvelteKit development build with
+`NODE_ENV=development` and a **local PostgreSQL database**. The server still
+validates the installer file's structure and format before upload, and only
+rows with `artifact_validated_at` set may be marked downloadable. An unsigned
+development release is never promoted to the signed desktop update feed.
+Development files use the existing `/dev/` Bunny namespace. A production build
+cannot enable this manual publishing path by changing `NODE_ENV`.
+
+**Production/release:** The admin's ordinary upload form accepts **Linux
+companion bundles only**. Manual Windows MSI uploads are rejected by the API,
+because even a structurally valid MSI is not proven Authenticode-signed. To
+publish Windows, use the trusted external Windows Authenticode verification
+and offline Ed25519 signer, private staging upload and
+`POST /api/v1/releases/ingest/desktop` described below. The verified,
+`staged` candidate then appears in the admin installers list. Upload exactly
+one validated Linux companion of the same version, and click **Make available**
+on the signed Windows candidate. The backend revalidates the staged MSI and
+Linux companion before atomically publishing both.
+
+This admin UI deliberately does not accept a bare "signed" checkbox, a
+developer-supplied manifest signature, or unsigned Windows binaries in
+production. The website cannot independently validate Authenticode on Linux;
+the trusted Windows verification ceremony is mandatory prior to signed
+ingest. Don't weaken this to an MSI-header check.
+
 ## Required installer artifacts and publication readiness
 
 The admin upload supports **Windows x64 MSI** (`AceBlocker-<version>.msi`)

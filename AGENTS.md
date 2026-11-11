@@ -143,6 +143,26 @@ for zero/singular/plural agreement.
   remain separate required gates. Do not claim signed Linux manifests or
   unattended MSI installation exist. See `docs/DESKTOP_UPDATES.md`.
 
+## Installer publication UI environments (2026-11-11)
+
+- The admin installer page exposes explicit disabled-action reasons and shows
+  whether it is running in development or production publication mode.
+- Unsigned/manual installers can be published only in a SvelteKit development
+  build with `NODE_ENV=development` and local PostgreSQL, as guarded by
+  `src/lib/server/installer-publication-mode.ts`. Even there, the server
+  requires validated x64 installer bytes and the signed Windows/Linux pair
+  remains atomic.
+- In production, ordinary Windows MSI uploads are **rejected**, even when the
+  MSI header is valid. Production Windows releases enter only via the trusted
+  Authenticode-verified, Ed25519-signed CI/offline pipeline and private staging,
+  then appear as staged candidates in the admin list. The admin can upload
+  the matching validated Linux bundle and publish the signed Windows row.
+  Never treat a manually supplied MSI as signed based solely on its filename
+  or compound-file header. See `docs/DESKTOP_UPDATES.md`.
+- `src/lib/installer-publication-ui.ts` only explains availability in the
+  browser. API-side gates in `src/lib/server/api/routers/admin/installers.ts`
+  and `src/lib/server/desktop-update-service.ts` remain authoritative.
+
 ## Download page primary installer actions (2026-11-11)
 
 - The public `/download` hero contains **one selected-platform installer card**. It offers the direct installer button and matching terminal command together, above the other-builds list.

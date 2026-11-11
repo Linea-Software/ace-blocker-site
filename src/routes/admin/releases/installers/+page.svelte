@@ -10,6 +10,11 @@
 	import * as m from '$lib/paraglide/messages';
 	import { expectedInstallerFile } from '$lib/installer-release-policy';
 	import {
+		installerActionBlock,
+		type InstallerActionBlock,
+		type InstallerRecord
+	} from '$lib/installer-publication-ui';
+	import {
 		Calendar,
 		Cpu,
 		Eye,
@@ -25,7 +30,7 @@
 
 	let { data }: { data: any } = $props();
 	let uploadVersion = $state('');
-	let uploadOs = $state('windows');
+	let uploadOs = $state('linux');
 	const expectedName = $derived(expectedInstallerFile(uploadOs, uploadVersion || '0.1.0'));
 
 	const liveBuilds = $derived(
@@ -45,7 +50,7 @@
 
 	function resetUploadForm() {
 		uploadVersion = '';
-		uploadOs = 'windows';
+		uploadOs = 'linux';
 	}
 
 	function errorMessage(response: any, fallback: string): string {
@@ -63,6 +68,8 @@
 		const file = formData.get('file') as File;
 		const version = formData.get('version') as string;
 		if (!file?.size || !version) return m.admin_releases_missing_file_version();
+		if (!data.allowUnsignedPublishing && uploadOs === 'windows')
+			return m.admin_releases_manual_windows_production();
 		if (!/^\d+\.\d+\.\d+$/.test(version)) return m.admin_releases_expected_version();
 		const expected = expectedInstallerFile(uploadOs, version);
 		return file.name !== expected
@@ -84,6 +91,29 @@
 	async function submitDelete(item: any): Promise<string | null> {
 		const response = await apiClient.v1.admin.installers.delete.post({ id: item.id });
 		return response.error ? errorMessage(response, m.admin_releases_delete_fallback()) : null;
+	}
+
+	function actionBlock(release: InstallerRecord): InstallerActionBlock | null {
+		return installerActionBlock(release, data.installers, data.allowUnsignedPublishing);
+	}
+
+	function actionBlockMessage(block: InstallerActionBlock): string {
+		switch (block) {
+			case 'unverified':
+				return m.admin_releases_unverified_reason();
+			case 'withdrawn':
+				return m.admin_releases_withdrawn_reason();
+			case 'linked_linux':
+				return m.admin_releases_linux_linked_reason();
+			case 'manual_windows':
+				return m.admin_releases_manual_windows_production();
+			case 'manual_linux':
+				return m.admin_releases_manual_linux_production();
+			case 'missing_linux':
+				return m.admin_releases_missing_linux_companion();
+			case 'unavailable':
+				return m.admin_releases_unavailable_reason();
+		}
 	}
 
 	async function toggleDownloadable(item: any) {
@@ -137,6 +167,7 @@
 {/snippet}
 
 {#snippet row(release: any, index: number, actions: any)}
+	{@const blocked = actionBlock(release)}
 	<td class="px-5 py-4">
 		<div class="flex items-center gap-2">
 			<span class="font-medium">{release.version}</span>
@@ -167,6 +198,11 @@
 					{m.admin_releases_file_unverified()}
 				{/if}
 			</div>
+			<p class="text-xs text-muted-foreground">
+				{release.updateState !== 'legacy' && release.signedEnvelope
+					? m.admin_releases_signed_candidate()
+					: m.admin_releases_legacy_candidate()}
+			</p>
 		</div>
 	</td>
 	<td class="px-5 py-4 text-center">
@@ -191,40 +227,39 @@
 		</span>
 	</td>
 	<td class="px-5 py-4">
-		<div class="flex items-center justify-end gap-2">
-			<Button
-				variant={release.canBeDownloaded ? 'outline' : 'default'}
-				size="sm"
-				disabled={(!release.canBeDownloaded &&
-					(release.updateState === 'legacy' ||
-						!release.artifactValidatedAt ||
-						release.updateState === 'withdrawn')) ||
-					(release.os === 'linux' &&
-						data.installers.some(
-							(other: { os: string; version: string; updateState: string }) =>
-								other.os === 'windows' &&
-								other.version === release.version &&
-								other.updateState === 'published'
-						))}
-				onclick={() => toggleDownloadable(release)}
-				title={release.canBeDownloaded
-					? m.admin_releases_withdraw_installer_tooltip()
-					: m.admin_releases_publish_installer_tooltip()}
-			>
-				{release.canBeDownloaded
-					? m.admin_releases_withdraw()
-					: m.admin_releases_make_available()}
-			</Button>
-			<Button
-				variant="ghost"
-				size="icon-sm"
-				onclick={() => actions.confirmDelete(release)}
-				disabled={release.updateState && release.updateState !== 'legacy'}
-				title={m.admin_releases_delete_record()}
-			>
-				<Trash2 aria-hidden="true" />
-				<span class="sr-only">{m.admin_releases_delete_record()}</span>
-			</Button>
+		<div class="flex flex-col items-end gap-1.5">
+			<div class="flex items-center justify-end gap-2">
+				<Button
+					variant={release.canBeDownloaded ? 'outline' : 'default'}
+					size="sm"
+					disabled={blocked !== null}
+					onclick={() => toggleDownloadable(release)}
+					title={blocked
+						? actionBlockMessage(blocked)
+						: release.canBeDownloaded
+							? m.admin_releases_withdraw_installer_tooltip()
+							: m.admin_releases_publish_installer_tooltip()}
+				>
+					{release.canBeDownloaded
+						? m.admin_releases_withdraw()
+						: m.admin_releases_make_available()}
+				</Button>
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					onclick={() => actions.confirmDelete(release)}
+					disabled={release.updateState && release.updateState !== 'legacy'}
+					title={m.admin_releases_delete_record()}
+				>
+					<Trash2 aria-hidden="true" />
+					<span class="sr-only">{m.admin_releases_delete_record()}</span>
+				</Button>
+			</div>
+			{#if blocked}
+				<p class="max-w-64 text-right text-xs leading-relaxed text-muted-foreground">
+					{actionBlockMessage(blocked)}
+				</p>
+			{/if}
 		</div>
 	</td>
 {/snippet}
@@ -261,7 +296,9 @@
 				>
 				<Select.Content>
 					<Select.Group>
-						<Select.Item value="windows" label="Windows">Windows</Select.Item>
+						{#if data.allowUnsignedPublishing}
+							<Select.Item value="windows" label="Windows">Windows</Select.Item>
+						{/if}
 						<Select.Item value="linux" label="Linux">Linux</Select.Item>
 					</Select.Group>
 				</Select.Content>
@@ -299,6 +336,14 @@
 		{m.admin_releases_delete_installer({ version: item.version, fileName: item.fileName })}
 	</p>
 {/snippet}
+
+<div
+	class="mb-5 border-l-2 border-amber-500 bg-muted/30 px-4 py-3 text-sm leading-relaxed text-muted-foreground"
+>
+	{data.allowUnsignedPublishing
+		? m.admin_releases_development_policy()
+		: m.admin_releases_production_policy()}
+</div>
 
 <ReleaseManager
 	Icon={HardDrive}
