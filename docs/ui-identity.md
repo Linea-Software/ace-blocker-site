@@ -1,47 +1,45 @@
-# Ace Blocker Site — UI Identity
+# Ace Blocker Site: UI Identity
 
-Status: **approved target direction** for the public website.
+Status: **Approved design target** for the public website.
+This guide applies to new and redesigned marketing and account UI in `ace-blocker-site`.
+The website and desktop app share one brand identity. The website can use a more expressive presentation.
 
-This document governs new and redesigned marketing/account UI in `ace-blocker-site`. It shares the same brand DNA as the desktop app, but the website may be more expressive.
+## 1. Relationship to the Desktop App
 
-## 1. Relationship to the desktop app
+The website explains Ace Blocker's purpose and how it works.
+The desktop app helps users configure and enforce decisions.
 
-The site and app should feel like two modes of the same product:
+Use these shared visual elements:
 
-- **Website:** expressive introduction to the Ace worldview and mechanism.
-- **Desktop app:** restrained working instrument for configuring and enforcing decisions.
+- Signal amber.
+- Warm Ink and Paper neutral colors.
+- IBM Plex fonts.
+- Firm shapes.
+- Borders and rules instead of floating shadows.
+- Visual representations of Network Blocks, schedules, locks, and Resistance.
+- Limited motion with a clear purpose.
 
-Shared DNA:
+Do not create a separate generic premium-SaaS identity.
+Marketing previews can simplify scale, data, and interaction.
+Keep previews visually consistent with the current desktop app.
+Use real product concepts: Network Blocks, Resistance controls, schedules, locks, and Site Packs.
+Show simplified product UI, not a different fictional app.
+Marketing diagrams can use other layouts when they are clearly diagrams.
 
-- Signal amber;
-- warm Ink/Paper neutral palette;
-- IBM Plex family;
-- firmer geometry;
-- borders/rules over floating shadows;
-- structural representation of locks, schedules, blocks, and resistance;
-- limited, deliberate motion.
+## 2. Required Design Skills
 
-The website must not invent a separate “premium SaaS” identity.
+For new marketing pages and visible marketing redesigns:
 
-When the website depicts Ace product UI, it may simplify scale, data, and interaction for marketing, but it must remain visually faithful to the current desktop app's domain components. Network policies, resistance controls, schedules, locks, and Site Packs should read as reduced representations of the real product rather than a parallel pseudo-app design system. Marketing diagrams can be freer only when they are clearly diagrams rather than screenshots or product surfaces.
-
-## 2. Mandatory design skills
-
-For any visible marketing redesign or new marketing page:
-
-1. Read this document.
+1. Read this guide.
 2. Use `frontend-design`.
 3. Use `design-taste-frontend`.
 4. Use `ui-ux-pro-max`.
-5. For Svelte implementation, use:
-    - `svelte-code-writer`;
-    - `svelte-core-bestpractices`;
-    - `svelte-components`.
-6. Use `web-design-guidelines` for final review.
-7. Verify meaningful visual changes with real screenshots in light and dark themes.
+5. For Svelte work, use `svelte-code-writer`, `svelte-core-bestpractices`, and `svelte-components`.
+6. Use `web-design-guidelines` for the final review.
+7. Check real screenshots in light and dark modes.
 
-For account/admin product UI, use `frontend-design` + `ui-ux-pro-max` as the primary design skills. `design-taste-frontend` is mainly a marketing/redesign skill and should not override dense product UX.
-
+For account and admin UI, prioritize `frontend-design` and `ui-ux-pro-max`.
+Do not let `design-taste-frontend` override the needs of dense product UI.
 ## 3. Palette
 
 Target shared palette:
@@ -65,153 +63,137 @@ Semantic colors remain exceptional and meaning-driven:
 - Danger: `#DF5145`
 - Information: `#668DB3`
 
-The old/current site token audit in `docs/design-tokens.md` records `#f59e0b` as the previous canonical brand amber. This new identity brief supersedes that **as the target direction**, but the codebase has not yet been migrated. Do not perform a blind global replacement; migrate visually and verify page by page.
+The audit in `docs/design-tokens.md` records the former canonical brand amber: `#f59e0b`.
+This identity is the new **target**, but the site code has not been fully migrated.
+Do not replace all colors without review. Migrate one page at a time.
+Verify each page visually.
 
-Amber means intervention/commitment/attention, not simply “brand-colored thing.”
-
+Use amber for intervention, commitment, and attention.
+Do not use amber only because an element needs a brand color.
 ## 4. Typography
 
-Target:
+Use these fonts:
 
-- **IBM Plex Sans** — body and UI;
-- **IBM Plex Sans Condensed** — major headings / state-driven display;
-- **IBM Plex Mono** — selective technical data such as schedules, counts, releases, durations.
+- **IBM Plex Sans:** Body text and UI.
+- **IBM Plex Sans Condensed:** Major headings and state-driven displays.
+- **IBM Plex Mono:** Technical data, schedules, counts, releases, and durations.
 
-Typography should create much of the identity. Avoid generic “huge extra-bold gradient SaaS headline” composition.
+Use typography as a main part of the design.
+Do not use the generic oversized, bold, gradient headline style from SaaS templates.
 
-## 5. Marketing composition
+## 5. Marketing Composition
 
-The current generic pattern to move away from is:
+Avoid the old generic pattern:
 
-- centered hero;
-- release pill;
-- huge gradient text;
-- blurred background blobs;
-- two CTA buttons;
-- three equal feature cards;
-- rounded icon boxes;
-- hover-lift card motion.
+- Centered hero and release pill.
+- Oversized gradient text and blurred background shapes.
+- Two generic call-to-action buttons.
+- Three equal feature cards.
+- Rounded icon tiles and hover-lift cards.
 
-The replacement should begin with the most characteristic Ace idea: **the mechanism of commitment and resistance**.
+Start the page with a characteristic Ace concept: **commitment and Resistance**.
+Possible visual ideas include:
 
-Possible directions include:
+- An enforcement timeline.
+- An interactive policy object.
+- A Resistance sequence.
+- A Before/After demonstration of a distracting site becoming limited.
+- An explanation of configuring a decision before a moment of temptation.
 
-- a live/illustrated enforcement timeline;
-- an interactive policy object;
-- a resistance progression;
-- a before/after view of an addictive site becoming constrained/boring;
-- a visual explanation of rational-moment configuration vs weak-moment enforcement.
+The hero does not have to be centered.
+Make the product mechanism the main visual.
 
-The hero does not need to be centered. Prefer composition that makes the product mechanism the main visual.
+## 6. Surfaces and Geometry
 
-## 6. Surfaces and geometry
+Use modest corner radii and clear structure.
+Prefer rules, borders, inset panels, editorial spacing, and direct product demonstrations.
+Use one strong signature composition on each page.
+Do not put every section in a rounded card.
+The website can use more expressive scale, but it must use the same material logic as the app.
+## 7. Pro and Pricing
 
-Use modest radii and stronger structure.
+Show prices and payment terms clearly.
+Do not use generic luxury visuals as the Pro identity:
 
-Prefer:
+- A crown as the main graphic.
+- An amber glow around the product.
+- An oversized glowing action button.
+- Repeated shine effects.
+- A floating premium card.
 
-- rules;
-- borders;
-- inset panels;
-- editorial spacing;
-- direct visual demonstrations;
-- one strong signature composition per page.
+Show Pro as an extension of Ace Blocker's enforcement functions.
+Do not give Pro a different luxury-SaaS visual style.
 
-Avoid making every section a rounded card.
+## 8. Show Product Concepts
 
-The website may use more expressive scale and composition than the app, but it should preserve the same material logic.
+Use these actual Ace concepts in feature illustrations:
 
-## 7. Pro / pricing
+- Enforcement policies.
+- Schedules.
+- Locks.
+- Site Packs.
+- Resistance intervention categories.
+- Engine state.
+- The difference between a saved decision and a later attempt to reverse it.
 
-Pricing information should remain easy to understand.
-
-Do not use generic premium signals as the identity:
-
-- crown as the primary visual;
-- amber glow aura;
-- giant glowing CTA;
-- shine sweep;
-- “premium card” floating above the page.
-
-Ace Pro should feel like an extension of the same enforcement product, not a different luxury-SaaS skin.
-
-## 8. Product concepts to show, not decorate around
-
-When communicating features, use the actual Ace concepts as visual material:
-
-- enforcement policies;
-- schedules;
-- locks;
-- site packs;
-- Resistance intervention categories;
-- engine state;
-- the difference between a configured decision and a weak-moment attempt to reverse it.
-
-Distinctiveness should come from the product itself.
+Make product behavior the source of the visual identity.
 
 ## 9. Motion
 
-Use one deliberate moment better than many decorative effects.
+Prefer one meaningful animation to many decorative effects.
+Useful examples:
 
-Good:
+- A user controls an interactive explanation.
+- A lock closes after a user action.
+- A schedule changes its enforcement state.
+- A Resistance preview changes after a control changes.
 
-- interactive mechanism explanation;
-- lock closing after direct user action;
-- schedule/enforcement state changing;
-- resistance preview changing with a control.
+Do not use repeated entrance fades, hover lifts, moving background shapes, or looping premium shine.
+Respect reduced-motion settings.
 
-Avoid:
+Walkthrough steps must follow a clear order:
 
-- entrance fade-up on every section;
-- every card translating upward on hover;
-- ambient blobs;
-- looping “premium” shimmer.
+1. Move the pointer from a stable position to the target.
+2. Pause over the target.
+3. Press the target.
+4. Show the UI response.
+5. Let the UI settle.
 
-Respect reduced motion.
+Use the same pointer across steps.
+Vary cue durations. Stop automatic playback immediately after a visitor interacts.
 
-Walkthrough motion must be causal: the pointer moves from a stable location,
-pauses over a target, presses it, then the interface responds and settles.
-Keep a single pointer between stages, vary cue durations and stop automatic
-playback immediately when a visitor interacts.
+The Network Block demo must match the app's compact actions, icon container, and readable header.
+Keep its Categories/Rules divider, weekly schedule preview, and confirmed lock options.
+Keep the View action available for a protected block.
 
-The Network Block demonstration mirrors the app's compact actions, icon
-container, readable header/actions separation, Categories/Rules divider,
-weekly schedule coverage and confirmable lock choices. A protected block
-remains viewable. Resistance has five categories, opt-in CAPTCHA and
-site-scoped effects; a script for Reddit must never change the YouTube preview.
-On mobile, show one readable Before/After site panel at a time.
+Resistance has five intervention categories, optional CAPTCHA, and effects limited to each site.
+A Reddit script must not change the YouTube preview.
+On mobile, show one readable Before/After panel at a time.
 
-## 10. Shadcn/Bits UI
+## 10. shadcn-svelte and Bits UI
 
-Existing shadcn-svelte components can continue to provide behavior and common form patterns, especially in account/admin surfaces.
+Use existing shadcn-svelte components for common behavior and forms.
+These components are not the brand identity.
+For important new UI components:
 
-They are not the brand.
+- Use Ace-specific structure and styling.
+- Use Bits UI or headless primitives when appropriate.
+- Do not keep default shadcn visual styles without review.
+- Do not let a component library determine information structure.
 
-For new visually important components:
+## 11. Accessibility and Verification
 
-- prefer Ace-owned composition and styling;
-- use Bits UI/headless primitives where appropriate;
-- do not ship the default shadcn visual grammar unchanged;
-- do not let the component library decide information architecture.
+Provide keyboard interaction and visible focus.
+Use semantic headings and controls.
+Keep sufficient contrast.
+Do not communicate state through color alone.
+Support reduced-motion settings.
+Use layouts that work on narrow screens.
+Design mobile layouts for readability, not only as stacked desktop cards.
 
-## 11. Accessibility and validation
+Compare real screenshots in light and dark modes after meaningful visual changes.
 
-Required:
+## 12. Recognition Check
 
-- keyboard and focus support;
-- semantic headings/controls;
-- sufficient contrast;
-- no state encoded only by color;
-- reduced-motion support;
-- responsive layouts;
-- useful mobile composition rather than merely stacked desktop cards.
-
-For meaningful visual changes, compare screenshots in light and dark mode before considering the task complete.
-
-## 12. Recognition test
-
-A successful redesigned Ace homepage should not look like a generic security/productivity landing page with the Ace logo pasted on.
-
-Ask:
-
-> If the words “Ace Blocker” disappear, do the palette, type, geometry, and product mechanism still identify the brand?
+The homepage must not look like a generic security or productivity landing page with a new logo.
+Ask: Can users recognize Ace from its colors, fonts, structure, and product mechanism without the brand name?
