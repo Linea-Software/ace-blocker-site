@@ -605,6 +605,35 @@ test('localized feature routes expose translated titles and content', async ({ p
 });
 
 test.describe('Download page primary installer actions', () => {
+	test('terminal copy overlays the command and appears on hover or focus', async ({ page }) => {
+		await page.setViewportSize({ width: 1440, height: 900 });
+		await page.goto('/download', { waitUntil: 'networkidle' });
+		const box = page.getByTestId('installer-command-box');
+		const copy = box.getByRole('button', { name: /Copy .* installation command/ });
+		await expect(box.locator('pre code')).toBeVisible();
+
+		const initialHeight = await box.evaluate(
+			(element) => element.getBoundingClientRect().height
+		);
+		await page.mouse.move(0, 0);
+		await expect(copy).toHaveCSS('opacity', '0');
+		await box.hover({ position: { x: 8, y: 8 } });
+		await expect(copy).toHaveCSS('opacity', '1');
+		const code = await box.locator('pre').boundingBox();
+		const control = await copy.boundingBox();
+		expect(code).not.toBeNull();
+		expect(control).not.toBeNull();
+		expect(control!.y).toBeLessThan(code!.y + code!.height);
+		expect(await box.evaluate((element) => element.getBoundingClientRect().height)).toBe(
+			initialHeight
+		);
+
+		await page.mouse.move(0, 0);
+		await expect(copy).toHaveCSS('opacity', '0');
+		await copy.focus();
+		await expect(copy).toHaveCSS('opacity', '1');
+	});
+
 	test('an explicit architecture URL selects the requested platform', async ({ page }) => {
 		for (const [arch, platform] of [
 			['windows_x64', 'Windows'],
@@ -634,8 +663,24 @@ test.describe('Download page primary installer actions', () => {
 			await expect(copy).toBeVisible();
 			const downloadBox = await download.boundingBox();
 			const copyBox = await copy.boundingBox();
+			const commandBox = card.getByTestId('installer-command-box');
+			const commandBoxBounds = await commandBox.boundingBox();
 			expect(downloadBox).not.toBeNull();
 			expect(copyBox).not.toBeNull();
+			expect(commandBoxBounds).not.toBeNull();
+			// Both actions form one vertical column, and Copy lives inside the terminal surface.
+			expect(downloadBox!.y + downloadBox!.height).toBeLessThan(copyBox!.y);
+			expect(copyBox!.x).toBeGreaterThanOrEqual(commandBoxBounds!.x);
+			expect(copyBox!.x + copyBox!.width).toBeLessThanOrEqual(
+				commandBoxBounds!.x + commandBoxBounds!.width
+			);
+			expect(copyBox!.y).toBeGreaterThanOrEqual(commandBoxBounds!.y);
+			expect(copyBox!.y + copyBox!.height).toBeLessThanOrEqual(
+				commandBoxBounds!.y + commandBoxBounds!.height
+			);
+			for (const platform of ['Windows', 'macOS', 'Linux']) {
+				await expect(card.getByText(platform, { exact: true })).toHaveCount(1);
+			}
 			expect(downloadBox!.y + downloadBox!.height).toBeLessThan(900);
 			expect(copyBox!.y + copyBox!.height).toBeLessThan(900);
 			expect(

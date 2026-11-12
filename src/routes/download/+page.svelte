@@ -218,33 +218,8 @@
 					</div>
 				</div>
 
-				<div class="border-b border-border px-4 py-4 sm:px-5">
-					<div class="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-						<strong class="font-display text-xl font-semibold">
-							{effectivePlatform === 'windows'
-								? m.download_platform_windows()
-								: effectivePlatform === 'macos'
-									? m.download_platform_macos()
-									: m.download_platform_linux()}
-						</strong>
-						{#if selectedMeta}
-							<span class="font-mono text-xs text-muted-foreground"
-								>v{selectedMeta.version}</span
-							>
-							<span class="font-mono text-xs text-muted-foreground"
-								>{formatSize(selectedMeta)}</span
-							>
-						{:else}
-							<span class="text-xs text-muted-foreground"
-								>{m.download_not_available()}</span
-							>
-						{/if}
-					</div>
-				</div>
-
-				<div class="grid gap-4 p-4 sm:p-5 xl:grid-cols-[minmax(0,0.76fr)_minmax(0,1.24fr)]">
-					<div class="flex min-w-0 flex-col gap-3">
-						<p class="text-sm font-semibold">{m.download_file_option_label()}</p>
+				<div class="flex min-w-0 flex-col gap-4 p-4 sm:p-5">
+					<div class="flex min-w-0 flex-col gap-2">
 						<button
 							type="button"
 							onclick={handleManualDownload}
@@ -258,14 +233,28 @@
 							{/if}
 							{m.download_manual_button()}
 						</button>
+						<div
+							class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-mono text-xs text-muted-foreground"
+						>
+							{#if selectedMeta}
+								<span>v{selectedMeta.version}</span>
+								<span aria-hidden="true">·</span>
+								<span>{formatSize(selectedMeta)}</span>
+							{:else}
+								<span>{m.download_not_available()}</span>
+							{/if}
+						</div>
 					</div>
 
-					<div class="min-w-0">
-						<div class="flex min-h-6 flex-wrap items-center justify-between gap-2">
-							<p class="inline-flex items-center gap-2 text-sm font-semibold">
-								<Terminal class="size-4" aria-hidden="true" />
-								{m.download_terminal_option_label()}
-							</p>
+					<div class="min-w-0 border-t border-border pt-4">
+						<p class="mb-2 inline-flex items-center gap-2 text-sm font-semibold">
+							<Terminal class="size-4" aria-hidden="true" />
+							{m.download_terminal_option_label()}
+						</p>
+						<div
+							class="command-box relative min-w-0 rounded-md border border-border bg-background"
+							data-testid="installer-command-box"
+						>
 							<button
 								type="button"
 								onclick={copySelectedCommand}
@@ -278,25 +267,26 @@
 												? m.download_platform_macos()
 												: m.download_platform_linux()
 								})}
-								class="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+								class="command-copy absolute top-1 right-1 z-10 inline-flex min-h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2.5 text-xs font-medium hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed"
 							>
 								{#if copiedPlatform === effectivePlatform && selectedCommand}
 									<Check class="size-4" aria-hidden="true" />
-									{m.download_command_copied()}
+									<span class="hidden sm:inline"
+										>{m.download_command_copied()}</span
+									>
 								{:else}
 									<Copy class="size-4" aria-hidden="true" />
-									{m.download_command_copy()}
+									<span class="hidden sm:inline">{m.download_command_copy()}</span
+									>
 								{/if}
 							</button>
-						</div>
-						<div class="mt-2 min-w-0 rounded-md border border-border bg-background">
 							{#if selectedCommand}
 								<pre
-									class="overflow-x-auto px-3 py-3 font-mono text-xs leading-relaxed"><code
+									class="min-w-0 overflow-x-auto py-3 pr-14 pl-3 font-mono text-xs leading-relaxed sm:pr-32"><code
 										>{selectedCommand}</code
 									></pre>
 							{:else}
-								<p class="px-3 py-3 text-xs text-muted-foreground">
+								<p class="px-3 py-3 pr-14 text-xs text-muted-foreground sm:pr-32">
 									{m.download_not_available()}
 								</p>
 							{/if}
@@ -351,3 +341,38 @@
 </main>
 
 <MarketingFooter />
+
+<style>
+	.command-copy {
+		transition: opacity 150ms ease;
+	}
+
+	/* Touch users have no hover state, so keep the copy action discoverable. */
+	.command-copy:disabled {
+		opacity: 0.4;
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		.command-box .command-copy,
+		.command-box .command-copy:disabled {
+			opacity: 0;
+			pointer-events: none;
+		}
+
+		.command-box:is(:hover, :focus-within) .command-copy {
+			opacity: 1;
+			pointer-events: auto;
+		}
+
+		.command-box:is(:hover, :focus-within) .command-copy:disabled {
+			opacity: 0.4;
+			pointer-events: none;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.command-copy {
+			transition: none;
+		}
+	}
+</style>
