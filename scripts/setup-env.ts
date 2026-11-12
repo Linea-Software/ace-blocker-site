@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-/** Production .env configuration used by scripts/setup-vps.sh. */
+/** Production .env configuration called by the private ace-infra provisioning flow. */
 import { chmod, readFile, writeFile } from 'node:fs/promises';
 import {
 	defaultEntitlementKeyDirectory,

@@ -14,9 +14,9 @@ Use **Bun** for package management and script execution.
 - **Running locally:** The development server runs at `https://localhost:5173/`. Do not start `bun run dev` yourself. Use that URL to test and verify changes.
 - **Initial setup:** Run `bun run setup`. It configures `.env`, creates `BETTER_AUTH_SECRET`, creates a persistent Ed25519 entitlement signing and verification key pair outside the checkout, and fills missing `DEFAULT_ADMIN_*` fixture credentials when needed. It also starts Docker PostgreSQL and applies Drizzle migrations.
   Run `bun run gen:entitlement-keys` to create or reuse development entitlement keys and fill `.env`. Provide a positional output directory to manage standalone files without changing `.env`.
-  On a VPS, `setup-vps.sh` passes `ACE_VPS_BOOTSTRAP=1` to the development bootstrap. `setup-env.ts` creates or reuses a separate production key pair in `~/.config/ace-blocker/entitlement-keys`. It writes both values to `.env` with mode 0600. Repeated setup must never rotate keys.
+  On a VPS, the private `ace-infra` provisioning flow calls `scripts/setup-env.ts`. It creates or reuses a separate production key pair in `~/.config/ace-blocker/entitlement-keys`, writes the values to `.env` with mode 0600, and must never rotate the keys on a routine deployment.
   `scripts/setup.ts` detects Debian/Ubuntu, Arch, Fedora/RHEL, openSUSE, and Alpine through `os-release`. It checks for `certutil` before installing distribution-specific NSS tools. `scripts/linux-setup.ts` selects packages; unit tests cover this selection. See README.md.
-  The production VPS script `scripts/setup-vps.sh` supports Debian/Ubuntu only. Do not treat it as portable.
+  VPS host provisioning and updates are owned by the private `ace-infra` repository. Its production provisioning supports Debian/Ubuntu only.
 - **Local database migration rebases:** The checked-in `drizzle/0000` replaces earlier development migrations. During `bun run setup`, run `bun scripts/db-baseline.ts` before `db:migrate`. Compare the existing local catalog with the checked-in snapshot. Record the new baseline only for a matching legacy schema, and preserve older migration history.
   Remove the obsolete `account.issuer` field only when `account` is empty and an exclusive lock is held. Fail closed for unexpected schema differences or a non-local/production database URL.
   For read-only diagnosis, run `bun scripts/db-baseline.ts --dry-run`. Never reset user databases or edit migration history by hand. See README.md.
@@ -280,7 +280,7 @@ for zero/singular/plural agreement.
 ## Payments (DodoPayments)
 
 - **Country-based currency:** `/get-pro` and `/checkout` must read only `X-Ace-Visitor-Country` from Nginx. Never trust raw client-controlled `CDN-RequestCountryCode` or `CF-IPCountry`.
-  Trust BunnyCDN country data only from IPs in `/etc/nginx/ace-bunny-edges.geo`, which uses Bunny's published edge feeds. Alternatively, trust Cloudflare data only from a trusted Cloudflare peer. `scripts/vps/refresh-bunny-edges.sh` installs and refreshes this allowlist; the VPS setup installs a daily cron job.
+  Trust BunnyCDN country data only from IPs in `/etc/nginx/ace-bunny-edges.geo`, which uses Bunny's published edge feeds. Alternatively, trust Cloudflare data only from a trusted Cloudflare peer. The private `ace-infra/scripts/vps/refresh-bunny-edges.sh` maintains this allowlist; provisioning installs its daily cron job.
   Map countries to USD/EUR/GBP/INR. Use USD for unknown locations. When this path changes, deploy both the updated Nginx configuration and the application.
 
 Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })` in `src/lib/server/auth.ts`.
@@ -322,7 +322,7 @@ Use `bun run <script>` for these tasks:
 
 - `setup`: Configures `.env`, including default development admin credentials, starts Docker DB, and applies migrations. The pure `.env` helper `scripts/dev-admin-setup.ts` refuses remote/production database targets and preserves custom credentials; see the config and seeder tests.
 - `setup-env`: Production `.env` configuration must validate third-party credentials when a safe read-only/non-effectful provider check exists, re-prompt rejected credentials, and fail closed on provider/network ambiguity rather than saving unverified values. Webhook/signing secrets with no standalone verification endpoint must be called out honestly.
-- `scripts/setup-vps.sh`: Deployment credential prompts must validate GitHub/Cloudflare/B2 access before relying on the values and re-prompt invalid credentials without persisting plaintext secrets.
+- Production VPS provisioning, host credentials, SSH and backup scripts are maintained separately in the private `ace-infra` repository.
 - `db:start`: Starts the Docker database.
 - `db:delete`: Stops the Docker database and deletes volumes.
 - `db:push`: Pushes schema changes to the database (development).

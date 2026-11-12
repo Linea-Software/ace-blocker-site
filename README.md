@@ -30,7 +30,7 @@ On Linux the script detects the distribution through `/etc/os-release` (falling 
 
 If `certutil` is already installed, no system packages are changed. Installation may request a sudo password. Unsupported Linux distributions can install NSS `certutil` manually before running setup. On Arch, the script does not perform an automatic system-wide upgrade; if the package database is outdated, run `sudo pacman -Syu` yourself before retrying.
 
-**Note:** `scripts/setup-vps.sh` is a separate, Debian/Ubuntu-specific production server provisioning script. It has not been adapted to Arch or other server distributions; do not use it there.
+**Note:** VPS provisioning and updates live in the private `Linea-Software/ace-infra` repository. The app-owned production interfaces remain `scripts/setup-env.ts`, database migrations and the build. See `docs/DEPLOY.md` for the boundary. The private provisioning targets Debian/Ubuntu only.
 
 The **development server will refuse to start** if any required environment variable is absent, blank or whitespace-only. It prints a `[ACE ENV ERROR]` message listing the missing keys (never their values). Configure `.env` before launching `bun run dev`; `bun run setup` creates the file, but empty credential placeholders must be filled in. This includes Dodo Payments, Resend and BunnyCDN credentials. In development, `BETTER_AUTH_URL` is unnecessary because Better Auth falls back to `PUBLIC_BETTER_AUTH_URL`, and `ORIGIN` is only used by SvelteKit's production Node adapter; neither is required by the dev startup check. Both remain mandatory in production. Configure `PUBLIC_BETTER_AUTH_URL` for the local HTTPS origin. An absent optional `ACE_RELEASE_INGEST_TOKEN` or development-admin fixture credential does not block startup.
 
