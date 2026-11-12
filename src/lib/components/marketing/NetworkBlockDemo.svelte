@@ -1175,6 +1175,28 @@
 		row-gap: 16px;
 		padding: 18px;
 	}
+	/* Keep the homepage's compact policy actions beside the block name. */
+	.block-demo.compact .policy-main {
+		column-gap: 12px;
+		padding: 14px;
+	}
+	.block-demo.compact .policy-actions {
+		flex-wrap: nowrap;
+	}
+	.block-demo.compact .policy-actions > button {
+		padding-inline: 6px;
+	}
+	.block-demo.compact .name {
+		gap: 8px;
+	}
+	.block-demo.compact .policy-icon {
+		flex-basis: 34px;
+		width: 34px;
+		height: 34px;
+	}
+	.block-demo.compact .name h3 {
+		font-size: 18px;
+	}
 	.policy-body {
 		min-width: 0;
 		container: network-card / inline-size;
@@ -1494,25 +1516,46 @@
 	}
 
 	@container network-card (max-width: 600px) {
-		.policy-main {
+		.block-demo:not(.compact) .policy-main {
 			grid-template-columns: minmax(0, 1fr);
 			gap: 17px;
 		}
-		.policy-actions {
+		.block-demo:not(.compact) .policy-actions {
 			justify-content: flex-start;
 			width: 100%;
 			padding-top: 12px;
 			border-top: 1px solid var(--border);
 		}
 	}
+	@container network-card (max-width: 440px) {
+		/* Keep the actions beside the title even on narrow phones. */
+		.block-demo.compact .enabled-label,
+		.block-demo.compact .policy-actions > button {
+			font-size: 0;
+		}
+		.block-demo.compact .policy-actions {
+			gap: 2px;
+		}
+		.block-demo.compact .enabled-label {
+			gap: 0;
+			padding-right: 7px;
+			margin-right: 2px;
+		}
+		.block-demo.compact .policy-actions > button {
+			gap: 0;
+			justify-content: center;
+			width: 30px;
+			padding-inline: 5px;
+		}
+	}
 	@media (max-width: 520px) {
 		.demo-stage {
 			padding: 16px;
 		}
-		.policy-main {
+		.block-demo:not(.compact) .policy-main {
 			padding: 14px;
 		}
-		.policy-actions {
+		.block-demo:not(.compact) .policy-actions {
 			width: 100%;
 		}
 		.steps button {

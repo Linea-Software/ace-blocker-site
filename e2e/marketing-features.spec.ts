@@ -11,6 +11,41 @@ async function openReadyDemo(
 	});
 }
 
+test.describe('Homepage Network Block preview', () => {
+	test('keeps actions to the right of the name across screen sizes', async ({ page }) => {
+		for (const width of [1365, 1024, 480, 390, 320]) {
+			await page.setViewportSize({ width, height: 900 });
+			await page.goto('/', { waitUntil: 'domcontentloaded' });
+			const demo = page.getByTestId('network-demo');
+			await expect(demo).toHaveAttribute('data-demo-ready', 'true');
+			await expect(demo.getByRole('switch', { name: 'Enabled' })).toBeVisible();
+			await expect(demo.getByRole('button', { name: 'Edit' })).toBeVisible();
+			await expect(demo.getByRole('button', { name: 'Lock', exact: true })).toBeVisible();
+
+			const position = await demo.evaluate((element) => {
+				const name = element.querySelector('.name')!.getBoundingClientRect();
+				const actions = element.querySelector('.policy-actions')!.getBoundingClientRect();
+				return {
+					nameRight: name.right,
+					nameCenterY: name.y + name.height / 2,
+					actionsLeft: actions.left,
+					actionsCenterY: actions.y + actions.height / 2,
+					horizontalOverflow: document.documentElement.scrollWidth > innerWidth
+				};
+			});
+			expect(
+				position.actionsLeft,
+				`controls overlap the name at ${width}px`
+			).toBeGreaterThanOrEqual(position.nameRight);
+			expect(
+				Math.abs(position.actionsCenterY - position.nameCenterY),
+				`controls wrap at ${width}px`
+			).toBeLessThan(24);
+			expect(position.horizontalOverflow, `horizontal overflow at ${width}px`).toBe(false);
+		}
+	});
+});
+
 test.describe('Network Block marketing walkthrough', () => {
 	test('content → schedule → review → final policy, then lock', async ({ page }) => {
 		await openReadyDemo(page, '/features/network-blocks');
