@@ -9,6 +9,7 @@ import {
 	type SignedEnvelope
 } from '$lib/server/desktop-update-security';
 import { createLogger } from '$lib/server/logger';
+import { isPublicDownloadEnabled } from '$lib/public-download-platforms';
 
 const log = createLogger('cache');
 
@@ -42,12 +43,15 @@ export async function loadLatestInstaller(): Promise<
 		)
 		.orderBy(desc(aceBlockerInstaller.createdAt));
 
-	latestInstaller = results[0] || null;
+	// A staged or mistakenly published macOS candidate is not exposed on
+	// the public site, legacy latest-release API, or download cache.
+	const publicResults = results.filter((row) => isPublicDownloadEnabled(row.os));
+	latestInstaller = publicResults[0] || null;
 
 	// Rows come back newest-first, so the first row seen per (os, arch)
-	// combo is that combo's latest downloadable release.
+	// combo is that combo's latest publicly downloadable release.
 	const byTarget = new Map<string, typeof aceBlockerInstaller.$inferSelect>();
-	for (const row of results) {
+	for (const row of publicResults) {
 		const key = installerKey(row.os, row.architecture);
 		if (!byTarget.has(key)) byTarget.set(key, row);
 	}

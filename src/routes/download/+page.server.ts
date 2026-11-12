@@ -1,4 +1,5 @@
 import { getInstallerFor } from '$lib/server/cache';
+import { isPublicDownloadEnabled } from '$lib/public-download-platforms';
 import type { aceBlockerInstaller } from '$lib/server/db/schema';
 import type { PageServerLoad } from './$types';
 
@@ -55,7 +56,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 	const platforms = {
 		windows: firstAvailableRow(PLATFORM_TARGETS.windows),
-		macos: firstAvailableRow(PLATFORM_TARGETS.macos),
+		macos: isPublicDownloadEnabled('macos') ? firstAvailableRow(PLATFORM_TARGETS.macos) : null,
 		linux: firstAvailableRow(PLATFORM_TARGETS.linux)
 	};
 

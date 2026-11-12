@@ -92,29 +92,10 @@ describe('download [arch] route', () => {
 		expect(incrementInstallerDownloadCount).toHaveBeenCalledWith('windows', 'x64');
 	});
 
-	it('tries both architectures for macos_universal and uses the first hit', async () => {
-		getInstallerURL
-			.mockReturnValueOnce({
-				isErr: () => true,
-				error: 2 // NoReleaseAvailable
-			} as never)
-			.mockReturnValue({
-				isOk: () => true,
-				isErr: () => false,
-				_unsafeUnwrap: () => ({
-					url: new URL(
-						'https://cdn.aceblocker.test/dev/ace-blocker-installer/1.0.0/macos/arm64/Ace%20Blocker%20Installer.dmg'
-					),
-					version: '1.0.0',
-					sha256: 'b'.repeat(64),
-					size: 654321
-				})
-			} as never);
-
-		await expect(GET(routeEvent('macos_universal'))).rejects.toMatchObject({ status: 302 });
-		expect(getInstallerURL).toHaveBeenNthCalledWith(1, 'macos', 'x64');
-		expect(getInstallerURL).toHaveBeenNthCalledWith(2, 'macos', 'arm64');
-		expect(incrementInstallerDownloadCount).toHaveBeenCalledWith('macos', 'arm64');
+	it('does not publish a macOS installer even if a CDN release exists', async () => {
+		await expect(GET(routeEvent('macos_universal'))).rejects.toMatchObject({ status: 404 });
+		expect(getInstallerURL).not.toHaveBeenCalled();
+		expect(incrementInstallerDownloadCount).not.toHaveBeenCalled();
 	});
 
 	it('404s when no release exists for a known arch', async () => {
@@ -184,10 +165,12 @@ describe('download page load', () => {
 
 		const data = await loadData('http://localhost/download?arch=windows_x64');
 
-		// Windows resolved from (windows, x64); macOS via its arm64 fallback
-		// (macos_universal serves x64 then arm64); Linux has no release.
+		// Windows is available, but macOS remains unpublished even when a
+		// matching arm64 installer row exists. Linux has no release.
 		expect(data.platforms.windows).toMatchObject({ os: 'windows', architecture: 'x64' });
-		expect(data.platforms.macos).toMatchObject({ os: 'macos', architecture: 'arm64' });
+		expect(data.platforms.macos).toBeNull();
+		expect(getInstallerFor).not.toHaveBeenCalledWith('macos', 'x64');
+		expect(getInstallerFor).not.toHaveBeenCalledWith('macos', 'arm64');
 		expect(data.platforms.linux).toBeNull();
 		expect(data.requestedArch).toBe('windows_x64');
 	});

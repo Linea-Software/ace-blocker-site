@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { getInstallerURL } from '$lib/server/cdn';
 import { incrementInstallerDownloadCount } from '$lib/server/cache';
 import { createLogger } from '$lib/server/logger';
+import { isPublicDownloadEnabled } from '$lib/public-download-platforms';
 
 const log = createLogger('routes:download');
 
@@ -30,6 +31,12 @@ export const GET: RequestHandler = async ({ params }) => {
 	if (!targets) {
 		log.warn({ arch }, 'Download requested for unsupported architecture');
 		throw error(400, `Unsupported architecture: ${arch}`);
+	}
+
+	// Keep historical arch mappings, but never serve an unpublished platform.
+	if (targets.every((target) => !isPublicDownloadEnabled(target.os))) {
+		log.info({ arch }, 'Download requested for inactive platform');
+		throw error(404, `No installer available for ${arch}`);
 	}
 
 	for (const target of targets) {

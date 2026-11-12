@@ -605,6 +605,28 @@ test('localized feature routes expose translated titles and content', async ({ p
 });
 
 test.describe('Download page primary installer actions', () => {
+	test('shows release metadata in the footer instead of release notes', async ({ page }) => {
+		await page.goto('/download', { waitUntil: 'networkidle' });
+		const card = page.getByTestId('primary-installer-card');
+		await expect(card.getByRole('link', { name: /release notes/i })).toHaveCount(0);
+		for (const platform of ['Windows', 'Linux']) {
+			await card.getByRole('button', { name: platform, exact: true }).click();
+			const metadata = card.getByTestId('installer-release-metadata');
+			if ((await card.locator('pre code').count()) > 0) {
+				await expect(metadata).toBeVisible();
+				await expect(metadata).toContainText(/v\d/);
+				await expect(metadata).toContainText(/MB/);
+				const terminal = await card.getByTestId('installer-command-box').boundingBox();
+				const footer = await metadata.boundingBox();
+				expect(terminal).not.toBeNull();
+				expect(footer).not.toBeNull();
+				expect(footer!.y).toBeGreaterThanOrEqual(terminal!.y + terminal!.height);
+			} else {
+				await expect(metadata).toHaveCount(0);
+			}
+		}
+	});
+
 	test('terminal copy overlays the command and appears on hover or focus', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 });
 		await page.goto('/download', { waitUntil: 'networkidle' });
@@ -634,10 +656,18 @@ test.describe('Download page primary installer actions', () => {
 		await expect(copy).toHaveCSS('opacity', '1');
 	});
 
+	test('macOS stays hidden even for an explicit macOS download link', async ({ page }) => {
+		await page.goto('/download?arch=macos_universal', { waitUntil: 'networkidle' });
+		const card = page.getByTestId('primary-installer-card');
+		await expect(card.getByRole('button', { name: 'macOS' })).toHaveCount(0);
+		await expect(page.getByRole('link', { name: /macOS/i })).toHaveCount(0);
+		await expect(card.locator('[aria-pressed="true"]')).toHaveCount(1);
+		await expect(card.getByRole('button', { name: 'Download now' })).toBeVisible();
+	});
+
 	test('an explicit architecture URL selects the requested platform', async ({ page }) => {
 		for (const [arch, platform] of [
 			['windows_x64', 'Windows'],
-			['macos_universal', 'macOS'],
 			['linux_x64', 'Linux']
 		]) {
 			await page.goto(`/download?arch=${arch}`, { waitUntil: 'networkidle' });
@@ -678,7 +708,7 @@ test.describe('Download page primary installer actions', () => {
 			expect(copyBox!.y + copyBox!.height).toBeLessThanOrEqual(
 				commandBoxBounds!.y + commandBoxBounds!.height
 			);
-			for (const platform of ['Windows', 'macOS', 'Linux']) {
+			for (const platform of ['Windows', 'Linux']) {
 				await expect(card.getByText(platform, { exact: true })).toHaveCount(1);
 			}
 			expect(downloadBox!.y + downloadBox!.height).toBeLessThan(900);
@@ -694,7 +724,7 @@ test.describe('Download page primary installer actions', () => {
 	}) => {
 		await page.goto('/download', { waitUntil: 'networkidle' });
 		const card = page.getByTestId('primary-installer-card');
-		for (const platform of ['Windows', 'macOS', 'Linux']) {
+		for (const platform of ['Windows', 'Linux']) {
 			const option = card.getByRole('button', { name: platform, exact: true });
 			await option.click();
 			await expect(option).toHaveAttribute('aria-pressed', 'true');

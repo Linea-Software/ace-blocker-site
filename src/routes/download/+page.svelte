@@ -8,13 +8,12 @@
 		IconBrandWindows,
 		IconBrandUbuntu,
 		IconBrandApple,
-		IconDownload,
-		IconFileText,
-		IconExternalLink
+		IconDownload
 	} from '@tabler/icons-svelte';
 	import { Check, Copy, Terminal, Loader2 } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import { installerArch, installerCommand } from './_components/installer-command';
+	import { isPublicDownloadEnabled } from '$lib/public-download-platforms';
 	import PlatformGrid from './_components/PlatformGrid.svelte';
 	import ChecksumCard from './_components/ChecksumCard.svelte';
 
@@ -33,7 +32,7 @@
 	const REQUESTED_PLATFORM: PlatformId | null = (() => {
 		const arch = page.url.searchParams.get('arch');
 		if (arch === 'windows_x64' || arch === 'windows_arm64') return 'windows';
-		if (arch === 'macos_universal') return 'macos';
+		if (arch === 'macos_universal' && isPublicDownloadEnabled('macos')) return 'macos';
 		if (arch === 'linux_x64' || arch === 'linux_arm64') return 'linux';
 		return null;
 	})();
@@ -46,7 +45,7 @@
 
 	const availablePlatforms = $derived<PlatformId[]>(
 		(['windows', 'macos', 'linux'] as PlatformId[]).filter(
-			(platform) => platformRows[platform] !== null
+			(platform) => isPublicDownloadEnabled(platform) && platformRows[platform] !== null
 		)
 	);
 
@@ -54,10 +53,30 @@
 	let chosenPlatform = $state<PlatformId | null>(null);
 	let copiedPlatform = $state<PlatformId | null>(null);
 	let isManualLoading = $state(false);
+	let commandScroller = $state<HTMLPreElement | null>(null);
+	let hasCommandToLeft = $state(false);
+	let hasCommandToRight = $state(false);
+
+	function updateCommandScrollHints() {
+		const element = commandScroller;
+		if (!element) {
+			hasCommandToLeft = false;
+			hasCommandToRight = false;
+			return;
+		}
+		const maxScroll = Math.max(0, element.scrollWidth - element.clientWidth);
+		hasCommandToLeft = element.scrollLeft > 1;
+		hasCommandToRight = maxScroll - element.scrollLeft > 1;
+	}
 
 	const preferredPlatform = $derived.by<PlatformId | null>(() => {
 		if (REQUESTED_PLATFORM) return REQUESTED_PLATFORM;
-		if (detectedPlatform && platformRows[detectedPlatform]) return detectedPlatform;
+		if (
+			detectedPlatform &&
+			isPublicDownloadEnabled(detectedPlatform) &&
+			platformRows[detectedPlatform]
+		)
+			return detectedPlatform;
 		return null;
 	});
 
@@ -66,7 +85,9 @@
 			preferredPlatform ??
 			availablePlatforms[0] ??
 			REQUESTED_PLATFORM ??
-			detectedPlatform ??
+			(detectedPlatform && isPublicDownloadEnabled(detectedPlatform)
+				? detectedPlatform
+				: null) ??
 			'windows'
 	);
 
@@ -90,6 +111,21 @@
 		selectedMeta ? installerCommand(effectivePlatform, selectedMeta.architecture) : null
 	);
 
+	$effect(() => {
+		// Recheck after a platform change and whenever the command area resizes.
+		const command = selectedCommand;
+		const element = commandScroller;
+		if (!element || !command) {
+			hasCommandToLeft = false;
+			hasCommandToRight = false;
+			return;
+		}
+		const resizeObserver = new ResizeObserver(updateCommandScrollHints);
+		resizeObserver.observe(element);
+		updateCommandScrollHints();
+		return () => resizeObserver.disconnect();
+	});
+
 	async function copySelectedCommand() {
 		if (!selectedCommand) return;
 		try {
@@ -101,6 +137,7 @@
 	}
 
 	function choosePlatform(platform: PlatformId) {
+		if (!isPublicDownloadEnabled(platform)) return;
 		chosenPlatform = platform;
 		copiedPlatform = null;
 		isManualLoading = false;
@@ -145,6 +182,10 @@
 			isAvailable: platformRows.linux !== null
 		}
 	]);
+
+	const visiblePlatformOptions = $derived(
+		platformOptions.filter((option) => isPublicDownloadEnabled(option.id as PlatformId))
+	);
 
 	function handleManualDownload() {
 		if (!selectedMeta) return;
@@ -194,11 +235,13 @@
 						{m.download_platform_select_label()}
 					</p>
 					<div
-						class="grid grid-cols-3 gap-2"
+						class={visiblePlatformOptions.length === 2
+							? 'grid grid-cols-2 gap-2'
+							: 'grid grid-cols-3 gap-2'}
 						role="group"
 						aria-label={m.download_platform_select_label()}
 					>
-						{#each platformOptions as option (option.id)}
+						{#each visiblePlatformOptions as option (option.id)}
 							{@const PlatformIcon = option.icon}
 							<button
 								type="button"
@@ -233,17 +276,6 @@
 							{/if}
 							{m.download_manual_button()}
 						</button>
-						<div
-							class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-mono text-xs text-muted-foreground"
-						>
-							{#if selectedMeta}
-								<span>v{selectedMeta.version}</span>
-								<span aria-hidden="true">·</span>
-								<span>{formatSize(selectedMeta)}</span>
-							{:else}
-								<span>{m.download_not_available()}</span>
-							{/if}
-						</div>
 					</div>
 
 					<div class="min-w-0 border-t border-border pt-4">
@@ -281,10 +313,26 @@
 								{/if}
 							</button>
 							{#if selectedCommand}
+								<!-- svelte-ignore a11y_no_noninteractive_tabindex -- the scroll viewport must be keyboard-focusable -->
 								<pre
-									class="min-w-0 overflow-x-auto py-3 pr-14 pl-3 font-mono text-xs leading-relaxed sm:pr-32"><code
+									role="region"
+									bind:this={commandScroller}
+									onscroll={updateCommandScrollHints}
+									tabindex="0"
+									aria-label={m.download_terminal_option_label()}
+									class="command-scroll min-w-0 overflow-x-auto py-3 pr-14 pl-3 font-mono text-xs leading-relaxed sm:pr-32"><code
 										>{selectedCommand}</code
 									></pre>
+								<div
+									aria-hidden="true"
+									class="command-fade command-fade-left pointer-events-none absolute top-0 bottom-1.5 left-0 z-[1] w-10 rounded-l-md"
+									class:visible={hasCommandToLeft}
+								></div>
+								<div
+									aria-hidden="true"
+									class="command-fade command-fade-right pointer-events-none absolute top-0 right-0 bottom-1.5 z-[1] w-10 rounded-r-md"
+									class:visible={hasCommandToRight}
+								></div>
 							{:else}
 								<p class="px-3 py-3 pr-14 text-xs text-muted-foreground sm:pr-32">
 									{m.download_not_available()}
@@ -295,17 +343,13 @@
 				</div>
 
 				{#if selectedMeta}
-					<div class="border-t border-border px-4 py-3 sm:px-5">
-						<a
-							href="https://github.com/aintDatCap/ace-blocker/releases"
-							target="_blank"
-							rel="noreferrer"
-							class="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
-						>
-							<IconFileText size={16} aria-hidden="true" />
-							{m.download_release_notes({ version: selectedMeta.version })}
-							<IconExternalLink size={13} aria-hidden="true" />
-						</a>
+					<div
+						class="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border px-4 py-3 font-mono text-xs text-muted-foreground sm:px-5"
+						data-testid="installer-release-metadata"
+					>
+						<span>v{selectedMeta.version}</span>
+						<span aria-hidden="true">·</span>
+						<span>{formatSize(selectedMeta)}</span>
 					</div>
 				{/if}
 			</div>
@@ -315,7 +359,7 @@
 	<section class="border-b border-border bg-card py-12 sm:py-16">
 		<div class="ace-shell">
 			<PlatformGrid
-				platforms={platformOptions}
+				platforms={visiblePlatformOptions}
 				detectedArch={effectivePlatform
 					? installerArch(effectivePlatform, selectedMeta?.architecture ?? 'x64')
 					: null}
@@ -343,6 +387,60 @@
 <MarketingFooter />
 
 <style>
+	.command-scroll {
+		/* Keep one thin scrollbar gutter so hover never changes the box height. */
+		scrollbar-width: thin;
+		scrollbar-color: var(--muted-foreground) transparent;
+	}
+
+	.command-scroll::-webkit-scrollbar {
+		height: 5px;
+	}
+
+	.command-scroll::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.command-scroll::-webkit-scrollbar-thumb {
+		border-radius: 999px;
+		background: var(--muted-foreground);
+	}
+
+	.command-fade {
+		opacity: 0;
+		transition: opacity 150ms ease;
+	}
+
+	.command-fade.visible {
+		opacity: 1;
+	}
+
+	.command-fade-left {
+		background: linear-gradient(to right, var(--background), transparent);
+	}
+
+	.command-fade-right {
+		background: linear-gradient(to left, var(--background), transparent);
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		.command-scroll {
+			scrollbar-color: transparent transparent;
+		}
+
+		.command-scroll::-webkit-scrollbar-thumb {
+			background: transparent;
+		}
+
+		.command-box:is(:hover, :focus-within) .command-scroll {
+			scrollbar-color: var(--muted-foreground) transparent;
+		}
+
+		.command-box:is(:hover, :focus-within) .command-scroll::-webkit-scrollbar-thumb {
+			background: var(--muted-foreground);
+		}
+	}
+
 	.command-copy {
 		transition: opacity 150ms ease;
 	}
@@ -371,7 +469,8 @@
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.command-copy {
+		.command-copy,
+		.command-fade {
 			transition: none;
 		}
 	}

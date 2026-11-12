@@ -178,6 +178,8 @@ for zero/singular/plural agreement.
 - Make the Windows/macOS/Linux tabs update both actions from the same published `platformRows` metadata. An explicit `?arch=` link must select the requested OS even if no installer is available.
   Generate commands with `src/routes/download/_components/installer-command.ts`. For Windows, download the MSI and invoke `msiexec`. For Linux, download the validated tar.gz bundle and invoke its included `install.sh`. Never copy stale CDN URLs or show a command for an unpublished installer.
 - If no release is available, show both actions in a disabled state. Show `Not currently available`. Preserve responsive stacking, horizontal scrolling for long commands, and correct copy feedback. Other platform builds and checksum validation remain in their lower sections.
+- Display the selected release version and file size in the installer's footer. Release notes are deferred; see `docs/FEATURE_BACKLOG.md`. Do not show an external release-notes placeholder.
+- macOS installer downloads are **inactive** pending validation on a Mac. Keep macOS implementation and components for future activation, but exclude macOS from public `/download` tabs, other builds and metadata; `/download/macos_universal` must return 404 even if a release row exists. Toggle only `src/lib/public-download-platforms.ts` after testing.
 
 ## Pro product page visibility (2026-11-11)
 
