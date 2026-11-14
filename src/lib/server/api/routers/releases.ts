@@ -6,6 +6,7 @@ import { createLogger } from '$lib/server/logger';
 import { db } from '$lib/server/db';
 import { aceBlockerInstaller } from '$lib/server/db/schema';
 import { CDNErrorType, getArrayBufferChecksum, uploadInstaller } from '$lib/server/cdn';
+import { expectedInstallerFiles } from '$lib/installer-release-policy';
 
 const log = createLogger('api:releases');
 
@@ -136,10 +137,10 @@ export const releasesRouter = new Elysia({ prefix: '/releases' })
 				appCommit
 			} = body;
 
-			if (!file.name.toLowerCase().endsWith('.msi')) {
+			if (!expectedInstallerFiles(os, version).includes(file.name)) {
 				return status(400, {
 					error: true,
-					message: 'Installer candidate must be an MSI file'
+					message: 'Unexpected installer filename or package format'
 				});
 			}
 
@@ -147,13 +148,14 @@ export const releasesRouter = new Elysia({ prefix: '/releases' })
 				where: and(
 					eq(aceBlockerInstaller.version, version),
 					eq(aceBlockerInstaller.os, os),
-					eq(aceBlockerInstaller.architecture, architecture)
+					eq(aceBlockerInstaller.architecture, architecture),
+					eq(aceBlockerInstaller.fileName, file.name)
 				)
 			});
 			if (existing) {
 				return status(409, {
 					error: true,
-					message: `Installer ${version} for ${os}/${architecture} already exists; release versions are immutable`
+					message: `Installer ${file.name} for ${os}/${architecture} already exists; release files are immutable`
 				});
 			}
 

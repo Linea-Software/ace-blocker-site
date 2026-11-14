@@ -44,6 +44,7 @@ function toPublic(row: InstallerRow) {
 	return {
 		version: row.version,
 		size: row.size,
+		fileName: row.fileName,
 		os: row.os,
 		architecture: row.architecture,
 		createdAt: row.createdAt,

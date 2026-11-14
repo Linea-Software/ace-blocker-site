@@ -3,7 +3,7 @@ import { env } from '$env/dynamic/private';
 import type { aceBlockerInstaller } from '$lib/server/db/schema';
 import { installersUploadBase } from '$lib/server/cdn/common';
 import { validateInstallerArtifact } from './installer-artifact-validation';
-import { expectedInstallerFile, supportedInstallerTarget } from '$lib/installer-release-policy';
+import { expectedInstallerFiles, supportedInstallerTarget } from '$lib/installer-release-policy';
 
 /**
  * Re-read the stored object before it becomes public. CDN availability is never
@@ -18,11 +18,11 @@ export async function verifyLegacyInstallerObject(
 	) {
 		throw new Error('Installer has not passed structural validation');
 	}
-	const name = expectedInstallerFile(release.os, release.version);
+	const names = expectedInstallerFiles(release.os, release.version);
+	const name = release.fileName;
 	if (
 		!/^\d+\.\d+\.\d+$/.test(release.version) ||
-		!name ||
-		release.fileName !== name ||
+		!names.includes(name) ||
 		!/^[a-f0-9]{64}$/.test(release.sha256) ||
 		!Number.isSafeInteger(release.size) ||
 		release.size < 1 ||

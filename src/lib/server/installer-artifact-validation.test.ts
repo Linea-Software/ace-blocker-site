@@ -10,6 +10,23 @@ function validMsi() {
 	return new File([header], 'AceBlocker-1.2.3.msi');
 }
 
+function validBurnExe(options: { machine?: number; magic?: number; section?: string } = {}) {
+	const bytes = Buffer.alloc(8192);
+	bytes.write('MZ', 0);
+	bytes.writeUInt32LE(0x120, 60);
+	bytes.write('PE', 0x120);
+	bytes.writeUInt16LE(options.machine ?? 0x8664, 0x124);
+	bytes.writeUInt16LE(1, 0x126);
+	bytes.writeUInt16LE(240, 0x134);
+	bytes.writeUInt16LE(0x20b, 0x138);
+	const section = 0x120 + 24 + 240;
+	bytes.write(options.section ?? '.wixburn', section);
+	bytes.writeUInt32LE(512, section + 16);
+	bytes.writeUInt32LE(4096, section + 20);
+	bytes.writeUInt32LE(options.magic ?? 0x00f14300, 4096);
+	return new File([bytes], 'AceBlocker-Setup-1.2.3.exe');
+}
+
 function tarEntry(name: string, data: Buffer, kind: 'file' | 'link' = 'file'): Buffer {
 	const header = Buffer.alloc(512);
 	header.write(name, 0, 'utf8');
@@ -99,6 +116,50 @@ describe('desktop installer binary validation', () => {
 			/Only/
 		);
 	});
+	it('accepts only x64 WiX Burn setup EXEs, not arbitrary PE files or ZIP wrappers', async () => {
+		expect(
+			await validateInstallerArtifact(validBurnExe(), '1.2.3', 'windows', 'x64')
+		).toBeNull();
+		expect(
+			await validateInstallerArtifact(
+				validBurnExe({ machine: 0x14c }),
+				'1.2.3',
+				'windows',
+				'x64'
+			)
+		).toMatch(/WiX Burn/);
+		expect(
+			await validateInstallerArtifact(
+				validBurnExe({ section: '.rsrc' }),
+				'1.2.3',
+				'windows',
+				'x64'
+			)
+		).toMatch(/WiX Burn/);
+		expect(
+			await validateInstallerArtifact(validBurnExe({ magic: 0 }), '1.2.3', 'windows', 'x64')
+		).toMatch(/WiX Burn/);
+		expect(
+			await validateInstallerArtifact(
+				new File(['MZ'], 'AceBlocker-Setup-1.2.3.exe'),
+				'1.2.3',
+				'windows',
+				'x64'
+			)
+		).toMatch(/WiX Burn/);
+		expect(
+			await validateInstallerArtifact(
+				new File(['PK'], 'artifact.zip'),
+				'1.2.3',
+				'windows',
+				'x64'
+			)
+		).toMatch(/Expected/);
+		expect(await validateInstallerArtifact(validBurnExe(), '1.2.4', 'windows', 'x64')).toMatch(
+			/Expected/
+		);
+	});
+
 	it('accepts Linux tar.gz with required files and x64 ELF executables', async () => {
 		expect(await validateInstallerArtifact(linuxFile(), '1.2.3', 'linux', 'x64')).toBeNull();
 	});

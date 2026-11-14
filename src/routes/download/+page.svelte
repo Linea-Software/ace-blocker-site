@@ -22,6 +22,7 @@
 	interface PlatformMeta {
 		version: string;
 		size: number;
+		fileName: string;
 		os: 'windows' | 'macos' | 'linux';
 		architecture: string;
 		hash: string;
@@ -108,7 +109,9 @@
 
 	const selectedMeta = $derived<PlatformMeta | null>(platformRows[effectivePlatform] ?? null);
 	const selectedCommand = $derived(
-		selectedMeta ? installerCommand(effectivePlatform, selectedMeta.architecture) : null
+		selectedMeta
+			? installerCommand(effectivePlatform, selectedMeta.architecture, selectedMeta.fileName)
+			: null
 	);
 
 	$effect(() => {
@@ -155,7 +158,7 @@
 			icon: IconBrandWindows,
 			size: formatSize(platformRows.windows),
 			version: platformRows.windows?.version ?? null,
-			ext: '.msi',
+			ext: platformRows.windows?.fileName?.endsWith('.exe') ? '.exe' : '.msi',
 			details: m.download_platform_windows_details(),
 			isAvailable: platformRows.windows !== null
 		},
@@ -313,7 +316,7 @@
 								{/if}
 							</button>
 							{#if selectedCommand}
-								<!-- svelte-ignore a11y_no_noninteractive_tabindex -- the scroll viewport must be keyboard-focusable -->
+								<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 								<pre
 									role="region"
 									bind:this={commandScroller}

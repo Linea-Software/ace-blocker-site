@@ -121,6 +121,7 @@ describe('download page load', () => {
 	});
 
 	type PublicInstaller = {
+		fileName: string;
 		version: string;
 		size: number;
 		os: string;
@@ -167,7 +168,11 @@ describe('download page load', () => {
 
 		// Windows is available, but macOS remains unpublished even when a
 		// matching arm64 installer row exists. Linux has no release.
-		expect(data.platforms.windows).toMatchObject({ os: 'windows', architecture: 'x64' });
+		expect(data.platforms.windows).toMatchObject({
+			os: 'windows',
+			architecture: 'x64',
+			fileName: 'Ace Blocker Installer.exe'
+		});
 		expect(data.platforms.macos).toBeNull();
 		expect(getInstallerFor).not.toHaveBeenCalledWith('macos', 'x64');
 		expect(getInstallerFor).not.toHaveBeenCalledWith('macos', 'arm64');

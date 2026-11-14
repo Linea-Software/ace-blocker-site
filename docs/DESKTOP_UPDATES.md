@@ -236,15 +236,18 @@ Complete trusted Windows verification before signed ingest.
 
 ## Required installer artifacts and publication readiness
 
-The admin upload supports only **Windows x64 MSI**
-(`AceBlocker-<version>.msi`) and **Linux x64 tar.gz**
+The admin upload recognizes **Windows x64 MSI**
+(`AceBlocker-<version>.msi`), **Windows x64 WiX Burn setup EXE**
+(`AceBlocker-Setup-<version>.exe`), and **Linux x64 tar.gz**
 (`AceBlocker-<version>-linux-x64.tar.gz`).
 GitHub Actions downloads include a ZIP wrapper around the platform file.
 Upload the platform file, not the ZIP wrapper.
 Do not enable other architectures or macOS in this workflow.
 
 Set `artifact_validated_at` only after the server inspects the uploaded file.
-For Windows, check the MSI compound-file header.
+For Windows, check the MSI compound-file header or the EXE PE/COFF AMD64
+header and WiX Burn section. Structural validation is not Authenticode verification.
+The signed desktop update feed continues to use the MSI, never the EXE.
 For Linux, parse gzip/tar safely without extraction. Reject links, path
 traversal, duplicate entries, and unsupported entries. Verify required payload
 files and x64 ELF headers. Limit expanded bytes.

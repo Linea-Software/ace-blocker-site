@@ -8,7 +8,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
 	import * as m from '$lib/paraglide/messages';
-	import { expectedInstallerFile } from '$lib/installer-release-policy';
+	import { expectedInstallerFiles } from '$lib/installer-release-policy';
 	import {
 		installerActionBlock,
 		type InstallerActionBlock,
@@ -31,7 +31,8 @@
 	let { data }: { data: any } = $props();
 	let uploadVersion = $state('');
 	let uploadOs = $state('linux');
-	const expectedName = $derived(expectedInstallerFile(uploadOs, uploadVersion || '0.1.0'));
+	const expectedNames = $derived(expectedInstallerFiles(uploadOs, uploadVersion || '0.1.0'));
+	const expectedName = $derived(expectedNames.join(' / '));
 
 	const liveBuilds = $derived(
 		data.installers.filter(
@@ -71,9 +72,9 @@
 		if (!data.allowUnsignedPublishing && uploadOs === 'windows')
 			return m.admin_releases_manual_windows_production();
 		if (!/^\d+\.\d+\.\d+$/.test(version)) return m.admin_releases_expected_version();
-		const expected = expectedInstallerFile(uploadOs, version);
-		return file.name !== expected
-			? m.admin_releases_expected_filename({ filename: expected ?? '' })
+		const expected = expectedInstallerFiles(uploadOs, version);
+		return !expected.includes(file.name)
+			? m.admin_releases_expected_filename({ filename: expected.join(' / ') })
 			: null;
 	}
 
@@ -363,7 +364,7 @@
 	uploadSubtitle={m.admin_releases_upload_installer_description()}
 	fileFieldLabel={m.admin_releases_installer_file_label()}
 	fileInputId="installer-file"
-	fileAccept={uploadOs === 'windows' ? '.msi' : '.tar.gz,application/gzip'}
+	fileAccept={uploadOs === 'windows' ? '.msi,.exe' : '.tar.gz,application/gzip'}
 	{uploadFields}
 	{validateUpload}
 	{submitUpload}

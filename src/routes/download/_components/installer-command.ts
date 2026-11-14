@@ -7,12 +7,19 @@ export function installerArch(platform: InstallerPlatform, architecture: string)
 
 /**
  * These commands use the public download redirect, never a stale CDN URL.
- * Windows launches the MSI installer; macOS opens the installer contained in
+ * Windows runs the branded Burn EXE or launches the legacy MSI; macOS opens the installer contained in
  * the mounted disk image; Linux extracts the published bundle and runs install.sh.
  */
-export function installerCommand(platform: InstallerPlatform, architecture: string): string {
+export function installerCommand(
+	platform: InstallerPlatform,
+	architecture: string,
+	fileName?: string
+): string {
 	const url = `https://aceblocker.com/download/${installerArch(platform, architecture)}`;
 	if (platform === 'windows') {
+		if (fileName?.endsWith('.exe')) {
+			return `$ErrorActionPreference='Stop'; $file=Join-Path $env:TEMP 'AceBlocker-Setup.exe'; Invoke-WebRequest -Uri '${url}' -OutFile $file; Start-Process -FilePath $file -Wait`;
+		}
 		return `$ErrorActionPreference='Stop'; $file=Join-Path $env:TEMP 'AceBlocker-Setup.msi'; Invoke-WebRequest -Uri '${url}' -OutFile $file; Start-Process msiexec.exe -ArgumentList @('/i', ('"' + $file + '"')) -Wait`;
 	}
 	if (platform === 'macos') {

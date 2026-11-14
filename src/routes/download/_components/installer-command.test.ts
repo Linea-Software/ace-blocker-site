@@ -16,6 +16,14 @@ describe('terminal installer commands', () => {
 		expect(command).toContain('AceBlocker-Setup.msi');
 	});
 
+	it('downloads and launches the branded WiX Burn EXE when the published artifact is an EXE', () => {
+		const command = installerCommand('windows', 'x64', 'AceBlocker-Setup-1.2.3.exe');
+		expect(command).toContain('https://aceblocker.com/download/windows_x64');
+		expect(command).toContain('AceBlocker-Setup.exe');
+		expect(command).toContain('Start-Process -FilePath $file -Wait');
+		expect(command).not.toContain('msiexec');
+	});
+
 	it('downloads and opens a macOS installer from the disk image', () => {
 		const command = installerCommand('macos', 'arm64');
 		expect(command).toContain('/download/macos_universal');

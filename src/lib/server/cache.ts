@@ -48,12 +48,21 @@ export async function loadLatestInstaller(): Promise<
 	const publicResults = results.filter((row) => isPublicDownloadEnabled(row.os));
 	latestInstaller = publicResults[0] || null;
 
-	// Rows come back newest-first, so the first row seen per (os, arch)
-	// combo is that combo's latest publicly downloadable release.
+	// Rows come back newest-first. Within the same Windows version, prefer the
+	// branded setup EXE even if its MSI counterpart was uploaded more recently.
+	// The MSI remains the separate signed desktop update payload.
 	const byTarget = new Map<string, typeof aceBlockerInstaller.$inferSelect>();
 	for (const row of publicResults) {
 		const key = installerKey(row.os, row.architecture);
-		if (!byTarget.has(key)) byTarget.set(key, row);
+		const current = byTarget.get(key);
+		if (
+			!current ||
+			(row.os === 'windows' &&
+				row.version === current.version &&
+				row.fileName === `AceBlocker-Setup-${row.version}.exe` &&
+				current.fileName !== row.fileName)
+		)
+			byTarget.set(key, row);
 	}
 	latestInstallersByTarget = byTarget;
 

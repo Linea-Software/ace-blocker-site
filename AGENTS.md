@@ -130,12 +130,14 @@ for zero/singular/plural agreement.
 
 ## Installer-release artifact policy (2026-11-10)
 
-- Admin installer uploads accept only `AceBlocker-VERSION.msi` (Windows x64)
+- Admin installer uploads accept `AceBlocker-VERSION.msi` (Windows x64),
+  `AceBlocker-Setup-VERSION.exe` (Windows x64 branded WiX Burn bootstrapper),
   or `AceBlocker-VERSION-linux-x64.tar.gz` (Linux x64). GitHub Actions
   downloads include ZIP wrappers. Upload the platform package inside the ZIP,
   not the wrapper.
 - Authoritative target names are in `src/lib/installer-release-policy.ts`.
-  Server-side structural checks (MSI header, bounded safe tar/gzip with x64
+  Server-side structural checks (MSI header, x64 PE/WiX Burn section,
+  bounded safe tar/gzip with x64
   ELF binaries and mandatory files) live in
   `src/lib/server/installer-artifact-validation.ts`. Never trust MIME or
   filename alone.
@@ -176,7 +178,7 @@ for zero/singular/plural agreement.
 
 - The public `/download` hero contains **one selected-platform installer card**. It offers the direct installer button and matching terminal command together, above the other-builds list.
 - Make the Windows/macOS/Linux tabs update both actions from the same published `platformRows` metadata. An explicit `?arch=` link must select the requested OS even if no installer is available.
-  Generate commands with `src/routes/download/_components/installer-command.ts`. For Windows, download the MSI and invoke `msiexec`. For Linux, download the validated tar.gz bundle and invoke its included `install.sh`. Never copy stale CDN URLs or show a command for an unpublished installer.
+  Generate commands with `src/routes/download/_components/installer-command.ts`. For Windows, invoke `msiexec` for an MSI or launch the branded EXE when published. For Linux, download the validated tar.gz bundle and invoke its included `install.sh`. Never copy stale CDN URLs or show a command for an unpublished installer.
 - If no release is available, show both actions in a disabled state. Show `Not currently available`. Preserve responsive stacking, horizontal scrolling for long commands, and correct copy feedback. Other platform builds and checksum validation remain in their lower sections.
 - Display the selected release version and file size in the installer's footer. Release notes are deferred; see `docs/FEATURE_BACKLOG.md`. Do not show an external release-notes placeholder.
 - macOS installer downloads are **inactive** pending validation on a Mac. Keep macOS implementation and components for future activation, but exclude macOS from public `/download` tabs, other builds and metadata; `/download/macos_universal` must return 404 even if a release row exists. Toggle only `src/lib/public-download-platforms.ts` after testing.

@@ -27,7 +27,7 @@ import {
 import { deleteFileFromBunnyCDN } from './delete';
 import { createLogger } from '$lib/server/logger';
 import { validateInstallerArtifact } from '$lib/server/installer-artifact-validation';
-import { expectedInstallerFile } from '$lib/installer-release-policy';
+import { expectedInstallerFiles } from '$lib/installer-release-policy';
 
 const log = createLogger('cdn:upload');
 
@@ -268,7 +268,10 @@ export async function uploadInstaller(
 		return err(CDNErrorType.InvalidArtifact);
 	}
 
-	const installerFileName = expectedInstallerFile(os, version)!;
+	// Preserve the validated package name: EXE bootstrapper and MSI must never overwrite each other.
+	const installerFileName = file.name;
+	if (!expectedInstallerFiles(os, version).includes(installerFileName))
+		return err(CDNErrorType.InvalidArtifact);
 	const endpointUrl = new URL(
 		`${version}/${os}/${architecture}/${installerFileName}`,
 		installersUploadBase

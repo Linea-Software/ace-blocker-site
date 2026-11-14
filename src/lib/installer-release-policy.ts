@@ -4,10 +4,15 @@ export const INSTALLER_TARGETS = {
 	linux: { extension: '.tar.gz', architecture: 'x64', type: 'Linux release bundle (tar.gz)' }
 } as const;
 
+/** Both Windows packages are distributable. The MSI remains the signed updater payload. */
+export function expectedInstallerFiles(os: string, version: string): string[] {
+	if (os === 'windows') return [`AceBlocker-${version}.msi`, `AceBlocker-Setup-${version}.exe`];
+	if (os === 'linux') return [`AceBlocker-${version}-linux-x64.tar.gz`];
+	return [];
+}
+
 export function expectedInstallerFile(os: string, version: string): string | null {
-	if (os === 'windows') return `AceBlocker-${version}.msi`;
-	if (os === 'linux') return `AceBlocker-${version}-linux-x64.tar.gz`;
-	return null;
+	return expectedInstallerFiles(os, version)[0] ?? null;
 }
 
 export function supportedInstallerTarget(os: string, architecture: string): boolean {

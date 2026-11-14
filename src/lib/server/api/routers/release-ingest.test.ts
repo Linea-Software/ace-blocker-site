@@ -144,6 +144,28 @@ describe('installer release ingest', () => {
 		expect(uploadInstaller).not.toHaveBeenCalled();
 	});
 
+	it('stages the branded EXE alongside an MSI, while rejecting unexpected names', async () => {
+		const exe = candidateBody();
+		exe.set('file', new File([new Uint8Array([1, 2, 3, 4])], 'AceBlocker-Setup-0.3.0.exe'));
+		expect(
+			(await ingest({ body: exe, headers: { authorization: `Bearer ${TOKEN}` } })).status
+		).toBe(200);
+		expect(uploadInstaller).toHaveBeenCalledWith(
+			expect.objectContaining({ name: 'AceBlocker-Setup-0.3.0.exe' }),
+			'0.3.0',
+			'windows',
+			'x64',
+			false,
+			expect.any(Object)
+		);
+		expect(findInstaller).toHaveBeenCalled();
+		const invalid = candidateBody();
+		invalid.set('file', new File(['MZ'], 'random-name.exe'));
+		expect(
+			(await ingest({ body: invalid, headers: { authorization: `Bearer ${TOKEN}` } })).status
+		).toBe(400);
+	});
+
 	it('stores a valid CI candidate as staged with provenance', async () => {
 		const response = await ingest({
 			body: candidateBody(),

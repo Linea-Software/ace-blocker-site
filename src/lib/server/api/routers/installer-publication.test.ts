@@ -24,6 +24,23 @@ msiHeader[29] = 0xff;
 msiHeader[30] = 9;
 const validMsi = new File([msiHeader], 'AceBlocker-1.0.0.msi');
 
+const burnExe = (() => {
+	const bytes = Buffer.alloc(8192);
+	bytes.write('MZ', 0);
+	bytes.writeUInt32LE(0x120, 60);
+	bytes.write('PE', 0x120);
+	bytes.writeUInt16LE(0x8664, 0x124);
+	bytes.writeUInt16LE(1, 0x126);
+	bytes.writeUInt16LE(240, 0x134);
+	bytes.writeUInt16LE(0x20b, 0x138);
+	const section = 0x120 + 24 + 240;
+	bytes.write('.wixburn', section);
+	bytes.writeUInt32LE(512, section + 16);
+	bytes.writeUInt32LE(4096, section + 20);
+	bytes.writeUInt32LE(0x00f14300, 4096);
+	return new File([bytes], 'AceBlocker-Setup-1.0.0.exe');
+})();
+
 vi.mock('$lib/server/logger', () => ({
 	createLogger: () => ({
 		info: vi.fn(),
@@ -216,6 +233,52 @@ describe('installer publication lifecycle (regression: upload visible on /downlo
 			'x64',
 			false
 		);
+	});
+
+	it('accepts the branded EXE in development but never auto-publishes it', async () => {
+		vi.mocked(canPublishUnsignedInstallers).mockReturnValue(true);
+		uploadInstaller.mockResolvedValue({
+			isOk: () => true,
+			isErr: () => false,
+			_unsafeUnwrap: () => ({ downloadUrl: WINDOWS_URL.toString(), hash: 'a'.repeat(64) })
+		} as never);
+		const res = await adminHandle('/admin/installers/upload', {
+			method: 'POST',
+			body: uploadBody(burnExe, { version: '1.0.0', os: 'windows', architecture: 'x64' })
+		});
+		expect(res.status).toBe(200);
+		expect(uploadInstaller).toHaveBeenCalledWith(
+			expect.objectContaining({ name: 'AceBlocker-Setup-1.0.0.exe' }),
+			'1.0.0',
+			'windows',
+			'x64',
+			false
+		);
+	});
+
+	it('does not allow an unsigned EXE upload in production', async () => {
+		const res = await adminHandle('/admin/installers/upload', {
+			method: 'POST',
+			body: uploadBody(burnExe, { version: '1.0.0', os: 'windows', architecture: 'x64' })
+		});
+		expect(res.status).toBe(409);
+		expect(uploadInstaller).not.toHaveBeenCalled();
+	});
+
+	it('prefers the branded EXE over the MSI for the same published version', async () => {
+		rows = [
+			windowsRow({ canBeDownloaded: true, artifactValidatedAt: new Date() }),
+			windowsRow({
+				id: 'w2',
+				fileName: 'AceBlocker-Setup-1.0.0.exe',
+				canBeDownloaded: true,
+				artifactValidatedAt: new Date(),
+				createdAt: new Date('2026-08-30T00:00:00Z')
+			})
+		];
+		await loadLatestInstaller();
+		const { getInstallerFor } = await import('$lib/server/cache');
+		expect(getInstallerFor('windows', 'x64')?.fileName).toBe('AceBlocker-Setup-1.0.0.exe');
 	});
 
 	it('REPRODUCES the bug: a staged Windows release is invisible on /download', async () => {
