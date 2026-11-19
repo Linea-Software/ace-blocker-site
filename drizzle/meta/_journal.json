@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1790572663366,
-      "tag": "0000_puzzling_glorian",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1793935937907,
-      "tag": "0001_perpetual_mole_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1794266238705,
-      "tag": "0002_needy_black_panther",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1794402497963,
-      "tag": "0003_tearful_ultimates",
+      "when": 1795099639070,
+      "tag": "0000_amazing_the_hand",
       "breakpoints": true
     }
   ]

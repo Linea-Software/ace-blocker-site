@@ -6,68 +6,22 @@ import { backups } from '$lib/server/db/schema';
 import { isUserPro } from '$lib/server/pro';
 import { v7 as uuidv7 } from 'uuid';
 
-const BackupSitesListSourceSchema = t.Object({
-	source: t.String(),
-	sourceType: t.String(),
-	format: t.String()
-});
-
-// Site-pack ids are NOT server-side UUIDs: built-in/default packs use the
-// canonical catalog id (`pack-adult-free`, `pack-social-free`, ...), engine
-// rows created from the server list use the server's catalog string, and only
-// user-created packs carry a UUID. The site stores the backup blob verbatim
-// and never treats these ids as its own foreign keys, so any non-empty string
-// is valid (see engine issue: "UUID failure during cloud backup").
-const PackIdString = t.String({ minLength: 1, maxLength: 128 });
-
-const BackupSitesListSchema = t.Object({
-	id: PackIdString,
-	// Remote linkage/tier are preserved so a restore re-creates a
-	// server-managed pack as a remote row (matched by the content updater),
-	// not as a local pack. Optional for legacy backups.
-	remoteId: t.Optional(t.Nullable(t.String())),
-	requiresPro: t.Optional(t.Boolean()),
-	version: t.Optional(t.Nullable(t.String())),
-	name: t.String(),
-	description: t.Optional(t.Nullable(t.String())),
-	sources: t.Array(BackupSitesListSourceSchema)
-});
-
-const BackupScheduleEntrySchema = t.Object({
-	startTime: t.String(),
-	endTime: t.String(),
-	monday: t.Boolean(),
-	tuesday: t.Boolean(),
-	wednesday: t.Boolean(),
-	thursday: t.Boolean(),
-	friday: t.Boolean(),
-	saturday: t.Boolean(),
-	sunday: t.Boolean()
-});
-
-const BackupUserRuleSchema = t.Object({
-	rule: t.String(),
-	ruleType: t.Union([t.Literal('domain'), t.Literal('regex')])
-});
-
-const BackupNetworkBlockSchema = t.Object({
-	id: t.String({ format: 'uuid' }),
-	name: t.String(),
-	safe_search: t.Boolean(),
-	icon: t.Optional(t.Nullable(t.String())),
-	schedules: t.Array(BackupScheduleEntrySchema),
-	userRules: t.Array(BackupUserRuleSchema),
-	// A block may reference built-in packs by their canonical catalog id
-	// (not a UUID), so connected list ids are opaque strings too.
-	connectedSitesLists: t.Array(PackIdString)
-});
-
-const EngineBackupSchema = t.Object({
-	version: t.String(),
-	customSitesLists: t.Array(BackupSitesListSchema),
-	networkBlocks: t.Array(BackupNetworkBlockSchema),
-	deactivatedResistanceModeScripts: t.Array(t.String())
-});
+// New backups are always encrypted before reaching this API. The server
+// persists only the ciphertext, Argon2id salt and AES-GCM nonce in separate
+// database columns. The format is fixed to v1 until a coordinated upgrade.
+const Base64 = t.String({ pattern: '^[A-Za-z0-9+/]+={0,2}$' });
+export const EncryptedCloudBackupSchema = t.Object(
+	{
+		format: t.Literal('ace-cloud-e2ee'),
+		formatVersion: t.Literal(1),
+		algorithm: t.Literal('aes-256-gcm'),
+		kdf: t.Literal('argon2id'),
+		salt: Base64,
+		nonce: Base64,
+		ciphertext: Base64
+	},
+	{ additionalProperties: false }
+);
 
 export const backupsRouter = new Elysia({ prefix: '/backups' })
 	.derive(async ({ request }) => {
@@ -97,21 +51,45 @@ export const backupsRouter = new Elysia({ prefix: '/backups' })
 				return status(413, 'Backup size exceeds 2MB');
 			}
 
+			// Exact binary lengths and a minimum AES-GCM tag; no expensive KDF
+			// work or plaintext access is performed by this server.
+			const salt = Buffer.from(body.salt, 'base64');
+			const nonce = Buffer.from(body.nonce, 'base64');
+			const ciphertext = Buffer.from(body.ciphertext, 'base64');
+			if (
+				salt.length !== 16 ||
+				nonce.length !== 12 ||
+				ciphertext.length < 16 ||
+				salt.toString('base64') !== body.salt ||
+				nonce.toString('base64') !== body.nonce ||
+				ciphertext.toString('base64') !== body.ciphertext
+			) {
+				return status(400, 'Invalid encrypted backup envelope');
+			}
+			const wireBytes = Buffer.byteLength(JSON.stringify(body), 'utf8');
+			if (wireBytes > 2 * 1024 * 1024) {
+				return status(413, 'Backup size exceeds 2MB');
+			}
+
 			const backupId = uuidv7();
 			await db
 				.insert(backups)
 				.values({
 					id: backupId,
 					userId: user.id,
-					data: JSON.stringify(body),
-					version: body.version,
+					data: body.ciphertext,
+					salt: body.salt,
+					nonce: body.nonce,
+					version: 'e2ee-v1',
 					createdAt: new Date()
 				})
 				.onConflictDoUpdate({
 					target: backups.userId,
 					set: {
-						data: JSON.stringify(body),
-						version: body.version,
+						data: body.ciphertext,
+						salt: body.salt,
+						nonce: body.nonce,
+						version: 'e2ee-v1',
 						createdAt: new Date()
 					}
 				});
@@ -119,7 +97,7 @@ export const backupsRouter = new Elysia({ prefix: '/backups' })
 			return { id: backupId };
 		},
 		{
-			body: EngineBackupSchema,
+			body: EncryptedCloudBackupSchema,
 			detail: {
 				operationId: 'createBackup',
 				summary: 'Create a new engine backup',
@@ -129,6 +107,7 @@ export const backupsRouter = new Elysia({ prefix: '/backups' })
 				200: t.Object({
 					id: t.String({ format: 'uuid' })
 				}),
+				400: t.String(),
 				401: t.String(),
 				403: t.String(),
 				413: t.String(),
@@ -159,7 +138,17 @@ export const backupsRouter = new Elysia({ prefix: '/backups' })
 				return status(404, 'No backup found');
 			}
 
-			return JSON.parse(latestBackup.data);
+			// The API reassembles the wire envelope. PostgreSQL never contains an
+			// embedded JSON object with salt/nonce duplicated inside `data`.
+			return {
+				format: 'ace-cloud-e2ee' as const,
+				formatVersion: 1 as const,
+				algorithm: 'aes-256-gcm' as const,
+				kdf: 'argon2id' as const,
+				salt: latestBackup.salt,
+				nonce: latestBackup.nonce,
+				ciphertext: latestBackup.data
+			};
 		},
 		{
 			detail: {
@@ -168,7 +157,7 @@ export const backupsRouter = new Elysia({ prefix: '/backups' })
 				security: [{ APIKeyHeader: [] }]
 			},
 			response: {
-				200: EngineBackupSchema,
+				200: EncryptedCloudBackupSchema,
 				401: t.String(),
 				403: t.String(),
 				404: t.String(),

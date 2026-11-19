@@ -26,7 +26,7 @@
 		"db:delete": "bun scripts/delete-db.ts",
 		"db:push": "drizzle-kit push",
 		"db:generate": "drizzle-kit generate",
-		"db:migrate": "drizzle-kit migrate",
+		"db:migrate": "bun scripts/guard-db-migrate.ts && drizzle-kit migrate",
 		"db:studio": "drizzle-kit studio",
 		"gen:auth-schema": "bun x auth@1.7.5 generate --config ./src/lib/server/auth.ts --output ./src/lib/server/db/auth-schema.ts --yes"
 	},

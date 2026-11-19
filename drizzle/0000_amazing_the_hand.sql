@@ -4,9 +4,23 @@ CREATE TABLE "backups" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
 	"data" text NOT NULL,
+	"salt" text NOT NULL,
+	"nonce" text NOT NULL,
 	"version" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "backups_user_id_unique" UNIQUE("user_id")
+);
+--> statement-breakpoint
+CREATE TABLE "device_links" (
+	"device_code_hash" text PRIMARY KEY NOT NULL,
+	"user_code_hash" text NOT NULL,
+	"status" text DEFAULT 'pending' NOT NULL,
+	"approved_user_id" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
+	"last_polled_at" timestamp with time zone,
+	"consumed_at" timestamp with time zone,
+	CONSTRAINT "device_links_user_code_hash_unique" UNIQUE("user_code_hash")
 );
 --> statement-breakpoint
 CREATE TABLE "dodo_webhook_events" (
@@ -134,6 +148,7 @@ CREATE TABLE "ace_blocker_installer" (
 	"download_url" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"sha256" text NOT NULL,
+	"artifact_validated_at" timestamp with time zone,
 	"source_repository" text,
 	"source_commit" text,
 	"source_run_id" text,
@@ -142,7 +157,25 @@ CREATE TABLE "ace_blocker_installer" (
 	"app_commit" text,
 	"size" integer NOT NULL,
 	"can_be_downloaded" boolean DEFAULT true NOT NULL,
-	"download_count" integer DEFAULT 0 NOT NULL
+	"download_count" integer DEFAULT 0 NOT NULL,
+	"update_channel" text,
+	"update_state" text DEFAULT 'legacy' NOT NULL,
+	"signed_envelope" text,
+	"manifest_key_id" text,
+	"staging_key" text,
+	"published_at" timestamp with time zone,
+	CONSTRAINT "desktop_release_signature_required" CHECK ("ace_blocker_installer"."update_state" = 'legacy' OR
+		("ace_blocker_installer"."update_channel" = 'stable' AND "ace_blocker_installer"."signed_envelope" IS NOT NULL AND
+		"ace_blocker_installer"."manifest_key_id" IS NOT NULL AND "ace_blocker_installer"."staging_key" IS NOT NULL))
+);
+--> statement-breakpoint
+CREATE TABLE "desktop_release_audit" (
+	"id" text PRIMARY KEY NOT NULL,
+	"installer_id" text NOT NULL,
+	"actor" text NOT NULL,
+	"action" text NOT NULL,
+	"result" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "resistance_mode_scripts" (
@@ -172,11 +205,13 @@ CREATE TABLE "site_pack" (
 );
 --> statement-breakpoint
 ALTER TABLE "backups" ADD CONSTRAINT "backups_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "device_links" ADD CONSTRAINT "device_links_approved_user_id_user_id_fk" FOREIGN KEY ("approved_user_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pro_status" ADD CONSTRAINT "pro_status_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "two_factor" ADD CONSTRAINT "two_factor_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "backups_userId_idx" ON "backups" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "device_links_expiry_idx" ON "device_links" USING btree ("expires_at");--> statement-breakpoint
 CREATE INDEX "dodo_webhook_events_subscription_idx" ON "dodo_webhook_events" USING btree ("subscription_id");--> statement-breakpoint
 CREATE INDEX "dodo_webhook_events_event_timestamp_idx" ON "dodo_webhook_events" USING btree ("event_timestamp");--> statement-breakpoint
 CREATE INDEX "site_visits_timestamp_idx" ON "site_visits" USING btree ("timestamp");--> statement-breakpoint
@@ -187,4 +222,7 @@ CREATE INDEX "apikey_key_idx" ON "apikey" USING btree ("key");--> statement-brea
 CREATE INDEX "session_userId_idx" ON "session" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "twoFactor_secret_idx" ON "two_factor" USING btree ("secret");--> statement-breakpoint
 CREATE INDEX "twoFactor_userId_idx" ON "two_factor" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");
+CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");--> statement-breakpoint
+CREATE UNIQUE INDEX "desktop_release_target_version_unique" ON "ace_blocker_installer" USING btree ("version","os","architecture","update_channel") WHERE "ace_blocker_installer"."update_state" <> 'legacy';--> statement-breakpoint
+CREATE UNIQUE INDEX "desktop_release_single_publisher_unique" ON "ace_blocker_installer" USING btree ("os","architecture","update_channel") WHERE "ace_blocker_installer"."update_state" = 'publishing';--> statement-breakpoint
+CREATE INDEX "desktop_release_feed_idx" ON "ace_blocker_installer" USING btree ("update_state","os","architecture","update_channel");
