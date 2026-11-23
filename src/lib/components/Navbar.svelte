@@ -13,7 +13,7 @@
 		LogOut,
 		Menu,
 		Moon,
-		Settings2,
+		Settings,
 		Sun,
 		User,
 		UserPlus
@@ -232,7 +232,7 @@
 					class="hidden h-10 w-12 items-center justify-center gap-1 rounded-md border border-border bg-card hover:bg-accent md:inline-flex"
 					aria-label={`${m.nav_language_label()} / ${m.nav_toggle_theme()}`}
 				>
-					<Settings2 class="size-4" aria-hidden="true" />
+					<Settings class="size-[18px]" strokeWidth={1.75} aria-hidden="true" />
 					<ChevronDown class="size-3" aria-hidden="true" />
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end" class="w-48 rounded-md border-border shadow-none">
