@@ -25,7 +25,7 @@
 		<h1 class="mb-2 font-display text-5xl font-semibold tracking-tight">
 			{m.privacy_heading()}
 		</h1>
-		<p class="mb-12 text-muted-foreground">{m.legal_last_updated()}</p>
+		<p class="mb-12 text-muted-foreground">{m.privacy_last_updated()}</p>
 
 		<div class="space-y-8">
 			<section>

@@ -36,16 +36,24 @@ The **development server will refuse to start** if any required environment vari
 
 The startup check verifies **presence**, not that external API credentials work; production keeps its stricter URL/secret validation. Tests, builds and configuration scripts do not require live provider credentials. The database and Docker are still required.
 
-### Existing local databases and rebased migrations
+### Single Drizzle baseline (development)
 
-If the Docker database already has an older Drizzle migration history, the checked-in `0000` migration may otherwise attempt to recreate existing tables. `bun run setup` now runs `bun scripts/db-baseline.ts` before `bun run db:migrate`. This local-only reconciliation:
+The Drizzle migration history has been regenerated into **one initial migration**:
+`drizzle/0000_amazing_the_hand.sql`. It creates the full schema, including the
+cloud-backup columns `data` (ciphertext), `salt` (Argon2id) and `nonce`
+(AES-GCM), each NOT NULL. Old backup formats and old migration chains are
+intentionally unsupported.
 
-- Verifies that the existing tables, columns, indexes, constraints and enums match the committed baseline.
-- Preserves all existing migration records and adds the current baseline record only after validation.
-- Removes the obsolete Better Auth `account.issuer` column only when its table has **zero rows**, inside the same transaction. If account records exist or the database has any unexpected schema differences, it refuses to change the database.
-- Requires a local `DATABASE_URL` whose database name matches `POSTGRES_DB`; it cannot be used as a production migration repair mechanism.
+For a fresh **development** database, run `bun run setup` or `bun run
+db:migrate`. The migration command checks the database history before
+applying SQL; if it detects older migrations on an existing database, it
+stops rather than attempting to create tables that already exist.
 
-Run `bun scripts/db-baseline.ts --dry-run` to inspect a legacy database without modifying it. Never delete the database or manually edit Drizzle history to resolve a rebase until you have checked the actual schema and made a backup.
+The current local development database has been aligned with this baseline.
+If you recreate a local test environment, initialize a new empty database.
+Never run the initial migration against an existing database without verifying
+its contents. The VPS database is outside this development reset and has not
+been changed by these instructions.
 
 ## Site pack synchronization
 

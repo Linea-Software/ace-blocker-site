@@ -7,13 +7,25 @@ This website repository contains the **application** and local development tools
 ## Application-owned deployment interfaces
 
 - `bun scripts/setup-env.ts` — configure and validate the production environment. Creates or reuses a persistent production entitlement-signing key pair; do not rotate this pair during ordinary deployments.
-- `bun run db:migrate` — apply reviewed database migrations; require an independently restorable pre-migration backup.
+- `bun run db:migrate` — safely apply reviewed database migrations; a read-only guard refuses to replay the regenerated initial `0000` on databases with old migration history. Require an independently restorable pre-migration backup.
 - `bun run build` — build the production SvelteKit application.
 - `bun run provision-admin` — initial administrator provisioning; not an ordinary deployment step.
 - `compose.yaml` — the versioned PostgreSQL development template and source input for root-owned production Compose configuration.
 - `Dockerfile` — container packaging option. The current documented production path uses the Bun application service.
 
 Do **not** run `bun run setup` against a production database. It is for local development only.
+
+### New migration baseline
+
+The current `drizzle/0000` is a clean initial schema for an empty database,
+not an incremental migration. Its `backups` table stores ciphertext, Argon2id
+salt, and AES-GCM nonce in distinct non-null columns.
+
+The production VPS has **not** been migrated or modified by this development
+change. Before any future production rollout, review the actual database and
+establish an appropriate deployment procedure; **do not** blindly replay
+`drizzle-kit migrate` over existing tables. The built-in read-only migration
+guard refuses incompatible histories.
 
 ## VPS runbooks
 

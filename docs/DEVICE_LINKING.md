@@ -1,6 +1,7 @@
 # HTTPS Device Linking for Ace Blocker
 
 ## Purpose
+
 Browsers show a security warning when a website starts an external protocol handler such as `aceblocker://`.
 Ace Blocker uses a temporary device code instead.
 The browser authorizes the link through HTTPS.
@@ -8,6 +9,7 @@ This process does not bypass browser security prompts.
 The browser does not have to start the desktop application.
 
 ## Flow
+
 1. In **Desktop → Settings → License → Connect account**, Tauri Rust sends a POST request to `/api/device-link/start`.
    The server returns a secret 256-bit `deviceCode` and a separate 12-character `userCode`.
    It also returns a 5-second polling interval and a 10-minute expiration time.
@@ -27,11 +29,12 @@ The browser does not have to start the desktop application.
    Signed entitlements and server-side subscription checks control Pro access. A user code alone does not grant Pro access.
 
 ## Security Requirements
+
 - **User code:** Generate 12 characters uniformly from a 32-character alphabet (approximately 60 bits of entropy).
   The code identifies the request. It is not a bearer credential for redemption.
 - **Device code:** Generate 32 random bytes and encode them as base64url.
   Store only SHA-256 hashes of both codes and the approved user ID.
-  Migration `0003_tearful_ultimates.sql` adds `device_links`.
+  The regenerated `drizzle/0000` initial migration includes `device_links`.
 - **Single use and expiration:** Expire grants after 10 minutes.
   Use database compare-and-set to prevent competing pollers from redeeming one grant.
   Treat an uncertain key-issuance failure as terminal. Do not replay a possibly issued credential.
@@ -47,13 +50,15 @@ The browser does not have to start the desktop application.
   Never open it automatically on sign-in, sign-up, checkout, or Pro landing pages.
 
 ## Deployment
-1. Apply the additive PostgreSQL migration with `bun run db:migrate` before you ship desktop builds that use these endpoints.
+
+1. On fresh databases, `device_links` is part of the regenerated `drizzle/0000` baseline. On existing deployments, safely adopt the baseline (see `docs/DEPLOY.md`) before shipping desktop builds that use these endpoints.
 2. Deploy the site. Set per-IP/IP-prefix edge limits for start and poll. Set stronger per-account limits for approve.
 3. Ship desktop builds with native Tauri commands `device_link_start`, `device_link_poll`, and `device_link_cancel`.
 4. Verify that `/connect` uses HTTPS and displays the matching code.
    Confirm that the app reports Pro only after the engine refreshes the account successfully.
 
 ## Tests
+
 - **Site checks:** `bun run check`, `bun run test:unit -- --run src/lib/server/device-link.test.ts`, `bunx playwright test --config e2e/marketing-features.config.ts device-link.spec.ts`.
 - **Desktop checks:** `cd ../ace-blocker && cargo check -p ace-app --lib`, then `cd apps/ace-app && bun run check && bun run test:unit -- --run src/lib/utils/account-browser.test.ts`.
 - **Security checks:** Reject cross-origin and unauthenticated approval. Enforce the polling interval.

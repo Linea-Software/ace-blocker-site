@@ -1,5 +1,5 @@
 {
-  "id": "300b3a87-340e-4451-a9f3-21334011d0c2",
+  "id": "7da53eba-37f9-417f-aecd-05063ab67e3b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -22,6 +22,18 @@
         },
         "data": {
           "name": "data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "salt": {
+          "name": "salt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nonce": {
+          "name": "nonce",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -79,6 +91,107 @@
           "nullsNotDistinct": false,
           "columns": [
             "user_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.device_links": {
+      "name": "device_links",
+      "schema": "",
+      "columns": {
+        "device_code_hash": {
+          "name": "device_code_hash",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_code_hash": {
+          "name": "user_code_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "approved_user_id": {
+          "name": "approved_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_polled_at": {
+          "name": "last_polled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "consumed_at": {
+          "name": "consumed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "device_links_expiry_idx": {
+          "name": "device_links_expiry_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "device_links_approved_user_id_user_id_fk": {
+          "name": "device_links_approved_user_id_user_id_fk",
+          "tableFrom": "device_links",
+          "tableTo": "user",
+          "columnsFrom": [
+            "approved_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "device_links_user_code_hash_unique": {
+          "name": "device_links_user_code_hash_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_code_hash"
           ]
         }
       },
@@ -1048,6 +1161,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "artifact_validated_at": {
+          "name": "artifact_validated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "source_repository": {
           "name": "source_repository",
           "type": "text",
@@ -1103,6 +1222,194 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
+        },
+        "update_channel": {
+          "name": "update_channel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "update_state": {
+          "name": "update_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'legacy'"
+        },
+        "signed_envelope": {
+          "name": "signed_envelope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "manifest_key_id": {
+          "name": "manifest_key_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "staging_key": {
+          "name": "staging_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "desktop_release_target_version_unique": {
+          "name": "desktop_release_target_version_unique",
+          "columns": [
+            {
+              "expression": "version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "os",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "architecture",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "update_channel",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"ace_blocker_installer\".\"update_state\" <> 'legacy'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "desktop_release_single_publisher_unique": {
+          "name": "desktop_release_single_publisher_unique",
+          "columns": [
+            {
+              "expression": "os",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "architecture",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "update_channel",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"ace_blocker_installer\".\"update_state\" = 'publishing'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "desktop_release_feed_idx": {
+          "name": "desktop_release_feed_idx",
+          "columns": [
+            {
+              "expression": "update_state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "os",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "architecture",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "update_channel",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "desktop_release_signature_required": {
+          "name": "desktop_release_signature_required",
+          "value": "\"ace_blocker_installer\".\"update_state\" = 'legacy' OR\n\t\t(\"ace_blocker_installer\".\"update_channel\" = 'stable' AND \"ace_blocker_installer\".\"signed_envelope\" IS NOT NULL AND\n\t\t\"ace_blocker_installer\".\"manifest_key_id\" IS NOT NULL AND \"ace_blocker_installer\".\"staging_key\" IS NOT NULL)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.desktop_release_audit": {
+      "name": "desktop_release_audit",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "installer_id": {
+          "name": "installer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor": {
+          "name": "actor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "result": {
+          "name": "result",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},

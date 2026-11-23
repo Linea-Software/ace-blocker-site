@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Backups round-trip (spec §10.x / release plan Step 5.2): create (pro only),
-// fetch, delete — and the payload must survive POST → DB → GET unchanged.
-// Router-level tests: auth, pro and db are mocked; the db mock records the
-// inserted payload so the fetch path can prove the round-trip.
+// Opaque encrypted cloud backups: server stores ciphertext, nonce, and salt
+// separately and reassembles a versioned envelope on fetch. Auth/Pro enforced.
 
 const { dbInsert, dbSelect, dbDelete } = vi.hoisted(() => ({
 	dbInsert: vi.fn(),
@@ -110,45 +108,21 @@ function handle(path: string, init?: RequestInit) {
 	return backupsRouter.handle(new Request(`http://localhost/backups${path}`, init));
 }
 
-const ENGINE_BACKUP = {
+const ENCRYPTED_BACKUP = {
+	format: 'ace-cloud-e2ee' as const,
+	formatVersion: 1 as const,
+	algorithm: 'aes-256-gcm' as const,
+	kdf: 'argon2id' as const,
+	salt: Buffer.alloc(16, 1).toString('base64'),
+	nonce: Buffer.alloc(12, 2).toString('base64'),
+	ciphertext: Buffer.alloc(64, 3).toString('base64')
+};
+
+const PLAINTEXT_BACKUP = {
 	version: '1.0.0',
-	customSitesLists: [
-		{
-			id: '4e2f4a6f-8f3a-4c1e-9d5b-2b7a0f1c3d5e',
-			name: 'My Custom List',
-			description: null,
-			sources: [
-				{ source: 'https://example.com/list.txt', sourceType: 'url', format: 'hosts' }
-			]
-		}
-	],
-	networkBlocks: [
-		{
-			id: 'b1f2c3d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
-			name: 'Evening Lock',
-			safe_search: true,
-			icon: null,
-			schedules: [
-				{
-					startTime: '22:00',
-					endTime: '06:00',
-					monday: true,
-					tuesday: true,
-					wednesday: true,
-					thursday: true,
-					friday: true,
-					saturday: true,
-					sunday: true
-				}
-			],
-			userRules: [
-				{ rule: 'example.com', ruleType: 'domain' },
-				{ rule: '/shorts(?:/|$)', ruleType: 'regex' }
-			],
-			connectedSitesLists: ['4e2f4a6f-8f3a-4c1e-9d5b-2b7a0f1c3d5e']
-		}
-	],
-	deactivatedResistanceModeScripts: ['com.youtube.audio_delay']
+	customSitesLists: [],
+	networkBlocks: [],
+	deactivatedResistanceModeScripts: []
 };
 
 function jsonPost(path: string, body: unknown, headers: Record<string, string> = {}) {
@@ -178,13 +152,13 @@ describe('backups endpoints', () => {
 	});
 
 	it('create requires a signed-in user (401)', async () => {
-		const res = await jsonPost('/', ENGINE_BACKUP);
+		const res = await jsonPost('/', ENCRYPTED_BACKUP);
 		expect(res.status).toBe(401);
 	});
 
 	it('create requires a Pro license (403)', async () => {
 		await asUser();
-		const res = await jsonPost('/', ENGINE_BACKUP);
+		const res = await jsonPost('/', ENCRYPTED_BACKUP);
 		expect(res.status).toBe(403);
 		expect(dbInsert).not.toHaveBeenCalled();
 	});
@@ -194,7 +168,7 @@ describe('backups endpoints', () => {
 		const { isUserPro } = await import('$lib/server/pro');
 		vi.mocked(isUserPro).mockResolvedValue(true);
 
-		const big = { ...ENGINE_BACKUP, version: 'x'.repeat(3 * 1024 * 1024) };
+		const big = { ...ENCRYPTED_BACKUP, ciphertext: 'A'.repeat(3 * 1024 * 1024) };
 		const res = await jsonPost('/', big, {
 			'content-length': String(JSON.stringify(big).length)
 		});
@@ -207,112 +181,69 @@ describe('backups endpoints', () => {
 		const { isUserPro } = await import('$lib/server/pro');
 		vi.mocked(isUserPro).mockResolvedValue(true);
 
-		const res = await jsonPost('/', ENGINE_BACKUP);
+		const res = await jsonPost('/', ENCRYPTED_BACKUP);
 		expect(res.status).toBe(200);
 		const body = (await res.json()) as { id: string };
 		expect(body.id).toBeTruthy();
 
-		// The whole engine payload is stored, stringified.
+		// The database stores opaque ciphertext and KDF parameters independently.
 		const insertCall = dbInsert.mock.calls[0][0];
 		const values = insertChainValues(dbInsert);
-		expect(values.data).toBe(JSON.stringify(ENGINE_BACKUP));
-		expect(values.version).toBe('1.0.0');
+		expect(values.data).toBe(ENCRYPTED_BACKUP.ciphertext);
+		expect(values.salt).toBe(ENCRYPTED_BACKUP.salt);
+		expect(values.nonce).toBe(ENCRYPTED_BACKUP.nonce);
+		expect(values.data).not.toContain('salt');
+		expect(values.data).not.toContain('nonce');
+		expect(values.version).toBe('e2ee-v1');
 		expect(values.userId).toBe('user-1');
 		expect(insertCall).toBeDefined();
 	});
 
-	it('accepts backups whose site packs use canonical catalog ids (non-UUID)', async () => {
-		// Regression: engine exports include built-in/default packs identified
-		// by catalog ids such as `pack-adult-free` (never UUIDs), and network
-		// blocks reference them the same way. The upload must not be rejected
-		// by a UUID-format constraint — the site stores the blob verbatim.
+	it('rejects plaintext uploads without storing any user configuration', async () => {
 		await asUser();
 		const { isUserPro } = await import('$lib/server/pro');
 		vi.mocked(isUserPro).mockResolvedValue(true);
-
-		const defaultPacksBackup = {
-			version: '1.0.0',
-			customSitesLists: [
-				{
-					id: 'pack-adult-free',
-					name: 'Adult Websites — Free',
-					description: null,
-					sources: [
-						{
-							source: 'https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts',
-							sourceType: 'url',
-							format: 'hosts'
-						}
-					]
-				},
-				{
-					id: '4e2f4a6f-8f3a-4c1e-9d5b-2b7a0f1c3d5e',
-					name: 'My Custom List',
-					description: null,
-					sources: []
-				}
-			],
-			networkBlocks: [
-				{
-					id: 'b1f2c3d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
-					name: 'Default-backed block',
-					safe_search: false,
-					icon: null,
-					schedules: [],
-					userRules: [],
-					connectedSitesLists: ['pack-adult-free', '4e2f4a6f-8f3a-4c1e-9d5b-2b7a0f1c3d5e']
-				}
-			],
-			deactivatedResistanceModeScripts: []
-		};
-
-		const res = await jsonPost('/', defaultPacksBackup);
-		expect(res.status).toBe(200);
-		expect(dbInsert).toHaveBeenCalled();
-	});
-
-	it('rejects empty site-pack ids as invalid identifiers', async () => {
-		await asUser();
-		const { isUserPro } = await import('$lib/server/pro');
-		vi.mocked(isUserPro).mockResolvedValue(true);
-
-		const bad = {
-			version: '1.0.0',
-			customSitesLists: [
-				{
-					id: '',
-					name: 'No id',
-					description: null,
-					sources: []
-				}
-			],
-			networkBlocks: [],
-			deactivatedResistanceModeScripts: []
-		};
-
-		const res = await jsonPost('/', bad);
+		const res = await jsonPost('/', PLAINTEXT_BACKUP);
 		expect(res.status).not.toBe(200);
 		expect(dbInsert).not.toHaveBeenCalled();
 	});
 
-	it('fetch round-trips the payload: what was stored comes back unchanged', async () => {
+	it('fetches an encrypted envelope unchanged for client-side decryption', async () => {
 		await asUser();
 		const { isUserPro } = await import('$lib/server/pro');
 		vi.mocked(isUserPro).mockResolvedValue(true);
-
-		// Simulate the DB: the fetch returns exactly what create stored.
-		const stored = {
-			id: 'backup-1',
-			userId: 'user-1',
-			data: JSON.stringify(ENGINE_BACKUP),
-			version: '1.0.0',
-			createdAt: new Date('2026-09-01T00:00:00Z')
-		};
-		dbSelect.mockImplementation(() => selectChain([stored]));
-
+		dbSelect.mockImplementation(() =>
+			selectChain([
+				{
+					id: 'backup-1',
+					userId: 'user-1',
+					data: ENCRYPTED_BACKUP.ciphertext,
+					salt: ENCRYPTED_BACKUP.salt,
+					nonce: ENCRYPTED_BACKUP.nonce,
+					version: 'e2ee-v1',
+					createdAt: new Date()
+				}
+			])
+		);
 		const res = await handle('/', { method: 'GET' });
 		expect(res.status).toBe(200);
-		expect(await res.json()).toEqual(ENGINE_BACKUP);
+		expect(await res.json()).toEqual(ENCRYPTED_BACKUP);
+	});
+
+	it('rejects malformed encrypted envelopes', async () => {
+		await asUser();
+		const { isUserPro } = await import('$lib/server/pro');
+		vi.mocked(isUserPro).mockResolvedValue(true);
+		for (const invalid of [
+			{ ...ENCRYPTED_BACKUP, nonce: 'AA==' },
+			{ ...ENCRYPTED_BACKUP, salt: '@@@@@' },
+			{ ...ENCRYPTED_BACKUP, ciphertext: 'AQ==' },
+			{ ...ENCRYPTED_BACKUP, algorithm: 'none' }
+		]) {
+			const res = await jsonPost('/', invalid);
+			expect(res.status).not.toBe(200);
+		}
+		expect(dbInsert).not.toHaveBeenCalled();
 	});
 
 	it('fetch returns 404 when no backup exists', async () => {

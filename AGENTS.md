@@ -17,9 +17,7 @@ Use **Bun** for package management and script execution.
   On a VPS, the private `ace-infra` provisioning flow calls `scripts/setup-env.ts`. It creates or reuses a separate production key pair in `~/.config/ace-blocker/entitlement-keys`, writes the values to `.env` with mode 0600, and must never rotate the keys on a routine deployment.
   `scripts/setup.ts` detects Debian/Ubuntu, Arch, Fedora/RHEL, openSUSE, and Alpine through `os-release`. It checks for `certutil` before installing distribution-specific NSS tools. `scripts/linux-setup.ts` selects packages; unit tests cover this selection. See README.md.
   VPS host provisioning and updates are owned by the private `ace-infra` repository. Its production provisioning supports Debian/Ubuntu only.
-- **Local database migration rebases:** The checked-in `drizzle/0000` replaces earlier development migrations. During `bun run setup`, run `bun scripts/db-baseline.ts` before `db:migrate`. Compare the existing local catalog with the checked-in snapshot. Record the new baseline only for a matching legacy schema, and preserve older migration history.
-  Remove the obsolete `account.issuer` field only when `account` is empty and an exclusive lock is held. Fail closed for unexpected schema differences or a non-local/production database URL.
-  For read-only diagnosis, run `bun scripts/db-baseline.ts --dry-run`. Never reset user databases or edit migration history by hand. See README.md.
+- **Single Drizzle baseline (2026-11-19):** The checked-in `drizzle/0000` is the only initial migration and creates the entire current schema, including separate `backups.data`, `backups.salt`, and `backups.nonce` columns. There is no incremental/legacy migration path or automatic database-reset behavior. `bun run db:migrate` uses a read-only guard against replaying CREATE TABLE over an existing database with a different history. For development, start with a fresh database when schema history is incompatible. Do not connect test migrations to the VPS. See README.md.
 - **Database Management**: Run `bun run db:delete` to stop the Docker database and delete its associated volumes (virtual disk); this is destructive and must never be used as an automatic migration-repair step.
 - **Development Credentials**: `bun run setup` fills missing/blank `DEFAULT_ADMIN_EMAIL`, `DEFAULT_ADMIN_USERNAME` and `DEFAULT_ADMIN_PASSWORD` in `.env` without overwriting nonblank custom values. The dev seeder also falls back to these defaults:
     - **Email**: `dev@example.com`
@@ -76,6 +74,21 @@ Before you work with a technology listed below, use `read_url_content` to read i
 ## Project Description
 
 This project is the **Ace Blocker** marketing and subscription website. It uses full-stack SvelteKit for public pages, accounts, subscriptions, and REST APIs. Better Auth handles authentication. DodoPayments handles payments. BunnyCDN hosts files. The website supplies site packs, Resistance scripts, and binary releases to Ace Engine.
+
+## Password-protected cloud backup (2026-11-19)
+
+- New `POST /backups` payloads **must be client-encrypted**, never plaintext.
+- Password-based Argon2id/AES-256-GCM envelopes and recovery/migration limitations
+  are specified in `docs/CLOUD_BACKUP_PASSWORD_ENCRYPTION.md`. The server
+  cannot decrypt them with the backup API alone. The existing Better Auth login
+  still processes plaintext passwords during authentication: do not claim a
+  fully zero-knowledge authentication system.
+- No legacy backup API contract or old-client compatibility remains. Backups
+  store ciphertext in `data`, Argon2id `salt`, and AES-GCM `nonce`
+  in separate NOT NULL columns. The new schema requires a fresh development
+  database; keep OpenAPI docs in sync.
+- Cloud backup encryption has **no KMS or server encryption key**. A password
+  reset does not recover data encrypted with the old password.
 
 ## UI Identity
 
@@ -196,7 +209,7 @@ for zero/singular/plural agreement.
 - Implement `/api/device-link/{start,poll,approve}` as **native SvelteKit** routes. Exempt them from the Elysia API interceptor in `src/hooks.server.ts`; otherwise, they return 404.
   Never put raw device secrets or unclaimed API keys in browser URLs. Store device challenges only as hashes. Expire challenges after 10 minutes. Poll no more often than every 5 seconds. Consume each approval atomically and only once.
 - After native redemption, the Tauri process imports the account key through the existing capability-protected engine remoc `setApiKey` RPC. Never introduce a browser-accessible engine HTTP listener or transmit its privileged capability to JavaScript.
-- `drizzle/0003_tearful_ultimates.sql` creates `device_links`; deploy the migration **before** deploying native clients and the website. Keep edge rate limiting on unauthenticated start/poll endpoints. See `docs/DEVICE_LINKING.md` for protocol and security gates.
+- The regenerated `drizzle/0000` includes `device_links` on fresh databases. Adopt the baseline on an existing database before deploying native clients and the website. Keep edge rate limiting on unauthenticated start/poll endpoints. See `docs/DEVICE_LINKING.md` for protocol and security gates.
 - Legacy `aceblocker://` is available only through a **manual** fallback button. Do not auto-open it on `/signin`, `/get-pro`, or checkout completion. Tests: `src/lib/server/device-link.test.ts`, `e2e/device-link.spec.ts` and Pro activation component tests.
 
 ## Desktop account activation

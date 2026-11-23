@@ -30,7 +30,13 @@ export const backups = pgTable(
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' })
 			.unique(),
+		// Base64-encoded authenticated ciphertext (includes the GCM tag).
 		data: text('data').notNull(),
+		// Base64-encoded random salt (16 bytes) for Argon2id password derivation.
+		salt: text('salt').notNull(),
+		// Base64-encoded random AES-GCM nonce (12 bytes).
+		nonce: text('nonce').notNull(),
+		// Cryptographic format version, e.g. e2ee-v1.
 		version: text('version').notNull(),
 		createdAt: timestamp('created_at').defaultNow().notNull()
 	},
