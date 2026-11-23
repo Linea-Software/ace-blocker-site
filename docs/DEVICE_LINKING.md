@@ -14,8 +14,11 @@ The browser does not have to start the desktop application.
    The server returns a secret 256-bit `deviceCode` and a separate 12-character `userCode`.
    It also returns a 5-second polling interval and a 10-minute expiration time.
    The native process keeps `deviceCode` in memory. It never sends the secret to the WebView.
-2. Tauri opens the HTTPS `/connect` page without a device secret in the URL.
-   The desktop shows the user code. The user enters the same code on the authenticated browser page.
+2. Tauri opens `/connect?code=<userCode>` in the system browser. The URL contains only the human-readable confirmation code, **not** the secret `deviceCode` or an API key.
+   The browser pre-fills the code so the user only checks it against the desktop app and explicitly approves the request.
+   If sign-in (including two-factor authentication) is needed, the site retains the validated code through the sign-in redirect.
+   Opening `/connect` without a code continues to support manual entry for older clients.
+   The confirmation page uses `no-referrer` and never approves a link automatically.
 3. `/api/device-link/approve` accepts only same-origin POST requests.
    It requires a verified Better Auth session, a valid one-time code, and a pending unexpired challenge.
    A conditional UPDATE authorizes one challenge row for the authenticated user.
@@ -54,7 +57,7 @@ The browser does not have to start the desktop application.
 1. On fresh databases, `device_links` is part of the regenerated `drizzle/0000` baseline. On existing deployments, safely adopt the baseline (see `docs/DEPLOY.md`) before shipping desktop builds that use these endpoints.
 2. Deploy the site. Set per-IP/IP-prefix edge limits for start and poll. Set stronger per-account limits for approve.
 3. Ship desktop builds with native Tauri commands `device_link_start`, `device_link_poll`, and `device_link_cancel`.
-4. Verify that `/connect` uses HTTPS and displays the matching code.
+4. Verify that `/connect?code=<userCode>` uses HTTPS, pre-fills the code and preserves it through login; ensure approval requires a click.
    Confirm that the app reports Pro only after the engine refreshes the account successfully.
 
 ## Tests

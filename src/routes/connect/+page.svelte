@@ -4,10 +4,26 @@
 	import { authClient } from '$lib/auth-client';
 	import * as m from '$lib/paraglide/messages';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { Check, Link2, ShieldCheck } from '@lucide/svelte';
 
+	// This is the human-readable confirmation code, never the secret deviceCode.
+	const userCodePattern = /^[A-HJ-NP-Z2-9]{4}(?:-[A-HJ-NP-Z2-9]{4}){2}$/;
+	function codeFromUrl(value: string | null): string {
+		const candidate = value?.toUpperCase() ?? '';
+		return userCodePattern.test(candidate) ? candidate : '';
+	}
+
 	const session = authClient.useSession();
-	let code = $state('');
+	const urlCode = $derived(codeFromUrl(page.url.searchParams.get('code')));
+	let code = $state(codeFromUrl(page.url.searchParams.get('code')));
+	const signInReturn = $derived(
+		urlCode ? `/connect?code=${encodeURIComponent(urlCode)}` : '/connect'
+	);
+	// SvelteKit retains the page component across search-param-only navigations.
+	$effect(() => {
+		code = urlCode;
+	});
 	let busy = $state(false);
 	let approved = $state(false);
 	let invalid = $state(false);
@@ -91,7 +107,7 @@
 				{#if !$session.data}
 					<p class="mb-5 text-sm text-muted-foreground">{m.device_link_from_desktop()}</p>
 					<form action={resolve('/signin')} method="GET">
-						<input type="hidden" name="redirectTo" value="/connect" />
+						<input type="hidden" name="redirectTo" value={signInReturn} />
 						<button
 							type="submit"
 							class="inline-flex min-h-12 items-center rounded-md bg-foreground px-5 font-semibold text-background"

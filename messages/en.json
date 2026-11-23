@@ -981,7 +981,7 @@
 	"demo_lock_status": "Protection",
 	"demo_weekly_preview": "Weekly coverage",
 	"device_link_title": "Connect Ace Blocker",
-	"device_link_subtitle": "Enter the code shown in Ace Blocker to link this desktop to your account. The code expires in 10 minutes.",
+	"device_link_subtitle": "Check that the code matches Ace Blocker, then authorize this desktop. If the code was not filled in automatically, enter it manually. It expires in 10 minutes.",
 	"device_link_code_label": "Code from the desktop app",
 	"device_link_code_hint": "For example: ABCD-EFGH-JKLM",
 	"device_link_confirm": "Authorize this device",

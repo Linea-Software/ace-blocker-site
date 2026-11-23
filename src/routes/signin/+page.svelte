@@ -31,8 +31,14 @@
 	const checkoutReturn = $derived(
 		(() => {
 			const candidate = page.url.searchParams.get('redirectTo');
-			return (candidate === '/connect' || candidate?.startsWith('/checkout?')) &&
-				!candidate?.startsWith('//')
+			if (candidate === '/connect') return candidate;
+			// Accept only the expected one-time confirmation code, never arbitrary URLs.
+			if (
+				candidate &&
+				/^\/connect\?code=[A-HJ-NP-Z2-9]{4}(?:-[A-HJ-NP-Z2-9]{4}){2}$/.test(candidate)
+			)
+				return candidate;
+			return candidate?.startsWith('/checkout?') && !candidate.startsWith('//')
 				? candidate
 				: null;
 		})()

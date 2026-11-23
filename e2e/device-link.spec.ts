@@ -57,4 +57,30 @@ test.describe('HTTPS device linking', () => {
 			).toBeLessThanOrEqual(width);
 		}
 	});
+
+	test('forwards the desktop confirmation code through sign-in without approving it', async ({
+		page
+	}) => {
+		const code = 'ABCD-EFGH-JKLM';
+		const approvalRequests: string[] = [];
+		page.on('request', (request) => {
+			if (request.url().includes('/api/device-link/approve'))
+				approvalRequests.push(request.url());
+		});
+		await page.goto(`/connect?code=${code}`, { waitUntil: 'networkidle' });
+		await expect(page.locator('input[name="redirectTo"]')).toHaveValue(`/connect?code=${code}`);
+		await page.getByRole('button', { name: 'Sign in to authorize' }).click();
+		await expect(page).toHaveURL(/\/signin\?/);
+		expect(new URL(page.url()).searchParams.get('redirectTo')).toBe(`/connect?code=${code}`);
+		expect(approvalRequests).toHaveLength(0);
+	});
+
+	test('does not pass malformed confirmation codes into the sign-in redirect', async ({
+		page
+	}) => {
+		await page.goto('/connect?code=invalid%26deviceCode%3Dsecret', {
+			waitUntil: 'networkidle'
+		});
+		await expect(page.locator('input[name="redirectTo"]')).toHaveValue('/connect');
+	});
 });
