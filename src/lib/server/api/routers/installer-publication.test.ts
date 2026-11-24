@@ -60,7 +60,7 @@ vi.mock('$lib/server/logger', () => ({
 	})
 }));
 
-vi.mock('$env/dynamic/private', () => ({
+vi.mock('$lib/server/runtime-env', () => ({
 	env: {
 		BUNNY_URL_TOKEN_AUTH_KEY: 'test-url-token-key',
 		BUNNY_STORAGE_ZONE: 'test-zone',
@@ -165,8 +165,8 @@ vi.mock('$lib/server/installer-publication-mode', () => ({
 
 import { canPublishUnsignedInstallers } from '$lib/server/installer-publication-mode';
 import { adminRouter } from './admin';
-import { GET } from '../../../../routes/download/[arch]/+server';
-import { load } from '../../../../routes/download/+page.server';
+import { GET } from '../../../../routes/download/[arch]';
+import { loadDownloadPlatforms } from '$lib/server/download-page-data';
 import { invalidateInstallerCache, loadLatestInstaller } from '$lib/server/cache';
 
 const WINDOWS_URL = new URL(
@@ -287,15 +287,13 @@ describe('installer publication lifecycle (regression: upload visible on /downlo
 		await invalidateInstallerCache();
 
 		// [arch] download route: no downloadable row for windows_x64.
-		await expect(GET(routeEvent('windows_x64'))).rejects.toMatchObject({ status: 404 });
+		expect((await GET(routeEvent('windows_x64'))).status).toBe(404);
 
 		// Page metadata: every platform reports no installer.
-		const data = (await load({ url: new URL('http://localhost/download') } as never)) as {
-			platforms: { windows: unknown; macos: unknown; linux: unknown };
-		};
-		expect(data.platforms.windows).toBeNull();
-		expect(data.platforms.macos).toBeNull();
-		expect(data.platforms.linux).toBeNull();
+		const platforms = await loadDownloadPlatforms();
+		expect(platforms.windows).toBeNull();
+		expect(platforms.macos).toBeNull();
+		expect(platforms.linux).toBeNull();
 	});
 
 	it('rejects manual publication of a legacy Windows upload', async () => {
@@ -307,14 +305,14 @@ describe('installer publication lifecycle (regression: upload visible on /downlo
 		});
 		expect(res.status).toBe(409);
 		await loadLatestInstaller();
-		await expect(GET(routeEvent('windows_x64'))).rejects.toMatchObject({ status: 404 });
+		expect((await GET(routeEvent('windows_x64'))).status).toBe(404);
 	});
 
 	it('withdrawing a release removes it from /download again', async () => {
 		rows = [windowsRow({ canBeDownloaded: true, artifactValidatedAt: new Date() })];
 		await invalidateInstallerCache();
 
-		await expect(GET(routeEvent('windows_x64'))).rejects.toMatchObject({ status: 302 });
+		expect((await GET(routeEvent('windows_x64'))).status).toBe(302);
 
 		const res = await adminHandle('/admin/installers/set-downloadable', {
 			method: 'POST',
@@ -324,7 +322,7 @@ describe('installer publication lifecycle (regression: upload visible on /downlo
 		expect(res.status).toBe(200);
 		await loadLatestInstaller();
 
-		await expect(GET(routeEvent('windows_x64'))).rejects.toMatchObject({ status: 404 });
+		expect((await GET(routeEvent('windows_x64'))).status).toBe(404);
 	});
 });
 

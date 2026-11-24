@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { GET } from './+server';
+import { GET } from '../sitemap.xml';
 import { INDEXABLE_PATHS, localesForPath } from '$lib/seo';
 
 describe('sitemap', () => {
 	it('includes each public locale and only indexable pages', async () => {
-		const response = await GET({} as never);
+		const response = await GET();
 		expect(response).toBeInstanceOf(Response);
 		const xml = await (response as Response).text();
 		expect(xml).toContain('<loc>https://aceblocker.com/it/faq</loc>');

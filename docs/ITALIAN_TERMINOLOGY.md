@@ -2,20 +2,20 @@
 
 Reviewed November 6, 2026. Locale: Italian (Italy). Compared EN and IT in two passes: accuracy and writing quality. This is not legal advice or independent human approval.
 
-| English concept | Preferred Italian form | Meaning and use |
-| --- | --- | --- |
-| Network Block                 | **blocco di rete**                                                                  | Configuration that links sites and categories to enforcement periods. Use «Blocco» only when the context is clear. |
+| English concept               | Preferred Italian form                                                              | Meaning and use                                                                                                                              |
+| ----------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Network Block                 | **blocco di rete**                                                                  | Configuration that links sites and categories to enforcement periods. Use «Blocco» only when the context is clear.                           |
 | Lock / time-lock              | **protezione delle regole**, **protezione delle modifiche**, **protezione a tempo** | Prevents changes that weaken active rules. It does not add sites or extend filtering times. Action: «Proteggi». State: «Modifiche bloccate». |
-| Schedule                      | **programmazione**, **orari programmati**                                           | Days and times when a Network Block enforces its rules. Without configured times, the filter does not apply. |
-| Resistance Mode               | **modalità Resistenza**; **Resistenza** nella navigazione                           | Pro feature that changes feeds, videos, UI, and delays on supported sites. It does not mean a Network Block. |
-| Categories                    | **categorie predefinite**, **categorie**                                            | Curated lists offered by Ace. Some are Free; the full catalog is Pro. «Selezionate» describes editorial selection. |
-| Custom Lists                  | **liste personalizzate**                                                            | Imported domain lists. This is a Pro feature. |
-| Downloaded vs enabled         | **scaricata** vs **collegata al blocco**                                            | Downloading makes list data available. To enforce it, attach the list to a Network Block with an active schedule. |
-| Free / Pro                    | **Free**, **Pro**                                                                   | Keep plan names unchanged. Free includes basic blocking. Pro adds Resistance, all categories, Custom Lists, and cloud backup. |
-| Recurring payment             | **pagamento ricorrente**                                                            | Do not use «prezzo ricorrente». Distinguish charges, renewals, prices, and cancellation. |
-| Authenticated product release | **versione verificata**                                                             | A verified release is not necessarily installable. Avoid «release autenticate». |
-| Settings                      | **Impostazioni**                                                                    | Use the same name in navigation, section headings, tooltips, and instructions. |
-| Private by Design             | **Privacy fin dalla progettazione**                                                 | Privacy is part of product design, not an optional user preference. |
+| Schedule                      | **programmazione**, **orari programmati**                                           | Days and times when a Network Block enforces its rules. Without configured times, the filter does not apply.                                 |
+| Resistance Mode               | **modalità Resistenza**; **Resistenza** nella navigazione                           | Pro feature that changes feeds, videos, UI, and delays on supported sites. It does not mean a Network Block.                                 |
+| Categories                    | **categorie predefinite**, **categorie**                                            | Curated lists offered by Ace. Some are Free; the full catalog is Pro. «Selezionate» describes editorial selection.                           |
+| Custom Lists                  | **liste personalizzate**                                                            | Imported domain lists. This is a Pro feature.                                                                                                |
+| Downloaded vs enabled         | **scaricata** vs **collegata al blocco**                                            | Downloading makes list data available. To enforce it, attach the list to a Network Block with an active schedule.                            |
+| Free / Pro                    | **Free**, **Pro**                                                                   | Keep plan names unchanged. Free includes basic blocking. Pro adds Resistance, all categories, Custom Lists, and cloud backup.                |
+| Recurring payment             | **pagamento ricorrente**                                                            | Do not use «prezzo ricorrente». Distinguish charges, renewals, prices, and cancellation.                                                     |
+| Authenticated product release | **versione verificata**                                                             | A verified release is not necessarily installable. Avoid «release autenticate».                                                              |
+| Settings                      | **Impostazioni**                                                                    | Use the same name in navigation, section headings, tooltips, and instructions.                                                               |
+| Private by Design             | **Privacy fin dalla progettazione**                                                 | Privacy is part of product design, not an optional user preference.                                                                          |
 
 ## Dynamic Plurals
 

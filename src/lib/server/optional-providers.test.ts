@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 // Simulate provider module imports without credentials. The real development
 // server now refuses to start in this state; test/build imports must remain safe.
-vi.mock('$env/dynamic/private', () => ({ env: {} }));
+vi.mock('$lib/server/runtime-env', () => ({ env: {} }));
 const { sendTransport, fetchTransport } = vi.hoisted(() => ({
 	sendTransport: vi.fn(),
 	fetchTransport: vi.fn()

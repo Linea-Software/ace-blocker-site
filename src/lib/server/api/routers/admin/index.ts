@@ -8,9 +8,12 @@ import { resistanceRouter } from './resistance';
 
 export const adminRouter = new Elysia({ prefix: '/admin' })
 	.derive(async ({ request }) => {
-		const session = await auth.api.getSession({
-			headers: request.headers
-		});
+		const session =
+			request.headers.has('x-api-key') || request.headers.has('authorization')
+				? null
+				: await auth.api.getSession({
+						headers: request.headers
+					});
 
 		if (!session || session.user.role !== 'admin') {
 			return {

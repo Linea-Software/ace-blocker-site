@@ -1,0 +1,60 @@
+.demo-pointer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 25;
+	display: block;
+	width: 24px;
+	height: 24px;
+	color: var(--background);
+	pointer-events: none;
+	transform: translate3d(var(--cursor-x), var(--cursor-y), 0);
+	transition: transform var(--cursor-travel) cubic-bezier(0.27, 0.75, 0.24, 1);
+	filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.4));
+	will-change: transform;
+	animation: pointer-enter 220ms ease-out both;
+}
+.demo-pointer :global(svg) {
+	transform-origin: 2px 2px;
+	transition: transform 110ms ease-out;
+}
+.demo-pointer.pressed :global(svg) {
+	transform: scale(0.79);
+}
+.click-ring {
+	position: absolute;
+	top: -7px;
+	left: -7px;
+	width: 30px;
+	height: 30px;
+	border: 2px solid var(--signal-deep);
+	border-radius: 50%;
+	opacity: 0;
+	transform: scale(0.4);
+}
+.pressed .click-ring {
+	animation: cursor-click 340ms ease-out forwards;
+}
+@keyframes pointer-enter {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+@keyframes cursor-click {
+	0% {
+		opacity: 0.85;
+		transform: scale(0.4);
+	}
+	100% {
+		opacity: 0;
+		transform: scale(1.2);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.demo-pointer {
+		display: none;
+	}
+}

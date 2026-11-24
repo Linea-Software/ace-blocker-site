@@ -1,3 +1,5 @@
+import { isPublicDownloadEnabled } from '$lib/public-download-platforms';
+
 export type InstallerPlatform = 'windows' | 'macos' | 'linux';
 
 export function installerArch(platform: InstallerPlatform, architecture: string): string {
@@ -26,4 +28,13 @@ export function installerCommand(
 		return `d="$(mktemp -d)" && curl -fL '${url}' -o "$d/AceBlocker.dmg" && mkdir "$d/mount" && hdiutil attach -quiet -nobrowse -mountpoint "$d/mount" "$d/AceBlocker.dmg" && { p="$(find "$d/mount" -maxdepth 1 -name '*.pkg' -print -quit)"; a="$(find "$d/mount" -maxdepth 1 -name '*.app' -print -quit)"; if [ -n "$p" ]; then open "$p"; elif [ -n "$a" ]; then open "$a"; else echo 'No installer found in disk image' >&2; false; fi; }`;
 	}
 	return `d="$(mktemp -d)" && curl -fL '${url}' -o "$d/AceBlocker.tar.gz" && tar -xzf "$d/AceBlocker.tar.gz" -C "$d" && (cd "$d"/AceBlocker-*-linux-x64 && bash ./install.sh)`;
+}
+
+/** Resolve an explicit download target without enabling unpublished platforms. */
+export function requestedDownloadPlatform(search: string): InstallerPlatform | null {
+	const arch = new URLSearchParams(search).get('arch');
+	if (arch === 'windows_x64' || arch === 'windows_arm64') return 'windows';
+	if (arch === 'linux_x64' || arch === 'linux_arm64') return 'linux';
+	if (arch === 'macos_universal' && isPublicDownloadEnabled('macos')) return 'macos';
+	return null;
 }

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import crypto from 'crypto';
 
-vi.mock('$env/dynamic/private', () => ({
+vi.mock('$lib/server/runtime-env', () => ({
 	env: {
 		BUNNY_URL_TOKEN_AUTH_KEY: 'test-token-key',
 		BUNNY_STORAGE_ZONE: 'test-zone',
@@ -101,12 +101,13 @@ describe('ace-hosts site-pack sync', () => {
 		expect(ACE_HOSTS_SITE_PACKS.map((pack) => pack.assetName)).toContain(
 			'site-pack-anime-manga-pro.zip'
 		);
-		expect(ACE_HOSTS_SITE_PACKS.some((pack) => pack.id === 'pack-anime-manga-extended')).toBe(false);
+		expect(ACE_HOSTS_SITE_PACKS.some((pack) => pack.id === 'pack-anime-manga-extended')).toBe(
+			false
+		);
 		for (const id of ['pack-gambling-free', 'pack-streaming-free']) {
 			const pack = ACE_HOSTS_SITE_PACKS.find((item) => item.id === id);
 			expect(pack?.requiresProSubscription).toBe(false);
 		}
-
 	});
 
 	it('shares an in-flight sync between startup, monthly and manual triggers', async () => {
@@ -160,9 +161,12 @@ describe('ace-hosts site-pack sync', () => {
 			storedHashes.set(definition.id, 'a'.repeat(64));
 		}
 		storedHashes.set('pack-anime-manga-extended', 'a'.repeat(64));
-		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-			new Response(JSON.stringify(releaseResponse()), { status: 200 })
-		));
+		vi.stubGlobal(
+			'fetch',
+			vi
+				.fn()
+				.mockResolvedValue(new Response(JSON.stringify(releaseResponse()), { status: 200 }))
+		);
 		await expect(syncAceHostsSitePacks()).resolves.toMatchObject({ unchanged: 16 });
 		expect(deleteSitePack).toHaveBeenCalledExactlyOnceWith('pack-anime-manga-extended');
 	});
@@ -179,9 +183,10 @@ describe('ace-hosts site-pack sync', () => {
 			browser_download_url: 'https://example.test/site-pack-anime-manga-extended.zip',
 			digest: 'sha256:' + 'a'.repeat(64)
 		});
-		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-			new Response(JSON.stringify(oldRelease), { status: 200 })
-		));
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue(new Response(JSON.stringify(oldRelease), { status: 200 }))
+		);
 		await syncAceHostsSitePacks();
 		expect(deleteSitePack).not.toHaveBeenCalled();
 	});

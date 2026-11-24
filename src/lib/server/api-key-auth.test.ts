@@ -83,7 +83,7 @@ vi.mock('$lib/server/email', () => ({
 }));
 
 // cdn/common.ts throws at import unless every Bunny env var is present.
-vi.mock('$env/dynamic/private', () => ({
+vi.mock('$lib/server/runtime-env', () => ({
 	env: {
 		BUNNY_URL_TOKEN_AUTH_KEY: 'test-url-token-key',
 		BUNNY_STORAGE_ZONE: 'test-zone',

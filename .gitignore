@@ -8,7 +8,6 @@ node_modules
 .vercel
 .netlify
 .wrangler
-/.svelte-kit
 /build
 
 # OS
@@ -36,3 +35,12 @@ project.inlang/project_id
 .temp/
 
 .codexpro-worktrees/
+
+# Solid Vite start-mode bundles
+/dist
+
+# Historical local build artifacts (not source)
+.svelte-kit/
+playwright-report/
+
+/file-routes.d.ts

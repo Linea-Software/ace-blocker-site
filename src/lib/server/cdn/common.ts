@@ -1,4 +1,4 @@
-import { env } from '$env/dynamic/private';
+import { env } from '$lib/server/runtime-env';
 import crypto from 'crypto';
 import { getCdnEnvironmentPrefix } from './environment';
 import { createLogger } from '$lib/server/logger';

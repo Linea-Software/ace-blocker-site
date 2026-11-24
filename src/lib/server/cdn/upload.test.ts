@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // cleanup of the CDN object when the DB write fails (no inconsistent
 // database/CDN state).
 
-vi.mock('$env/dynamic/private', () => ({
+vi.mock('$lib/server/runtime-env', () => ({
 	env: {
 		BUNNY_URL_TOKEN_AUTH_KEY: 'test-url-token-key',
 		BUNNY_STORAGE_ZONE: 'test-zone',

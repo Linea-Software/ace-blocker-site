@@ -1,22 +1,11 @@
 import { expect, test } from '@playwright/test';
 import crypto from 'node:crypto';
 
-/**
- * Pro funnel smoke (release plan Step 5.2): signup → get-pro → checkout
- * (test mode) → synthetic signed webhook → Pro granted.
- *
- * Requires the DB-backed preview server (playwright.config.ts webServer) with
- * a seeded dev DB — `user1@example.com` / `password123` (email-verified, from
- * src/lib/server/seeder/user-seeder.ts) — and DODO_PAYMENTS_WEBHOOK_SECRET in
- * the server env to sign the synthetic delivery.
- *
- * NOT part of the vitest server CI gate: it runs under `bun run test:e2e`
- * against a real server + Postgres.
- */
+import postgres from 'postgres';
 
-const BASE_URL = 'http://127.0.0.1:4173';
-const SEEDED_EMAIL = 'user1@example.com';
-const SEEDED_PASSWORD = 'password123';
+/** Real HTTP, UI, database and signed webhook; local fake email/payment transports. */
+const BASE_URL = process.env.ACE_E2E_BASE_URL!;
+const fixturePassword = 'correct-horse-battery-staple';
 
 // Mirrors @dodopayments/core/webhook vendor standardwebhook (Svix-style).
 function signWebhook(secret: string, id: string, timestampSec: number, body: string): string {
@@ -68,44 +57,67 @@ test('pro funnel: signup → get-pro → checkout → webhook → pro granted', 
 	page,
 	request
 }) => {
-	test.skip(
-		!process.env.DODO_PAYMENTS_WEBHOOK_SECRET,
-		'DODO_PAYMENTS_WEBHOOK_SECRET is required to sign the synthetic webhook delivery'
-	);
-
-	// 1. Signup — the verification email is sent, but the Resend link cannot be
-	//    consumed in CI, so the checkout/webhook steps use the seeded user.
-	const email = `smoke-${Date.now()}@example.com`;
+	expect(process.env.ACE_E2E_ISOLATED).toBe('1');
+	expect(process.env.DODO_PAYMENTS_WEBHOOK_SECRET).toBeTruthy();
+	const email = `smoke-${Date.now()}@example.invalid`;
 	await page.goto('/signup');
 	await page.fill('#name', 'Smoke User');
 	await page.fill('#email', email);
-	await page.fill('#password', 'correct-horse-battery-staple');
+	await page.fill('#password', fixturePassword);
+	await page.fill('#confirm-password', fixturePassword);
 	await page.getByRole('button', { name: /sign up/i }).click();
 	await expect(page.getByRole('heading', { name: /check your email/i })).toBeVisible();
 
-	// 2. Sign in as the seeded, email-verified dev user.
+	// Email delivery is mocked. Mark only this newly created isolated user verified.
+	const database = process.env.DATABASE_URL!;
+	expect(new URL(database).hostname).toBe('127.0.0.1');
+	expect(new URL(database).pathname).toBe('/ace_e2e');
+	const sql = postgres(database);
+	try {
+		const verified =
+			await sql`update "user" set email_verified=true where email=${email} returning id`;
+		expect(verified).toHaveLength(1);
+	} finally {
+		await sql.end();
+	}
 	await page.goto('/signin');
-	await page.fill('#email', SEEDED_EMAIL);
-	await page.fill('#password', SEEDED_PASSWORD);
+	await page.fill('#email', email);
+	await page.fill('#password', fixturePassword);
 	await page.getByRole('button', { name: /sign in/i }).click();
 	await expect(page).toHaveURL(`${BASE_URL}/`);
 
-	// 3. get-pro → upgrade → the checkout session redirects to the Dodo
-	//    TEST-mode host (payments stay in test mode).
+	// Checkout must remain on the site with the external test-mode iframe.
+	// Block all real Dodo browser traffic; server-side SDK calls use fixture transport.
+	await page.route(/^https:\/\/(?!127\.0\.0\.1:)/, (route) => route.abort());
+	await page.route('https://test.checkout.dodopayments.com/**', (route) =>
+		route.fulfill({
+			status: 200,
+			body: '<html>Test payment frame</html>',
+			contentType: 'text/html'
+		})
+	);
 	await page.goto('/get-pro');
-	await page
-		.getByRole('button', { name: /upgrade to pro/i })
-		.first()
-		.click();
-	await expect(page).toHaveURL(/test\.checkout\.dodopayments\.com/, { timeout: 15_000 });
-
+	await page.getByRole('button', { name: 'Start 14-day free trial' }).click();
+	await expect(page).toHaveURL(/\/checkout\?/);
+	await expect(page.getByRole('heading', { name: 'Start your 14-day Pro trial' })).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Secure Dodo Payments checkout' })).toBeVisible();
+	// A fixture frame does not implement Dodo's resize protocol. Verify the SDK
+	// mounted the real test-mode iframe, rather than its fixture-dependent height.
+	await expect(page.locator('#dodo-inline-checkout iframe')).toHaveAttribute(
+		'src',
+		/^https:\/\/test\.checkout\.dodopayments\.com\//
+	);
 	// 4. Synthetic signed webhook: subscription.active for the seeded user.
-	const payload = subscriptionActivePayload(SEEDED_EMAIL, '2027-06-29T08:23:52.809Z');
+	const payload = subscriptionActivePayload(
+		email,
+		new Date(Date.now() + 30 * 86400000).toISOString()
+	);
 	const body = JSON.stringify(payload);
 	const timestampSec = Math.floor(Date.now() / 1000);
 	const webhookId = `smoke_${Date.now()}`;
 	const webhook = await request.post(`${BASE_URL}/api/auth/dodopayments/webhooks`, {
 		headers: {
+			'content-type': 'application/json',
 			'webhook-id': webhookId,
 			'webhook-timestamp': String(timestampSec),
 			'webhook-signature': `v1,${signWebhook(process.env.DODO_PAYMENTS_WEBHOOK_SECRET!, webhookId, timestampSec, body)}`
@@ -115,6 +127,8 @@ test('pro funnel: signup → get-pro → checkout → webhook → pro granted', 
 	expect(webhook.status()).toBe(200);
 
 	// 5. The account page reflects the granted Pro status.
+	await page.goto('/checkout/completed');
+	await expect(page.getByRole('heading', { name: 'Welcome to Ace Blocker Pro.' })).toBeVisible();
 	await page.goto('/account');
 	await expect(page.getByText('Pro', { exact: true }).first()).toBeVisible({ timeout: 15_000 });
 });

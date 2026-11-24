@@ -34,12 +34,13 @@ For new marketing pages and visible marketing redesigns:
 2. Use `frontend-design`.
 3. Use `design-taste-frontend`.
 4. Use `ui-ux-pro-max`.
-5. For Svelte work, use `svelte-code-writer`, `svelte-core-bestpractices`, and `svelte-components`.
-6. Use `web-design-guidelines` for the final review.
-7. Check real screenshots in light and dark modes.
+5. For Solid 2 `.tsx` implementation, read installed `.agents/skills/solid-2.0/SKILL.md`, `solidjs-v2` and `reactivity-diagnostics` as applicable; consult the official [Solid 2 documentation](https://docs.solidjs.com/llms-full.txt). Do not reuse old Svelte skills or Svelte MCP workflows.
+6. Use `web-design-guidelines` for the final review when available; do not claim a skill is installed unless it is present in `.agents/skills/`.
+7. Check real screenshots in light and dark modes, on desktop and mobile, and compare with the Svelte reference where necessary.
 
 For account and admin UI, prioritize `frontend-design` and `ui-ux-pro-max`.
 Do not let `design-taste-frontend` override the needs of dense product UI.
+
 ## 3. Palette
 
 Target shared palette:
@@ -70,6 +71,7 @@ Verify each page visually.
 
 Use amber for intervention, commitment, and attention.
 Do not use amber only because an element needs a brand color.
+
 ## 4. Typography
 
 Use these fonts:
@@ -110,6 +112,7 @@ Prefer rules, borders, inset panels, editorial spacing, and direct product demon
 Use one strong signature composition on each page.
 Do not put every section in a rounded card.
 The website can use more expressive scale, but it must use the same material logic as the app.
+
 ## 7. Pro and Pricing
 
 Show prices and payment terms clearly.
@@ -170,16 +173,17 @@ Resistance has five intervention categories, optional CAPTCHA, and effects limit
 A Reddit script must not change the YouTube preview.
 On mobile, show one readable Before/After panel at a time.
 
-## 10. shadcn-svelte and Bits UI
+## 10. Solid 2 UI primitives
 
-Use existing shadcn-svelte components for common behavior and forms.
-These components are not the brand identity.
+Use the migrated/project-owned Solid `.tsx` primitives under `src/lib/components/ui/` for common controls and forms. They are implementation tools, not the brand identity. The older shadcn-svelte and Bits UI components belong to the Svelte reference implementation and must not be introduced into new Solid UI.
+
 For important new UI components:
 
-- Use Ace-specific structure and styling.
-- Use Bits UI or headless primitives when appropriate.
+- Use Ace-specific structure, styling and actual product semantics.
+- Check accessible Solid-compatible headless patterns if custom behavior is needed; verify APIs against Solid 2, not Solid 1 or React.
 - Do not keep default shadcn visual styles without review.
 - Do not let a component library determine information structure.
+- Preserve visual/keyboard behavior and SSR/hydration consistency while porting; framework changes must not silently redesign the interface.
 
 ## 11. Accessibility and Verification
 

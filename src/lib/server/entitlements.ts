@@ -12,7 +12,8 @@ export function getEntitlementPublicKey(
 		format: 'der',
 		type: 'pkcs8'
 	});
-	const actual = crypto.createPublicKey(privateKey)
+	const actual = crypto
+		.createPublicKey(privateKey)
 		.export({ format: 'der', type: 'spki' })
 		.subarray(-32);
 	const configured = process.env.ACE_ENTITLEMENT_PUBLIC_KEY_BASE64;
@@ -29,7 +30,10 @@ export function getEntitlementPublicKey(
 export const LEASE_SECONDS = 24 * 60 * 60;
 export const OFFLINE_GRACE_SECONDS = 72 * 60 * 60;
 export const PRO_FEATURES = [
-	'custom_site_packs', 'premium_site_packs', 'resistance_mode', 'cloud_backup'
+	'custom_site_packs',
+	'premium_site_packs',
+	'resistance_mode',
+	'cloud_backup'
 ] as const;
 
 const encode = (data: object): string => Buffer.from(JSON.stringify(data)).toString('base64url');
@@ -40,7 +44,8 @@ export async function issueEntitlement(
 	privateKeyBase64 = process.env.ACE_ENTITLEMENT_SIGNING_KEY_BASE64
 ): Promise<string | null> {
 	const pro = await getProStatus(userId);
-	if (!pro.isPro || !pro.expirationDate || pro.expirationDate.getTime() <= Date.now()) return null;
+	if (!pro.isPro || !pro.expirationDate || pro.expirationDate.getTime() <= Date.now())
+		return null;
 	if (!privateKeyBase64) throw new Error('Entitlement signing key is not configured');
 
 	const privateKey = crypto.createPrivateKey({
@@ -53,9 +58,12 @@ export async function issueEntitlement(
 	const now = Math.floor(Date.now() / 1000);
 	const expires = Math.min(now + LEASE_SECONDS, Math.floor(pro.expirationDate.getTime() / 1000));
 	const payload = {
-		iss: 'aceblocker.com', sub: userId,
+		iss: 'aceblocker.com',
+		sub: userId,
 		key_sha256: crypto.createHash('sha256').update(apiKey).digest('hex'),
-		iat: now, exp: expires, offline_until: expires + OFFLINE_GRACE_SECONDS,
+		iat: now,
+		exp: expires,
+		offline_until: expires + OFFLINE_GRACE_SECONDS,
 		features: PRO_FEATURES
 	};
 	const body = `${encode({ alg: 'EdDSA', typ: 'ACE-ENTITLEMENT', kid: 'ace-v1' })}.${encode(payload)}`;

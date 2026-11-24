@@ -2,8 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 const { getProduct } = vi.hoisted(() => ({ getProduct: vi.fn() }));
 vi.mock('$lib/server/products', () => ({ getProduct }));
+vi.mock('$lib/server/auth', () => ({ auth: { api: { getSession: async () => null } } }));
+vi.mock('$lib/server/pro', () => ({ isUserPro: async () => false }));
 
-import { load } from './+page.server';
+import { loadPricingData } from '$lib/server/pricing-page-data';
+
+function load(event: { url: URL; request: Request }) {
+	return loadPricingData(event.request, event.url.searchParams.get('currency') ?? '');
+}
 import { formatCurrency, countryToCurrency } from '$lib/utils/locale-currency';
 import { MONTHLY_PRICE_MAP, YEARLY_PRICE_MAP } from '$lib/server/seeder/price-maps';
 

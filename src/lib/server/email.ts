@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { Resend } from 'resend';
 import type { Locale } from './messages';
-import { env } from '$env/dynamic/private';
+import { env } from '$lib/server/runtime-env';
 import { m as pm } from '$lib/paraglide/messages';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';

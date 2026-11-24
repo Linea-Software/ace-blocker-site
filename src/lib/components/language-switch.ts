@@ -7,5 +7,6 @@ export function languageSwitchHref(
 	url: Pick<URL, 'pathname' | 'search' | 'hash'>,
 	locale: AvailableSiteLocale
 ): string {
-	return localizeHref(url.pathname + url.search + url.hash, { locale });
+	const href = localizeHref(url.pathname + url.search + url.hash, { locale });
+	return href.replace(/^\/(it|de|es)\/(?=[?#]|$)/, '/$1');
 }

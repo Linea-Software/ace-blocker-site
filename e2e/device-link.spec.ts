@@ -31,7 +31,7 @@ test.describe('HTTPS device linking', () => {
 
 		const anonymousApproval = await request.post('/api/device-link/approve', {
 			data: { code: userCode },
-			headers: { origin: 'http://localhost:5173' }
+			headers: { origin: process.env.ACE_E2E_BASE_URL! }
 		});
 		expect(anonymousApproval.status()).toBe(401);
 

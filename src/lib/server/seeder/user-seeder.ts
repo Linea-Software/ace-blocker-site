@@ -2,7 +2,7 @@ import { auth } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
-import { dev } from '$app/environment';
+const dev = import.meta.env.DEV;
 import { updateProExpiration } from '$lib/server/pro';
 import { createLogger } from '$lib/server/logger';
 import {
@@ -64,7 +64,7 @@ export async function seedDatabase() {
 	);
 
 	const proEmail = 'delivered+pro@resend.dev';
-	let proUser = await db.select().from(user).where(eq(user.email, proEmail)).limit(1);
+	const proUser = await db.select().from(user).where(eq(user.email, proEmail)).limit(1);
 	if (proUser.length === 0) {
 		await auth.api.createUser({
 			body: {

@@ -33,7 +33,7 @@ export async function findActiveBillingSubscriptions(
 		});
 		// Dodo can create more than one billing customer for the same email.
 		// Iterate every page rather than binding to an arbitrary first result.
-		do {
+		for (;;) {
 			for (const customer of customers.items ?? []) {
 				if (customer.email.trim().toLowerCase() === normalizedEmail) {
 					ids.add(customer.customer_id);
@@ -41,7 +41,7 @@ export async function findActiveBillingSubscriptions(
 			}
 			if (!customers.hasNextPage()) break;
 			customers = await customers.getNextPage();
-		} while (true);
+		}
 	}
 
 	const matches: MatchedSubscription[] = [];
@@ -51,13 +51,13 @@ export async function findActiveBillingSubscriptions(
 			status: 'active',
 			page_size: 100
 		});
-		do {
+		for (;;) {
 			for (const subscription of subscriptions.items ?? []) {
 				if (subscription.status === 'active') matches.push({ customerId, subscription });
 			}
 			if (!subscriptions.hasNextPage()) break;
 			subscriptions = await subscriptions.getNextPage();
-		} while (true);
+		}
 	}
 
 	return { hasCustomer: ids.size > 0, matches };

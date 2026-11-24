@@ -9,9 +9,9 @@ Use **Bun** for package management and script execution.
 - Use `bun` instead of `node`
 - Never use `npm`, `yarn`, or `pnpm`.
 - **When installing packages**, use `bun add <package>` or `bun add -d <package>`.
-- **TypeScript compatibility**: Keep `typescript@~6` and `@typescript/native@npm:typescript@7` installed together while `svelte-check` requires both. The `check` script uses `--tsgo`. Do not bump the root `typescript` dependency to 7 until Svelte tooling supports it without TypeScript 6.
-- **Adapter compatibility**: Keep `@sveltejs/adapter-node` on v5 while using SvelteKit 2; adapter-node v6 requires SvelteKit 3. Review the migration as a coordinated major update.
-- **Running locally:** The development server runs at `https://localhost:5173/`. Do not start `bun run dev` yourself. Use that URL to test and verify changes.
+- **TypeScript**: The Solid 2 port uses the repository's pinned TypeScript toolchain and `tsc --noEmit` (see `package.json`); do not retain Svelte-specific `svelte-check`, `svelte-kit sync`, or `adapter-node` requirements. Run `bun run check` after changes and coordinate any toolchain upgrade with the lockfile and CI.
+- **SSR runtime**: Vite 8 + `@solidjs/vite-plugin` start mode (`ssr: true`, `serverFunctions: true`, `start.nodeServer`) replaces SvelteKit's Node adapter. Do not add an independent SvelteKit server or page handler. See `docs/SOLIDJS_2_ARCHITECTURE.md`.
+- **Running locally:** The development server runs at `https://localhost:5173/`. Do not start `bun run dev` yourself. Use that URL if available; otherwise use `bun run test:e2e` for the isolated production-artifact runner. Never use the real database for E2E fixtures.
 - **Initial setup:** Run `bun run setup`. It configures `.env`, creates `BETTER_AUTH_SECRET`, creates a persistent Ed25519 entitlement signing and verification key pair outside the checkout, and fills missing `DEFAULT_ADMIN_*` fixture credentials when needed. It also starts Docker PostgreSQL and applies Drizzle migrations.
   Run `bun run gen:entitlement-keys` to create or reuse development entitlement keys and fill `.env`. Provide a positional output directory to manage standalone files without changing `.env`.
   On a VPS, the private `ace-infra` provisioning flow calls `scripts/setup-env.ts`. It creates or reuses a separate production key pair in `~/.config/ace-blocker/entitlement-keys`, writes the values to `.env` with mode 0600, and must never rotate the keys on a routine deployment.
@@ -24,8 +24,8 @@ Use **Bun** for package management and script execution.
     - **Username**: `Admin`
     - **Password**: `dev-password`
     - **Login**: `https://localhost:5173/signin` after `bun run dev`
-      Both `hooks.server.ts:init` and `seedDatabase()` require a local loopback PostgreSQL URL before they seed a development account. Keep existing user passwords. Update only the role, email verification, and Pro fixture. For a custom admin email, require a custom password of at least 12 characters. Never use the public development password or log passwords. Keep the production provisioning flow in `scripts/provision-admin.ts` separate and unchanged.
-- **Committing changes:** Commit verified work yourself. Run `git add .` and `git commit -m "..."` with a descriptive message. Do not ask the user to make the commit.
+      Both `src/lib/server/bootstrap.ts:initializeSite()` and the development seeder require a local loopback PostgreSQL URL before they seed a development account. Keep existing user passwords. Update only the role, email verification, and Pro fixture. For a custom admin email, require a custom password of at least 12 characters. Never use the public development password or log passwords. Keep the production provisioning flow in `scripts/provision-admin.ts` separate and unchanged.
+- **Committing changes:** Commit verified changes with a descriptive message only when the task authorizes commits. Never stage unrelated agents' work (`git add .` is unsafe in a shared workspace). For documentation-only delegated tasks, respect an explicit no-commit instruction.
 
 ## Self-Maintenance (IMPORTANT)
 
@@ -34,13 +34,13 @@ Use **Bun** for package management and script execution.
 ## Core Documentation & Tech Stack
 
 **🚨 CRITICAL MANDATORY REQUIREMENT 🚨**
-Before you work with a technology listed below, use `read_url_content` to read its linked `llms.txt` documentation. Do not rely only on internal knowledge. It can omit current requirements, such as Svelte 5 runes.
+Before working with a technology below, consult its current linked documentation using available documentation/web tools. If a named tool is unavailable, use an available equivalent; do not pretend to have read a page. Solid 2 is NOT Solid 1.x or React: first read the installed `solid-2.0` skill and relevant official Solid 2 documentation.
 
-- **Svelte 5 & SvelteKit**: [Documentation](https://svelte.dev/llms.txt) - Full-stack framework. **MUST use Svelte 5 runes (`$state`, `$derived`, `$effect`, etc.)**.
+- **SolidJS 2.0 / `@solidjs/web` / router / Vite start mode**: [Full official documentation](https://docs.solidjs.com/llms-full.txt), [index](https://docs.solidjs.com/llms.txt), [Solid index](https://www.solidjs.com/llms.txt). Use the Solid 2 APIs, SSR and server-function conventions documented in `docs/SOLIDJS_2_ARCHITECTURE.md` and `.agents/skills/solid-2.0/SKILL.md`.
 - **Drizzle ORM**: [Documentation](https://orm.drizzle.team/llms.txt) - Database management.
 - **Better Auth**: [Documentation](https://www.better-auth.com/llms.txt) - Authentication.
 - **Zod**: [Documentation](https://zod.dev/llms.txt) - Schema verification.
-- **shadcn-svelte**: [Documentation](https://shadcn-svelte.com/llms.txt) - UI components.
+- **UI primitives**: Use the Solid `.tsx` primitives maintained in `src/lib/components/ui/`; assess existing accessibility, style and project conventions before using library snippets. Do not introduce shadcn-svelte/Bits UI dependencies into new Solid components.
 - **DodoPayments**: [Documentation](https://docs.dodopayments.com/llms.txt) - Payments.
 - **BunnyCDN**: [Documentation](https://docs.bunny.net/llms.txt) - File hosting.
 - **Elysia**: [Documentation](https://elysiajs.com/llms.txt) - API framework.
@@ -49,14 +49,14 @@ Before you work with a technology listed below, use `read_url_content` to read i
 
 1. **Identify:** Find the listed technologies that the task uses.
 2. **Fetch:** Call `read_url_content` for every relevant documentation URL.
-3. **Analyze:** Use the patterns, runes, and practices in that documentation.
-4. **Cite sources:** In your plan, name the documentation you consulted (for example, "Consulted Svelte 5 llms.txt for proper rune usage").
+3. **Analyze:** Use the matching Solid 2 reactivity, router, server-function, and security practices; never copy Solid 1, React, or Svelte examples verbatim.
+4. **Cite sources:** In your plan, name the documentation consulted (for example, "Consulted Solid 2 full docs and solid-2.0 skill for SSR and server functions").
 
 **FAILURE TO FOLLOW THIS WORKFLOW IS A PROJECT-LEVEL FAILURE.**
 
 ### Secondary Technologies
 
-- **Secondary Technologies**: Use `@lucide/svelte` for icons. Do NOT use `lucide-svelte` as it is only for Svelte 4; `@lucide/svelte` is required for Svelte 5.
+- **Icons**: Use `@lucide/solid` for migrated `.tsx` components. `@lucide/svelte` belongs only to unmigrated historical files and must not be reintroduced into new UI.
 
 ## Localization (Paraglide JS)
 
@@ -65,15 +65,15 @@ Before you work with a technology listed below, use `read_url_content` to read i
 - **Workflow**:
     1. Add the string key to `messages/en.json` (format: `"snake_case_key": "Text content"`).
     2. Run `bun run check` (or let the dev server auto-generate fields) to ensure types are updated.
-    3. Import `* as m` from `$lib/paraglide/messages.js`.
-    4. Use `m.snake_case_key()` in your Svelte components or TS files.
+    3. Import `* as m` from `$lib/paraglide/messages.js` (the Vite alias maps `$lib` to `src/lib`).
+    4. Use `m.snake_case_key()` in Solid `.tsx` components, server functions, or TypeScript modules.
 - **Rules**:
     - **Only** edit `en.json` by default. Do **NOT** edit other language files (`de.json`, `fr.json`, etc.) unless the user explicitly instructs you to do so.
     - Variable arguments: Use `{paramName}` in JSON (e.g., `"hello_user": "Hello {name}"`) and pass object used in code: `m.hello_user({ name: 'User' })`.
 
 ## Project Description
 
-This project is the **Ace Blocker** marketing and subscription website. It uses full-stack SvelteKit for public pages, accounts, subscriptions, and REST APIs. Better Auth handles authentication. DodoPayments handles payments. BunnyCDN hosts files. The website supplies site packs, Resistance scripts, and binary releases to Ace Engine.
+This project is the **Ace Blocker** marketing and subscription website. It is migrating to full-stack SolidJS 2.0 with SSR in Vite start mode, file-based Solid routes and Elysia REST APIs for public pages, accounts and subscriptions. Better Auth handles authentication. DodoPayments handles payments. BunnyCDN hosts files. The website supplies site packs, Resistance scripts, and binary releases to Ace Engine.
 
 ## Password-protected cloud backup (2026-11-19)
 
@@ -109,17 +109,17 @@ Use a more expressive version of the shared Ace visual language on the website:
 
 Do not reuse the old generic marketing layout. Avoid centered gradient heroes, blurred blobs, release pills, three equal feature cards, rounded icon tiles, hover-lift cards, and generic premium glow or crown effects.
 
-For visible marketing changes, use the required `frontend-design`, `design-taste-frontend`, and `ui-ux-pro-max` skills. For implementation, use `svelte-code-writer`, `svelte-core-bestpractices`, and `svelte-components`. For final review, use `web-design-guidelines` and real screenshots in light and dark modes. For dense account/admin product UI, treat `frontend-design` + `ui-ux-pro-max` as primary; `design-taste-frontend` must not override product-UI semantics.
+For visible marketing changes, use the required `frontend-design`, `design-taste-frontend`, and `ui-ux-pro-max` skills. For implementation, use `solid-2.0`, `solidjs-v2`, and `reactivity-diagnostics` as applicable. For final review, use `web-design-guidelines` and real screenshots in light and dark modes. For dense account/admin product UI, treat `frontend-design` + `ui-ux-pro-max` as primary; `design-taste-frontend` must not override product-UI semantics.
 
 ## Features walkthroughs (2026-11-09)
 
 - Public feature routes: `/features/network-blocks` and `/features/resistance`.
-- Marketing demos live in `src/lib/components/marketing/{NetworkBlockDemo,ResistanceDemo}.svelte`. They are deterministic, isolated illustrations: never connect them to the desktop engine, browser user settings or any account mutations.
-- DemoPlayback.svelte.ts and DemoPointer.svelte implement finite guided walkthroughs: move pointer -> hover -> press -> change state -> settle. Do not change state before simulated clicking. Preserve no autoplay on mount, manual interaction priority and reduced motion.
-- Marketing NetworkBlockDemo.svelte preserves compact action buttons, a Categories/Rules divider, week schedule preview, and a deliberate lock setup and confirmation step. Locked blocks retain read-only View.
+- Marketing demos live in `src/lib/components/marketing/*.tsx` (including `BlockedBrowserDemo.tsx` and `ResistanceDemo.tsx`). They are deterministic, isolated illustrations: never connect them to the desktop engine, browser user settings or any account mutations.
+- `DemoPlayback.ts` and `DemoPointer.tsx` implement finite guided walkthroughs: move pointer -> hover -> press -> change state -> settle. Do not change state before simulated clicking. Preserve no autoplay on mount, manual interaction priority and reduced motion.
+- The Solid Network Blocks marketing demo preserves compact action buttons, a Categories/Rules divider, week schedule preview, and a deliberate lock setup and confirmation step. Locked blocks retain read-only View.
 - End the non-compact Network Block walkthrough with a local simulated browser scene. Show these actions in order: click to open, enter the configured custom domain, and navigate. Show HTTP 404 only if the configured rule applies at the fixed example time (Monday 10:30).
   The preview must not make external requests or use an iframe. Show the final network response as a passive timed cue, not as an invented click. Keep manual Back/Play/Replay, reduced-motion support, and the unchanged compact homepage demo.
-- ResistanceDemo.svelte uses real intervention catalog IDs and defaults, CAPTCHA opt-in and per-site effects; never apply one site’s script to another website preview.
+- `ResistanceDemo.tsx` uses real intervention catalog IDs and defaults, CAPTCHA opt-in and per-site effects; never apply one site’s script to another website preview.
 - Give the replica preview most of the Resistance demo width. On the compact homepage version, use about 30% for controls and 70% for the preview, below a full-width editorial heading. On the feature page, use about 35% for controls and 65% for the preview.
   Show Before/After side by side in wide previews. Use a switch in narrow preview containers. **Use the named `resistance-layout` CSS container query (<=760px component width)** instead of a viewport media query. Stack controls above the preview and show the collapsible panel at this width. This must also protect the compact demo inside `/get-pro` on desktop viewports.
   Start compact controls collapsed and full walkthrough controls expanded. Reopen controls during guided playback as needed. Preserve preview interactions and prevent category text overflow.
@@ -171,8 +171,8 @@ for zero/singular/plural agreement.
 
 - The admin installer page explains why an action is disabled. It also shows
   whether publication runs in development or production mode.
-- Unsigned/manual installers can be published only in a SvelteKit development
-  build with `NODE_ENV=development` and local PostgreSQL, as guarded by
+- Unsigned/manual installers can be published only in a local development
+  runtime with `NODE_ENV=development` and local PostgreSQL, as guarded by
   `src/lib/server/installer-publication-mode.ts`. Even there, the server
   requires validated x64 installer bytes and the signed Windows/Linux pair
   remains atomic.
@@ -200,13 +200,13 @@ for zero/singular/plural agreement.
 
 - `/get-pro` has two subscription-aware hero paths: Free visitors see the upgrade introduction; active Pro accounts see the activation/linking panel. The price/billing comparison and checkout calls to action remain **Free-only**.
 - **Both** Free and Pro users must see the Resistance and Categories marketing sections. Active Pro accounts additionally see a concise list of included Pro features (all curated categories, Custom Lists, Resistance, cloud backup, and Network Blocks) without prompting them to purchase again.
-- Do not treat a website subscription as proof of desktop activation. Pro linking continues through `ProActivationPanel`; only the desktop app confirms import. The browser component tests in `src/routes/get-pro/page.svelte.spec.ts` cover both branches.
+- Do not treat a website subscription as proof of desktop activation. Pro linking continues through `ProActivationPanel`; only the desktop app confirms import. The former Svelte browser spec `src/routes/get-pro/page.svelte.spec.ts` is legacy; port equivalent Free/Pro coverage to Solid 2 browser tests and verify before claiming parity.
 
 ## HTTPS desktop device linking (2026-11-11)
 
 - Start the preferred license and account handoff at **Ace Blocker Desktop → Settings → License → Connect account**. Do not start it by opening an `aceblocker://` URL from the website.
   Tauri's native Rust process starts and polls a one-time HTTP(S) device challenge. The browser route `/connect` displays the code entry and explicitly authorizes the signed-in, email-verified user.
-- Implement `/api/device-link/{start,poll,approve}` as **native SvelteKit** routes. Exempt them from the Elysia API interceptor in `src/hooks.server.ts`; otherwise, they return 404.
+- Implement `/api/device-link/{start,poll,approve}` as **native filesystem-routing HTTP handlers** in `src/routes/api/device-link/{start,poll,approve}.ts`. Exempt them from Elysia in `src/middleware.ts`; otherwise, they return 404.
   Never put raw device secrets or unclaimed API keys in browser URLs. Store device challenges only as hashes. Expire challenges after 10 minutes. Poll no more often than every 5 seconds. Consume each approval atomically and only once.
 - After native redemption, the Tauri process imports the account key through the existing capability-protected engine remoc `setApiKey` RPC. Never introduce a browser-accessible engine HTTP listener or transmit its privileged capability to JavaScript.
 - The regenerated `drizzle/0000` includes `device_links` on fresh databases. Adopt the baseline on an existing database before deploying native clients and the website. Keep edge rate limiting on unauthenticated start/poll endpoints. See `docs/DEVICE_LINKING.md` for protocol and security gates.
@@ -220,11 +220,11 @@ for zero/singular/plural agreement.
 
 ## Environment validation at startup
 
-- **Development fails closed:** Before the development server listens, Vite's `configureServer` hook verifies that every required server environment variable exists and is not blank. `hooks.server.ts:init` repeats the check. Missing settings cause a clearly labeled `[ACE ENV ERROR]` with the missing variable names, not secret values. Fill in all required settings before starting development.
+- **Development fails closed:** Before the development server listens, Vite's `configureServer` hook verifies that every required server environment variable exists and is not blank. `src/lib/server/bootstrap.ts:initializeSite()` repeats the check before the first request. Missing settings cause a clearly labeled `[ACE ENV ERROR]` with the missing variable names, not secret values. Fill in all required settings before starting development.
 - `src/lib/server/config/development.ts` derives the required keys from the production schema, excluding runtime `NODE_ENV`, production-only `BETTER_AUTH_URL` and `ORIGIN`, and optional settings such as `ACE_RELEASE_INGEST_TOKEN`. Empty and whitespace-only values count as missing; it does **not** make network calls or prove API credentials are valid.
 - **Keep builds, tests, migrations, and scripts import-safe.** Missing provider credentials must not cause errors when a module loads. Run Vite's startup validation only for the real development server, not Vitest. Email/CDN services still return explicit errors if invoked in a missing-key test. See `src/lib/server/optional-providers.test.ts`.
-- Production retains strict syntax/security validation in `src/lib/server/config/production.ts` and `hooks.server.ts:init`. Never bypass production validation or insert dummy production credentials.
-- In development, `BETTER_AUTH_URL` is not required: Better Auth resolves its base URL from `PUBLIC_BETTER_AUTH_URL` when absent. `ORIGIN` is read by the production SvelteKit Node adapter, not required by the Vite development server. Both remain strictly required by the production schema.
+- Production retains strict syntax/security validation in `src/lib/server/config/production.ts` and `src/lib/server/bootstrap.ts:initializeSite()`. Never bypass production validation or insert dummy production credentials.
+- In development, `BETTER_AUTH_URL` is not required: Better Auth resolves its base URL from `PUBLIC_BETTER_AUTH_URL` when absent. `ORIGIN` is a production-origin setting in the existing application schema, not required by the Vite development startup check. Verify production proxy/origin correctness with the Solid start-mode server; both settings remain strictly required by the production schema.
 
 ## SEO and AI-search conventions
 
@@ -235,23 +235,30 @@ for zero/singular/plural agreement.
 
 ## Project Structure
 
-- `/src/routes/`: Contains SvelteKit pages and API endpoints.
+Architecture, server/client boundaries, SSR, URL locale routing, route-to-API ownership, and migration verification: [`docs/SOLIDJS_2_ARCHITECTURE.md`](docs/SOLIDJS_2_ARCHITECTURE.md). The active branch is **in migration**: legacy `.svelte`/`+page.server.ts` source and tests may remain until independently retired; do not confuse the reference implementation with the Solid runtime.
+
+- `/src/App.tsx`: Root Solid 2 router shell and `<Loading>` boundary.
+- `/src/Document.tsx`: Server-rendered HTML shell, icons, hydration script and document locale.
+- `/src/router.ts`: Solid router created from `virtual:file-routes`, with explicit localized path prefix.
+- `/src/middleware.ts`: Solid start-mode request entry; bootstraps the site and dispatches Elysia `/api`, native device linking and Paraglide/page SSR.
+- `/src/routes/`: Contains Solid `.tsx` pages, layouts and filesystem-routing `.ts` HTTP handlers.
     - **Authentication:** `signin/`, `signup/`, `forgot-password/`
     - **Account:** `account/`
     - **Admin:** `admin/`
     - **Checkout & Marketing:** `checkout/`, `download/`, `get-pro/`
     - **Content:** `about/`, `privacy/`, `terms/`
-    - **API Forwarding:** `api/[...slugs]/` (catch-all route forwarding to Elysia)
-    - **Development:** `dev/`
+    - **API:** Elysia is dispatched by middleware for `/api/*` other than `/api/device-link/*`; device-link handlers are explicit filesystem HTTP routes.
+    - **Server data:** Route-nearby `data.ts` can export `query(async (...) => { 'use server'; ... }, key)`; call using `createAsync()` or suitable router primitives. Sensitive operations require server-side auth and validation.
+    - **Development:** `dev/` (never expose development-only endpoints in production)
     - **Page-specific components** MUST reside in a `./_components` folder within the route directory.
 - `/src/lib/`: Reusable components, utilities, and logic.
     - `/src/lib/components/`: **Global components** reused across the app.
-    - `/src/lib/components/ui/`: Reserved ONLY for **shadcn-svelte** components.
-    - `/src/lib/states/`: Svelte state modules (e.g., `engine.svelte.ts`).
+    - `/src/lib/components/ui/`: Solid `.tsx` UI primitives (migrated/project-owned); prefer existing accessible controls and match Ace's visual identity.
+    - `/src/lib/states/`: Shared state modules where needed; use Solid 2 signals/memos/stores and route/server-safe lifetimes. Legacy `.svelte.ts` modules are not a design target.
     - `/src/lib/assets/`: Static assets (logo, favicon).
     - `/src/lib/utils/`: Utility functions (`platform.ts`, `locale-currency.ts`, `list-icons.ts`).
     - `/src/lib/api-client.ts`: Elysia Eden client for type-safe API calls.
-    - `/src/lib/auth-client.ts`: Better Auth client setup.
+    - `/src/lib/auth-client.ts`: Better Auth framework-neutral browser client + Solid 2 session adapter. Do not import the Better Auth Solid 1 adapter (`better-auth/solid`) which still relies on removed `solid-js/store`.
     - `/src/lib/server/`: Server-only logic, including:
         - `auth.ts`: Better Auth configuration.
         - `db/`: Database schema (`schema.ts`, `auth-schema.ts`, `artifacts-schema.ts`) and connection (`index.ts`) using Drizzle.
@@ -283,9 +290,9 @@ for zero/singular/plural agreement.
 
 ## API Development & Documentation
 
-**Elysia** handles all API requests under `/api`.
+**Elysia** handles the existing API under `/api`, **except** the three native device-link endpoints.
 
-- **Catch-all Route**: `src/routes/api/[...slugs]/+server.ts` forwards all requests to the Elysia app.
+- **Request dispatcher**: `src/middleware.ts` forwards `/api/*` (excluding `/api/device-link/*`) to `src/lib/server/api/app.ts` via `app.handle(request)`. Solid filesystem HTTP handlers serve device link. Legacy SvelteKit routing files have been removed.
 - **Type Safety**: The Elysia app exports an `AppType`. Use `@elysiajs/eden` in external projects to get full type safety and auto-completion.
 - **OpenAPI / Swagger**:
     - In development mode, the interactive Swagger UI is available at `/api/docs`.
@@ -318,16 +325,16 @@ Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })
 
 - **Design tokens and UI consistency:** Follow the approved **target** visual direction in `docs/ui-identity.md`. The current token system is in `src/routes/layout.css` (Tailwind v4 `@theme`). [`docs/design-tokens.md`](docs/design-tokens.md) records current and legacy tokens and earlier consolidation work.
   The new palette is an approved direction. Migrate to it visually and in small steps. Never replace colors globally without checking screenshots.
-- **Svelte components:** Name every `.svelte` file in `UpperCamelCase` (for example, `Button.svelte` or `UserCard.svelte`).
-- **Typed Svelte props**: Use a type annotation on the destructuring (`let { foo }: { foo: string } = $props();`) rather than `$props<{ foo: string }>()`; the latter breaks the current `svelte-check --tsgo` CI typecheck.
-- **Page-specific components:** Put them in the route's `./_components` directory or prefix their names with an underscore (for example, `_Component.svelte`). This distinguishes components from routes.
+- **Solid components:** Name reusable `.tsx` components in `UpperCamelCase` (for example `BrandLogo.tsx`). Keep components pure across SSR and hydration; Solid component functions run once, and reactive reads belong inside JSX, `createMemo`, or an effect's compute function. Read `props` lazily; do not destructure reactive props in the component signature.
+- **Solid 2 reactivity:** `createEffect(compute, apply)` is two-phase; use `onSettled` for browser setup/teardown, `<Loading>` for async data and `@solidjs/web` for DOM and server functions. Do not copy Solid 1, React or Svelte runes patterns.
+- **Page-specific components:** Put them in the route's `./_components` directory, with `UpperCamelCase.tsx` names. Route modules use filesystem-routing `index.tsx`, layout `.tsx`, and API `.ts` conventions.
 - `/messages/`: Localization message files for Paraglide. During development, always prioritize English (`en`). Only translate when explicitly requested.
 - `/scripts/`: Development and maintenance scripts. **ALWAYS use TypeScript** for these scripts.
 - `/drizzle/`: Database migrations managed by Drizzle.
 
 ## Formatting and linting
 
-- Run `bun run format` to format owned source/docs, and `bun run lint` to generate Paraglide files, sync SvelteKit, then check formatting and ESLint (also required by CI). `.prettierignore` excludes vendor-provided `.agents/skills`, generated files and build artifacts; do not reformat those inputs.
+- Run `bun run format` to format owned source/docs, and `bun run lint` to compile Paraglide then check formatting and ESLint (also required by CI). `.prettierignore` excludes vendor-provided `.agents/skills`, generated files and build artifacts; do not reformat those inputs.
 - ESLint 10 uses `@ninoseki/eslint-plugin-neverthrow` (not the obsolete `eslint-plugin-neverthrow`) with TypeScript project services in the server/ CDN code where `neverthrow` Results are produced and consumed. Always handle cleanup Results explicitly; a failed best-effort cleanup must still be logged.
 - `eslint-suppressions.json` records the **pre-existing** lint debt. It does not disable rules for new code. After fixing a recorded violation, run `bunx eslint . --prune-suppressions` and review the diff. Do not regenerate the baseline automatically or use suppressions for new neverthrow errors.
 
@@ -345,7 +352,7 @@ Use `bun run <script>` for these tasks:
 - `db:studio`: Opens Drizzle Studio.
 - `provision-admin`: Promote an existing account without changing its password. Running the script again must have the same result. During interactive creation of a new account, prompt securely for a password and confirmation. Keep `--password-stdin` available for piped or noninteractive provisioning.
   Use the Better Auth runtime compatible with the lockfile. Repair known-bad 1.7.0–1.7.2 installations with `bun install --frozen-lockfile`. Do not restore the reverted `account.issuer` column.
-- `check`: Compiles the git-ignored Paraglide output first, then runs SvelteKit sync and Svelte-check. Keep this self-contained so fresh CI checkouts do not depend on generated local files.
+- `check`: Compiles the git-ignored Paraglide output first, then runs `tsc --noEmit --pretty false`. Keep this self-contained so fresh CI checkouts do not depend on generated local files.
 - `test`: Runs unit and E2E tests.
 - `format`: Formats code with Prettier.
 - `verify-screenshots`: Captures before/after full-page screenshots (light +
@@ -358,111 +365,33 @@ All server-side logging uses **Pino** for structured JSON logging.
 
 - **Core module**: `src/lib/server/logger.ts` — exports the root `logger` instance and a `createLogger(component)` helper.
 - **Component-level loggers**: In standalone server modules (CDN, pro, auth) and Elysia route files (admin routers, releases), create a module-level logger with `createLogger('component:name')`.
-- **SvelteKit hooks**: `src/hooks.server.ts` injects a per-request child logger into `event.locals.log` with a unique `requestId`.
+- **Solid request entry**: `src/middleware.ts` currently assigns a short request ID to incoming-request debug logging; `src/lib/server/api/app.ts` uses its own component logger and URL-path-only error logging. Never assume SvelteKit `event.locals`; if adding request-scoped logging, propagate context through the Solid request lifecycle without exposing secrets.
 - **Dev vs Prod**: In development, logs are pretty-printed with colors via `pino-pretty`. In production, logs are raw JSON to stdout.
 - **Redaction:** The logger automatically removes sensitive fields from nested objects: `password`, `token`, `secret`, `apiKey`, `accessKey`, `headers.authorization`, and `headers.cookie`.
-- **DO NOT use `console.log` or `console.error`** in server-side code. Always use `log.info(...)`, `log.error(...)`, `log.warn(...)`, or `log.debug(...)`.
+- **DO NOT use `console.log` or `console.error`** in server-side code. Always use `log.info(...)`, `log.error(...)`, `log.warn(...)`, or `log.debug(...)`. Log paths without query strings or credentials.
 
 ## Agent Skills
 
-Specialized **Skills** are in `./.agents/skills/` (managed by `npx skills`). Before complex tasks, check these directories for `SKILL.md`. Follow the project-specific patterns, instructions, and examples in these files.
+Installed skills are in `.agents/skills/` (managed by the project skill installer). Read the relevant `SKILL.md` before complex work; never assume every remotely documented skill is installed.
 
-The following skills are installed for all agents:
+### Solid 2 framework (mandatory for Solid code)
 
-### Core Framework
+- `solid-2.0`: locally installed Solid 2-only APIs; read before any TSX/reactivity changes.
+- `solidjs-v2`: Solid 2 architecture and component patterns.
+- `reactivity-diagnostics`: explain and correct Solid 2 runtime diagnostics, not by silencing them.
+- Official docs: [Solid 2 full reference](https://docs.solidjs.com/llms-full.txt) and [AI tooling](https://docs.solidjs.com/guides/ai-tools). Use the installed `node_modules/solid-js/CHEATSHEET.md` when available.
+- **Do not use** the removed Svelte skills (`svelte5-best-practices`, `sveltekit-structure`, `sveltekit-data-flow`, `sveltekit-svelte5-tailwind-skill`) or obsolete Svelte MCP `list-sections`/`get-documentation`/`svelte-autofixer`/`playground-link` workflow for Solid code.
 
-- **`svelte5-best-practices`** (`ejirocodes/agent-skills`) — Svelte 5 runes, patterns, and best practices.
-- **`sveltekit-structure`** (`spences10/svelte-skills-kit`) — SvelteKit project structure conventions.
-- **`sveltekit-data-flow`** (`spences10/svelte-skills-kit`) — SvelteKit data loading, forms, and actions.
-- **`sveltekit-svelte5-tailwind-skill`** (`claude-skills/sveltekit-svelte5-tailwind-skill`) — Combined SvelteKit + Svelte 5 + Tailwind patterns.
+### Other installed skills
 
-### Database
-
-- **`drizzle-orm-patterns`** (`giuseppe-trisciuoglio/developer-kit`) — Drizzle ORM schema design, queries, and migrations.
-
-### Authentication
-
-- **`better-auth-best-practices`** (`better-auth/skills`) — Core Better Auth setup and configuration.
-- **`better-auth-security-best-practices`** (`better-auth/skills`) — Security hardening for Better Auth.
-- **`email-and-password-best-practices`** (`better-auth/skills`) — Email/password authentication patterns.
-
-### API & Documentation
-
-- **`elysiajs`** (`elysiajs/skills`) — Elysia API framework patterns.
-- **`openapi-spec-generation`** (`wshobson/agents`) — OpenAPI/Swagger spec generation.
-
-### UI & Styling
-
-- **`frontend-design`** — Mandatory for distinctive, intentional visible UI.
-- **`design-taste-frontend`** — Mandatory for marketing/landing redesigns and anti-template review.
-- **`ui-ux-pro-max`** — Mandatory for product-wide UI/UX, typography, accessibility, layout, and interaction reasoning.
-- **`svelte-components`** — Use for Bits UI/headless component patterns.
-- **`web-design-guidelines`** — Final UI/accessibility review where applicable.
-- **`shadcn`** (`shadcn/ui`) — Existing implementation reference; default shadcn styling is not Ace identity.
-- **`tailwind-design-system`** (`wshobson/agents`) — Legacy/reference Tailwind design-system guidance; the Ace identity document is authoritative for visual direction.
-- **`tailwind-v4-shadcn`** (`secondsky/claude-skills`) — Existing integration reference; do not treat its defaults as the target system.
-
-### Validation
-
-- **`zod`** (`pproenca/dot-skills`) — Zod schema validation patterns.
-
-### Runtime
-
-- **`bun-runtime`** (`affaan-m/everything-claude-code`) — Bun runtime best practices.
-
-### Localization
-
-- **`paraglide-js-internationalization-i18n`** (`oimiragieo/agent-studio`) — Paraglide JS i18n patterns.
-
-### Infrastructure
-
-- **`docker-expert`** (`sickn33/antigravity-awesome-skills`) — Docker containerization and Compose patterns.
-
-### Payments (DodoPayments)
-
-- **`dodo-best-practices`** (`dodopayments/skills`) — DodoPayments SDK best practices.
-- **`checkout-integration`** (`dodopayments/skills`) — DodoPayments checkout integration.
-- **`subscription-integration`** (`dodopayments/skills`) — DodoPayments subscription management.
-
-### Testing
-
-- **`vitest`** (`antfu/skills`) — Vitest unit testing patterns.
-- **`playwright-cli`** (`microsoft/playwright-cli`) — Playwright CLI usage.
-- **`playwright-best-practices`** (`currents-dev/playwright-best-practices-skill`) — Playwright E2E best practices.
-- **`webapp-testing`** (`anthropics/skills`) — General web application testing strategies.
-
-### TypeScript
-
-- **`typescript-advanced-types`** (`wshobson/agents`) — Advanced TypeScript type patterns.
-
-### Git & Code Quality
-
-- **`git-commit`** (`github/awesome-copilot`) — Conventional commit message patterns.
-- **`eslint-prettier-config`** (`patricio0312rev/skills`) — ESLint + Prettier configuration and usage.
-
-## Svelte MCP Tools usage:
-
-Use the Svelte MCP documentation tools as follows:
-
-### 1. list-sections
-
-Use this first to find available documentation sections. It returns titles, use_cases, and paths.
-When asked about Svelte or SvelteKit topics, ALWAYS use this tool at the start of the chat to find relevant sections.
-
-### 2. get-documentation
-
-Fetch the full documentation for relevant sections. Request one or more sections per call.
-After calling the list-sections tool, you MUST analyze the returned documentation sections (especially the use_cases field) and then use the get-documentation tool to fetch ALL documentation sections that are relevant for the user's task.
-
-### 3. svelte-autofixer
-
-Analyze Svelte code for issues and suggested changes.
-You MUST use this tool whenever writing Svelte code before sending it to the user. Keep calling it until no issues or suggestions are returned.
-
-### 4. playground-link
-
-Generate a Svelte Playground link from the supplied code.
-After completing the code, ask the user if they want a playground link. Only call this tool after user confirmation and NEVER if code was written to files in their project.
+- **Database:** `drizzle-orm-patterns`; regenerate/review schema and migration diffs.
+- **Authentication/security:** `better-auth-best-practices`, `better-auth-security-best-practices`, `email-and-password-best-practices`.
+- **APIs:** `elysiajs`, `openapi-spec-generation`; keep endpoint contracts and auth explicit.
+- **UI:** `shadcn`, `tailwind-design-system`, `tailwind-v4-shadcn` are references only. Use `docs/ui-identity.md` as Ace visual authority and migrate actual Solid UI primitives; do not paste Svelte implementations. For design review, use any available frontend-design/a11y/visual-review skills and real screenshots.
+- **Validation, runtime, locale:** `zod`, `bun-runtime`, `paraglide-js-internationalization-i18n`.
+- **Infrastructure/payments:** `docker-expert`, `dodo-best-practices`, `checkout-integration`, `subscription-integration`.
+- **Testing:** `vitest`, `playwright-cli`, `playwright-best-practices`, `webapp-testing`; use Solid browser tests for migrated components.
+- **Language/code quality:** `typescript-advanced-types`, `git-commit`, `eslint-prettier-config`.
 
 ## Signed desktop MSI updates (server, gated)
 

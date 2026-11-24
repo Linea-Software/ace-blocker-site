@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { env } from '$env/dynamic/private';
+import { env } from '$lib/server/runtime-env';
 import type { aceBlockerInstaller } from '$lib/server/db/schema';
 import { installersUploadBase } from '$lib/server/cdn/common';
 import { validateInstallerArtifact } from './installer-artifact-validation';

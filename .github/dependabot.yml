@@ -5,14 +5,9 @@ updates:
       schedule:
           interval: weekly
       open-pull-requests-limit: 5
-      # svelte-check requires TypeScript 6 alongside the TS7 native alias.
-      # Do not re-open the incompatible TypeScript 7 major version update.
-      # This does not block Dependabot security update PRs.
+      # Keep the TypeScript version pinned until the next toolchain upgrade.
       ignore:
           - dependency-name: typescript
-            update-types: ['version-update:semver-major']
-          # adapter-node 6 requires SvelteKit 3; the site still uses SvelteKit 2.
-          - dependency-name: '@sveltejs/adapter-node'
             update-types: ['version-update:semver-major']
       groups:
           better-auth-minor-patch:
@@ -20,12 +15,11 @@ updates:
                   - better-auth
                   - '@better-auth/*'
               update-types: [minor, patch]
-          svelte-minor-patch:
+          solid-minor-patch:
               patterns:
-                  - svelte
-                  - '@sveltejs/kit'
-                  - '@sveltejs/adapter-node'
-                  - svelte-check
+                  - solid-js
+                  - '@solidjs/*'
+                  - filesystem-routing
               update-types: [minor, patch]
           elysia-minor-patch:
               patterns:
@@ -42,8 +36,6 @@ updates:
                   - vite
                   - vitest
                   - '@vitest/*'
-                  - vitest-browser-svelte
-                  - '@sveltejs/vite-plugin-svelte'
               update-types: [minor, patch]
           playwright-minor-patch:
               patterns:
@@ -53,17 +45,12 @@ updates:
           frontend-minor-patch:
               patterns:
                   - '@fontsource/*'
-                  - '@lucide/svelte'
-                  - '@tabler/icons-svelte'
+                  - '@lucide/solid'
                   - '@tailwindcss/*'
                   - tailwindcss
                   - tailwind-merge
                   - tailwind-variants
                   - tw-animate-css
-                  - bits-ui
-                  - layerchart
-                  - mode-watcher
-                  - svelte-sonner
               update-types: [minor, patch]
           lint-tooling-minor-patch:
               patterns:

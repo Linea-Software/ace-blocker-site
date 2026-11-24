@@ -39,8 +39,9 @@ vi.mock('$lib/server/cache', () => ({
 	incrementInstallerDownloadCount
 }));
 
-import { GET } from './[arch]/+server';
-import { load } from './+page.server';
+import { GET } from './[arch]';
+import { loadDownloadPlatforms } from '$lib/server/download-page-data';
+import { requestedDownloadPlatform } from './_components/installer-command';
 
 const WINDOWS_URL = new URL(
 	'https://cdn.aceblocker.test/dev/ace-blocker-installer/1.0.0/windows/x64/Ace%20Blocker%20Installer.exe'
@@ -80,20 +81,20 @@ describe('download [arch] route', () => {
 	});
 
 	it('redirects to the public CDN URL for a known arch', async () => {
-		await expect(GET(routeEvent('windows_x64'))).rejects.toMatchObject({ status: 302 });
+		expect((await GET(routeEvent('windows_x64'))).status).toBe(302);
 		// The redirect target is the release-manager URL (token-free, public).
-		await expect(GET(routeEvent('windows_x64'))).rejects.toMatchObject({
-			location: WINDOWS_URL.href
-		});
+		expect((await GET(routeEvent('windows_x64'))).headers.get('location')).toBe(
+			WINDOWS_URL.href
+		);
 	});
 
 	it('increments the matching installer download count with os/arch', async () => {
-		await expect(GET(routeEvent('windows_x64'))).rejects.toMatchObject({ status: 302 });
+		expect((await GET(routeEvent('windows_x64'))).status).toBe(302);
 		expect(incrementInstallerDownloadCount).toHaveBeenCalledWith('windows', 'x64');
 	});
 
 	it('does not publish a macOS installer even if a CDN release exists', async () => {
-		await expect(GET(routeEvent('macos_universal'))).rejects.toMatchObject({ status: 404 });
+		expect((await GET(routeEvent('macos_universal'))).status).toBe(404);
 		expect(getInstallerURL).not.toHaveBeenCalled();
 		expect(incrementInstallerDownloadCount).not.toHaveBeenCalled();
 	});
@@ -104,12 +105,12 @@ describe('download [arch] route', () => {
 			error: 2 // NoReleaseAvailable
 		} as never);
 
-		await expect(GET(routeEvent('linux_x64'))).rejects.toMatchObject({ status: 404 });
+		expect((await GET(routeEvent('linux_x64'))).status).toBe(404);
 		expect(incrementInstallerDownloadCount).not.toHaveBeenCalled();
 	});
 
 	it('400s for an unknown arch', async () => {
-		await expect(GET(routeEvent('arm_32'))).rejects.toMatchObject({ status: 400 });
+		expect((await GET(routeEvent('arm_32'))).status).toBe(400);
 		expect(getInstallerURL).not.toHaveBeenCalled();
 		expect(incrementInstallerDownloadCount).not.toHaveBeenCalled();
 	});
@@ -134,11 +135,14 @@ describe('download page load', () => {
 			macos: PublicInstaller | null;
 			linux: PublicInstaller | null;
 		};
-		requestedArch: string;
+		requestedArch: string | null;
 	};
 
 	async function loadData(url: string): Promise<PageData> {
-		return (await load({ url: new URL(url) } as never)) as PageData;
+		return {
+			platforms: await loadDownloadPlatforms(),
+			requestedArch: requestedDownloadPlatform(new URL(url).search)
+		};
 	}
 
 	function macRow(os: 'windows' | 'macos' | 'linux', architecture = 'x64') {
@@ -177,7 +181,7 @@ describe('download page load', () => {
 		expect(getInstallerFor).not.toHaveBeenCalledWith('macos', 'x64');
 		expect(getInstallerFor).not.toHaveBeenCalledWith('macos', 'arm64');
 		expect(data.platforms.linux).toBeNull();
-		expect(data.requestedArch).toBe('windows_x64');
+		expect(data.requestedArch).toBe('windows');
 	});
 
 	it('labels every platform without a release as unavailable instead of guessing', async () => {
@@ -192,6 +196,6 @@ describe('download page load', () => {
 
 		const data = await loadData('http://localhost/download?arch=macos_universal');
 		expect(data.platforms.windows).toMatchObject({ version: '1.0.0', hash: 'a'.repeat(64) });
-		expect(data.requestedArch).toBe('macos_universal');
+		expect(data.requestedArch).toBeNull();
 	});
 });

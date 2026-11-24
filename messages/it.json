@@ -939,5 +939,22 @@
 	"demo_lock_continue": "Verifica lock",
 	"demo_lock_apply": "Applica lock",
 	"demo_lock_status": "Protezione",
-	"demo_weekly_preview": "Copertura settimanale"
+	"demo_weekly_preview": "Copertura settimanale",
+	"demo_browser_404_description": "Impossibile trovare la pagina richiesta.",
+	"demo_browser_404_explanation": "Questo blocco di rete attivo restituisce HTTP 404 per il sito web richiesto.",
+	"demo_browser_404_title": "Non trovato",
+	"demo_browser_address": "Barra degli indirizzi del browser",
+	"demo_browser_address_hint": "Cerca o inserisci un indirizzo",
+	"demo_browser_allowed_description": "All’orario simulato, questo blocco di rete non è attivo.",
+	"demo_browser_allowed_explanation": "La regola non si applica a questo orario, quindi la richiesta non viene bloccata.",
+	"demo_browser_allowed_title": "Sito web non bloccato",
+	"demo_browser_back": "Torna alla regola",
+	"demo_browser_heading": "Prova il blocco di rete",
+	"demo_browser_loading": "Caricamento del sito web…",
+	"demo_browser_navigate": "Apri il sito web",
+	"demo_browser_open": "Prova ad aprire il sito web",
+	"demo_browser_preview_note": "Browser simulato · nessuna richiesta esterna",
+	"demo_browser_ready": "Inserisci l’indirizzo del sito web per provare il blocco.",
+	"demo_browser_simulated_time": "Lunedì, 10:30 · simulato",
+	"demo_browser_window_label": "Finestra del browser simulato"
 }

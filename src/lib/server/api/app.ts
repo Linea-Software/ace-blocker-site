@@ -3,7 +3,7 @@ import { openapi } from '@elysiajs/openapi';
 import { v1Router } from './routers/v1';
 import { auth } from '$lib/server/auth';
 import { createLogger } from '$lib/server/logger';
-import { dev } from '$app/environment';
+const dev = import.meta.env.DEV;
 import { getSafeRequestPath } from './request-log';
 
 const log = createLogger('api');

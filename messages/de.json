@@ -939,5 +939,22 @@
 	"demo_lock_continue": "Sperre prüfen",
 	"demo_lock_apply": "Sperre anwenden",
 	"demo_lock_status": "Schutz",
-	"demo_weekly_preview": "Wochenübersicht"
+	"demo_weekly_preview": "Wochenübersicht",
+	"demo_browser_404_description": "Die angeforderte Seite konnte nicht gefunden werden.",
+	"demo_browser_404_explanation": "Diese aktive Netzwerksperre gibt HTTP 404 für die angeforderte Website zurück.",
+	"demo_browser_404_title": "Nicht gefunden",
+	"demo_browser_address": "Adressleiste des Browsers",
+	"demo_browser_address_hint": "Suchen oder Adresse eingeben",
+	"demo_browser_allowed_description": "Zum simulierten Zeitpunkt ist diese Netzwerksperre nicht aktiv.",
+	"demo_browser_allowed_explanation": "Die Regel gilt zu diesem Zeitpunkt nicht, daher wird die Anfrage nicht blockiert.",
+	"demo_browser_allowed_title": "Website nicht blockiert",
+	"demo_browser_back": "Zurück zur Regel",
+	"demo_browser_heading": "Netzwerksperre ausprobieren",
+	"demo_browser_loading": "Website wird geladen…",
+	"demo_browser_navigate": "Website öffnen",
+	"demo_browser_open": "Website probeweise öffnen",
+	"demo_browser_preview_note": "Simulierter Browser · keine externen Anfragen",
+	"demo_browser_ready": "Gib die Website-Adresse ein, um die Sperre zu testen.",
+	"demo_browser_simulated_time": "Montag, 10:30 Uhr · simuliert",
+	"demo_browser_window_label": "Simuliertes Browserfenster"
 }

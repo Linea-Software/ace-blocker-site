@@ -1,5 +1,5 @@
 import { err, ok, Result } from 'neverthrow';
-import { env } from '$env/dynamic/private';
+import { env } from '$lib/server/runtime-env';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { sitePack, resistanceModeScripts, aceBlockerInstaller } from '$lib/server/db/schema';

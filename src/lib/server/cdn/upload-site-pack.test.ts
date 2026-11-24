@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // as a version string, while the id (which becomes the CDN object name) and
 // the zip file still are.
 
-vi.mock('$env/dynamic/private', () => ({
+vi.mock('$lib/server/runtime-env', () => ({
 	env: {
 		BUNNY_URL_TOKEN_AUTH_KEY: 'test-url-token-key',
 		BUNNY_STORAGE_ZONE: 'test-zone',

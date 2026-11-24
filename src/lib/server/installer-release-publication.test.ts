@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 
-vi.mock('$env/dynamic/private', () => ({ env: { BUNNY_STORAGE_ACCESS_KEY: 'test-key' } }));
+vi.mock('$lib/server/runtime-env', () => ({ env: { BUNNY_STORAGE_ACCESS_KEY: 'test-key' } }));
 vi.mock('$lib/server/cdn/common', () => ({
 	installersUploadBase: new URL('https://storage.bunnycdn.test/private/ace-blocker-installer/')
 }));

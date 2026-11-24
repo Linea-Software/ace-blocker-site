@@ -1,4 +1,4 @@
-import { dev } from '$app/environment';
+const dev = import.meta.env.DEV;
 import { assertLocalDevelopmentDatabase } from '$lib/server/config/dev-admin';
 
 /**

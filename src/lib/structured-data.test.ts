@@ -3,7 +3,10 @@ import { jsonLdScript, organizationAndWebsiteData, softwareData } from './struct
 
 describe('structured data', () => {
 	it('describes only evidenced product features and a free offer', () => {
-		const software = softwareData('Block distracting websites with schedules and locks.', 'Free version');
+		const software = softwareData(
+			'Block distracting websites with schedules and locks.',
+			'Free version'
+		);
 		expect(software.operatingSystem).toContain('Linux');
 		expect(software.offers.price).toBe('0');
 		expect(software).not.toHaveProperty('aggregateRating');
@@ -12,7 +15,9 @@ describe('structured data', () => {
 	});
 
 	it('prevents script termination from translated descriptions', () => {
-		const text = jsonLdScript(softwareData('</script><script>alert(1)</script>', 'Free version'));
+		const text = jsonLdScript(
+			softwareData('</script><script>alert(1)</script>', 'Free version')
+		);
 		expect(text).not.toContain('</script><script>');
 		expect(text).toContain('\\u003c/script>');
 	});

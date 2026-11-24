@@ -1,0 +1,49 @@
+.walkthrough {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 10px 12px;
+	border-top: 1px solid var(--border);
+	background: var(--muted);
+}
+.walkthrough-actions {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+.walkthrough button {
+	display: inline-flex;
+	min-height: 36px;
+	min-width: 36px;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 6px 10px;
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	background: var(--card);
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+}
+.walkthrough button:hover:not(:disabled) {
+	background: var(--accent);
+}
+.walkthrough button:focus-visible {
+	outline: 2px solid var(--foreground);
+	outline-offset: 2px;
+}
+.walkthrough button:disabled {
+	cursor: not-allowed;
+	opacity: 0.35;
+}
+.progress {
+	margin-right: 5px;
+	color: var(--muted-foreground);
+	font:
+		11px 'IBM Plex Mono',
+		monospace;
+	white-space: nowrap;
+}

@@ -515,7 +515,9 @@ test.describe('Resistance marketing walkthrough', () => {
 		});
 		const spinner = demo.locator('.mock-site.after [data-testid="captcha-spinner"]');
 		await expect(spinner).toBeVisible({ timeout: 4000 });
-		expect(await spinner.evaluate((el) => getComputedStyle(el).animationName)).toMatch(/spin$/);
+		expect(await spinner.evaluate((el) => getComputedStyle(el).animationName)).toMatch(
+			/(?:^|_)spin(?:_|$)/
+		);
 		await expect(demo.locator('.mock-site.after [data-testid="mock-captcha"]')).toHaveCount(0, {
 			timeout: 5000
 		});

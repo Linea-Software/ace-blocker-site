@@ -23,6 +23,7 @@ Tailwind v4 `@theme inline` maps CSS variables to `--color-*` and `--radius-*` u
 In light mode, `--primary` is amber: `oklch(0.795 0.185 79.1)`.
 In dark mode, it is pale slate-blue: `oklch(0.929 0.013 255.508)`.
 Thus, `primary` does **not** always mean marketing brand amber.
+
 ## 2. De-facto palette (measured across `src/`, excluding `lib/components/ui`)
 
 | Role                           | Value(s) actually used                     | Count     | Notes                          |
@@ -47,6 +48,7 @@ Thus, `primary` does **not** always mean marketing brand amber.
 4. Radii vary across pages. The site uses `rounded-lg`, `rounded-xl`, `rounded-2xl`,
    `rounded-3xl`, `rounded-[22px]`, and `rounded-md`.
    Different values make card and button corners inconsistent.
+
 ## 3. UI Primitives
 
 `src/lib/components/ui/` contains shadcn-svelte controls.
@@ -54,6 +56,7 @@ These include buttons, inputs, cards, dialogs, badges, tabs, separators, sheets,
 Many components add one-off styling such as `bg-amber-500` or `rounded-xl border border-border bg-card p-6`.
 Repeated styling is a larger problem than missing primitives.
 Shared `Panel` and `EmptyState` components can reduce these repeated styles.
+
 ## 4. Approved Decisions (Round 5)
 
 1. Use `amber-500` (`#f59e0b`) as the canonical brand amber in `--color-brand`.

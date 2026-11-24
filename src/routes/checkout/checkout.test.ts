@@ -1,24 +1,24 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-const { getSession, createSession, previewSession, getProduct, checkoutLocale } = vi.hoisted(
-	() => ({
-		checkoutLocale: { current: 'en' },
-		getSession: vi.fn(),
-		createSession: vi.fn(),
-		previewSession: vi.fn(),
-		getProduct: vi.fn()
-	})
-);
+const { getSession, createSession, previewSession, getProduct } = vi.hoisted(() => ({
+	getSession: vi.fn(),
+	createSession: vi.fn(),
+	previewSession: vi.fn(),
+	getProduct: vi.fn()
+}));
 
 vi.mock('$lib/server/auth', () => ({
 	auth: { api: { getSession } },
 	dodoPayments: { checkoutSessions: { create: createSession, preview: previewSession } }
 }));
 vi.mock('$lib/server/products', () => ({ getProduct }));
-vi.mock('$lib/paraglide/runtime', () => ({ getLocale: () => checkoutLocale.current }));
 vi.mock('$lib/server/logger', () => ({ createLogger: () => ({ error: vi.fn() }) }));
 
-import { load } from './+page.server';
+import { loadCheckoutData } from '$lib/server/checkout-page-data';
+
+function load(event: { url: URL; request: Request }) {
+	return loadCheckoutData(event.request, event.url.pathname + event.url.search);
+}
 
 function request(url: string) {
 	return {
@@ -32,7 +32,6 @@ function request(url: string) {
 describe('inline checkout server loader', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		checkoutLocale.current = 'en';
 		getSession.mockResolvedValue({ user: { email: 'customer@example.com', name: 'Customer' } });
 		getProduct.mockReturnValue({
 			productId: 'prod_test',
@@ -185,14 +184,13 @@ describe('inline checkout server loader', () => {
 	});
 
 	it('matches the Dodo form language to the selected site locale', async () => {
-		checkoutLocale.current = 'it';
 		previewSession.mockResolvedValueOnce({
 			currency: 'EUR',
 			trial_period_days: 14,
 			current_breakup: { total_amount: 0 },
 			recurring_breakup: { total_amount: 2499 }
 		});
-		await load(request('https://aceblocker.com/checkout?currency=EUR'));
+		await load(request('https://aceblocker.com/it/checkout?currency=EUR'));
 		expect(createSession.mock.calls[0][0].customization.force_language).toBe('it');
 	});
 

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DemoPlayback } from './DemoPlayback.svelte';
+import { flush } from 'solid-js';
+import { DemoPlayback } from './DemoPlayback';
 
 const CYCLE = 660 + 210 + 160 + 590;
 
@@ -22,30 +23,41 @@ describe('guided marketing demo playback', () => {
 
 	it('does not begin automatically', () => {
 		vi.advanceTimersByTime(10_000);
+		flush();
 		expect(playback.step).toBe(-1);
+		flush();
 		expect(playback.playing).toBe(false);
 		expect(applied).toEqual([]);
 	});
 
 	it('moves, hovers and presses before applying an action', () => {
 		playback.play();
+		flush();
 		expect(playback.pointerVisible).toBe(true);
+		flush();
 		expect(playback.pointerTarget).toBe('category');
+		flush();
 		expect(playback.phase).toBe('travel');
 		expect(applied).toEqual([]);
 
 		vi.advanceTimersByTime(660);
+		flush();
 		expect(playback.phase).toBe('hover');
+		flush();
 		expect(playback.step).toBe(-1);
 
 		vi.advanceTimersByTime(210);
+		flush();
 		expect(playback.phase).toBe('press');
 		expect(applied).toEqual([]);
 
 		vi.advanceTimersByTime(159);
+		flush();
 		expect(playback.step).toBe(-1);
 		vi.advanceTimersByTime(1);
+		flush();
 		expect(playback.step).toBe(0);
+		flush();
 		expect(playback.phase).toBe('settle');
 		expect(applied).toEqual([0]);
 	});
@@ -54,7 +66,9 @@ describe('guided marketing demo playback', () => {
 		playback.play();
 		vi.advanceTimersByTime(CYCLE * 3);
 		expect(applied).toEqual([0, 1, 2]);
+		flush();
 		expect(playback.step).toBe(2);
+		flush();
 		expect(playback.playing).toBe(false);
 		vi.advanceTimersByTime(30_000);
 		expect(applied).toEqual([0, 1, 2]);
@@ -65,8 +79,10 @@ describe('guided marketing demo playback', () => {
 		vi.advanceTimersByTime(CYCLE);
 		playback.pause();
 		vi.advanceTimersByTime(30_000);
+		flush();
 		expect(playback.step).toBe(0);
 		expect(applied).toEqual([0]);
+		flush();
 		expect(playback.playing).toBe(false);
 	});
 
@@ -74,7 +90,9 @@ describe('guided marketing demo playback', () => {
 		playback.play();
 		vi.advanceTimersByTime(600);
 		playback.manual();
+		flush();
 		expect(playback.pointerVisible).toBe(false);
+		flush();
 		expect(playback.phase).toBe('idle');
 		vi.advanceTimersByTime(20_000);
 		expect(applied).toEqual([]);
@@ -84,9 +102,12 @@ describe('guided marketing demo playback', () => {
 		playback.next();
 		playback.next();
 		playback.previous();
+		flush();
 		expect(playback.step).toBe(0);
 		expect(applied).toEqual([0, 1, 0]);
+		flush();
 		expect(playback.playing).toBe(false);
+		flush();
 		expect(playback.pointerVisible).toBe(false);
 	});
 
@@ -95,9 +116,12 @@ describe('guided marketing demo playback', () => {
 		playback.next();
 		playback.replay();
 		expect(applied).toEqual([0, 1, -1]);
+		flush();
 		expect(playback.playing).toBe(true);
+		flush();
 		expect(playback.phase).toBe('travel');
 		vi.advanceTimersByTime(1030);
+		flush();
 		expect(playback.step).toBe(0);
 	});
 
@@ -113,6 +137,7 @@ describe('guided marketing demo playback', () => {
 		vi.advanceTimersByTime(1);
 		expect(custom).toEqual([0]);
 		vi.advanceTimersByTime(450);
+		flush();
 		expect(sequence.playing).toBe(false);
 		sequence.dispose();
 	});
@@ -122,8 +147,11 @@ describe('guided marketing demo playback', () => {
 		playback.manual();
 		playback.play();
 		expect(applied).toEqual([0, -1]);
+		flush();
 		expect(playback.step).toBe(-1);
+		flush();
 		expect(playback.phase).toBe('travel');
+		flush();
 		expect(playback.pointerTarget).toBe('category');
 	});
 

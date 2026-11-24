@@ -6,29 +6,29 @@ This document records terms for Ace Blocker Desktop and Ace Blocker Site. GPT-6 
 
 ## Approved Translation Terms
 
-| English concept | Preferred Spanish term | Meaning and use |
-| --- | --- | --- |
-| Network Block                       | **bloqueo de red**                                     | Sites, categories, and schedule. Rules apply only during configured times. |
-| Block (nel contesto Network Blocks) | **bloqueo**                                            | Short form only when website filtering is clear from context. |
+| English concept                     | Preferred Spanish term                                 | Meaning and use                                                                  |
+| ----------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| Network Block                       | **bloqueo de red**                                     | Sites, categories, and schedule. Rules apply only during configured times.       |
+| Block (nel contesto Network Blocks) | **bloqueo**                                            | Short form only when website filtering is clear from context.                    |
 | Lock                                | **protección contra cambios**, **protección**          | Prevents deletion, deactivation, or weaker settings. Does not add blocked sites. |
-| Hard / timed lock                   | **protección estricta**, **protección temporal**       | Cannot be removed until its period ends. |
-| Schedule lock                       | **protección por horario**                             | Prevents changes during the configured period. |
-| Reflection Lock                     | **protección con reflexión**                           | Requires a reflection question and a five-minute wait. |
-| Locked (settings)                   | **cambios protegidos**                                 | Indicates protected settings, not active website filtering. |
-| Schedule                            | **horario**, **horas programadas**                     | Weekly enforcement periods with saved time and time zone. |
-| Resistance Mode                     | **Modo Resistencia**, **Resistencia**                  | Changes distracting website functions without necessarily blocking access. |
-| Categories / Site Packs             | **categorías**, **categorías seleccionadas**           | Domain groups available for use, not automatically applied to a block. |
-| Custom Lists                        | **listas personalizadas**                              | Reusable imported lists for Pro users. |
-| Downloaded / attached / enabled     | **descargada** / **añadida al bloqueo** / **activado** | Distinguish downloaded data, attachment to a block, and active enforcement. |
-| Blocking attempts                   | **intentos de acceso bloqueados**                      | Counts blocked attempts, not unique domains. |
-| Safe Search                         | **Búsqueda segura**                                    | Filters explicit results in compatible search engines. |
-| Free / Pro                          | **Free / Pro**                                         | Keep commercial plan names unchanged. |
-| Engine                              | **motor**                                              | Local Ace Blocker engine. |
-| Backup                              | **copia de seguridad**                                 | Saved file or copy of a configuration. |
-| Cloud backup                        | **copia de seguridad en la nube**                      | Pro feature for saving and restoring account data. |
-| Account                             | **cuenta**                                             | Personal user profile. |
-| Subscription                        | **suscripción**                                        | Subscription to a plan. |
-| Renewal / cancellation              | **renovación / cancelación**                           | Distinguish automatic renewal, payment cancellation, and end of access. |
+| Hard / timed lock                   | **protección estricta**, **protección temporal**       | Cannot be removed until its period ends.                                         |
+| Schedule lock                       | **protección por horario**                             | Prevents changes during the configured period.                                   |
+| Reflection Lock                     | **protección con reflexión**                           | Requires a reflection question and a five-minute wait.                           |
+| Locked (settings)                   | **cambios protegidos**                                 | Indicates protected settings, not active website filtering.                      |
+| Schedule                            | **horario**, **horas programadas**                     | Weekly enforcement periods with saved time and time zone.                        |
+| Resistance Mode                     | **Modo Resistencia**, **Resistencia**                  | Changes distracting website functions without necessarily blocking access.       |
+| Categories / Site Packs             | **categorías**, **categorías seleccionadas**           | Domain groups available for use, not automatically applied to a block.           |
+| Custom Lists                        | **listas personalizadas**                              | Reusable imported lists for Pro users.                                           |
+| Downloaded / attached / enabled     | **descargada** / **añadida al bloqueo** / **activado** | Distinguish downloaded data, attachment to a block, and active enforcement.      |
+| Blocking attempts                   | **intentos de acceso bloqueados**                      | Counts blocked attempts, not unique domains.                                     |
+| Safe Search                         | **Búsqueda segura**                                    | Filters explicit results in compatible search engines.                           |
+| Free / Pro                          | **Free / Pro**                                         | Keep commercial plan names unchanged.                                            |
+| Engine                              | **motor**                                              | Local Ace Blocker engine.                                                        |
+| Backup                              | **copia de seguridad**                                 | Saved file or copy of a configuration.                                           |
+| Cloud backup                        | **copia de seguridad en la nube**                      | Pro feature for saving and restoring account data.                               |
+| Account                             | **cuenta**                                             | Personal user profile.                                                           |
+| Subscription                        | **suscripción**                                        | Subscription to a plan.                                                          |
+| Renewal / cancellation              | **renovación / cancelación**                           | Distinguish automatic renewal, payment cancellation, and end of access.          |
 
 ## Writing Rules
 

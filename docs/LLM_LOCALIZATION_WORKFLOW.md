@@ -13,10 +13,10 @@ English is the current source. Review unclear English text before translation.
 
 ## Verified Starting State (November 6, 2026)
 
-| Repository | English source | Configured locales | Already translated keys |
-| --- | --- | --- | --- |
-| `ace-blocker/apps/ace-app` | 720 keys in `messages/en.json` | en, de, it, es, fr, pt, pt-BR | it: 13; others: 0 |
-| `ace-blocker-site` | 724 keys in `messages/en.json` | en, es, it, de | es/it/de: 56 each |
+| Repository                 | English source                 | Configured locales            | Already translated keys |
+| -------------------------- | ------------------------------ | ----------------------------- | ----------------------- |
+| `ace-blocker/apps/ace-app` | 720 keys in `messages/en.json` | en, de, it, es, fr, pt, pt-BR | it: 13; others: 0       |
+| `ace-blocker-site`         | 724 keys in `messages/en.json` | en, es, it, de                | es/it/de: 56 each       |
 
 These numbers count keys. They do **not** measure complete UI or page translations.
 Both projects use Paraglide/inlang, but their `project.inlang/settings.json` files differ.
@@ -54,17 +54,18 @@ Review lock, payment, privacy, Terms, and data claims before publication.
   Do not alternate synonyms for one technical concept.
 - You can change sentence order and length when the meaning stays the same.
   Keep essential security explanations and constraints, even when UI space is limited.
+
 ## Proposed Glossary Before the First Translation Pass
 
-| English concept | Meaning to preserve | Proposed Italian form to validate |
-| --- | --- | --- |
-| Network Block        | Configuration that filters sites or categories during a schedule. | `blocco di rete`                                                      |
+| English concept      | Meaning to preserve                                                                       | Proposed Italian form to validate                                     |
+| -------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Network Block        | Configuration that filters sites or categories during a schedule.                         | `blocco di rete`                                                      |
 | Lock / time-lock     | Protects block settings against changes that weaken rules. Does **not** block more sites. | `blocco delle modifiche` / `protezione delle regole` secondo contesto |
-| Locked               | Prevents users from weakening a rule while its protection is active. | `modifiche bloccate` oppure `protetto`, secondo il controllo          |
-| Schedule             | Times during which a Network Block enforces rules. | `programmazione` / `orari programmati`                                |
-| Resistance Mode      | Tools that reduce distracting parts of supported sites. Not a Network Block. | `modalità Resistenza` (nome prodotto da convalidare)                  |
-| Category / Site Pack | List of sites. Downloading it does **not** activate filtering. | `categoria` (distinguere da lista personalizzata)                     |
-| Pro / Ace Blocker    | Commercial plan or product name. | lasciare invariato                                                    |
+| Locked               | Prevents users from weakening a rule while its protection is active.                      | `modifiche bloccate` oppure `protetto`, secondo il controllo          |
+| Schedule             | Times during which a Network Block enforces rules.                                        | `programmazione` / `orari programmati`                                |
+| Resistance Mode      | Tools that reduce distracting parts of supported sites. Not a Network Block.              | `modalità Resistenza` (nome prodotto da convalidare)                  |
+| Category / Site Pack | List of sites. Downloading it does **not** activate filtering.                            | `categoria` (distinguere da lista personalizzata)                     |
+| Pro / Ace Blocker    | Commercial plan or product name.                                                          | lasciare invariato                                                    |
 
 This glossary is a **proposal**, not an approved list.
 Approve terms with examples from real screens.
@@ -110,6 +111,7 @@ Keep Portuguese `pt` and Brazilian Portuguese `pt-BR` separate.
   Flag untranslated or nearly identical strings for review. Do not flag brand names as translation errors.
 - Check spelling, punctuation, dates, numbers, button width, screen-reader output, and RTL where required.
 - Do not send secrets, credentials, personal data, or unnecessary private text to translation prompts.
+
 ## Practical Example: Preserve the Meaning
 
 EN (`control_lock_help_detail`, app):

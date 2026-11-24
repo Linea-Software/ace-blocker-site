@@ -129,7 +129,7 @@ export function ensureEntitlementKeysInText(
 	const keys = [ENTITLEMENT_PRIVATE_ENV, ENTITLEMENT_PUBLIC_ENV] as const;
 	const found = new Map<string, { value: string; present: boolean }>();
 	for (const key of keys) {
-		const regex = new RegExp('^' + key + '\s*=\s*([^\r\n]*)$', 'gm');
+		const regex = new RegExp('^' + key + '\\s*=\\s*([^\r\n]*)$', 'gm');
 		const matches = [...content.matchAll(regex)];
 		if (matches.length > 1) throw new Error('Duplicate entitlement key definitions in .env');
 		const raw = matches[0]?.[1].trim() ?? '';
@@ -143,7 +143,7 @@ export function ensureEntitlementKeysInText(
 	for (const key of keys) {
 		const definition = key + '="' + env.get(key) + '"';
 		if (found.get(key)!.present) {
-			const regex = new RegExp('^' + key + '\s*=\s*[^\r\n]*$', 'm');
+			const regex = new RegExp('^' + key + '\\s*=\\s*[^\r\n]*$', 'm');
 			updated = updated.replace(regex, definition);
 		} else {
 			if (updated && !updated.endsWith('\n')) updated += '\n';

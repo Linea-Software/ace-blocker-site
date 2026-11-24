@@ -11,8 +11,8 @@ bun.lockb
 # Generated files and build/test output
 /static/
 /drizzle/
-/.svelte-kit/
 /build/
+/dist/
 /src/lib/paraglide/
 /src/lib/server/db/auth-schema.ts
 /project.inlang/cache/
@@ -21,3 +21,6 @@ bun.lockb
 /test-results/
 /skills-lock.json
 /eslint-suppressions.json
+
+# Generated filesystem routes
+/file-routes.d.ts

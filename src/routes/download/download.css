@@ -1,0 +1,88 @@
+/* Download hero controls ported verbatim from the Svelte implementation. */
+.command-scroll {
+	/* Keep one thin scrollbar gutter so hover never changes the box height. */
+	scrollbar-width: thin;
+	scrollbar-color: var(--muted-foreground) transparent;
+}
+
+.command-scroll::-webkit-scrollbar {
+	height: 5px;
+}
+
+.command-scroll::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.command-scroll::-webkit-scrollbar-thumb {
+	border-radius: 999px;
+	background: var(--muted-foreground);
+}
+
+.command-fade {
+	opacity: 0;
+	transition: opacity 150ms ease;
+}
+
+.command-fade.visible {
+	opacity: 1;
+}
+
+.command-fade-left {
+	background: linear-gradient(to right, var(--background), transparent);
+}
+
+.command-fade-right {
+	background: linear-gradient(to left, var(--background), transparent);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.command-scroll {
+		scrollbar-color: transparent transparent;
+	}
+
+	.command-scroll::-webkit-scrollbar-thumb {
+		background: transparent;
+	}
+
+	.command-box:is(:hover, :focus-within) .command-scroll {
+		scrollbar-color: var(--muted-foreground) transparent;
+	}
+
+	.command-box:is(:hover, :focus-within) .command-scroll::-webkit-scrollbar-thumb {
+		background: var(--muted-foreground);
+	}
+}
+
+.command-copy {
+	transition: opacity 150ms ease;
+}
+
+/* Touch users have no hover state, so keep the copy action discoverable. */
+.command-copy:disabled {
+	opacity: 0.4;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.command-box .command-copy,
+	.command-box .command-copy:disabled {
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.command-box:is(:hover, :focus-within) .command-copy {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	.command-box:is(:hover, :focus-within) .command-copy:disabled {
+		opacity: 0.4;
+		pointer-events: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.command-copy,
+	.command-fade {
+		transition: none;
+	}
+}

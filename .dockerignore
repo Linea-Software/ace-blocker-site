@@ -10,7 +10,6 @@ bun.lockb
 # Build output
 dist/
 build/
-.svelte-kit/
 playwright-report/
 project.inlang/cache/
 *.log

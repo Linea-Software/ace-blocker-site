@@ -8,8 +8,6 @@ const { createUser, selectQueue, updateSet, updateWhere, updateProExpiration } =
 	updateProExpiration: vi.fn()
 }));
 
-vi.mock('$app/environment', () => ({ dev: true }));
-
 vi.mock('$lib/server/auth', () => ({
 	auth: {
 		api: {
