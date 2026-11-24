@@ -8,7 +8,7 @@
  *
  *   bun scripts/test-dodo-webhooks.ts
  *
- * Requires: dev server on https://localhost:5173, dev DB reachable via
+ * Requires: dev server on http://localhost:5173, dev DB reachable via
  * DATABASE_URL. Uses the seeder's dev user delivered+user1@resend.dev and its active
  * test-mode subscription (sub_0Nh5UEeRJdJYMY3jNz54E in this environment).
  */
@@ -16,7 +16,7 @@ import 'dotenv/config';
 import crypto from 'node:crypto';
 import postgres from 'postgres';
 
-const BASE_URL = process.env.TEST_BASE_URL ?? 'https://localhost:5173';
+const BASE_URL = process.env.TEST_BASE_URL ?? 'http://localhost:5173';
 // Better Auth serves plugin endpoints under its base path (/api/auth), so the
 // DodoPayments dashboard must be configured with:
 //   https://<host>/api/auth/dodopayments/webhooks

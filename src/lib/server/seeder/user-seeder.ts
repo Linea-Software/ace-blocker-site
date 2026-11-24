@@ -57,7 +57,7 @@ export async function seedDatabase() {
 		.where(eq(user.id, adminUser.id));
 	await updateProExpiration(adminEmail, new Date('2099-01-01'));
 	log.info(
-		{ email: adminEmail, url: 'https://localhost:5173/signin' },
+		{ email: adminEmail, url: 'http://localhost:5173/signin' },
 		adminAlreadyExists
 			? 'Development admin ready (existing password unchanged)'
 			: 'Development admin created (password configured via DEFAULT_ADMIN_PASSWORD)'

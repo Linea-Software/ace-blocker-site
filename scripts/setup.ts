@@ -1,6 +1,5 @@
 import { $ } from 'bun';
 import { join } from 'path';
-import { resolveLinuxNssInstallPlan } from './linux-setup';
 import { configureDevelopmentAdminEnv } from './dev-admin-setup';
 import {
 	defaultEntitlementKeyDirectory,
@@ -10,7 +9,7 @@ import {
 async function runCommand(command: string, args: string[]) {
 	// Use sudo only for privileged Linux commands and only when not already root.
 	const isLinux = process.platform === 'linux';
-	const privilegedCommands = ['docker', 'apt', 'pacman', 'dnf', 'zypper', 'apk'];
+	const privilegedCommands = ['docker'];
 	const useSudo = isLinux && process.getuid?.() !== 0 && privilegedCommands.includes(command);
 
 	console.log(`🚀 Running: ${useSudo ? 'sudo ' : ''}${command} ${args.join(' ')}...`);
@@ -22,56 +21,6 @@ async function runCommand(command: string, args: string[]) {
 	return result.exitCode === 0;
 }
 
-async function ensureLinuxNssTools() {
-	console.log('\n🛠️  Checking system dependencies...');
-
-	// certutil is provided by different packages on different Linux distros.
-	// Checking the executable also handles manually installed NSS tools.
-	if (Bun.which('certutil')) {
-		console.log('✅ NSS certutil is already installed.');
-		return;
-	}
-
-	const osReleasePaths = ['/etc/os-release', '/usr/lib/os-release'];
-	let osRelease = '';
-	for (const path of osReleasePaths) {
-		if (await Bun.file(path).exists()) {
-			osRelease = await Bun.file(path).text();
-			break;
-		}
-	}
-	const plan = resolveLinuxNssInstallPlan(osRelease);
-	if (!plan) {
-		throw new Error(
-			'Unsupported Linux distribution: please install NSS certutil manually and rerun setup.'
-		);
-	}
-
-	console.log(
-		`📦 Installing ${plan.packageName} (${plan.family}) for local HTTPS certificates...`
-	);
-	for (const { command, args } of plan.commands) {
-		if (!Bun.which(command)) {
-			throw new Error(
-				`Missing ${command} package manager. Install NSS certutil manually or check your Linux distribution.`
-			);
-		}
-		if (!(await runCommand(command, args))) {
-			throw new Error(
-				`Could not install ${plan.packageName} with ${command}. Install it manually and rerun setup.` +
-					(command === 'pacman'
-						? ' On Arch, update your system with sudo pacman -Syu first if package databases are outdated.'
-						: '')
-			);
-		}
-	}
-
-	if (!Bun.which('certutil')) {
-		throw new Error(`Installed ${plan.packageName}, but certutil is not on PATH.`);
-	}
-	console.log('✅ NSS certutil is available.');
-}
-
 async function main() {
 	if (process.env.NODE_ENV === 'production') {
 		throw new Error(
@@ -79,10 +28,6 @@ async function main() {
 		);
 	}
 
-	// 0. Install system dependencies (Linux only)
-	if (process.platform === 'linux') {
-		await ensureLinuxNssTools();
-	}
 	const rootDir = process.cwd();
 	const envPath = join(rootDir, '.env');
 	const envExamplePath = join(rootDir, '.env.example');
@@ -129,10 +74,10 @@ async function main() {
 	}
 
 	// 1.5. Set BETTER_AUTH_URL if missing
-	if (!envContent.includes('BETTER_AUTH_URL')) {
+	if (!/^BETTER_AUTH_URL\s*=/m.test(envContent)) {
 		console.log('🔗 Adding BETTER_AUTH_URL...');
 		if (!envContent.endsWith('\n')) envContent += '\n';
-		envContent += `BETTER_AUTH_URL="https://localhost:5173"\n`;
+		envContent += `BETTER_AUTH_URL="http://localhost:5173"\n`;
 		needsUpdate = true;
 	}
 
@@ -194,7 +139,7 @@ async function main() {
 	console.log('Database migrations applied successfully.');
 
 	console.log('\n✨ Setup complete! You can now run the development server.');
-	console.log(`🔐 Development admin: ${devAdminSetup.email} — https://localhost:5173/signin`);
+	console.log(`🔐 Development admin: ${devAdminSetup.email} — http://localhost:5173/signin`);
 	console.log(
 		'   New accounts use the password configured in DEFAULT_ADMIN_PASSWORD (existing passwords are not changed).'
 	);

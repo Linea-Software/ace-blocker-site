@@ -11,11 +11,10 @@ Use **Bun** for package management and script execution.
 - **When installing packages**, use `bun add <package>` or `bun add -d <package>`.
 - **TypeScript**: The Solid 2 port uses the repository's pinned TypeScript toolchain and `tsc --noEmit` (see `package.json`); do not retain Svelte-specific `svelte-check`, `svelte-kit sync`, or `adapter-node` requirements. Run `bun run check` after changes and coordinate any toolchain upgrade with the lockfile and CI.
 - **SSR runtime**: Vite 8 + `@solidjs/vite-plugin` start mode (`ssr: true`, `serverFunctions: true`, `start.nodeServer`) replaces SvelteKit's Node adapter. Do not add an independent SvelteKit server or page handler. See `docs/SOLIDJS_2_ARCHITECTURE.md`.
-- **Running locally:** The development server runs at `https://localhost:5173/`. Do not start `bun run dev` yourself. Use that URL if available; otherwise use `bun run test:e2e` for the isolated production-artifact runner. Never use the real database for E2E fixtures.
+- **Running locally:** The development server runs at `http://localhost:5173/`. Do not start `bun run dev` yourself. Use that URL if available; otherwise use `bun run test:e2e` for the isolated production-artifact runner. Never use the real database for E2E fixtures.
 - **Initial setup:** Run `bun run setup`. It configures `.env`, creates `BETTER_AUTH_SECRET`, creates a persistent Ed25519 entitlement signing and verification key pair outside the checkout, and fills missing `DEFAULT_ADMIN_*` fixture credentials when needed. It also starts Docker PostgreSQL and applies Drizzle migrations.
   Run `bun run gen:entitlement-keys` to create or reuse development entitlement keys and fill `.env`. Provide a positional output directory to manage standalone files without changing `.env`.
   On a VPS, the private `ace-infra` provisioning flow calls `scripts/setup-env.ts`. It creates or reuses a separate production key pair in `~/.config/ace-blocker/entitlement-keys`, writes the values to `.env` with mode 0600, and must never rotate the keys on a routine deployment.
-  `scripts/setup.ts` detects Debian/Ubuntu, Arch, Fedora/RHEL, openSUSE, and Alpine through `os-release`. It checks for `certutil` before installing distribution-specific NSS tools. `scripts/linux-setup.ts` selects packages; unit tests cover this selection. See README.md.
   VPS host provisioning and updates are owned by the private `ace-infra` repository. Its production provisioning supports Debian/Ubuntu only.
 - **Single Drizzle baseline (2026-11-19):** The checked-in `drizzle/0000` is the only initial migration and creates the entire current schema, including separate `backups.data`, `backups.salt`, and `backups.nonce` columns. There is no incremental/legacy migration path or automatic database-reset behavior. `bun run db:migrate` uses a read-only guard against replaying CREATE TABLE over an existing database with a different history. For development, start with a fresh database when schema history is incompatible. Do not connect test migrations to the VPS. See README.md.
 - **Database Management**: Run `bun run db:delete` to stop the Docker database and delete its associated volumes (virtual disk); this is destructive and must never be used as an automatic migration-repair step.
@@ -23,7 +22,7 @@ Use **Bun** for package management and script execution.
     - **Email**: `dev@example.com`
     - **Username**: `Admin`
     - **Password**: `dev-password`
-    - **Login**: `https://localhost:5173/signin` after `bun run dev`
+    - **Login**: `http://localhost:5173/signin` after `bun run dev`
       Both `src/lib/server/bootstrap.ts:initializeSite()` and the development seeder require a local loopback PostgreSQL URL before they seed a development account. Keep existing user passwords. Update only the role, email verification, and Pro fixture. For a custom admin email, require a custom password of at least 12 characters. Never use the public development password or log passwords. Keep the production provisioning flow in `scripts/provision-admin.ts` separate and unchanged.
 - **Committing changes:** Commit verified changes with a descriptive message only when the task authorizes commits. Never stage unrelated agents' work (`git add .` is unsafe in a shared workspace). For documentation-only delegated tasks, respect an explicit no-commit instruction.
 

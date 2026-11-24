@@ -5,7 +5,7 @@
  * pixel diff) before merging.
  *
  * Usage (from ace-blocker-site, dev server + Docker DB running):
- *   BASE_URL=https://localhost:5173 OUT_DIR=C:/tmp/shots/before bun scripts/verify-screenshots.ts
+ *   BASE_URL=http://localhost:5173 OUT_DIR=C:/tmp/shots/before bun scripts/verify-screenshots.ts
  *
  * Captures public pages logged OUT, then signs in as the dev admin
  * (2FA TOTP computed from the encrypted DB secret) and captures the admin
@@ -21,7 +21,7 @@ import { createOTP } from '@better-auth/utils/otp';
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { hexToBytes, managedNonce } from '@noble/ciphers/utils.js';
 
-const BASE_URL = process.env.BASE_URL ?? 'https://localhost:5173';
+const BASE_URL = process.env.BASE_URL ?? 'http://localhost:5173';
 const OUT_DIR = process.env.OUT_DIR ?? '.verify-shots';
 const REQUEST_TIMEOUT_MS = 15_000;
 fs.mkdirSync(OUT_DIR, { recursive: true });

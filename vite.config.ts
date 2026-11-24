@@ -21,14 +21,13 @@ function requireDevelopmentEnvironment(): Plugin {
 	};
 }
 
-export default defineConfig(async ({ command, mode }) => ({
+export default defineConfig(({ command, mode }) => ({
 	server:
 		command === 'serve' && mode === 'development' && !process.env.VITEST
 			? {
 					host: 'localhost',
 					port: 5173,
-					strictPort: true,
-					https: await (await import('devcert-sanscache')).default('localhost')
+					strictPort: true
 				}
 			: undefined,
 	publicDir: 'static',
