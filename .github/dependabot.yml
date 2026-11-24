@@ -72,17 +72,3 @@ updates:
           github-actions:
               patterns: ['*']
               update-types: [minor, patch]
-
-    # Dockerfile: Bun builder and runtime stages share the same base image.
-    - package-ecosystem: docker
-      directory: /
-      schedule:
-          interval: weekly
-      open-pull-requests-limit: 3
-
-    # compose.yaml: review PostgreSQL image upgrades individually.
-    - package-ecosystem: docker-compose
-      directory: /
-      schedule:
-          interval: weekly
-      open-pull-requests-limit: 2

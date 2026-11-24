@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { createServer as createHttpsServer } from 'node:https';
 import { request as httpRequest, createServer } from 'node:http';
 import postgres from 'postgres';
+import { DATABASE_IMAGE } from '../db';
 
 const folder = mkdtempSync(join(tmpdir(), 'ace-e2e-'));
 const container = 'ace-e2e-' + randomBytes(6).toString('hex');
@@ -13,6 +14,7 @@ const password = randomBytes(24).toString('hex');
 const baseEnv = {
 	PATH: process.env.PATH!,
 	HOME: process.env.HOME!,
+	...(process.env.XDG_RUNTIME_DIR ? { XDG_RUNTIME_DIR: process.env.XDG_RUNTIME_DIR } : {}),
 	ACE_E2E_ISOLATED: '1',
 	DOTENV_CONFIG_PATH: '/dev/null',
 	NODE_ENV: 'production'
@@ -52,7 +54,7 @@ try {
 		cert
 	]);
 	run([
-		'docker',
+		'podman',
 		'run',
 		'-d',
 		'--rm',
@@ -66,16 +68,16 @@ try {
 		'POSTGRES_PASSWORD=' + password,
 		'-e',
 		'POSTGRES_DB=ace_e2e',
-		'postgres:18.6-bookworm'
+		DATABASE_IMAGE
 	]);
 	created = true;
-	const port = output(['docker', 'port', container, '5432/tcp']).split(':').at(-1);
+	const port = output(['podman', 'port', container, '5432/tcp']).split(':').at(-1);
 	const database = 'postgresql://ace_e2e:' + password + '@127.0.0.1:' + port + '/ace_e2e';
 	for (let i = 0; i < 60; i++) {
 		if (
 			Bun.spawnSync(
 				[
-					'docker',
+					'podman',
 					'exec',
 					container,
 					'pg_isready',
@@ -202,6 +204,6 @@ try {
 		await new Promise<void>((resolve) => proxy!.close(() => resolve()));
 	}
 	if (db) await db.end();
-	if (created) Bun.spawnSync(['docker', 'rm', '-f', container], { env: baseEnv });
+	if (created) Bun.spawnSync(['podman', 'rm', '-f', container], { env: baseEnv });
 	rmSync(folder, { recursive: true, force: true });
 }

@@ -12,12 +12,12 @@ Use **Bun** for package management and script execution.
 - **TypeScript**: The Solid 2 port uses the repository's pinned TypeScript toolchain and `tsc --noEmit` (see `package.json`); do not retain Svelte-specific `svelte-check`, `svelte-kit sync`, or `adapter-node` requirements. Run `bun run check` after changes and coordinate any toolchain upgrade with the lockfile and CI.
 - **SSR runtime**: Vite 8 + `@solidjs/vite-plugin` start mode (`ssr: true`, `serverFunctions: true`, `start.nodeServer`) replaces SvelteKit's Node adapter. Do not add an independent SvelteKit server or page handler. See `docs/SOLIDJS_2_ARCHITECTURE.md`.
 - **Running locally:** The development server runs at `http://localhost:5173/`. Do not start `bun run dev` yourself. Use that URL if available; otherwise use `bun run test:e2e` for the isolated production-artifact runner. Never use the real database for E2E fixtures.
-- **Initial setup:** Run `bun run setup`. It configures `.env`, creates `BETTER_AUTH_SECRET`, creates a persistent Ed25519 entitlement signing and verification key pair outside the checkout, and fills missing `DEFAULT_ADMIN_*` fixture credentials when needed. It also starts Docker PostgreSQL and applies Drizzle migrations.
+- **Initial setup:** Run `bun run setup`. It configures `.env`, creates `BETTER_AUTH_SECRET`, creates a persistent Ed25519 entitlement signing and verification key pair outside the checkout, and fills missing `DEFAULT_ADMIN_*` fixture credentials when needed. It also starts Podman PostgreSQL and applies Drizzle migrations.
   Run `bun run gen:entitlement-keys` to create or reuse development entitlement keys and fill `.env`. Provide a positional output directory to manage standalone files without changing `.env`.
   On a VPS, the private `ace-infra` provisioning flow calls `scripts/setup-env.ts`. It creates or reuses a separate production key pair in `~/.config/ace-blocker/entitlement-keys`, writes the values to `.env` with mode 0600, and must never rotate the keys on a routine deployment.
   VPS host provisioning and updates are owned by the private `ace-infra` repository. Its production provisioning supports Debian/Ubuntu only.
 - **Single Drizzle baseline (2026-11-19):** The checked-in `drizzle/0000` is the only initial migration and creates the entire current schema, including separate `backups.data`, `backups.salt`, and `backups.nonce` columns. There is no incremental/legacy migration path or automatic database-reset behavior. `bun run db:migrate` uses a read-only guard against replaying CREATE TABLE over an existing database with a different history. For development, start with a fresh database when schema history is incompatible. Do not connect test migrations to the VPS. See README.md.
-- **Database Management**: Run `bun run db:delete` to stop the Docker database and delete its associated volumes (virtual disk); this is destructive and must never be used as an automatic migration-repair step.
+- **Database Management**: Run `bun run db:delete` to stop the Podman database and delete its associated volumes (virtual disk); this is destructive and must never be used as an automatic migration-repair step.
 - **Development Credentials**: `bun run setup` fills missing/blank `DEFAULT_ADMIN_EMAIL`, `DEFAULT_ADMIN_USERNAME` and `DEFAULT_ADMIN_PASSWORD` in `.env` without overwriting nonblank custom values. The dev seeder also falls back to these defaults:
     - **Email**: `dev@example.com`
     - **Username**: `Admin`
@@ -341,11 +341,11 @@ Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })
 
 Use `bun run <script>` for these tasks:
 
-- `setup`: Configures `.env`, including default development admin credentials, starts Docker DB, and applies migrations. The pure `.env` helper `scripts/dev-admin-setup.ts` refuses remote/production database targets and preserves custom credentials; see the config and seeder tests.
+- `setup`: Configures `.env`, including default development admin credentials, starts Podman DB, and applies migrations. The pure `.env` helper `scripts/dev-admin-setup.ts` refuses remote/production database targets and preserves custom credentials; see the config and seeder tests.
 - `setup-env`: Production `.env` configuration must validate third-party credentials when a safe read-only/non-effectful provider check exists, re-prompt rejected credentials, and fail closed on provider/network ambiguity rather than saving unverified values. Webhook/signing secrets with no standalone verification endpoint must be called out honestly.
 - Production VPS provisioning, host credentials, SSH and backup scripts are maintained separately in the private `ace-infra` repository.
-- `db:start`: Starts the Docker database.
-- `db:delete`: Stops the Docker database and deletes volumes.
+- `db:start`: Starts the Podman database.
+- `db:delete`: Stops the Podman database and deletes volumes.
 - `db:push`: Pushes schema changes to the database (development).
 - `db:migrate`: Runs migrations.
 - `db:studio`: Opens Drizzle Studio.
@@ -356,7 +356,7 @@ Use `bun run <script>` for these tasks:
 - `format`: Formats code with Prettier.
 - `verify-screenshots`: Captures before/after full-page screenshots (light +
   dark) of the key pages for pixel-level visual verification of UI changes
-  (requires the dev server + Docker DB; see the script header for usage).
+  (requires the dev server + Podman DB; see the script header for usage).
 
 ## Logging (Pino)
 
@@ -388,7 +388,7 @@ Installed skills are in `.agents/skills/` (managed by the project skill installe
 - **APIs:** `elysiajs`, `openapi-spec-generation`; keep endpoint contracts and auth explicit.
 - **UI:** `shadcn`, `tailwind-design-system`, `tailwind-v4-shadcn` are references only. Use `docs/ui-identity.md` as Ace visual authority and migrate actual Solid UI primitives; do not paste Svelte implementations. For design review, use any available frontend-design/a11y/visual-review skills and real screenshots.
 - **Validation, runtime, locale:** `zod`, `bun-runtime`, `paraglide-js-internationalization-i18n`.
-- **Infrastructure/payments:** `docker-expert`, `dodo-best-practices`, `checkout-integration`, `subscription-integration`.
+- **Infrastructure/payments:** `dodo-best-practices`, `checkout-integration`, `subscription-integration`.
 - **Testing:** `vitest`, `playwright-cli`, `playwright-best-practices`, `webapp-testing`; use Solid browser tests for migrated components.
 - **Language/code quality:** `typescript-advanced-types`, `git-commit`, `eslint-prettier-config`.
 

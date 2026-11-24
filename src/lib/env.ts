@@ -23,7 +23,7 @@ export const envSchema = z.object({
 
 /**
  * `NODE_ENV` is the single production-mode signal shared by the application,
- * Docker image, and VPS deployment tooling.
+ * Podman database, and VPS deployment tooling.
  */
 export function isProduction(environment: NodeJS.ProcessEnv = process.env): boolean {
 	return environment.NODE_ENV === 'production';

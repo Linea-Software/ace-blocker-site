@@ -12,7 +12,7 @@ The website runs on **Bun + Vite 8** using **SolidJS 2.0** and `@solidjs/vite-pl
 
 ## Local development
 
-Install [Bun](https://bun.sh/) and Docker with the Docker Compose plugin. Start the Docker daemon, then run from the repository root:
+Install [Bun](https://bun.sh/) and Podman (rootless, with user namespaces configured). On CachyOS/Arch, install with `sudo pacman -Syu podman fuse-overlayfs passt`. On Debian/Ubuntu, install `podman uidmap slirp4netns fuse-overlayfs` with APT. On Linux check that `podman info --format '{{.Host.Security.Rootless}}'` returns `true`. On macOS/Windows initialize and start a Podman machine. The database uses PostgreSQL 19.0, pinned in `postgres-image.txt`. Then run from the repository root:
 
 ```sh
 bun install
@@ -32,7 +32,7 @@ Local development uses HTTP on loopback; no certificate installation or system t
 
 The **development server will refuse to start** if any required environment variable is absent, blank or whitespace-only. It prints a `[ACE ENV ERROR]` message listing the missing keys (never their values). Configure `.env` before launching `bun run dev`; `bun run setup` creates the file, but empty credential placeholders must be filled in. This includes Dodo Payments, Resend and BunnyCDN credentials. In development, `BETTER_AUTH_URL` is unnecessary because Better Auth falls back to `PUBLIC_BETTER_AUTH_URL`, and `ORIGIN` is excluded from development validation; neither is required by the dev startup check. Both remain mandatory in the **current production schema**. Verify the trusted origin/proxy values with the Solid SSR server before deployment. Configure `PUBLIC_BETTER_AUTH_URL` for the local HTTP origin. An absent optional `ACE_RELEASE_INGEST_TOKEN` or development-admin fixture credential does not block startup.
 
-The startup check verifies **presence**, not that external API credentials work; production keeps its stricter URL/secret validation. Tests, builds and configuration scripts do not require live provider credentials. The database and Docker are still required.
+The startup check verifies **presence**, not that external API credentials work; production keeps its stricter URL/secret validation. Tests, builds and configuration scripts do not require live provider credentials. The database and Podman are still required.
 
 ### Single Drizzle baseline (development)
 
@@ -96,6 +96,6 @@ bun run build
 bun run test:e2e
 ```
 
-The Playwright runner creates a disposable PostgreSQL container, temporary HTTPS proxy, generated test keys and isolated provider fixtures. It builds and exercises the actual production server artifact without reading the local .env or using production services. Docker and Chromium must be installed. Run a subset with `bun run test:e2e -- e2e/device-link.spec.ts`. Verify direct SSR loads, localized pages, auth/admin denials, device-link HTTP endpoints, payment/webhook invariants, client hydration and mobile/light/dark UI parity; the migrated browser specs exercise Solid 2 components directly. See the [architecture verification matrix](docs/SOLIDJS_2_ARCHITECTURE.md#10-verification-gates-must-be-rerun-not-claimed-completed).
+The Playwright runner creates a disposable PostgreSQL container, temporary HTTPS proxy, generated test keys and isolated provider fixtures. It builds and exercises the actual production server artifact without reading the local .env or using production services. Podman and Chromium must be installed. Run a subset with `bun run test:e2e -- e2e/device-link.spec.ts`. Verify direct SSR loads, localized pages, auth/admin denials, device-link HTTP endpoints, payment/webhook invariants, client hydration and mobile/light/dark UI parity; the migrated browser specs exercise Solid 2 components directly. See the [architecture verification matrix](docs/SOLIDJS_2_ARCHITECTURE.md#10-verification-gates-must-be-rerun-not-claimed-completed).
 
 The commands above are **recommended checks**, not a claim of a green migration. See [docs/DEPLOY.md](docs/DEPLOY.md) for production application interfaces and the private `ace-infra` operations boundary.

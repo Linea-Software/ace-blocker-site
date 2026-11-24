@@ -7,17 +7,8 @@ import {
 } from './entitlement-key-setup';
 
 async function runCommand(command: string, args: string[]) {
-	// Use sudo only for privileged Linux commands and only when not already root.
-	const isLinux = process.platform === 'linux';
-	const privilegedCommands = ['docker'];
-	const useSudo = isLinux && process.getuid?.() !== 0 && privilegedCommands.includes(command);
-
-	console.log(`🚀 Running: ${useSudo ? 'sudo ' : ''}${command} ${args.join(' ')}...`);
-
-	const result = useSudo
-		? await $`sudo ${command} ${args}`.nothrow()
-		: await $`${command} ${args}`.nothrow();
-
+	console.log(`Running: ${command} ${args.join(' ')}`);
+	const result = await $`${command} ${args}`.nothrow();
 	return result.exitCode === 0;
 }
 
@@ -124,13 +115,9 @@ async function main() {
 	// 3. Database & Auth Setup
 	console.log('\n🗄️  Setting up database...');
 
-	// Ensure docker is running
-	if (!(await runCommand('docker', ['compose', 'up', '-d', '--wait', '--wait-timeout', '60']))) {
-		throw new Error(
-			'Failed to start a healthy database container. Make sure Docker is running.'
-		);
+	if (!(await runCommand('bun', ['scripts/db.ts', 'start']))) {
+		throw new Error('Failed to start a healthy Podman database.');
 	}
-	console.log('Docker containers are running and healthy.');
 
 	console.log('Applying database migrations...');
 	if (!(await runCommand('bun', ['run', 'db:migrate']))) {

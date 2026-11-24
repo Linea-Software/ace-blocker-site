@@ -11,11 +11,10 @@ This website repository contains the **application** and local development tools
 - `bun scripts/setup-env.ts` — configure and validate the production environment. Creates or reuses a persistent production entitlement-signing key pair; do not rotate this pair during ordinary deployments.
 - `bun run db:migrate` — safely apply reviewed database migrations; a read-only guard refuses to replay the regenerated initial `0000` on databases with old migration history. Require an independently restorable pre-migration backup.
 - `bun run build` — generate Solid 2 start-mode SSR bundles: `dist/client/` static assets and `dist/server/` server code. The current Vite config enables SSR, server functions and `start.nodeServer`; do not run SvelteKit's adapter or `svelte-kit sync`.
-- `bun ./dist/server/node.js` — current Node-compatible server entry run under Bun (also the `Dockerfile` command); validate the actual emitted artifact after each build and use the host's proper process supervision. Serve `dist/client` and forward page, API and `/_server` requests to the appropriate handler on the same origin.
+- `bun ./dist/server/node.js` — current Node-compatible server entry run under Bun; validate the actual emitted artifact after each build and use the host's proper process supervision. Serve `dist/client` and forward page, API and `/_server` requests to the appropriate handler on the same origin.
 - `bun run check`, `bun run lint`, `bun run test:unit -- --run`, `bun run test:e2e` — pre-deploy checks (E2E requires a running test instance and database). Run `bun run seo:audit` once the deployed origin is reachable.
 - `bun run provision-admin` — initial administrator provisioning; not an ordinary deployment step.
-- `compose.yaml` — the versioned PostgreSQL development template and source input for root-owned production Compose configuration.
-- `Dockerfile` — optional container packaging: builds with Bun, copies both Solid SSR outputs, installs runtime dependencies, and starts `dist/server/node.js` as a non-root user. The documented VPS path remains the separately managed Bun application service; infrastructure ownership is unchanged.
+- `postgres-image.txt` — shared pinned PostgreSQL image for rootless development, E2E and production Quadlet.
 
 Do **not** run `bun run setup` against a production database. It is for local development only.
 

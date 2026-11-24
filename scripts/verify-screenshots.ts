@@ -4,7 +4,7 @@
  * refactor can be proven pixel-identical (compare files with a hash or a
  * pixel diff) before merging.
  *
- * Usage (from ace-blocker-site, dev server + Docker DB running):
+ * Usage (from ace-blocker-site, dev server + Podman DB running):
  *   BASE_URL=http://localhost:5173 OUT_DIR=C:/tmp/shots/before bun scripts/verify-screenshots.ts
  *
  * Captures public pages logged OUT, then signs in as the dev admin
@@ -53,16 +53,16 @@ async function totp(secret: string): Promise<string> {
 	return await createOTP(secret, { period: 30, digits: 6 }).totp();
 }
 
-function runDocker(args: string[]): string {
-	const res = spawnSync('docker', args, { encoding: 'utf8', timeout: 30000 });
-	if (res.status !== 0) throw new Error(res.stderr || `docker ${args[0]} failed`);
+function runPodman(args: string[]): string {
+	const res = spawnSync('podman', args, { encoding: 'utf8', timeout: 30000 });
+	if (res.status !== 0) throw new Error(res.stderr || `podman ${args[0]} failed`);
 	return res.stdout.trim();
 }
 
 function admin2faSecret(): string | null {
 	const sql = `select tf.secret from two_factor tf join "user" u on u.id = tf.user_id where u.email = '${env.DEFAULT_ADMIN_EMAIL}' limit 1;`;
 	try {
-		const encrypted = runDocker([
+		const encrypted = runPodman([
 			'exec',
 			'ace-blocker-db',
 			'psql',

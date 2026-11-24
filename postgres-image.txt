@@ -1,0 +1,1 @@
+docker.io/library/postgres:19.0-trixie

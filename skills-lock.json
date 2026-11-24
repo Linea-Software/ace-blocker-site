@@ -30,12 +30,6 @@
       "sourceType": "github",
       "computedHash": ""
     },
-    "docker-expert": {
-      "source": "sickn33/antigravity-awesome-skills",
-      "sourceType": "github",
-      "skillPath": "skills/docker-expert/SKILL.md",
-      "computedHash": ""
-    },
     "dodo-best-practices": {
       "source": "dodopayments/skills",
       "sourceType": "github",
