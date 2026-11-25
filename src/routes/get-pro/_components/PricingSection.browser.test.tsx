@@ -3,9 +3,9 @@ import { createSignal, flush } from 'solid-js';
 import { page } from 'vitest/browser';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as m from '$lib/paraglide/messages';
-import PricingSection from './PricingSection';
+import PricingSection, { type Pricing } from './PricingSection';
 
-const pricing = {
+const pricing: Pricing = {
 	currency: 'EUR',
 	monthlyPrice: '€3,99',
 	yearlyPrice: '€24,99',
@@ -26,7 +26,7 @@ afterEach(() => {
 	container = undefined;
 });
 
-function mount() {
+function mount(currency: Pricing['currency'] = pricing.currency) {
 	container = document.createElement('div');
 	document.body.append(container);
 	const upgrade = vi.fn();
@@ -34,7 +34,7 @@ function mount() {
 	dispose = render(
 		() => (
 			<PricingSection
-				pricing={pricing}
+				pricing={{ ...pricing, currency }}
 				billingCycle={cycle}
 				setBillingCycle={setCycle}
 				onUpgrade={upgrade}
@@ -46,6 +46,16 @@ function mount() {
 }
 
 describe('Solid 2 pricing comparison', () => {
+	it.each([
+		['USD', '$0'],
+		['EUR', '€0'],
+		['GBP', '£0'],
+		['INR', '₹0']
+	] as const)('shows the free plan in %s', async (currency, price) => {
+		mount(currency);
+		await expect.element(page.getByText(price, { exact: true })).toBeVisible();
+	});
+
 	it('includes network blocks for Free and Pro and distinguishes Resistance tools', async () => {
 		mount();
 		const network = page.getByRole('row').filter({

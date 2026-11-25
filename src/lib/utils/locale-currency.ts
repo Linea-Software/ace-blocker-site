@@ -92,7 +92,11 @@ export function requestCurrency(
 }
 
 /** Display currency symbols before numbers while preserving decimal separators. */
-export function formatCurrency(amountMinor: number, currency: SupportedCurrency): string {
+export function formatCurrency(
+	amountMinor: number,
+	currency: SupportedCurrency,
+	compactWhole = false
+): string {
 	const symbols: Record<SupportedCurrency, string> = {
 		USD: '$',
 		EUR: '€',
@@ -105,7 +109,7 @@ export function formatCurrency(amountMinor: number, currency: SupportedCurrency)
 		GBP: 'en-GB',
 		INR: 'en-IN'
 	};
-	const digits = currency === 'INR' && amountMinor % 100 === 0 ? 0 : 2;
+	const digits = (compactWhole || currency === 'INR') && amountMinor % 100 === 0 ? 0 : 2;
 	const number = new Intl.NumberFormat(locales[currency], {
 		minimumFractionDigits: digits,
 		maximumFractionDigits: digits

@@ -1,9 +1,10 @@
 import { For, Show } from 'solid-js';
 import { Check, Minus } from '@lucide/solid';
 import * as m from '$lib/paraglide/messages';
+import { formatCurrency, type SupportedCurrency } from '$lib/utils/locale-currency';
 
 export interface Pricing {
-	currency: string;
+	currency: SupportedCurrency;
 	monthlyPrice: string;
 	yearlyPrice: string;
 	yearlyStrikethrough: string;
@@ -91,7 +92,7 @@ export default function PricingSection(props: Props) {
 						<div class="flex flex-col justify-start pt-5 md:min-h-48">
 							<div class="flex items-end gap-2">
 								<span class="font-display text-5xl font-semibold">
-									{m.plan_free_price()}
+									{formatCurrency(0, props.pricing.currency, true)}
 								</span>
 								<span class="pb-1 text-sm text-muted-foreground">
 									{m.pricing_forever()}
