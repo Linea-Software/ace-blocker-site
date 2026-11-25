@@ -1,3 +1,5 @@
+import { GET } from '@solidjs/web/server-functions';
+
 export type DownloadOS = 'windows' | 'linux' | 'macos';
 export type DownloadPlatformMeta = {
 	version: string;
@@ -9,9 +11,9 @@ export type DownloadPlatformMeta = {
 };
 export type DownloadPlatforms = Record<DownloadOS, DownloadPlatformMeta | null>;
 
-/** Server-only read; expose public metadata only. */
-export async function getDownloadPlatforms(): Promise<DownloadPlatforms> {
+/** Declare GET at the server-function module so RPC dispatch permits it before the page loads. */
+export const getDownloadPlatforms = GET(async (): Promise<DownloadPlatforms> => {
 	'use server';
 	const { loadDownloadPlatforms } = await import('$lib/server/download-page-data');
 	return loadDownloadPlatforms();
-}
+});

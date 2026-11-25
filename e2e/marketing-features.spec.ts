@@ -607,6 +607,29 @@ test('localized feature routes expose translated titles and content', async ({ p
 });
 
 test.describe('Download page primary installer actions', () => {
+	test('loads published installers on client navigation from the homepage', async ({ page }) => {
+		const errors: string[] = [];
+		page.on('pageerror', (error) => errors.push(error.message));
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const rpc = page.waitForResponse(
+			(response) =>
+				new URL(response.url()).pathname.includes('/_server/data/') &&
+				response.request().method() === 'GET' &&
+				new URL(response.url()).pathname.includes('getDownloadPlatforms')
+		);
+		await page
+			.getByRole('link', { name: /download/i })
+			.first()
+			.click();
+		expect((await rpc).status()).toBe(200);
+		await expect(page).toHaveURL(/\/download$/);
+		const card = page.getByTestId('primary-installer-card');
+		await expect(card).toBeVisible();
+		await expect(card.getByRole('button', { name: 'Windows', exact: true })).toBeVisible();
+		await expect(card.getByRole('button', { name: 'Linux', exact: true })).toBeVisible();
+		expect(errors).toEqual([]);
+	});
+
 	test('shows release metadata in the footer instead of release notes', async ({ page }) => {
 		await page.goto('/download', { waitUntil: 'networkidle' });
 		const card = page.getByTestId('primary-installer-card');
