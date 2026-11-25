@@ -30,7 +30,12 @@ type ComparisonRow = {
 const comparisonRows: ComparisonRow[] = [
 	{ label: m.pricing_network_blocks, basic: m.pricing_included, pro: m.pricing_included },
 	{ label: m.pricing_curated_packs, basic: m.pricing_three_packs, pro: m.pricing_all_packs },
-	{ label: m.pricing_resistance, available: true },
+	{
+		label: m.pricing_resistance,
+		basic: m.pricing_standard_resistance,
+		pro: m.pricing_full_resistance
+	},
+	{ label: m.pricing_resistance_lock, available: true },
 	{ label: m.pricing_cloud_backup, available: true },
 	{ label: m.pricing_custom_packs, available: true }
 ];
@@ -65,9 +70,11 @@ export default function PricingSection(props: Props) {
 						onClick={() => props.setBillingCycle('yearly')}
 					>
 						{m.pricing_cycle_yearly()}
-						<span class="ml-2 font-mono text-[10px]">
-							{m.pricing_save_percent({ percent: props.pricing.discountPercent })}
-						</span>
+						<Show when={props.pricing.discountPercent > 0}>
+							<span class="ml-2 font-mono text-[10px]">
+								{m.pricing_save_percent({ percent: props.pricing.discountPercent })}
+							</span>
+						</Show>
 					</button>
 				</div>
 			</div>
@@ -127,7 +134,7 @@ export default function PricingSection(props: Props) {
 							</div>
 						</div>
 						<div class="flex flex-col justify-start pt-5 md:min-h-48">
-							<Show when={yearly()}>
+							<Show when={yearly() && props.pricing.discountPercent > 0}>
 								<p class="text-sm text-muted-foreground">
 									<span class="font-mono text-lg font-semibold text-foreground/75 line-through decoration-2">
 										{props.pricing.yearlyStrikethrough}
@@ -143,7 +150,7 @@ export default function PricingSection(props: Props) {
 								</span>
 								<span class="pb-1 text-sm text-muted-foreground">{period()}</span>
 							</div>
-							<Show when={yearly()}>
+							<Show when={yearly() && props.pricing.discountPercent > 0}>
 								<p class="mt-2 text-sm font-medium text-signal-deep dark:text-signal">
 									{m.pricing_save_amount({
 										amount: props.pricing.yearlySavings,
@@ -157,13 +164,17 @@ export default function PricingSection(props: Props) {
 							class="ace-signal-action mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-md px-5 font-semibold md:mt-0"
 							onClick={props.onUpgrade}
 						>
-							{trialDays() === 14
-								? m.pricing_start_trial()
+							{trialDays() > 0
+								? m.pricing_start_trial({ days: trialDays() })
 								: m.pricing_get_pro_action()}
 						</button>
 						<p class="mt-3 min-h-10 text-xs leading-relaxed text-muted-foreground">
-							{trialDays() === 14
-								? m.pricing_trial_terms({ price: billedPrice(), period: period() })
+							{trialDays() > 0
+								? m.pricing_trial_terms({
+										days: trialDays(),
+										price: billedPrice(),
+										period: period()
+									})
 								: m.pricing_recurring_terms({
 										price: billedPrice(),
 										period: period()

@@ -20,7 +20,8 @@ import SitePackVisual from '$lib/components/marketing/SitePackVisual';
 const benefits = [
 	m.pricing_all_packs,
 	m.pricing_custom_packs,
-	m.pricing_resistance,
+	m.pricing_full_resistance,
+	m.pricing_resistance_lock,
 	m.pricing_cloud_backup,
 	m.pricing_network_blocks
 ];

@@ -34,7 +34,8 @@ export default function Page(props: { data?: { isPro?: boolean } }) {
 				<section class="border-b border-border">
 					<div class="ace-shell py-14 sm:py-20">
 						<p class="font-mono text-xs text-muted-foreground">
-							{m.policy_resistance_label()} · {m.plan_pro_name()}
+							{m.policy_resistance_label()} · {m.plan_free_name()} /{' '}
+							{m.plan_pro_name()}
 						</p>
 						<h1 class="mt-4 max-w-3xl font-display text-5xl leading-[.95] font-semibold tracking-tight sm:text-6xl">
 							{m.feature_resistance_title()}

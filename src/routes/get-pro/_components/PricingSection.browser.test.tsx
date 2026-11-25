@@ -26,7 +26,7 @@ afterEach(() => {
 	container = undefined;
 });
 
-function mount(currency: Pricing['currency'] = pricing.currency) {
+function mount(currency: Pricing['currency'] = pricing.currency, overrides: Partial<Pricing> = {}) {
 	container = document.createElement('div');
 	document.body.append(container);
 	const upgrade = vi.fn();
@@ -34,7 +34,7 @@ function mount(currency: Pricing['currency'] = pricing.currency) {
 	dispose = render(
 		() => (
 			<PricingSection
-				pricing={{ ...pricing, currency }}
+				pricing={{ ...pricing, currency, ...overrides }}
 				billingCycle={cycle}
 				setBillingCycle={setCycle}
 				onUpgrade={upgrade}
@@ -68,15 +68,20 @@ describe('Solid 2 pricing comparison', () => {
 			.element(network.getByRole('cell').nth(1))
 			.toHaveTextContent(m.pricing_included());
 
-		const resistance = page.getByRole('row').filter({
-			has: page.getByRole('rowheader', { name: m.pricing_resistance() })
-		});
-		await expect
-			.element(resistance.getByRole('cell').nth(0))
-			.toHaveTextContent(m.pricing_not_included());
-		await expect
-			.element(resistance.getByRole('cell').nth(1))
-			.toHaveTextContent(m.pricing_included());
+		const rows = [
+			[m.pricing_curated_packs(), m.pricing_three_packs(), m.pricing_all_packs()],
+			[m.pricing_resistance(), m.pricing_standard_resistance(), m.pricing_full_resistance()],
+			[m.pricing_resistance_lock(), m.pricing_not_included(), m.pricing_included()],
+			[m.pricing_cloud_backup(), m.pricing_not_included(), m.pricing_included()],
+			[m.pricing_custom_packs(), m.pricing_not_included(), m.pricing_included()]
+		];
+		for (const [label, free, pro] of rows) {
+			const row = page.getByRole('row').filter({
+				has: page.getByRole('rowheader', { name: label, exact: true })
+			});
+			await expect.element(row.getByRole('cell').nth(0)).toHaveTextContent(free);
+			await expect.element(row.getByRole('cell').nth(1)).toHaveTextContent(pro);
+		}
 	});
 
 	it('updates billing amount and trial disclosure without triggering checkout', async () => {
@@ -90,9 +95,31 @@ describe('Solid 2 pricing comparison', () => {
 		expect(upgrade).not.toHaveBeenCalled();
 	});
 
+	it('uses the catalog trial duration rather than assuming fourteen days', async () => {
+		mount('EUR', { yearlyTrialDays: 7, monthlyTrialDays: 0 });
+		await expect
+			.element(page.getByRole('button', { name: m.pricing_start_trial({ days: 7 }) }))
+			.toBeVisible();
+		await expect.element(page.getByText(/Free for 7 days/)).toBeVisible();
+		await page.getByRole('button', { name: m.pricing_cycle_monthly() }).click();
+		await expect
+			.element(page.getByRole('button', { name: m.pricing_get_pro_action() }))
+			.toBeVisible();
+	});
+
+	it('does not advertise a yearly discount when the catalog has no savings', async () => {
+		mount('EUR', { discountPercent: 0, yearlySavings: '€0,00' });
+		await expect
+			.element(page.getByText(m.pricing_save_percent({ percent: 0 })))
+			.not.toBeInTheDocument();
+		await expect
+			.element(page.getByText(pricing.yearlyStrikethrough, { exact: true }))
+			.not.toBeInTheDocument();
+	});
+
 	it('calls only the supplied upgrade callback when the trial CTA is selected', async () => {
 		const { upgrade } = mount();
-		await page.getByRole('button', { name: m.pricing_start_trial() }).click();
+		await page.getByRole('button', { name: m.pricing_start_trial({ days: 14 }) }).click();
 		expect(upgrade).toHaveBeenCalledTimes(1);
 	});
 });

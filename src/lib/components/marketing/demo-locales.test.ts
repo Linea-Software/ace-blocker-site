@@ -19,7 +19,14 @@ function placeholders(value: string) {
 describe('marketing walkthrough translations', () => {
 	it('provides all feature and demo strings in each advertised locale', () => {
 		const keys = Object.keys(messages.en).filter(
-			(key) => key.startsWith('demo_') || key.startsWith('feature_')
+			(key) =>
+				key.startsWith('demo_') ||
+				key.startsWith('feature_') ||
+				key.startsWith('pricing_') ||
+				key.startsWith('plan_') ||
+				key === 'page_description_get_pro' ||
+				key === 'faq_a7' ||
+				key === 'home_closing_description'
 		);
 		expect(keys.length).toBeGreaterThan(95);
 		for (const locale of locales) {
@@ -31,7 +38,14 @@ describe('marketing walkthrough translations', () => {
 
 	it('preserves every interpolation argument in every locale', () => {
 		const keys = Object.keys(messages.en).filter(
-			(key) => key.startsWith('demo_') || key.startsWith('feature_')
+			(key) =>
+				key.startsWith('demo_') ||
+				key.startsWith('feature_') ||
+				key.startsWith('pricing_') ||
+				key.startsWith('plan_') ||
+				key === 'page_description_get_pro' ||
+				key === 'faq_a7' ||
+				key === 'home_closing_description'
 		);
 		for (const key of keys) {
 			const expected = placeholders(messages.en[key]);
