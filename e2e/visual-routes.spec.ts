@@ -126,3 +126,38 @@ test('administrator route screenshots and data loaders', async ({ page }) => {
 	])
 		await capture(page, path, 'admin', title);
 });
+
+test('Mineral and Gunmetal separate public surfaces and account dialog controls', async ({
+	page
+}) => {
+	test.setTimeout(60_000);
+	await signIn(page, 'user');
+	await page.goto('/account');
+	await page.getByRole('button', { name: 'Change Password', exact: true }).click();
+	const dialog = page.getByRole('dialog', { name: 'Change Password' });
+	await expect(dialog).toBeVisible();
+	for (const dark of [false, true]) {
+		await page.evaluate((dark) => {
+			document.documentElement.classList.toggle('dark', dark);
+			document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+		}, dark);
+		await expect(page.locator('body')).toHaveCSS(
+			'background-color',
+			dark ? 'rgb(18, 23, 28)' : 'rgb(205, 220, 229)'
+		);
+		await expect(dialog).toHaveCSS(
+			'background-color',
+			dark ? 'rgb(44, 54, 65)' : 'rgb(240, 245, 248)'
+		);
+		await expect(dialog.locator('input[type="password"]').first()).toHaveCSS(
+			'background-color',
+			dark ? 'rgb(65, 78, 92)' : 'rgb(213, 225, 233)'
+		);
+		await page.screenshot({
+			path: `test-results/visual-routes/palette-account-dialog-${dark ? 'dark' : 'light'}.png`,
+			animations: 'disabled'
+		});
+	}
+	await page.keyboard.press('Escape');
+	await expect(dialog).not.toBeVisible();
+});

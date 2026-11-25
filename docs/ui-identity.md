@@ -12,7 +12,7 @@ The desktop app helps users configure and enforce decisions.
 Use these shared visual elements:
 
 - Signal amber.
-- Warm Ink and Paper neutral colors.
+- Mineral (light) and Gunmetal (dark) surface palettes.
 - IBM Plex fonts.
 - Firm shapes.
 - Borders and rules instead of floating shadows.
@@ -43,34 +43,27 @@ Do not let `design-taste-frontend` override the needs of dense product UI.
 
 ## 3. Palette
 
-Target shared palette:
+Shared Mineral / Gunmetal palette:
 
-| Token         | Hex       |
-| ------------- | --------- |
-| Signal        | `#FFB000` |
-| Signal Bright | `#FFC533` |
-| Signal Deep   | `#D58B00` |
-| Ink           | `#10100E` |
-| Graphite      | `#1A1A17` |
-| Steel         | `#292925` |
-| Ash           | `#8B8A82` |
-| Paper         | `#F3F0E8` |
-| Paper Strong  | `#FFFDF7` |
-| Line          | `#D7D2C7` |
+| Semantic surface      | Light     | Dark      |
+| --------------------- | --------- | --------- |
+| Workspace             | `#CDDCE5` | `#12171C` |
+| Panel                 | `#E2EAF0` | `#212932` |
+| Raised dialog / menu  | `#F0F5F8` | `#2C3641` |
+| Modal header / footer | `#E2EAF0` | `#35414D` |
+| Control               | `#D5E1E9` | `#414E5C` |
+| Strong border         | `#647C8C` | `#94A4B3` |
+| Primary text          | `#202E39` | `#E9EEF3` |
+| Secondary text        | `#465A69` | `#BFCAD5` |
 
-Semantic colors remain exceptional and meaning-driven:
+Brand amber remains `#FFB000` in both themes. Preserve intentional brand accents
+in marketing; use the shared neutral surfaces for page structure and controls.
+Success, danger and information use distinct semantic colors.
 
-- Success: `#77A86A`
-- Danger: `#DF5145`
-- Information: `#668DB3`
-
-The audit in `docs/design-tokens.md` records the former canonical brand amber: `#f59e0b`.
-This identity is the new **target**, but the site code has not been fully migrated.
-Do not replace all colors without review. Migrate one page at a time.
-Verify each page visually.
-
-Use amber for intervention, commitment, and attention.
-Do not use amber only because an element needs a brand color.
+Use the tokens in `src/routes/layout.css`, not local theme-specific hard-coded
+colors. In dark mode controls are brighter than their parent panels and dialogs.
+Raised dialogs and menus have a distinct surface, strong edge and a dimmed
+backdrop where modal. Avoid pure white for large page surfaces.
 
 ## 4. Typography
 

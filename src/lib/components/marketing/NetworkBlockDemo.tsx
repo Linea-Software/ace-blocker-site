@@ -679,7 +679,8 @@ export default function NetworkBlockDemo(props: { compact?: boolean }) {
 							class={
 								cls('policy-card') +
 								(locked() ? ' ' + cls('protected') : '') +
-								(!enabled() ? ' ' + cls('inactive') : '')
+								(!enabled() ? ' ' + cls('inactive') : '') +
+								(scheduleMode() === 'scheduled' ? ' ' + cls('scheduled') : '')
 							}
 							aria-label={m.demo_network_label()}
 						>

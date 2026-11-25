@@ -44,11 +44,11 @@ export default function DialogShell(props: {
 				if (event.target === dialog) props.onOpenChange(false);
 			}}
 			class={
-				'm-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-lg border border-border bg-background p-6 text-foreground shadow-lg backdrop:bg-black/75 sm:p-6 ' +
+				'ace-account-dialog m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-lg border border-border bg-background p-6 text-foreground shadow-lg backdrop:bg-black/75 sm:p-6 ' +
 				(props.class ?? '')
 			}
 		>
-			<div class="mb-5 flex items-start justify-between gap-4">
+			<div class="ace-dialog-heading mb-5 flex items-start justify-between gap-4">
 				<div>
 					<h2
 						id={id}

@@ -96,7 +96,7 @@ This project is the **Ace Blocker** marketing and subscription website. It is mi
 Use a more expressive version of the shared Ace visual language on the website:
 
 - Signal amber (`#FFB000`) for intervention/commitment/attention;
-- warm Ink/Paper neutrals instead of blue-slate defaults;
+- shared Mineral/Gunmetal surfaces and strong control contrast;
 - IBM Plex Sans / Condensed / Mono;
 - firmer geometry and modest radii;
 - borders, rules, and inset surfaces over floating shadow cards;

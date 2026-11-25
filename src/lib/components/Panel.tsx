@@ -11,8 +11,8 @@ export default function Panel(
 			{...rest}
 			class={cn(
 				local.variant === 'surface'
-					? 'rounded-xl border border-slate-200 bg-slate-100 p-5 backdrop-blur-sm dark:border-white/10 dark:bg-white/5'
-					: 'rounded-xl border border-border bg-card p-6',
+					? 'rounded-lg border border-border bg-card p-5'
+					: 'rounded-lg border border-border bg-card p-6',
 				local.class
 			)}
 		>

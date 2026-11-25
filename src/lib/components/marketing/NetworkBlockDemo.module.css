@@ -75,8 +75,9 @@
 	cursor: pointer;
 }
 .steps button.active {
-	border-bottom-color: var(--signal);
-	color: var(--foreground);
+	border-bottom-color: var(--foreground);
+	background: var(--foreground);
+	color: var(--background);
 }
 .steps span {
 	font:
@@ -112,7 +113,7 @@
 .select-row input {
 	width: 19px;
 	height: 19px;
-	accent-color: var(--signal-deep);
+	accent-color: var(--foreground);
 }
 .select-row > span:nth-child(2) {
 	display: grid;
@@ -151,7 +152,7 @@
 	border: 1px solid var(--border);
 	border-radius: 4px;
 	padding: 10px;
-	background: var(--background);
+	background: var(--surface-control);
 	color: var(--foreground);
 	font-size: 13px;
 }
@@ -209,8 +210,8 @@
 	text-align: left;
 }
 .mode-options button.selected {
-	border-color: var(--signal-deep);
-	box-shadow: inset 3px 0 0 var(--signal);
+	border-color: var(--foreground);
+	box-shadow: inset 3px 0 0 var(--foreground);
 }
 .mode-options small {
 	color: var(--muted-foreground);
@@ -362,16 +363,17 @@
 }
 .policy-card {
 	display: grid;
-	grid-template-columns: 7px minmax(0, 1fr);
+	grid-template-columns: 5px minmax(0, 1fr);
 }
 .state-rail {
-	background: var(--signal);
+	background: var(--success);
 }
-.policy-card.inactive .state-rail {
+.policy-card.inactive .state-rail,
+.policy-card.scheduled .state-rail {
 	background: var(--ash);
 }
 .policy-card.protected {
-	outline: 1px solid var(--signal-deep);
+	outline: 1px solid var(--border-strong);
 	outline-offset: -1px;
 }
 .lock-seal {
@@ -379,8 +381,8 @@
 	align-items: center;
 	gap: 10px;
 	padding: 9px 13px;
-	border-bottom: 1px solid var(--signal-deep);
-	background: color-mix(in srgb, var(--signal) 10%, var(--card));
+	border-bottom: 1px solid var(--border);
+	background: var(--muted);
 }
 .lock-seal span {
 	display: grid;
@@ -412,7 +414,11 @@
 .block-demo.compact .policy-actions > button {
 	padding-inline: 6px;
 }
-.block-demo.compact .name {
+.block-demo.compact .policy-card.inactive .state-text,
+.policy-card.scheduled .state-text {
+	color: var(--muted-foreground);
+}
+.name {
 	gap: 8px;
 }
 .block-demo.compact .policy-icon {
@@ -436,7 +442,7 @@
 	font:
 		600 12px 'IBM Plex Sans Condensed',
 		sans-serif;
-	color: var(--signal-deep);
+	color: var(--success);
 }
 .name {
 	display: flex;
@@ -492,8 +498,8 @@
 	background: var(--muted);
 }
 .policy-actions > button[data-demo-target='lock']:not(:disabled) {
-	border-color: color-mix(in srgb, var(--signal-deep) 45%, var(--border));
-	color: var(--signal-deep);
+	border-color: var(--border-strong);
+	color: var(--foreground);
 }
 .enabled-label {
 	display: flex;
@@ -516,7 +522,7 @@
 	cursor: pointer;
 }
 .switch.checked {
-	background: var(--signal-deep);
+	background: var(--foreground);
 }
 .switch span {
 	position: absolute;
@@ -529,6 +535,7 @@
 	transition: transform 130ms ease;
 }
 .switch.checked span {
+	background: var(--background);
 	transform: translateX(17px);
 }
 .counts {
@@ -565,9 +572,9 @@
 	gap: 14px;
 	margin: 14px 18px;
 	padding: 17px;
-	border: 1px solid var(--signal-deep);
+	border: 1px solid var(--border-strong);
 	border-radius: 5px;
-	background: var(--card);
+	background: var(--surface-raised);
 }
 .lock-config-heading {
 	display: flex;
@@ -621,13 +628,13 @@
 	text-align: left;
 	border: 1px solid var(--border);
 	border-radius: 4px;
-	background: var(--background);
+	background: var(--surface-control);
 	color: var(--foreground);
 	cursor: pointer;
 }
 .lock-options button.selected {
-	border-color: var(--signal-deep);
-	background: color-mix(in srgb, var(--signal) 9%, var(--card));
+	border-color: var(--foreground);
+	box-shadow: inset 0 0 0 1px var(--foreground);
 }
 .lock-options button > span:nth-child(2) {
 	display: grid;
@@ -666,7 +673,7 @@
 	padding: 8px;
 	border: 1px solid var(--border);
 	border-radius: 4px;
-	background: var(--background);
+	background: var(--surface-control);
 	color: var(--foreground);
 	font-size: 12px;
 }

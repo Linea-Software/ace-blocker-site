@@ -212,7 +212,7 @@ export default function Navbar(props: { isPro?: boolean }) {
 			>
 				{m.skip_to_content()}
 			</a>
-			<header class="sticky top-0 z-50 border-b border-border bg-background">
+			<header class="sticky top-0 z-50 border-b border-border bg-sidebar">
 				<div class="ace-shell flex h-16 items-center justify-between gap-4">
 					<div class="flex min-w-0 items-center gap-3 md:gap-8">
 						<button
@@ -436,7 +436,7 @@ export default function Navbar(props: { isPro?: boolean }) {
 					<button
 						aria-label={m.close()}
 						type="button"
-						class="absolute inset-0 w-full bg-black/55"
+						class="ace-modal-overlay absolute inset-0 w-full"
 						onClick={closeMobile}
 					/>
 					<aside
