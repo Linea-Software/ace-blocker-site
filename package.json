@@ -11,7 +11,7 @@
 		"gen:entitlement-keys": "bun scripts/generate-entitlement-keys.ts",
 		"provision-admin": "bun scripts/provision-admin.ts",
 		"preview": "vite preview",
-		"paraglide:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide --strategy url baseLocale",
+		"paraglide:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide --strategy url baseLocale --output-structure locale-modules --is-server \"import.meta.env?.SSR ?? typeof window === 'undefined'\"",
 		"prepare": "bun run paraglide:compile",
 		"seo:audit": "bun scripts/seo-audit.ts",
 		"check": "bun run paraglide:compile && tsc --noEmit --pretty false",
