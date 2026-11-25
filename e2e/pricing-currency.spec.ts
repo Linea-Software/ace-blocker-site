@@ -53,3 +53,16 @@ test('Indian regional plan displays zero rupees', async ({ page }) => {
 	await expect(page.getByText('₹599', { exact: true })).toBeVisible();
 	await expect(page.getByText('₹0', { exact: true })).toBeVisible();
 });
+
+for (const [prefix, label] of [
+	['', 'Download'],
+	['/it', 'Scarica']
+] as const) {
+	test(`Free CTA downloads without authentication (${prefix || 'en'})`, async ({ page }) => {
+		await page.goto(prefix + '/get-pro', { waitUntil: 'networkidle' });
+		const link = page.locator('main').getByRole('link', { name: label, exact: true });
+		await expect(link).toHaveAttribute('href', prefix + '/download');
+		await link.click();
+		await expect(page).toHaveURL(new RegExp(prefix + '/download/?$'));
+	});
+}

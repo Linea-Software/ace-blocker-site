@@ -56,6 +56,16 @@ describe('Solid 2 pricing comparison', () => {
 		await expect.element(page.getByText(price, { exact: true })).toBeVisible();
 	});
 
+	it('offers a download instead of requiring registration on Free', async () => {
+		mount();
+		await expect
+			.element(page.getByRole('link', { name: m.nav_download(), exact: true }))
+			.toHaveAttribute('href', '/download');
+		await expect
+			.element(page.getByRole('link', { name: m.cta_get_started() }))
+			.not.toBeInTheDocument();
+	});
+
 	it('includes network blocks for Free and Pro and distinguishes Resistance tools', async () => {
 		mount();
 		const network = page.getByRole('row').filter({

@@ -1,6 +1,7 @@
 import { For, Show } from 'solid-js';
-import { Check, Minus } from '@lucide/solid';
+import { Check, Download, Minus } from '@lucide/solid';
 import * as m from '$lib/paraglide/messages';
+import { localizeHref } from '$lib/paraglide/runtime';
 import { formatCurrency, type SupportedCurrency } from '$lib/utils/locale-currency';
 
 export interface Pricing {
@@ -107,10 +108,11 @@ export default function PricingSection(props: Props) {
 							</div>
 						</div>
 						<a
-							href="/signup"
-							class="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-md border border-foreground/30 font-medium hover:bg-accent md:mt-0"
+							href={localizeHref('/download')}
+							class="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-foreground/30 font-medium hover:bg-accent md:mt-0"
 						>
-							{m.cta_get_started()}
+							<Download class="size-4" aria-hidden="true" />
+							{m.nav_download()}
 						</a>
 						<p class="mt-3 min-h-10 text-xs text-muted-foreground">
 							{m.pricing_free_note()}
