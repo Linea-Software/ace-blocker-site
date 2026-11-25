@@ -35,25 +35,60 @@ const EURO_CODES = new Set([
 	'SK',
 	'SM',
 	'VA',
-	'XK'
+	'XK',
+	'AX',
+	'BL',
+	'GF',
+	'GP',
+	'MF',
+	'MQ',
+	'PM',
+	'RE',
+	'YT',
+	'TF'
 ]);
 
 export function countryToCurrency(country?: string | null): SupportedCurrency {
 	const code = country?.trim().toUpperCase();
-	if (code === 'GB' || code === 'UK') return 'GBP';
+	if (['GB', 'UK', 'GG', 'JE', 'IM', 'GS'].includes(code ?? '')) return 'GBP';
 	if (code === 'IN') return 'INR';
 	if (EURO_CODES.has(code ?? '')) return 'EUR';
 	return 'USD';
 }
 
+export { timeZoneToCurrency } from './timezone-currency';
+import { timeZoneToCurrency } from './timezone-currency';
+
+/** Send only a currency hint, not the browser's location or time zone. */
+export function browserCurrencyHint(): SupportedCurrency {
+	try {
+		return timeZoneToCurrency(Intl.DateTimeFormat().resolvedOptions().timeZone);
+	} catch {
+		return 'USD';
+	}
+}
+
+function supportedCurrency(value: unknown): SupportedCurrency | undefined {
+	return SUPPORTED_CURRENCIES.find((currency) => currency === value);
+}
+
 /**
- * Nginx sets X-Ace-Visitor-Country from BunnyCDN or Cloudflare only when the
- * connecting edge IP is trusted. Never read raw CDN headers supplied by clients.
- * Missing or invalid geolocation defaults to USD.
+ * Explicit selections win to preserve the advertised checkout price.
+ * Otherwise use the sanitized edge country, then the browser's untrusted
+ * currency hint when the edge provides no location (e.g. localhost).
+ * A hint selects only an existing regional product; it is not verified location.
  */
-export function requestCurrency(headers: Headers): SupportedCurrency {
-	const country = headers.get('x-ace-visitor-country');
-	return country && /^[A-Z]{2}$/i.test(country) ? countryToCurrency(country) : 'USD';
+export function requestCurrency(
+	headers: Headers,
+	browserHint: unknown = '',
+	explicitCurrency: unknown = ''
+): SupportedCurrency {
+	const explicit = supportedCurrency(explicitCurrency);
+	if (explicit) return explicit;
+	const country = headers.get('x-ace-visitor-country')?.toUpperCase();
+	if (country && /^[A-Z]{2}$/.test(country) && country !== 'XX' && country !== 'ZZ')
+		return countryToCurrency(country);
+	return supportedCurrency(browserHint) ?? 'USD';
 }
 
 /** Display currency symbols before numbers while preserving decimal separators. */

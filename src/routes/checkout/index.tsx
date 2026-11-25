@@ -5,6 +5,7 @@ import { Title, Meta } from '@solidjs/meta';
 import { ShieldCheck, RefreshCw } from '@lucide/solid';
 import * as m from '$lib/paraglide/messages';
 import {
+	browserCurrencyHint,
 	formatCurrency,
 	SUPPORTED_CURRENCIES,
 	type SupportedCurrency
@@ -393,7 +394,9 @@ export default function CheckoutPage() {
 }
 function CheckoutSession() {
 	const location = useLocation();
-	const data = createMemo(() => getCheckoutData(location.pathname + location.search));
+	const data = createMemo(() =>
+		getCheckoutData(location.pathname + location.search, browserCurrencyHint())
+	);
 	return (
 		<Show when={data()}>
 			{(value) => <CheckoutContent data={value()} search={location.search} />}

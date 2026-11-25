@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, Show } from 'solid-js';
+import { createMemo, createSignal, For, onSettled, Show } from 'solid-js';
 import { useLocation, useSearchParams } from '@solidjs/router';
 import { Title, Meta } from '@solidjs/meta';
 import { Check } from '@lucide/solid';
@@ -7,6 +7,7 @@ import { apiClient } from '$lib/api-client';
 import { canonicalUrl } from '$lib/seo';
 import { localizeHref } from '$lib/paraglide/runtime';
 import { linkEngine } from '$lib/utils';
+import { browserCurrencyHint } from '$lib/utils/locale-currency';
 import { getPricingData } from './data';
 import PricingSection from './_components/PricingSection';
 import ProActivationPanel, { type ActivationStatus } from './_components/ProActivationPanel';
@@ -26,8 +27,13 @@ const benefits = [
 export default function GetProPage() {
 	const location = useLocation();
 	const [params] = useSearchParams();
+	const [browserHint, setBrowserHint] = createSignal('');
+	onSettled(() => {
+		const hint = browserCurrencyHint();
+		if (hint !== 'USD') setBrowserHint(hint);
+	});
 	const data = createMemo(() =>
-		getPricingData(typeof params.currency === 'string' ? params.currency : '')
+		getPricingData(typeof params.currency === 'string' ? params.currency : '', browserHint())
 	);
 	const [billingCycle, setBillingCycle] = createSignal<'monthly' | 'yearly'>(() =>
 		params.cycle === 'monthly' ? 'monthly' : 'yearly'

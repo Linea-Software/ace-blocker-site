@@ -1,17 +1,17 @@
 import { redirect, respond } from '@solidjs/web';
 import { auth, dodoPayments } from '$lib/server/auth';
 import { getProduct } from '$lib/server/products';
-import {
-	requestCurrency,
-	SUPPORTED_CURRENCIES,
-	type SupportedCurrency
-} from '$lib/utils/locale-currency';
+import { requestCurrency } from '$lib/utils/locale-currency';
 import { createLogger } from '$lib/server/logger';
 import { localeFromPath, localizedPath } from '$lib/seo';
 
 const log = createLogger('checkout:inline');
 
-export async function loadCheckoutData(request: Request, queryString: string = '') {
+export async function loadCheckoutData(
+	request: Request,
+	queryString: string = '',
+	browserHint: string = ''
+) {
 	// Validate the requested route before using its locale. A client may invoke
 	// server functions directly, so never trust arbitrary absolute URLs.
 	const safeQuery =
@@ -30,11 +30,11 @@ export async function loadCheckoutData(request: Request, queryString: string = '
 	}
 
 	const cycle = url.searchParams.get('cycle') === 'monthly' ? 'monthly' : 'yearly';
-	const requestedCurrency = url.searchParams.get('currency');
-	const currency: SupportedCurrency =
-		requestedCurrency && SUPPORTED_CURRENCIES.includes(requestedCurrency as SupportedCurrency)
-			? (requestedCurrency as SupportedCurrency)
-			: requestCurrency(request.headers);
+	const currency = requestCurrency(
+		request.headers,
+		browserHint,
+		url.searchParams.get('currency')
+	);
 	const product = getProduct(cycle, currency);
 	if (!product || product.priceMinor == null)
 		throw respond({ error: 'Checkout is temporarily unavailable' }, { status: 503 });

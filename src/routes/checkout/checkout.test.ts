@@ -154,6 +154,24 @@ describe('inline checkout server loader', () => {
 		});
 	});
 
+	it('uses the browser hint for a direct checkout when no edge country is available', async () => {
+		const url = 'https://aceblocker.com/checkout?cycle=yearly';
+		previewSession.mockResolvedValueOnce({
+			currency: 'EUR',
+			trial_period_days: 14,
+			current_breakup: { total_amount: 0 },
+			recurring_breakup: { total_amount: 2499 }
+		});
+		const result = await loadCheckoutData(
+			new Request(url, { headers: { 'accept-language': 'en-US' } }),
+			'/checkout?cycle=yearly',
+			'EUR'
+		);
+		expect(result.currency).toBe('EUR');
+		expect(getProduct).toHaveBeenCalledWith('yearly', 'EUR');
+		expect(createSession.mock.calls[0][0].billing_currency).toBe('EUR');
+	});
+
 	it('refuses checkout if Dodo previews a converted or unexpected recurring amount', async () => {
 		previewSession.mockResolvedValueOnce({
 			currency: 'EUR',

@@ -300,9 +300,9 @@ Architecture, server/client boundaries, SSR, URL locale routing, route-to-API ow
 
 ## Payments (DodoPayments)
 
-- **Country-based currency:** `/get-pro` and `/checkout` must read only `X-Ace-Visitor-Country` from Nginx. Never trust raw client-controlled `CDN-RequestCountryCode` or `CF-IPCountry`.
+- **Country-based currency:** `/get-pro` and `/checkout` must use only `X-Ace-Visitor-Country` from Nginx as the trusted location signal. Never trust raw client-controlled `CDN-RequestCountryCode` or `CF-IPCountry`.
   Trust BunnyCDN country data only from IPs in `/etc/nginx/ace-bunny-edges.geo`, which uses Bunny's published edge feeds. Alternatively, trust Cloudflare data only from a trusted Cloudflare peer. The private `ace-infra/scripts/vps/refresh-bunny-edges.sh` maintains this allowlist; provisioning installs its daily cron job.
-  Map countries to USD/EUR/GBP/INR. Use USD for unknown locations. When this path changes, deploy both the updated Nginx configuration and the application.
+  Map countries to USD/EUR/GBP/INR. When the trusted country is absent or unknown, the browser may suggest a supported currency based on its time zone (not its language); send only the currency hint, not the zone. This hint is not verified geolocation. Use USD if neither source identifies a supported currency. An explicit supported currency selection preserves the advertised checkout product. Deploy matching proxy and application configurations when the trusted header contract changes.
 
 Always test mode: `dodoPayments = new DodoPayments({ environment: 'test_mode' })` in `src/lib/server/auth.ts`.
 

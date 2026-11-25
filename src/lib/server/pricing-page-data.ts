@@ -1,24 +1,23 @@
 import { respond } from '@solidjs/web';
 import { auth } from '$lib/server/auth';
 import { isUserPro } from '$lib/server/pro';
-import {
-	formatCurrency,
-	requestCurrency,
-	SUPPORTED_CURRENCIES,
-	type SupportedCurrency
-} from '$lib/utils/locale-currency';
+import { formatCurrency, requestCurrency } from '$lib/utils/locale-currency';
 import { getProduct } from '$lib/server/products';
 
-export async function loadPricingData(request: Request, currencyQuery: string = '') {
+export async function loadPricingData(
+	request: Request,
+	currencyQuery: string = '',
+	browserHint: string = ''
+) {
 	const url = new URL('/get-pro', request.url);
 	if (currencyQuery && currencyQuery.length < 12) url.searchParams.set('currency', currencyQuery);
 	const session = await auth.api.getSession({ headers: request.headers });
 	const isPro = session?.user ? await isUserPro(session.user.id) : false;
-	const requested = url.searchParams.get('currency');
-	const currency: SupportedCurrency =
-		requested && SUPPORTED_CURRENCIES.includes(requested as SupportedCurrency)
-			? (requested as SupportedCurrency)
-			: requestCurrency(request.headers);
+	const currency = requestCurrency(
+		request.headers,
+		browserHint,
+		url.searchParams.get('currency')
+	);
 
 	const monthlyProduct = getProduct('monthly', currency);
 	const yearlyProduct = getProduct('yearly', currency);

@@ -10,7 +10,12 @@ import { loadPricingData } from '$lib/server/pricing-page-data';
 function load(event: { url: URL; request: Request }) {
 	return loadPricingData(event.request, event.url.searchParams.get('currency') ?? '');
 }
-import { formatCurrency, countryToCurrency } from '$lib/utils/locale-currency';
+import {
+	formatCurrency,
+	countryToCurrency,
+	timeZoneToCurrency,
+	requestCurrency
+} from '$lib/utils/locale-currency';
 import { MONTHLY_PRICE_MAP, YEARLY_PRICE_MAP } from '$lib/server/seeder/price-maps';
 
 function request(currency?: string, country?: string, language = 'en-US') {
@@ -118,6 +123,41 @@ describe('Get Pro pricing', () => {
 			})
 		} as Parameters<typeof load>[0])) as { pricing: { currency: string } };
 		expect(malformed.pricing.currency).toBe('USD');
+	});
+
+	it.each([
+		['Europe/Rome', 'EUR'],
+		['Europe/Berlin', 'EUR'],
+		['Europe/Mariehamn', 'EUR'],
+		['Europe/Sofia', 'EUR'],
+		['Europe/Zagreb', 'EUR'],
+		['America/Martinique', 'EUR'],
+		['Indian/Reunion', 'EUR'],
+		['Atlantic/Canary', 'EUR'],
+		['Europe/London', 'GBP'],
+		['Asia/Calcutta', 'INR'],
+		['Asia/Kolkata', 'INR'],
+		['America/New_York', 'USD'],
+		['Europe/Zurich', 'USD'],
+		['UTC', 'USD']
+	] as const)('maps browser time zone %s to %s', (zone, currency) => {
+		expect(timeZoneToCurrency(zone)).toBe(currency);
+	});
+
+	it('uses a supported browser hint only if edge country is unavailable', async () => {
+		getProduct.mockReturnValue({ productId: 'test', priceMinor: 2499, trialDays: 14 });
+		const local = request(undefined, undefined, 'en-US');
+		expect((await loadPricingData(local.request, '', 'EUR')).pricing.currency).toBe('EUR');
+		expect(
+			(await loadPricingData(request(undefined, 'US').request, '', 'EUR')).pricing.currency
+		).toBe('USD');
+		expect(
+			(await loadPricingData(request(undefined, 'IT').request, '', 'GBP')).pricing.currency
+		).toBe('EUR');
+		expect((await loadPricingData(local.request, 'GBP', 'EUR')).pricing.currency).toBe('GBP');
+		expect(requestCurrency(new Headers({ 'x-ace-visitor-country': 'XX' }), 'EUR')).toBe('EUR');
+		expect(requestCurrency(new Headers(), 'FAKE')).toBe('USD');
+		expect(requestCurrency(new Headers({ 'cf-ipcountry': 'IT' }), '')).toBe('USD');
 	});
 
 	it('does not advertise a fictional price if a Dodo product is unavailable', async () => {
