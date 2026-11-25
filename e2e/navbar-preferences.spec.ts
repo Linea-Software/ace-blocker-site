@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+test.use({ colorScheme: 'light' });
+
 test('desktop navbar groups display preferences and keeps Get Pro prominent', async ({ page }) => {
 	await page.setViewportSize({ width: 1366, height: 768 });
 	await page.goto('/?from=navbar#plans', { waitUntil: 'networkidle' });
@@ -45,4 +47,42 @@ test('navbar keeps the compact menu at intermediate widths without overflow', as
 	await page.getByRole('button', { name: 'Open navigation menu' }).click();
 	await expect(page.getByRole('link', { name: 'Get Pro' })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Dark Mode' })).toBeVisible();
+});
+
+test('follows the system until an explicit preference is saved', async ({ page }) => {
+	await page.emulateMedia({ colorScheme: 'dark' });
+	await page.goto('/', { waitUntil: 'networkidle' });
+	const root = page.locator('html');
+	await expect(root).toHaveClass(/dark/);
+	await expect(root).toHaveCSS('color-scheme', 'dark');
+	expect(await page.evaluate(() => localStorage.getItem('mode'))).toBeNull();
+	expect((await page.context().cookies()).some((cookie) => cookie.name === 'mode')).toBe(false);
+
+	await page.emulateMedia({ colorScheme: 'light' });
+	await expect(root).not.toHaveClass(/dark/);
+	await expect(root).toHaveCSS('color-scheme', 'light');
+	const preferences = page.getByRole('button', { name: 'Language / Toggle theme' });
+	await preferences.click();
+	await page.getByRole('menuitem', { name: 'Dark Mode' }).click();
+	await expect(root).toHaveClass(/dark/);
+	expect(await page.evaluate(() => localStorage.getItem('mode'))).toBe('dark');
+
+	await page.reload({ waitUntil: 'networkidle' });
+	await expect(root).toHaveClass(/dark/);
+	await page.emulateMedia({ colorScheme: 'dark' });
+	await page.emulateMedia({ colorScheme: 'light' });
+	await expect(root).toHaveClass(/dark/);
+	await preferences.click();
+	await page.getByRole('menuitem', { name: 'Light Mode' }).click();
+	await page.emulateMedia({ colorScheme: 'dark' });
+	await page.reload({ waitUntil: 'networkidle' });
+	await expect(root).not.toHaveClass(/dark/);
+});
+
+test('system theme is applied before hydration without saving a preference', async ({ page }) => {
+	await page.emulateMedia({ colorScheme: 'dark' });
+	await page.route('**/*.js', (route) => route.abort());
+	await page.goto('/', { waitUntil: 'load' });
+	await expect(page.locator('html')).toHaveClass(/dark/);
+	expect(await page.evaluate(() => localStorage.getItem('mode'))).toBeNull();
 });

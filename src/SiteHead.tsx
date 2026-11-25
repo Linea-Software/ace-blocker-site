@@ -1,4 +1,4 @@
-import { For, onSettled, Show } from 'solid-js';
+import { createEffect, For, onSettled, Show } from 'solid-js';
 import { Head, Link, Meta } from '@solidjs/meta';
 import { useLocation } from '@solidjs/router';
 import {
@@ -24,21 +24,40 @@ export default function SiteHead() {
 	const locale = () => localeFromPath(path());
 	const localeTag = () => ({ en: 'en_US', it: 'it_IT', es: 'es_ES', de: 'de_DE' })[locale()];
 
-	onSettled(() => {
+	// Keep the document bootstrap and hydrated theme resolution in sync.
+	function applyTheme(pathname: string, search: string) {
 		const checkoutTheme =
-			basePath(path()) === '/checkout'
-				? new URLSearchParams(location.search).get('theme')
-				: null;
+			basePath(pathname) === '/checkout' ? new URLSearchParams(search).get('theme') : null;
+		let stored: string | null = null;
+		try {
+			stored = localStorage.getItem('mode');
+		} catch {
+			// Storage can be disabled; the cookie and system preference still work.
+		}
 		const requested =
 			checkoutTheme === 'dark' || checkoutTheme === 'light'
 				? checkoutTheme
-				: (localStorage.getItem('mode') ??
-					document.cookie.match(/(?:^|; )mode=(dark|light)(?:;|$)/)?.[1] ??
-					'light');
-		const isDark = requested === 'dark';
-		document.documentElement.classList.toggle('dark', isDark);
-		document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
-		return undefined;
+				: stored === 'dark' || stored === 'light'
+					? stored
+					: (document.cookie.match(/(?:^|; )mode=(dark|light)(?:;|$)/)?.[1] ??
+						(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+		document.documentElement.classList.toggle('dark', requested === 'dark');
+		document.documentElement.style.colorScheme = requested;
+	}
+
+	createEffect(
+		() => [path(), location.search] as const,
+		([pathname, search]) => applyTheme(pathname, search)
+	);
+	onSettled(() => {
+		const media = matchMedia('(prefers-color-scheme: dark)');
+		const update = () => applyTheme(window.location.pathname, window.location.search);
+		media.addEventListener('change', update);
+		window.addEventListener('storage', update);
+		return () => {
+			media.removeEventListener('change', update);
+			window.removeEventListener('storage', update);
+		};
 	});
 
 	return (

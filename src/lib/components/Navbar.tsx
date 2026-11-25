@@ -187,13 +187,20 @@ export default function Navbar(props: { isPro?: boolean }) {
 		}
 	);
 	onSettled(() => {
-		setDark(document.documentElement.classList.contains('dark'));
+		const root = document.documentElement;
+		const syncTheme = () => setDark(root.classList.contains('dark'));
+		syncTheme();
+		const observer = new MutationObserver(syncTheme);
+		observer.observe(root, { attributes: true, attributeFilter: ['class'] });
 		const mq = matchMedia('(min-width: 1024px)');
 		const close = () => {
 			if (mq.matches) setMobile(false);
 		};
 		mq.addEventListener('change', close);
-		return () => mq.removeEventListener('change', close);
+		return () => {
+			observer.disconnect();
+			mq.removeEventListener('change', close);
+		};
 	});
 	const menuItem =
 		'flex w-full min-h-10 items-center gap-2 rounded-sm px-2 text-left text-sm outline-none hover:bg-accent focus:bg-accent focus-visible:ring-2 focus-visible:ring-ring';

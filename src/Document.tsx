@@ -24,7 +24,7 @@ export default function Document(props: { children: JSX.Element }) {
 				/>
 				<link rel="apple-touch-icon" sizes="180x180" href="/ace-apple-touch-icon.png" />
 				<script
-					innerHTML={`try{var p=new URLSearchParams(location.search),t=(location.pathname.endsWith("/checkout")||location.pathname.endsWith("/checkout/"))?p.get("theme"):null,m=t==="dark"||t==="light"?t:localStorage.getItem("mode")||document.cookie.match(/(?:^|; )mode=(dark|light)(?:;|$)/)?.[1]||"light";document.documentElement.classList.toggle("dark",m==="dark");document.documentElement.style.colorScheme=m==="dark"?"dark":"light"}catch{}`}
+					innerHTML={`try{var p=new URLSearchParams(location.search),t=(location.pathname.endsWith("/checkout")||location.pathname.endsWith("/checkout/"))?p.get("theme"):null,m;try{m=localStorage.getItem("mode")}catch{}m=t==="dark"||t==="light"?t:m==="dark"||m==="light"?m:document.cookie.match(/(?:^|; )mode=(dark|light)(?:;|$)/)?.[1]||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.classList.toggle("dark",m==="dark");document.documentElement.style.colorScheme=m==="dark"?"dark":"light"}catch{}`}
 				/>
 				<HydrationScript />
 			</head>
