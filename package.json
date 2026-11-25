@@ -65,8 +65,8 @@
 		"vitest": "^5.0.5"
 	},
 	"dependencies": {
-		"@better-auth/api-key": "^1.7.22",
-		"@better-auth/core": "^1.7.22",
+		"@better-auth/api-key": "^1.7.27",
+		"@better-auth/core": "^1.7.27",
 		"@bunny.net/storage-sdk": "^0.3.2",
 		"@dodopayments/better-auth": "^1.6.6",
 		"@elysiajs/eden": "^1.4.9",
@@ -80,7 +80,7 @@
 		"@solidjs/router": "^2",
 		"@solidjs/vite-plugin": "^3.0.1",
 		"@solidjs/web": "^2",
-		"better-auth": "^1.7.22",
+		"better-auth": "^1.7.27",
 		"dodopayments": "^2.59.0",
 		"dodopayments-checkout": "^2.0.1",
 		"dotenv": "^18.0.9",
